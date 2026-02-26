@@ -24,13 +24,14 @@ describe('parseSbpFile', () => {
     expect(songs[0].meta.artist).toBe('Test Artist')
   })
 
-  it('maps key index 7 to "G"', async () => {
+  it('maps key index 7 to "G" and sets usesFlats=false', async () => {
     const buf = await makeMockSbp([{
       Id: 1, name: 'Song', author: '', key: 7, Capo: 0,
       TempoInt: 0, timeSig: '', Copyright: '', content: '', KeyShift: 0
     }])
     const songs = await parseSbpFile(buf)
     expect(songs[0].meta.key).toBe('G')
+    expect(songs[0].meta.usesFlats).toBe(false)
   })
 
   it('maps key index 3 to "Eb" and sets usesFlats=true', async () => {

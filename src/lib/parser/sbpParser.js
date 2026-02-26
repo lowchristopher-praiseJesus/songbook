@@ -20,7 +20,7 @@ export async function parseSbpFile(arrayBuffer) {
   const jsonText = newlineIdx >= 0 ? text.slice(newlineIdx + 1) : text
 
   const data = JSON.parse(jsonText)
-  if (!Array.isArray(data.songs)) return []
+  if (!data || !Array.isArray(data.songs)) return []
 
   return data.songs
     .filter(s => !s.Deleted)
