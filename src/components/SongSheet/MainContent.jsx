@@ -6,6 +6,7 @@ import { EmptyState } from './EmptyState'
 import { SongSheet } from './SongSheet'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
+import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 
 export function MainContent({ onAddToast }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -84,20 +85,8 @@ export function MainContent({ onAddToast }) {
         </div>
       </Modal>
 
-      {/* Performance mode is handled by PerformanceModal (Task 12) */}
       {performanceMode && activeSong && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex items-center justify-center">
-          <div className="text-center p-8">
-            <p className="text-lg text-gray-500">Performance mode coming in Task 12</p>
-            <button
-              type="button"
-              onClick={() => setPerformanceMode(false)}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-            >
-              Exit
-            </button>
-          </div>
-        </div>
+        <PerformanceModal song={activeSong} onClose={() => setPerformanceMode(false)} />
       )}
     </main>
   )
