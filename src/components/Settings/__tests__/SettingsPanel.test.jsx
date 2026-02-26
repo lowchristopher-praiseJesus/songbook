@@ -53,7 +53,7 @@ describe('SettingsPanel', () => {
   it('shows 1 song in singular form', () => {
     mockIndex = [{ id: 'a1', title: 'Song A', artist: 'Artist A' }]
     render(<SettingsPanel onClose={onClose} />)
-    expect(screen.getByText(/1 song[^s]/)).toBeInTheDocument()
+    expect(screen.getByText(/^1 song$/)).toBeInTheDocument()
   })
 
   it('shows plural form for multiple songs', () => {

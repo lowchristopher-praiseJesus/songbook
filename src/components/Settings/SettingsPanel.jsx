@@ -9,8 +9,6 @@ export function SettingsPanel({ onClose }) {
   const index = useLibraryStore(s => s.index)
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const stats = getStorageStats()
-  const usedKB = (stats.usedBytes / 1024).toFixed(1)
-  const limitKB = (stats.limitBytes / 1024).toFixed(0)
 
   function clearAll() {
     if (!window.confirm('Delete ALL songs? This cannot be undone.')) return
@@ -49,7 +47,7 @@ export function SettingsPanel({ onClose }) {
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2 dark:text-gray-300">Library</label>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {index.length} song{index.length !== 1 ? 's' : ''} · {usedKB} KB / {limitKB} KB used
+            {`${index.length} song${index.length !== 1 ? 's' : ''}`}
           </p>
           <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div

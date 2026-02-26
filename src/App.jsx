@@ -31,7 +31,7 @@ export default function App() {
             <span className="font-bold text-lg select-none">🎵 SongSheet</span>
           </div>
           <button
-            onClick={() => setSettingsOpen(o => !o)}
+            onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-xl"
           >
