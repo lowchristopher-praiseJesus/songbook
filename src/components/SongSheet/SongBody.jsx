@@ -53,17 +53,23 @@ function SongSection({ section, fontSize, performanceMode }) {
             return <div key={i} className="h-4" />
           }
           if (line.type === 'chord') {
-            // Pure chord line — render chord tokens spaced by position
+            // Reconstruct chord line preserving original spacing via position offsets
+            const chords = line.chords ?? []
+            let lineStr = ''
+            for (const { chord, position } of chords) {
+              // Pad to the chord's position, then append the chord
+              while (lineStr.length < position) lineStr += ' '
+              lineStr += chord
+              lineStr += ' ' // at least one space after each chord
+            }
             return (
               <div
                 key={i}
-                className="font-mono font-bold text-indigo-600 dark:text-indigo-400 leading-none mb-1"
+                className="font-mono font-bold text-indigo-600 dark:text-indigo-400 leading-none mb-1 whitespace-pre"
                 style={{ fontSize: Math.max(12, (fontSize ?? 16) - 2) }}
                 aria-hidden="true"
               >
-                {(line.chords ?? []).map((ct, j) => (
-                  <span key={j} style={{ marginRight: '1.5ch' }}>{ct.chord}</span>
-                ))}
+                {lineStr}
               </div>
             )
           }
