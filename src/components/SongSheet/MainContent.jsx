@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
@@ -30,6 +30,8 @@ export function MainContent({ onAddToast }) {
   })
 
   const { isDragging, onDragOver, onDragLeave, onDrop } = useDropZone(importFiles)
+
+  const handleClosePerformance = useCallback(() => setPerformanceMode(false), [])
 
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
@@ -86,7 +88,7 @@ export function MainContent({ onAddToast }) {
       </Modal>
 
       {performanceMode && activeSong && (
-        <PerformanceModal song={activeSong} onClose={() => setPerformanceMode(false)} />
+        <PerformanceModal song={activeSong} onClose={handleClosePerformance} />
       )}
     </main>
   )

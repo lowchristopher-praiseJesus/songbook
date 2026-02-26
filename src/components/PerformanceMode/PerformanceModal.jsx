@@ -40,7 +40,13 @@ export function PerformanceModal({ song, onClose }) {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto" ref={containerRef}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={song.meta.title}
+      className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto"
+      ref={containerRef}
+    >
       {/* Top controls */}
       <div className="sticky top-0 flex items-center justify-between px-6 py-3
         bg-white/90 dark:bg-gray-900/90 backdrop-blur border-b border-gray-200 dark:border-gray-700">
