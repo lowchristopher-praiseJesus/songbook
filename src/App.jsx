@@ -3,16 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
-
-// Placeholders — replaced by real components in Tasks 10 and 11
-function SidebarPlaceholder({ isOpen }) {
-  if (!isOpen) return null
-  return (
-    <aside className="w-64 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 shrink-0">
-      <p className="text-sm text-gray-500">Library sidebar (Task 10)</p>
-    </aside>
-  )
-}
+import { Sidebar } from './components/Sidebar/Sidebar'
 
 function MainContentPlaceholder() {
   return (
@@ -56,7 +47,7 @@ export default function App() {
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
-          <SidebarPlaceholder isOpen={sidebarOpen} />
+          <Sidebar isOpen={sidebarOpen} onAddToast={addToast} />
           <MainContentPlaceholder />
         </div>
       </div>
