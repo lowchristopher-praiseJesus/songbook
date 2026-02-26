@@ -5,6 +5,7 @@ import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { MainContent } from './components/SongSheet/MainContent'
+import { SettingsPanel } from './components/Settings/SettingsPanel'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -45,14 +46,7 @@ export default function App() {
         </div>
       </div>
       <ToastContainer toasts={toasts} />
-      {settingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-xl">
-            <p className="text-sm">Settings (Task 13)</p>
-            <button onClick={() => setSettingsOpen(false)} className="mt-4 text-indigo-600 underline text-sm">Close</button>
-          </div>
-        </div>
-      )}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
     </ThemeProvider>
   )
 }
