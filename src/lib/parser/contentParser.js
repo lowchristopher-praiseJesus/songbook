@@ -82,7 +82,7 @@ function parseLine(rawLine) {
 }
 
 // Matches: G, Am, F#m, Bb, Cmaj7, G/B, A/C#, Fmaj7, E7, etc.
-const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add)?[0-9]?(?:\/[A-G][b#]?)?$/
+const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add)?[0-9]{0,2}(?:\/[A-G][b#]?)?$/
 
 function isChord(str) {
   return CHORD_RE.test(str.trim())

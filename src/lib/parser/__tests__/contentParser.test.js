@@ -72,16 +72,30 @@ describe('parseContent', () => {
     expect(line.content).toBe('Hello world')
   })
 
-  it('handles complex chord suffixes: Am7, Fmaj7, E7, A/C#', () => {
-    const content = '{c: Test}\n[Am7]test [Fmaj7]test [E7]test [A/C#]test'
+  it('handles complex chord suffixes: Am7, Fmaj7, E7, A/C#, Dm11, Fmaj13', () => {
+    const content = '{c: Test}\n[Am7]test [Fmaj7]test [E7]test [A/C#]test [Dm11]test [Fmaj13]test'
     const sections = parseContent(content)
     const chords = sections[0].lines[0].chords.map(c => c.chord)
-    expect(chords).toEqual(['Am7', 'Fmaj7', 'E7', 'A/C#'])
+    expect(chords).toEqual(['Am7', 'Fmaj7', 'E7', 'A/C#', 'Dm11', 'Fmaj13'])
   })
 
   it('lyric line with no chords has empty chords array', () => {
     const content = '{c: Verse}\nNo chords here'
     const sections = parseContent(content)
+    expect(sections[0].lines[0].chords).toEqual([])
+  })
+
+  it('treats non-chord bracket sequences as literal text', () => {
+    const content = '{c: Test}\n[NotAChord]some text'
+    const sections = parseContent(content)
+    expect(sections[0].lines[0].content).toBe('[NotAChord]some text')
+    expect(sections[0].lines[0].chords).toEqual([])
+  })
+
+  it('treats unclosed bracket as literal character', () => {
+    const content = '{c: Test}\nHello [G world'
+    const sections = parseContent(content)
+    expect(sections[0].lines[0].content).toBe('Hello [G world')
     expect(sections[0].lines[0].chords).toEqual([])
   })
 })
