@@ -1,4 +1,5 @@
 import JSZip from 'jszip'
+import { parseContent } from './contentParser'
 
 const KEY_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 // Keys that prefer flat notation (Eb, F, Ab, Bb)
@@ -47,6 +48,6 @@ function songFromJson(s) {
       ccli: s.ccli ?? undefined,
       subTitle: s.subTitle || undefined,
     },
-    sections: [], // populated by contentParser in Task 3
+    sections: parseContent(s.content ?? ''),
   }
 }
