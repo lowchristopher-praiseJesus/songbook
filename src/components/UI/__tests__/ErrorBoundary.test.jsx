@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { ErrorBoundary } from '../ErrorBoundary'
 
 // A component that throws on render
@@ -57,5 +58,19 @@ describe('ErrorBoundary', () => {
     )
     const btn = screen.getByRole('button', { name: /reload app/i })
     expect(btn).toHaveAttribute('type', 'button')
+  })
+
+  it('Reload App button calls window.location.reload on click', async () => {
+    const reloadMock = vi.fn()
+    vi.stubGlobal('location', { reload: reloadMock })
+    const user = userEvent.setup()
+    render(
+      <ErrorBoundary>
+        <ThrowingChild message="oops" />
+      </ErrorBoundary>
+    )
+    await user.click(screen.getByRole('button', { name: /reload app/i }))
+    expect(reloadMock).toHaveBeenCalledOnce()
+    vi.unstubAllGlobals()
   })
 })
