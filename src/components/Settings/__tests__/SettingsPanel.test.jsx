@@ -137,4 +137,29 @@ describe('SettingsPanel', () => {
     expect(mockDeleteSong).toHaveBeenCalledWith('a2')
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('dialog has correct ARIA attributes', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(dialog).toHaveAttribute('aria-labelledby', 'settings-title')
+  })
+
+  it('settings heading has id matching aria-labelledby', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    const heading = document.getElementById('settings-title')
+    expect(heading).toBeInTheDocument()
+    expect(heading.tagName).toBe('H2')
+  })
+
+  it('close button has aria-label "Close settings"', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    expect(screen.getByLabelText('Close settings')).toBeInTheDocument()
+  })
+
+  it('Escape key calls onClose', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })
