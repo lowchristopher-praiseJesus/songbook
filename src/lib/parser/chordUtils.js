@@ -18,12 +18,15 @@ export function transposeChord(chord, delta, usesFlats) {
 
   const scale = usesFlats ? FLATS : SHARPS
 
-  // Handle slash chord: "G/B" → root="G", bass="B"
+  // Handle slash chord: "G/B" → root="G", bass="B"; "Dm7/F" → root="D", suffix="m7", bass="F"
   const slashIdx = chord.indexOf('/')
   if (slashIdx !== -1) {
-    const root = chord.slice(0, slashIdx)
+    const leftPart = chord.slice(0, slashIdx)
     const bass = chord.slice(slashIdx + 1)
-    return transposeNote(root, delta, scale) + '/' + transposeNote(bass, delta, scale)
+    const leftMatch = leftPart.match(/^([A-G][b#]?)(.*)$/)
+    if (!leftMatch) return chord
+    const [, leftRoot, leftSuffix] = leftMatch
+    return transposeNote(leftRoot, delta, scale) + leftSuffix + '/' + transposeNote(bass, delta, scale)
   }
 
   // Extract root (1 or 2 chars: note + optional accidental) and suffix

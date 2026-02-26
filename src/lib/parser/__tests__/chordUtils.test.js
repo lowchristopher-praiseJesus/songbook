@@ -61,6 +61,10 @@ describe('transposeChord', () => {
   it('handles Eb/G slash chord (flat notation)', () => {
     expect(transposeChord('Eb/G', 2, true)).toBe('F/A')
   })
+
+  it('transposes slash chord with suffix: Dm7/F up 2 → Em7/G', () => {
+    expect(transposeChord('Dm7/F', 2, false)).toBe('Em7/G')
+  })
 })
 
 describe('transposeSections', () => {
