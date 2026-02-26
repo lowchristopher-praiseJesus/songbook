@@ -3,6 +3,7 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
 import { Button } from '../UI/Button'
+import { Modal } from '../UI/Modal'
 
 export function Sidebar({ isOpen, onAddToast }) {
   const [query, setQuery] = useState('')
@@ -87,21 +88,20 @@ export function Sidebar({ isOpen, onAddToast }) {
       </div>
 
       {/* Duplicate resolution modal */}
-      {duplicateState && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="font-semibold mb-2 dark:text-white">Duplicate Song</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              A song titled "{duplicateState.title}" already exists. What would you like to do?
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="danger" onClick={() => resolveDuplicate('replace')}>Replace</Button>
-              <Button variant="secondary" onClick={() => resolveDuplicate('keep-both')}>Keep Both</Button>
-              <Button variant="ghost" onClick={() => resolveDuplicate('skip')}>Skip</Button>
-            </div>
-          </div>
+      <Modal
+        isOpen={!!duplicateState}
+        title="Duplicate Song"
+        onClose={() => resolveDuplicate('skip')}
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          A song titled "{duplicateState?.title}" already exists. What would you like to do?
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="danger" onClick={() => resolveDuplicate('replace')}>Replace</Button>
+          <Button variant="secondary" onClick={() => resolveDuplicate('keep-both')}>Keep Both</Button>
+          <Button variant="ghost" onClick={() => resolveDuplicate('skip')}>Skip</Button>
         </div>
-      )}
+      </Modal>
     </aside>
   )
 }

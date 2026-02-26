@@ -1,5 +1,4 @@
-// src/hooks/useFileImport.js
-import { useCallback } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { parseSbpFile } from '../lib/parser/sbpParser'
 import { useLibraryStore } from '../store/libraryStore'
 
@@ -14,6 +13,12 @@ export function useFileImport({ onError, onDuplicateCheck }) {
   const replaceSong = useLibraryStore(s => s.replaceSong)
   const index = useLibraryStore(s => s.index)
 
+  // Use a ref for index so importFiles closure always reads the latest value
+  const indexRef = useRef(index)
+  useEffect(() => {
+    indexRef.current = index
+  }, [index])
+
   const importFiles = useCallback(async (files) => {
     for (const file of files) {
       if (!file.name.endsWith('.sbp')) {
@@ -25,7 +30,7 @@ export function useFileImport({ onError, onDuplicateCheck }) {
         const songs = await parseSbpFile(buf)
 
         for (const song of songs) {
-          const duplicate = index.find(e => e.title === song.meta.title)
+          const duplicate = indexRef.current.find(e => e.title === song.meta.title)
 
           if (duplicate) {
             const resolution = await onDuplicateCheck(song.meta.title)
@@ -57,7 +62,8 @@ export function useFileImport({ onError, onDuplicateCheck }) {
         onError(`Could not read "${file.name}". It may be corrupted or use an unsupported format.`)
       }
     }
-  }, [addSongs, replaceSong, index, onError, onDuplicateCheck])
+  }, [addSongs, replaceSong, onError, onDuplicateCheck])
+  // index removed from deps — always read via indexRef
 
   return { importFiles }
 }

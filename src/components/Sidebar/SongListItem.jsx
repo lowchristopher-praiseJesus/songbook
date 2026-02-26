@@ -14,29 +14,30 @@ export function SongListItem({ entry }) {
   }
 
   return (
-    <li
-      role="button"
-      tabIndex={0}
-      onClick={() => selectSong(entry.id)}
-      onKeyDown={e => e.key === 'Enter' && selectSong(entry.id)}
-      className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer group select-none
-        ${isActive
-          ? 'bg-indigo-600 text-white'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
-        }`}
-    >
-      <div className="min-w-0 flex-1">
+    <li className="flex items-center group">
+      {/* Selection button spans the text area */}
+      <button
+        type="button"
+        onClick={() => selectSong(entry.id)}
+        className={`flex-1 min-w-0 text-left px-3 py-2 rounded-lg cursor-pointer
+          ${isActive
+            ? 'bg-indigo-600 text-white'
+            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
+          }`}
+      >
         <div className="text-sm font-medium truncate">{entry.title}</div>
         {entry.artist && (
           <div className={`text-xs truncate ${isActive ? 'text-indigo-200' : 'text-gray-500 dark:text-gray-400'}`}>
             {entry.artist}
           </div>
         )}
-      </div>
+      </button>
+      {/* Delete button outside the selection button */}
       <button
+        type="button"
         onClick={handleDelete}
         aria-label={`Delete ${entry.title}`}
-        className={`ml-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0
+        className={`ml-1 mr-1 p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity shrink-0
           ${isActive ? 'hover:bg-indigo-700 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500'}`}
       >
         🗑
