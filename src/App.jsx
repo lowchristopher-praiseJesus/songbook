@@ -4,14 +4,7 @@ import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
 import { Sidebar } from './components/Sidebar/Sidebar'
-
-function MainContentPlaceholder() {
-  return (
-    <main className="flex-1 flex items-center justify-center text-gray-400">
-      <p>Song content area (Task 11)</p>
-    </main>
-  )
-}
+import { MainContent } from './components/SongSheet/MainContent'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -48,7 +41,7 @@ export default function App() {
         {/* Body */}
         <div className="flex flex-1 overflow-hidden">
           <Sidebar isOpen={sidebarOpen} onAddToast={addToast} />
-          <MainContentPlaceholder />
+          <MainContent onAddToast={addToast} />
         </div>
       </div>
       <ToastContainer toasts={toasts} />
