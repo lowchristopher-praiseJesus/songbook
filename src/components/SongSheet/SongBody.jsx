@@ -39,6 +39,7 @@ function ChordedLine({ line, fontSize }) {
 }
 
 function SongSection({ section, fontSize, performanceMode }) {
+  const lines = section.lines
   return (
     <div className="mb-8" data-section>
       {section.label && (
@@ -48,19 +49,21 @@ function SongSection({ section, fontSize, performanceMode }) {
         </h3>
       )}
       <div className="space-y-0">
-        {section.lines.map((line, i) => {
+        {lines.map((line, i) => {
           if (line.type === 'blank') {
             return <div key={i} className="h-4" />
           }
           if (line.type === 'chord') {
-            // Reconstruct chord line preserving original spacing via position offsets
+            // If immediately followed by a lyric line, skip standalone rendering —
+            // chords will be merged into the lyric line below.
+            if (lines[i + 1]?.type === 'lyric') return null
+            // Standalone chord line (e.g. instrumental break with no lyric below)
             const chords = line.chords ?? []
             let lineStr = ''
             for (const { chord, position } of chords) {
-              // Pad to the chord's position, then append the chord
               while (lineStr.length < position) lineStr += ' '
               lineStr += chord
-              lineStr += ' ' // at least one space after each chord
+              lineStr += ' '
             }
             return (
               <div
@@ -73,17 +76,26 @@ function SongSection({ section, fontSize, performanceMode }) {
               </div>
             )
           }
-          // Lyric line (with or without inline chords)
+          // Lyric line — merge chords from any immediately preceding chord line
+          // so they all render uniformly above the text at the same size.
+          let effectiveChords = line.chords ?? []
+          const prevLine = lines[i - 1]
+          if (prevLine?.type === 'chord') {
+            const merged = [...(prevLine.chords ?? []), ...effectiveChords]
+            merged.sort((a, b) => a.position - b.position)
+            effectiveChords = merged
+          }
+          const effectiveLine = { ...line, chords: effectiveChords }
           return (
             <div
               key={i}
               className="leading-relaxed"
               style={{
-                paddingTop: (line.chords?.length ?? 0) > 0 ? '1.5rem' : '0',
+                paddingTop: effectiveChords.length > 0 ? '1.5rem' : '0',
                 fontSize,
               }}
             >
-              <ChordedLine line={line} fontSize={fontSize} />
+              <ChordedLine line={effectiveLine} fontSize={fontSize} />
             </div>
           )
         })}
