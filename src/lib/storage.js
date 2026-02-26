@@ -54,6 +54,10 @@ export function setLastSongId(id) {
   localStorage.setItem(LAST_SONG_KEY, id)
 }
 
+export function clearLastSongId() {
+  localStorage.removeItem(LAST_SONG_KEY)
+}
+
 /**
  * Returns estimated storage usage for all songsheet_ keys.
  * Uses 2 bytes/char approximation (UTF-16 encoding).

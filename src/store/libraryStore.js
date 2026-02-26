@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 import {
   saveSong, loadSong, deleteSong as deleteFromStorage,
-  loadIndex, saveIndex, getLastSongId, setLastSongId
+  loadIndex, saveIndex, getLastSongId, setLastSongId, clearLastSongId
 } from '../lib/storage'
 
 export const useLibraryStore = create((set, get) => ({
@@ -40,7 +40,8 @@ export const useLibraryStore = create((set, get) => ({
   addSongs(songs) {
     const currentIndex = [...get().index]
 
-    for (const song of songs) {
+    for (const rawSong of songs) {
+      const song = { ...rawSong }
       if (!song.id) song.id = uuidv4()
       if (!song.importedAt) song.importedAt = new Date().toISOString()
 
@@ -86,6 +87,7 @@ export const useLibraryStore = create((set, get) => ({
     saveIndex(newIndex)
 
     const wasActive = get().activeSongId === id
+    if (wasActive) clearLastSongId()
     set({
       index: newIndex,
       ...(wasActive ? { activeSongId: null, activeSong: null } : {}),
@@ -97,10 +99,13 @@ export const useLibraryStore = create((set, get) => ({
    */
   replaceSong(id, newSong) {
     deleteFromStorage(id)
-    // Remove from index first, then re-add via addSongs
+    // Remove from index first (addSongs will re-add and save final index)
     const filteredIndex = get().index.filter(e => e.id !== id)
-    saveIndex(filteredIndex)
     set({ index: filteredIndex })
     get().addSongs([{ ...newSong, id }])
+    // If this was the active song, refresh the in-memory view
+    if (get().activeSongId === id) {
+      get().selectSong(id)
+    }
   },
 }))
