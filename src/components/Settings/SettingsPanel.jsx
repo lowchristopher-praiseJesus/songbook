@@ -1,4 +1,5 @@
 // src/components/Settings/SettingsPanel.jsx
+import { useEffect } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLibraryStore } from '../../store/libraryStore'
 import { getStorageStats } from '../../lib/storage'
@@ -10,6 +11,14 @@ export function SettingsPanel({ onClose }) {
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const stats = getStorageStats()
 
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   function clearAll() {
     if (!window.confirm('Delete ALL songs? This cannot be undone.')) return
     ;[...index].forEach(e => deleteSong(e.id))
@@ -17,11 +26,11 @@ export function SettingsPanel({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold dark:text-white">Settings</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+          <h2 id="settings-title" className="text-xl font-semibold dark:text-white">Settings</h2>
+          <button type="button" aria-label="Close settings" onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
         {/* Theme */}
@@ -32,10 +41,7 @@ export function SettingsPanel({ onClose }) {
               <Button
                 key={t}
                 variant={theme === t ? 'primary' : 'secondary'}
-                onClick={() => setTheme(t === 'system'
-                  ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                  : t
-                )}
+                onClick={() => setTheme(t)}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </Button>
@@ -51,6 +57,7 @@ export function SettingsPanel({ onClose }) {
           </p>
           <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
+              data-testid="storage-bar"
               className="h-full bg-indigo-600 rounded-full"
               style={{ width: `${Math.min(100, (stats.usedBytes / stats.limitBytes) * 100)}%` }}
             />

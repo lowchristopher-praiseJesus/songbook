@@ -67,8 +67,7 @@ describe('SettingsPanel', () => {
 
   it('renders a storage bar element', () => {
     render(<SettingsPanel onClose={onClose} />)
-    // The storage bar inner div has an inline style with a width percentage
-    const bar = document.querySelector('[style*="width:"], [style*="width: "]')
+    const bar = screen.getByTestId('storage-bar')
     expect(bar).toBeInTheDocument()
   })
 
@@ -76,7 +75,7 @@ describe('SettingsPanel', () => {
     // Override getStorageStats mock inline — can't re-mock easily, but we know
     // 512KB / 5120KB = 10%, so the bar should be 10%
     render(<SettingsPanel onClose={onClose} />)
-    const bar = document.querySelector('[style]')
+    const bar = screen.getByTestId('storage-bar')
     // The width should be a percentage (not over 100)
     const widthStyle = bar?.style?.width ?? ''
     const pct = parseFloat(widthStyle)
