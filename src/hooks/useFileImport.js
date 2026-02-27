@@ -8,7 +8,7 @@ import { useLibraryStore } from '../store/libraryStore'
  * @param {Function} options.onError - Called with an error message string on failure
  * @param {Function} options.onDuplicateCheck - Called with title string, returns Promise<'replace'|'keep-both'|'skip'>
  */
-export function useFileImport({ onError, onDuplicateCheck }) {
+export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
   const addSongs = useLibraryStore(s => s.addSongs)
   const replaceSong = useLibraryStore(s => s.replaceSong)
   const index = useLibraryStore(s => s.index)
@@ -62,7 +62,8 @@ export function useFileImport({ onError, onDuplicateCheck }) {
         onError(`Could not read "${file.name}". It may be corrupted or use an unsupported format.`)
       }
     }
-  }, [addSongs, replaceSong, onError, onDuplicateCheck])
+    onSuccess?.()
+  }, [addSongs, replaceSong, onError, onDuplicateCheck, onSuccess])
   // index removed from deps — always read via indexRef
 
   return { importFiles }

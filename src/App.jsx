@@ -49,6 +49,7 @@ export default function App() {
             onAddToast={addToast}
             onClose={() => setSidebarOpen(false)}
             onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
+            onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
           />
           <MainContent onAddToast={addToast} lyricsOnly={lyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} />
         </div>

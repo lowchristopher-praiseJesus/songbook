@@ -5,7 +5,7 @@ import { SongListItem } from './SongListItem'
 import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 
-export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const fileInputRef = useRef()
@@ -25,6 +25,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose }) {
   const { importFiles } = useFileImport({
     onError: msg => onAddToast(msg, 'error'),
     onDuplicateCheck,
+    onSuccess: onImportSuccess,
   })
 
   const filtered = query.trim()
