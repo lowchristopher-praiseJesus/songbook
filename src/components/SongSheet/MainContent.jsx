@@ -1,18 +1,70 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
+import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { EmptyState } from './EmptyState'
 import { SongSheet } from './SongSheet'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 
-export function MainContent({ onAddToast }) {
+export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
+  const activeSongId = useLibraryStore(s => s.activeSongId)
+  const index = useLibraryStore(s => s.index)
+  const selectSong = useLibraryStore(s => s.selectSong)
   const fileInputRef = useRef()
-  const [performanceMode, setPerformanceMode] = useState(false)
+  const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
+  const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
+  const [swipeDir, setSwipeDir] = useState(null)      // 'left' | 'right' | null
+  const hintTimerRef = useRef(null)
+  const [chordsOpen, setChordsOpen] = useState(true)
+
+  const currentIdx = index.findIndex(e => e.id === activeSongId)
+  const prevEntry = currentIdx > 0 ? index[currentIdx - 1] : null
+  const nextEntry = currentIdx < index.length - 1 ? index[currentIdx + 1] : null
+
+  function showHint(title, direction) {
+    clearTimeout(hintTimerRef.current)
+    setSwipeHint({ title, direction })
+    hintTimerRef.current = setTimeout(() => setSwipeHint(null), 1200)
+  }
+
+  useEffect(() => () => clearTimeout(hintTimerRef.current), [])
+
+  const goNext = useCallback(() => {
+    if (!nextEntry) return
+    setSwipeDir('left')
+    selectSong(nextEntry.id)
+    showHint(nextEntry.title, 'left')
+  }, [nextEntry, selectSong])
+
+  const goPrev = useCallback(() => {
+    if (!prevEntry) return
+    setSwipeDir('right')
+    selectSong(prevEntry.id)
+    showHint(prevEntry.title, 'right')
+  }, [prevEntry, selectSong])
+
+  const { onTouchStart, onTouchEnd } = useSwipeNavigation({
+    onSwipeLeft: goNext,
+    onSwipeRight: goPrev,
+  })
+
+  // Desktop arrow-key navigation (skip when a modal is open or user is typing)
+  useEffect(() => {
+    function onKey(e) {
+      if (performanceSections) return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); goNext() }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); goPrev() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [goNext, goPrev, performanceSections])
 
   function onDuplicateCheck(title) {
     return new Promise(resolve => setDuplicateState({ title, resolve }))
@@ -31,7 +83,7 @@ export function MainContent({ onAddToast }) {
 
   const { isDragging, onDragOver, onDragLeave, onDrop } = useDropZone(importFiles)
 
-  const handleClosePerformance = useCallback(() => setPerformanceMode(false), [])
+  const handleClosePerformance = useCallback(() => setPerformanceSections(null), [])
 
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
@@ -45,6 +97,8 @@ export function MainContent({ onAddToast }) {
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       {isDragging && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
@@ -56,16 +110,43 @@ export function MainContent({ onAddToast }) {
 
       {!activeSong
         ? <EmptyState onImport={() => fileInputRef.current?.click()} />
-        : <SongSheet
-            song={activeSong}
-            onPerformanceMode={() => setPerformanceMode(true)}
-          />
+        : <div
+            key={activeSongId}
+            className={`h-full overflow-x-hidden
+              ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
+              ${swipeDir === 'right' ? 'animate-slideFromLeft'  : ''}
+            `}
+            onAnimationEnd={() => setSwipeDir(null)}
+          >
+            <SongSheet
+              song={activeSong}
+              onPerformanceMode={setPerformanceSections}
+              lyricsOnly={lyricsOnly}
+              fontSize={fontSize}
+              onFontSizeChange={onFontSizeChange}
+              chordsOpen={chordsOpen}
+              onChordsToggle={() => setChordsOpen(o => !o)}
+            />
+          </div>
       }
+
+      {/* Swipe navigation hint */}
+      {swipeHint && (
+        <div
+          key={swipeHint.title}
+          className="pointer-events-none fixed bottom-8 left-1/2 -translate-x-1/2
+            px-4 py-2 rounded-full bg-gray-900/80 dark:bg-gray-100/80
+            text-white dark:text-gray-900 text-sm font-medium
+            animate-[fadeInOut_1.2s_ease-in-out_forwards] z-40 whitespace-nowrap max-w-xs truncate"
+        >
+          {swipeHint.direction === 'left' ? '→ ' : '← '}{swipeHint.title}
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
         type="file"
-        accept=".sbp"
+        accept=".sbp,*/*"
         multiple
         className="hidden"
         onChange={handleFileInput}
@@ -87,8 +168,8 @@ export function MainContent({ onAddToast }) {
         </div>
       </Modal>
 
-      {performanceMode && activeSong && (
-        <PerformanceModal song={activeSong} onClose={handleClosePerformance} />
+      {performanceSections && activeSong && (
+        <PerformanceModal song={activeSong} sections={performanceSections} lyricsOnly={lyricsOnly} onClose={handleClosePerformance} />
       )}
     </main>
   )
