@@ -154,7 +154,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
             className="w-7 h-7 flex items-center justify-center rounded-full
               bg-gray-500/20 dark:bg-white/15 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
-              opacity-20 hover:opacity-60 transition-opacity duration-150
+              opacity-40 hover:opacity-80 transition-opacity duration-150
               disabled:opacity-5 disabled:cursor-not-allowed"
             aria-label="Increase font size"
           >+</button>
@@ -165,7 +165,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
             className="w-7 h-7 flex items-center justify-center rounded-full
               bg-gray-500/20 dark:bg-white/15 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
-              opacity-20 hover:opacity-60 transition-opacity duration-150
+              opacity-40 hover:opacity-80 transition-opacity duration-150
               disabled:opacity-5 disabled:cursor-not-allowed"
             aria-label="Decrease font size"
           >−</button>
