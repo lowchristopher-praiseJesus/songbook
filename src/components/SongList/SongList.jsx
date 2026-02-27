@@ -14,11 +14,13 @@ export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize
         transpose={transpose}
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
       />
-      <ChordStrip
-        sections={transpose.transposedSections}
-        open={chordsOpen}
-        onToggle={onChordsToggle}
-      />
+      {!lyricsOnly && (
+        <ChordStrip
+          sections={transpose.transposedSections}
+          open={chordsOpen}
+          onToggle={onChordsToggle}
+        />
+      )}
       <SongBody sections={transpose.transposedSections} fontSize={fontSize} lyricsOnly={lyricsOnly} />
     </div>
   )
