@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useLocalStorage('songsheet_theme', 'system')
+  const [theme, setTheme] = useLocalStorage('songsheet_theme', 'light')
 
   useEffect(() => {
     const root = document.documentElement
