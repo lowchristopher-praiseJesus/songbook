@@ -24,7 +24,7 @@ function ChordedLine({ line, fontSize }) {
         >
           {chord}
         </span>
-        {text[position] ?? '\u00A0'}
+        {text[position] == null || text[position] === ' ' ? '\u00A0' : text[position]}
       </span>
     )
     lastPos = position + 1
@@ -38,8 +38,22 @@ function ChordedLine({ line, fontSize }) {
   return <span>{parts}</span>
 }
 
-function SongSection({ section, fontSize, performanceMode }) {
+function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
   const lines = section.lines
+
+  // Pre-compute which chord-only lines will be absorbed into a following lyric line
+  // (scanning forward past any blank lines to find the next non-blank line).
+  const absorbedChordLines = new Set()
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].type === 'chord') {
+      let j = i + 1
+      while (j < lines.length && lines[j].type === 'blank') j++
+      if (j < lines.length && lines[j].type === 'lyric') {
+        absorbedChordLines.add(i)
+      }
+    }
+  }
+
   return (
     <div className="mb-8" data-section>
       {section.label && (
@@ -54,9 +68,11 @@ function SongSection({ section, fontSize, performanceMode }) {
             return <div key={i} className="h-4" />
           }
           if (line.type === 'chord') {
-            // If immediately followed by a lyric line, skip standalone rendering —
+            // In lyrics-only mode, skip all chord lines
+            if (lyricsOnly) return null
+            // If this chord line will be absorbed into a following lyric, skip it —
             // chords will be merged into the lyric line below.
-            if (lines[i + 1]?.type === 'lyric') return null
+            if (absorbedChordLines.has(i)) return null
             // Standalone chord line (e.g. instrumental break with no lyric below)
             const chords = line.chords ?? []
             let lineStr = ''
@@ -76,22 +92,24 @@ function SongSection({ section, fontSize, performanceMode }) {
               </div>
             )
           }
-          // Lyric line — merge chords from any immediately preceding chord line
-          // so they all render uniformly above the text at the same size.
+          // Lyric line — merge chords from any preceding absorbed chord line
+          // (scanning backward past blank lines) so they all render uniformly.
           let effectiveChords = line.chords ?? []
-          const prevLine = lines[i - 1]
-          if (prevLine?.type === 'chord') {
-            const merged = [...(prevLine.chords ?? []), ...effectiveChords]
+          let j = i - 1
+          while (j >= 0 && lines[j].type === 'blank') j--
+          if (j >= 0 && lines[j].type === 'chord' && absorbedChordLines.has(j)) {
+            const merged = [...(lines[j].chords ?? []), ...effectiveChords]
             merged.sort((a, b) => a.position - b.position)
             effectiveChords = merged
           }
-          const effectiveLine = { ...line, chords: effectiveChords }
+          const chordsForLine = lyricsOnly ? [] : effectiveChords
+          const effectiveLine = { ...line, chords: chordsForLine }
           return (
             <div
               key={i}
               className="leading-relaxed"
               style={{
-                paddingTop: effectiveChords.length > 0 ? '1.5rem' : '0',
+                paddingTop: chordsForLine.length > 0 ? '1.5rem' : '0',
                 fontSize,
               }}
             >
@@ -104,12 +122,12 @@ function SongSection({ section, fontSize, performanceMode }) {
   )
 }
 
-export function SongBody({ sections, fontSize = 16, performanceMode = false }) {
+export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false }) {
   if (!sections?.length) return null
   return (
     <div className="py-4">
       {sections.map((section, i) => (
-        <SongSection key={i} section={section} fontSize={fontSize} performanceMode={performanceMode} />
+        <SongSection key={i} section={section} fontSize={fontSize} performanceMode={performanceMode} lyricsOnly={lyricsOnly} />
       ))}
     </div>
   )

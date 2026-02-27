@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { loadSong } from '../../lib/storage'
-import { SongBody } from '../SongSheet/SongBody'
+import { SongBody } from '../SongList/SongBody'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { ChordStrip } from '../Chords/ChordStrip'
 

@@ -5,7 +5,7 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { getStorageStats } from '../../lib/storage'
 import { Button } from '../UI/Button'
 
-export function SettingsPanel({ onClose }) {
+export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
   const { theme, setTheme } = useTheme()
   const index = useLibraryStore(s => s.index)
   const deleteSong = useLibraryStore(s => s.deleteSong)
@@ -47,6 +47,26 @@ export function SettingsPanel({ onClose }) {
               </Button>
             ))}
           </div>
+        </div>
+
+        {/* Display */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2 dark:text-gray-300">Display</label>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={lyricsOnly}
+            onClick={onToggleLyricsOnly}
+            className="flex items-center gap-3 w-full text-left"
+          >
+            <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+              transition-colors duration-200 focus:outline-none
+              ${lyricsOnly ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+              <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                ${lyricsOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+            </span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Lyrics only (hide chords)</span>
+          </button>
         </div>
 
         {/* Storage stats */}

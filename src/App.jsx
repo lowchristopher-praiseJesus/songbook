@@ -3,15 +3,18 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
+import { useLocalStorage } from './hooks/useLocalStorage'
 import { Sidebar } from './components/Sidebar/Sidebar'
-import { MainContent } from './components/SongSheet/MainContent'
+import { MainContent } from './components/SongList/MainContent'
 import { SettingsPanel } from './components/Settings/SettingsPanel'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
   const { toasts, addToast } = useToast()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
+  const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
 
   useEffect(() => { init() }, [init])
 
@@ -28,7 +31,7 @@ export default function App() {
             >
               ☰
             </button>
-            <span className="font-bold text-lg select-none">🎵 SongSheet</span>
+            <span className="font-bold text-lg select-none">🎵 SongList</span>
           </div>
           <button
             onClick={() => setSettingsOpen(true)}
@@ -40,13 +43,24 @@ export default function App() {
         </header>
 
         {/* Body */}
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar isOpen={sidebarOpen} onAddToast={addToast} />
-          <MainContent onAddToast={addToast} />
+        <div className="flex flex-1 overflow-hidden relative">
+          <Sidebar
+            isOpen={sidebarOpen}
+            onAddToast={addToast}
+            onClose={() => setSidebarOpen(false)}
+            onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
+          />
+          <MainContent onAddToast={addToast} lyricsOnly={lyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} />
         </div>
       </div>
       <ToastContainer toasts={toasts} />
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <SettingsPanel
+          onClose={() => setSettingsOpen(false)}
+          lyricsOnly={lyricsOnly}
+          onToggleLyricsOnly={() => setLyricsOnly(v => !v)}
+        />
+      )}
     </ThemeProvider>
   )
 }

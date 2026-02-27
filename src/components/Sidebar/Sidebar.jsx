@@ -5,7 +5,7 @@ import { SongListItem } from './SongListItem'
 import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 
-export function Sidebar({ isOpen, onAddToast }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const fileInputRef = useRef()
@@ -39,10 +39,23 @@ export function Sidebar({ isOpen, onAddToast }) {
     e.target.value = ''
   }
 
-  if (!isOpen) return null
-
   return (
-    <aside className="w-64 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
+    <>
+      {/* Backdrop: mobile only — tap outside to close */}
+      <div
+        className={`absolute inset-0 z-30 md:hidden transition-opacity duration-200
+          ${isOpen ? 'bg-black/40 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+
+      <aside className={`
+        w-64 shrink-0 flex flex-col
+        border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800
+        absolute inset-y-0 left-0 z-40
+        md:static md:z-auto
+        transition-transform duration-200 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'}
+      `}>
       {/* Search */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         <input
@@ -59,7 +72,7 @@ export function Sidebar({ isOpen, onAddToast }) {
       {/* Song list */}
       <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
         {filtered.map(entry => (
-          <SongListItem key={entry.id} entry={entry} />
+          <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
         ))}
         {filtered.length === 0 && (
           <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
@@ -80,7 +93,7 @@ export function Sidebar({ isOpen, onAddToast }) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".sbp"
+          accept=".sbp,*/*"
           multiple
           className="hidden"
           onChange={handleFileInput}
@@ -103,5 +116,6 @@ export function Sidebar({ isOpen, onAddToast }) {
         </div>
       </Modal>
     </aside>
+    </>
   )
 }

@@ -4,7 +4,7 @@ import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { EmptyState } from './EmptyState'
-import { SongSheet } from './SongSheet'
+import { SongList } from './SongList'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
@@ -118,7 +118,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
             `}
             onAnimationEnd={() => setSwipeDir(null)}
           >
-            <SongSheet
+            <SongList
               song={activeSong}
               onPerformanceMode={setPerformanceSections}
               lyricsOnly={lyricsOnly}

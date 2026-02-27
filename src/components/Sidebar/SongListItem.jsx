@@ -1,6 +1,6 @@
 import { useLibraryStore } from '../../store/libraryStore'
 
-export function SongListItem({ entry }) {
+export function SongListItem({ entry, onSelect }) {
   const selectSong = useLibraryStore(s => s.selectSong)
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
@@ -18,7 +18,7 @@ export function SongListItem({ entry }) {
       {/* Selection button spans the text area */}
       <button
         type="button"
-        onClick={() => selectSong(entry.id)}
+        onClick={() => { selectSong(entry.id); onSelect?.() }}
         className={`flex-1 min-w-0 text-left px-3 py-2 rounded-lg cursor-pointer
           ${isActive
             ? 'bg-indigo-600 text-white'
@@ -37,7 +37,8 @@ export function SongListItem({ entry }) {
         type="button"
         onClick={handleDelete}
         aria-label={`Delete ${entry.title}`}
-        className={`ml-1 mr-1 p-1 rounded opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity shrink-0
+        className={`ml-1 mr-1 p-1 rounded focus:opacity-100 transition-opacity shrink-0
+          [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
           ${isActive ? 'hover:bg-indigo-700 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500'}`}
       >
         🗑

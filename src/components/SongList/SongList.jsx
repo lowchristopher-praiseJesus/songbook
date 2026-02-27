@@ -6,7 +6,7 @@ import { ChordStrip } from '../Chords/ChordStrip'
 const MIN_FONT = 12
 const MAX_FONT = 28
 
-export function SongSheet({ song, onPerformanceMode, lyricsOnly = false, fontSize = 16, onFontSizeChange, chordsOpen, onChordsToggle }) {
+export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize = 16, onFontSizeChange, chordsOpen, onChordsToggle }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats)
 
   const fontSizeControl = {
