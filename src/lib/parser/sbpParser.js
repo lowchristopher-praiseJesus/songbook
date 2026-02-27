@@ -1,9 +1,10 @@
 import JSZip from 'jszip'
 import { parseContent } from './contentParser'
 
-const KEY_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
-// Keys that prefer flat notation (Eb, F, Ab, Bb)
-const FLAT_KEY_INDICES = new Set([3, 5, 8, 10])
+// SongBook Pro stores key as a chromatic index starting at A=0
+const KEY_NAMES = ['A', 'Bb', 'B', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab']
+// Keys that prefer flat notation: Bb(1), Eb(6), F(8), Ab(11)
+const FLAT_KEY_INDICES = new Set([1, 6, 8, 11])
 
 /**
  * Parse one or more songs from an ArrayBuffer containing a .sbp ZIP file.
@@ -29,7 +30,7 @@ export async function parseSbpFile(arrayBuffer) {
 }
 
 function songFromJson(s) {
-  const keyIndex = typeof s.key === 'number' ? (((s.key + (s.KeyShift ?? 0)) % 12) + 12) % 12 : 0
+  const keyIndex = typeof s.key === 'number' ? ((s.key % 12) + 12) % 12 : 0
   const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
 
   return {
