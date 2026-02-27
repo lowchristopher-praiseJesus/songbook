@@ -1,8 +1,7 @@
 // Sprite sheet dimensions and crop constants
 export const SPRITE_W   = 84
 export const SPRITE_H   = 116
-const ROW_TOP_0  = 83
-const ROW_HEIGHT = 116
+const ROW_TOP_0 = 83
 
 // cropX per column index (0–10), centered on each chord diagram box
 const CROP_XS = [60, 140, 220, 300, 380, 460, 539, 618, 698, 778, 858]
@@ -61,6 +60,6 @@ export function chordToSprite(chord) {
 
   return {
     x: CROP_XS[col],
-    y: ROW_TOP_0 + row * ROW_HEIGHT,
+    y: ROW_TOP_0 + row * SPRITE_H,
   }
 }

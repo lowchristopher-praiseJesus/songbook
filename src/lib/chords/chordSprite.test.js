@@ -38,6 +38,10 @@ describe('chordToSprite', () => {
     expect(chordToSprite('Dsus4')).toEqual(chordToSprite('Dsus'))
   })
 
+  it('normalises min to m', () => {
+    expect(chordToSprite('Amin')).toEqual(chordToSprite('Am'))
+  })
+
   it('returns null for unknown suffix', () => {
     expect(chordToSprite('Cadd9')).toBeNull()
   })
