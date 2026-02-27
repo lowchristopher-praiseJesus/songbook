@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
 
-export function SongHeader({ meta, transpose, onPerformanceMode }) {
+export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode }) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
@@ -14,31 +14,35 @@ export function SongHeader({ meta, transpose, onPerformanceMode }) {
       )}
 
       <div className="flex flex-wrap items-center gap-3 mt-3">
-        <TransposeControl
-          delta={transpose.delta}
-          onTransposeTo={transpose.transposeTo}
-          originalKeyIndex={meta.keyIndex}
-          isMinor={meta.isMinor}
-        />
+        {!lyricsOnly && (
+          <>
+            <TransposeControl
+              delta={transpose.delta}
+              onTransposeTo={transpose.transposeTo}
+              originalKeyIndex={meta.keyIndex}
+              isMinor={meta.isMinor}
+            />
 
-        <div className="flex items-center gap-1" aria-label="Capo controls">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Capo</span>
-          <button
-            type="button"
-            onClick={transpose.capoDown}
-            disabled={transpose.capo === 0}
-            className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Decrease capo"
-          >−</button>
-          <span className="w-4 text-center text-sm font-mono">{transpose.capo}</span>
-          <button
-            type="button"
-            onClick={transpose.capoUp}
-            disabled={transpose.capo === 7}
-            className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Increase capo"
-          >+</button>
-        </div>
+            <div className="flex items-center gap-1" aria-label="Capo controls">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Capo</span>
+              <button
+                type="button"
+                onClick={transpose.capoDown}
+                disabled={transpose.capo === 0}
+                className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Decrease capo"
+              >−</button>
+              <span className="w-4 text-center text-sm font-mono">{transpose.capo}</span>
+              <button
+                type="button"
+                onClick={transpose.capoUp}
+                disabled={transpose.capo === 7}
+                className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Increase capo"
+              >+</button>
+            </div>
+          </>
+        )}
 
         {hasInfo && (
           <button

@@ -12,6 +12,7 @@ export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize
       <SongHeader
         meta={song.meta}
         transpose={transpose}
+        lyricsOnly={lyricsOnly}
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
       />
       {!lyricsOnly && (
