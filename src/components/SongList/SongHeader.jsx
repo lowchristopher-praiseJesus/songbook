@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
 
-export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode }) {
+export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf }) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
@@ -52,6 +52,16 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode }) {
             aria-expanded={infoOpen}
           >
             Info {infoOpen ? '▲' : '▼'}
+          </button>
+        )}
+
+        {lyricsOnly && (
+          <button
+            type="button"
+            onClick={onExportPdf}
+            className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+          >
+            ↓ PDF
           </button>
         )}
 

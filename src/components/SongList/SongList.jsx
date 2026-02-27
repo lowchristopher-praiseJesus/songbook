@@ -2,6 +2,7 @@ import { useTranspose } from '../../hooks/useTranspose'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
+import { exportLyricsPdf } from '../../lib/exportPdf'
 
 
 export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize = 16, onFontSizeChange, chordsOpen, onChordsToggle }) {
@@ -14,6 +15,7 @@ export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize
         transpose={transpose}
         lyricsOnly={lyricsOnly}
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
+        onExportPdf={() => exportLyricsPdf(song.meta, song.sections)}
       />
       {!lyricsOnly && (
         <ChordStrip
