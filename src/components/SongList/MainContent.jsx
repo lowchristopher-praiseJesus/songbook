@@ -9,7 +9,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 
-export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange }) {
+export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -79,6 +79,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const { importFiles } = useFileImport({
     onError: msg => onAddToast(msg, 'error'),
     onDuplicateCheck,
+    onSuccess: onImportSuccess,
   })
 
   const { isDragging, onDragOver, onDragLeave, onDrop } = useDropZone(importFiles)

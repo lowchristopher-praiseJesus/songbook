@@ -51,7 +51,7 @@ export default function App() {
             onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
             onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
           />
-          <MainContent onAddToast={addToast} lyricsOnly={lyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} />
+          <MainContent onAddToast={addToast} lyricsOnly={lyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
         </div>
       </div>
       <ToastContainer toasts={toasts} />
