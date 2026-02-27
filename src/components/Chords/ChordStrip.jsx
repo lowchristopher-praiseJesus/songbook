@@ -55,6 +55,7 @@ export function ChordStrip({ sections, open, onToggle }) {
           <div className="flex gap-1 px-4 pb-3">
             {chords.map(name => (
               <div key={name} data-chord={name}>
+                <span className="sr-only">{name}</span>
                 <ChordDiagram sprite={chordToSprite(name)} />
               </div>
             ))}
