@@ -29,7 +29,7 @@ export async function parseSbpFile(arrayBuffer) {
 }
 
 function songFromJson(s) {
-  const keyIndex = typeof s.key === 'number' ? ((s.key % 12) + 12) % 12 : 0
+  const keyIndex = typeof s.key === 'number' ? (((s.key + (s.KeyShift ?? 0)) % 12) + 12) % 12 : 0
   const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
 
   return {
