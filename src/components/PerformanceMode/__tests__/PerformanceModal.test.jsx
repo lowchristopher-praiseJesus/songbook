@@ -46,46 +46,46 @@ describe('PerformanceModal', () => {
   })
 
   it('renders the song title', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     expect(screen.getByText('Amazing Grace')).toBeInTheDocument()
   })
 
   it('renders the song artist', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     expect(screen.getByText('John Newton')).toBeInTheDocument()
   })
 
   it('renders an Exit button', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     expect(screen.getByRole('button', { name: /exit/i })).toBeInTheDocument()
   })
 
   it('Exit button has type="button"', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     const btn = screen.getByRole('button', { name: /exit/i })
     expect(btn).toHaveAttribute('type', 'button')
   })
 
   it('calls onClose when Exit button is clicked', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: /exit/i }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('calls onClose when Escape key is pressed', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('renders song section labels', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     expect(screen.getByText('Verse 1')).toBeInTheDocument()
     expect(screen.getByText('Chorus')).toBeInTheDocument()
   })
 
   it('renders lyric content', () => {
-    render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     expect(screen.getByText('Amazing grace how sweet the sound')).toBeInTheDocument()
   })
 
@@ -94,7 +94,7 @@ describe('PerformanceModal', () => {
       ...mockSong,
       meta: { ...mockSong.meta, artist: null },
     }
-    render(<PerformanceModal song={songNoArtist} onClose={onClose} />)
+    render(<PerformanceModal song={songNoArtist} sections={mockSong.sections} onClose={onClose} />)
     // Title should still be there
     expect(screen.getByText('Amazing Grace')).toBeInTheDocument()
     // No artist text
@@ -105,7 +105,7 @@ describe('PerformanceModal', () => {
     const addSpy = vi.spyOn(window, 'addEventListener')
     const removeSpy = vi.spyOn(window, 'removeEventListener')
 
-    const { unmount } = render(<PerformanceModal song={mockSong} onClose={onClose} />)
+    const { unmount } = render(<PerformanceModal song={mockSong} sections={mockSong.sections} onClose={onClose} />)
     unmount()
 
     // The handler registered with addEventListener should also be unregistered
