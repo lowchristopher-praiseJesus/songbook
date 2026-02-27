@@ -51,15 +51,13 @@ export function ChordStrip({ sections, open, onToggle }) {
 
       {/* Diagram row */}
       {open && (
-        <div className="overflow-x-auto">
-          <div className="flex gap-1 px-4 pb-3">
-            {chords.map(name => (
-              <div key={name} data-chord={name}>
-                <span className="sr-only">{name}</span>
-                <ChordDiagram sprite={chordToSprite(name)} />
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-1 px-4 pb-3">
+          {chords.map(name => (
+            <div key={name} data-chord={name}>
+              <span className="sr-only">{name}</span>
+              <ChordDiagram sprite={chordToSprite(name)} />
+            </div>
+          ))}
         </div>
       )}
     </div>
