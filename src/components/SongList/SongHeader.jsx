@@ -39,6 +39,7 @@ export function SongHeader({ meta, transpose, lyricsOnly, fontSizeControl, onPer
               delta={transpose.delta}
               onTransposeTo={transpose.transposeTo}
               originalKeyIndex={meta.keyIndex}
+              isMinor={meta.isMinor}
             />
 
             <div className="flex items-center gap-1" aria-label="Capo controls">

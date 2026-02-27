@@ -2,9 +2,11 @@ import JSZip from 'jszip'
 import { parseContent } from './contentParser'
 
 // SongBook Pro stores key as a chromatic index starting at A=0.
+// Major keys:  0–11  (A=0 root index)
+// Minor keys: 12–23  (12 + A=0 index of the relative major root)
 // We convert to standard C=0 to match TransposeControl and chordUtils.
-// Conversion: c0 = (a0 + 9) % 12
-const KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+const KEY_NAMES       = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+const MINOR_KEY_NAMES = ['Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm']
 // Keys that prefer flat notation (C=0): Db(1), Eb(3), F(5), Ab(8), Bb(10)
 const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
 
@@ -32,9 +34,21 @@ export async function parseSbpFile(arrayBuffer) {
 }
 
 function songFromJson(s) {
-  const a0Index = typeof s.key === 'number' ? ((s.key % 12) + 12) % 12 : 3 // default C
-  const keyIndex = (a0Index + 9) % 12  // convert A=0 → C=0
-  const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
+  const rawKey = typeof s.key === 'number' ? s.key : 3  // default C (sbp A=0=3)
+  const isMinor = rawKey >= 12
+
+  let keyIndex, usesFlats
+  if (isMinor) {
+    // sbp stores 12 + A=0 index of the relative major root
+    // minor root in C=0: ((rawKey - 6) % 12 + 12) % 12
+    keyIndex = ((rawKey - 6) % 12 + 12) % 12
+    const relMajorC0 = (keyIndex + 3) % 12
+    usesFlats = FLAT_KEY_INDICES.has(relMajorC0)
+  } else {
+    const a0Index = ((rawKey % 12) + 12) % 12
+    keyIndex = (a0Index + 9) % 12  // A=0 → C=0
+    usesFlats = FLAT_KEY_INDICES.has(keyIndex)
+  }
 
   return {
     // id and importedAt assigned by the library store when persisting
@@ -42,8 +56,9 @@ function songFromJson(s) {
     meta: {
       title: s.name ?? 'Untitled',
       artist: s.author || undefined,
-      key: KEY_NAMES[keyIndex],
+      key: isMinor ? MINOR_KEY_NAMES[keyIndex] : KEY_NAMES[keyIndex],
       keyIndex,
+      isMinor,
       usesFlats,
       capo: s.Capo ?? 0,
       tempo: s.TempoInt > 0 ? s.TempoInt : undefined,
