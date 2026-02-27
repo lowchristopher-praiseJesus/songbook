@@ -2,6 +2,7 @@ const PREFIX = 'songsheet_song_'
 const INDEX_KEY = 'songsheet_index'
 const THEME_KEY = 'songsheet_theme'
 const LAST_SONG_KEY = 'songsheet_last_song_id'
+const TRANSPOSE_PREFIX = 'songsheet_transpose_'
 
 /**
  * Save a song to localStorage. Throws QuotaExceededError if storage is full.
@@ -56,6 +57,16 @@ export function setLastSongId(id) {
 
 export function clearLastSongId() {
   localStorage.removeItem(LAST_SONG_KEY)
+}
+
+export function getTransposeState(songId) {
+  const raw = localStorage.getItem(TRANSPOSE_PREFIX + songId)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+export function setTransposeState(songId, state) {
+  localStorage.setItem(TRANSPOSE_PREFIX + songId, JSON.stringify(state))
 }
 
 /**
