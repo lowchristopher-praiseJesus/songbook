@@ -146,27 +146,28 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
 
       {/* Floating font-size controls */}
       {activeSong && (
-        <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-20 pointer-events-auto">
+        <div className="fixed bottom-4 right-4 flex flex-col gap-1 z-20 pointer-events-auto"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <button
             type="button"
             onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
             disabled={fontSize >= 28}
-            className="w-7 h-7 flex items-center justify-center rounded-full
-              bg-gray-500/20 dark:bg-white/15 text-gray-700 dark:text-gray-300
+            className="w-8 h-8 flex items-center justify-center rounded-full
+              bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
-              opacity-40 hover:opacity-80 transition-opacity duration-150
-              disabled:opacity-5 disabled:cursor-not-allowed"
+              opacity-70 active:opacity-100 transition-opacity duration-150
+              disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Increase font size"
           >+</button>
           <button
             type="button"
             onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
             disabled={fontSize <= 12}
-            className="w-7 h-7 flex items-center justify-center rounded-full
-              bg-gray-500/20 dark:bg-white/15 text-gray-700 dark:text-gray-300
+            className="w-8 h-8 flex items-center justify-center rounded-full
+              bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
-              opacity-40 hover:opacity-80 transition-opacity duration-150
-              disabled:opacity-5 disabled:cursor-not-allowed"
+              opacity-70 active:opacity-100 transition-opacity duration-150
+              disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Decrease font size"
           >−</button>
         </div>

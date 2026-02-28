@@ -1,6 +1,7 @@
 function ChordedLine({ line, fontSize }) {
   const text = line.content
   const chords = line.chords ?? []
+  const chordFontSize = Math.max(11, (fontSize ?? 16) - 3)
 
   if (chords.length === 0) {
     return <span>{text}</span>
@@ -10,16 +11,25 @@ function ChordedLine({ line, fontSize }) {
   let lastPos = 0
 
   for (const { chord, position } of chords) {
-    // Text between last chord and this one
+    // Plain inline <span> for text between chords — stays inline so CSS never
+    // strips trailing spaces, preserving word boundaries exactly.
     if (position > lastPos) {
       parts.push(<span key={`t-${lastPos}`}>{text.slice(lastPos, position)}</span>)
     }
-    // Chord superscript + the character at this position
+    // inline-block with paddingTop reserves chord height *within the current
+    // visual row*, so the absolutely-positioned chord lands in that padding
+    // area rather than overlapping the row above. This is correct on every
+    // wrapped row because inline-block height contributes to the line-box
+    // height wherever the element happens to land after word-wrap.
     parts.push(
-      <span key={`c-${position}`} className="relative inline-block">
+      <span
+        key={`c-${position}`}
+        className="relative inline-block"
+        style={{ paddingTop: '1.3em' }}
+      >
         <span
-          className="absolute -top-5 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
-          style={{ fontSize: Math.max(11, (fontSize ?? 16) - 3) }}
+          className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
+          style={{ fontSize: chordFontSize, lineHeight: 1.2 }}
           aria-hidden="true"
         >
           {chord}
@@ -30,7 +40,6 @@ function ChordedLine({ line, fontSize }) {
     lastPos = position + 1
   }
 
-  // Remaining text after last chord
   if (lastPos < text.length) {
     parts.push(<span key="t-end">{text.slice(lastPos)}</span>)
   }
@@ -108,10 +117,7 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
             <div
               key={i}
               className="leading-relaxed"
-              style={{
-                paddingTop: chordsForLine.length > 0 ? '1.5rem' : '0',
-                fontSize,
-              }}
+              style={{ fontSize }}
             >
               <ChordedLine line={effectiveLine} fontSize={fontSize} />
             </div>
