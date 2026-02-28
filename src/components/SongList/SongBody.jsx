@@ -7,44 +7,72 @@ function ChordedLine({ line, fontSize }) {
     return <span>{text}</span>
   }
 
-  const parts = []
-  let lastPos = 0
+  // Build a position → chord lookup.
+  const chordAt = new Map(chords.map(({ chord, position }) => [position, chord]))
 
-  for (const { chord, position } of chords) {
-    // Plain inline <span> for text between chords — stays inline so CSS never
-    // strips trailing spaces, preserving word boundaries exactly.
-    if (position > lastPos) {
-      parts.push(<span key={`t-${lastPos}`}>{text.slice(lastPos, position)}</span>)
+  // Segment the text into word-groups (non-space runs) and spaces.
+  // Each word-group is wrapped in white-space:nowrap so that inline-block
+  // chord anchors inside a word never create a spurious line-break point
+  // between them and the adjacent characters of the same word.
+  const groups = []
+  let i = 0
+  while (i < text.length) {
+    if (text[i] === ' ') {
+      groups.push({ type: 'space', key: i })
+      i++
+    } else {
+      const groupStart = i
+      const parts = []
+      let bufStart = i
+      let buf = ''
+      while (i < text.length && text[i] !== ' ') {
+        if (chordAt.has(i)) {
+          if (buf) { parts.push({ type: 'text', text: buf, key: bufStart }); buf = '' }
+          parts.push({ type: 'chord', chord: chordAt.get(i), char: text[i], key: i })
+          bufStart = i + 1
+        } else {
+          buf += text[i]
+        }
+        i++
+      }
+      if (buf) parts.push({ type: 'text', text: buf, key: bufStart })
+      groups.push({ type: 'word', parts, key: groupStart })
     }
-    // inline-block with paddingTop reserves chord height *within the current
-    // visual row*, so the absolutely-positioned chord lands in that padding
-    // area rather than overlapping the row above. This is correct on every
-    // wrapped row because inline-block height contributes to the line-box
-    // height wherever the element happens to land after word-wrap.
-    parts.push(
-      <span
-        key={`c-${position}`}
-        className="relative inline-block"
-        style={{ paddingTop: '1.3em' }}
-      >
-        <span
-          className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
-          style={{ fontSize: chordFontSize, lineHeight: 1.2 }}
-          aria-hidden="true"
-        >
-          {chord}
-        </span>
-        {text[position] == null || text[position] === ' ' ? '\u00A0' : text[position]}
-      </span>
-    )
-    lastPos = position + 1
   }
 
-  if (lastPos < text.length) {
-    parts.push(<span key="t-end">{text.slice(lastPos)}</span>)
-  }
-
-  return <span>{parts}</span>
+  return (
+    <span>
+      {groups.map((group) => {
+        if (group.type === 'space') {
+          return <span key={`sp${group.key}`}> </span>
+        }
+        return (
+          <span key={`w${group.key}`} style={{ whiteSpace: 'nowrap' }}>
+            {group.parts.map((part) =>
+              part.type === 'text'
+                ? <span key={`t${part.key}`}>{part.text}</span>
+                : (
+                  <span
+                    key={`c${part.key}`}
+                    className="relative inline-block"
+                    style={{ paddingTop: '1.3em' }}
+                  >
+                    <span
+                      className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
+                      style={{ fontSize: chordFontSize, lineHeight: 1.2 }}
+                      aria-hidden="true"
+                    >
+                      {part.chord}
+                    </span>
+                    {part.char === ' ' ? '\u00A0' : part.char}
+                  </span>
+                )
+            )}
+          </span>
+        )
+      })}
+    </span>
+  )
 }
 
 function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
