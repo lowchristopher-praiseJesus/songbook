@@ -148,6 +148,33 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Delete all songs in a collection and remove the collection itself.
+   */
+  deleteCollection(collectionId) {
+    const collection = get().collections.find(c => c.id === collectionId)
+    if (!collection) return
+
+    const idsToDelete = new Set(collection.songIds)
+
+    idsToDelete.forEach(id => deleteFromStorage(id))
+
+    const newIndex = get().index.filter(e => !idsToDelete.has(e.id))
+    saveIndex(newIndex)
+
+    const newCollections = get().collections.filter(c => c.id !== collectionId)
+    saveCollections(newCollections)
+
+    const wasActive = idsToDelete.has(get().activeSongId)
+    if (wasActive) clearLastSongId()
+
+    set({
+      index: newIndex,
+      collections: newCollections,
+      ...(wasActive ? { activeSongId: null, activeSong: null } : {}),
+    })
+  },
+
+  /**
    * Replace an existing song (used for "overwrite" duplicate resolution).
    */
   replaceSong(id, newSong) {
