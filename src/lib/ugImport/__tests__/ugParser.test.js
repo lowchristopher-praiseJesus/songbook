@@ -234,19 +234,19 @@ describe('parseUGPage — store.page_data JSON extraction', () => {
     expect(song.meta.artist).toBe('Leonard Cohen')
   })
 
-  it('strips trailing X end-of-content marker from wiki_tab.content', () => {
+  it('strips trailing X and backtick noise lines from wiki_tab.content', () => {
     const data = {
       tab: { song_name: 'Test', artist_name: 'Artist', capo: 0 },
       tab_view: {
-        wiki_tab: { content: '[Verse 1]\n[ch]G[/ch]  [ch]D[/ch]\nHello world\nX' },
+        // Simulates UG's typical trailing: song content, then X, then `
+        wiki_tab: { content: '[Verse 1]\n[ch]G[/ch]  [ch]D[/ch]\nHello world\nX\n`' },
       },
     }
     const song = parseUGPage({ rawHtml: makeHtml(data) })
-    const lastSection = song.sections[song.sections.length - 1]
-    const lastLine = lastSection.lines[lastSection.lines.length - 1]
-    // The trailing X should not appear as a lyric line
-    expect(lastLine.text ?? '').not.toBe('X')
-    expect(song.rawText.trimEnd()).not.toMatch(/\nX$/)
+    expect(song.rawText).not.toMatch(/\bX\b\s*$/)
+    expect(song.rawText).not.toContain('`')
+    // Legitimate content is preserved (chords are merged inline so check for lyric fragment)
+    expect(song.rawText).toContain('world')
   })
 
   it('falls back to markdown when wiki_tab.content is absent', () => {

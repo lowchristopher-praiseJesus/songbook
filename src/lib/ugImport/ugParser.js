@@ -237,14 +237,20 @@ function parseFromStoreData(data, url) {
 
   // Strip UG's [ch]Chord[/ch] notation → bare chord tokens for chord-above-lyrics detection
   // Strip [tab]...[/tab] tablature blocks
-  // Strip trailing bare 'x'/'X' end-of-content marker UG appends to wiki_tab.content
-  const content = rawContent
+  const rawLines = rawContent
     .replace(/\[ch\]/g, '')
     .replace(/\[\/ch\]/g, '')
     .replace(/\[tab\][\s\S]*?\[\/tab\]/gi, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
-    .replace(/\n[xX]\s*$/, '')
+    .split('\n')
+
+  // Strip trailing noise lines UG appends after the song content:
+  // bare 'X'/'x' end-of-content markers and backtick artifacts
+  while (rawLines.length > 0 && /^[xX`\s]*$/.test(rawLines[rawLines.length - 1])) {
+    rawLines.pop()
+  }
+  const content = rawLines.join('\n')
 
   const contentString = processContentLines(content)
   return makeSong(contentString, {
