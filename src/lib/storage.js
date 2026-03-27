@@ -3,6 +3,7 @@ const INDEX_KEY = 'songsheet_index'
 const THEME_KEY = 'songsheet_theme'
 const LAST_SONG_KEY = 'songsheet_last_song_id'
 const TRANSPOSE_PREFIX = 'songsheet_transpose_'
+const COLLECTIONS_KEY = 'songsheet_collections'
 
 /**
  * Save a song to localStorage. Throws QuotaExceededError if storage is full.
@@ -73,6 +74,20 @@ export function setTransposeState(songId, state) {
  * Returns estimated storage usage for all songsheet_ keys.
  * Uses 2 bytes/char approximation (UTF-16 encoding).
  */
+export function loadCollections() {
+  const raw = localStorage.getItem(COLLECTIONS_KEY)
+  if (raw === null) return []
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+export function saveCollections(cols) {
+  localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(cols))
+}
+
 export function getStorageStats() {
   let usedBytes = 0
   for (let i = 0; i < localStorage.length; i++) {

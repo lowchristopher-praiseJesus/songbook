@@ -28,6 +28,8 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
       try {
         const buf = await file.arrayBuffer()
         const songs = await parseSbpFile(buf)
+        const collectionName = file.name.replace(/\.(sbp|sbpbackup)$/i, '')
+        const accepted = []
 
         for (const song of songs) {
           const duplicate = indexRef.current.find(e => e.title === song.meta.title)
@@ -43,8 +45,12 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
             // 'keep-both' falls through — addSongs will assign a new UUID
           }
 
+          accepted.push(song)
+        }
+
+        if (accepted.length > 0) {
           try {
-            addSongs([song])
+            addSongs(accepted, collectionName)
           } catch (e) {
             if (e.name === 'QuotaExceededError') {
               onError('Storage is full. Please delete some songs before importing more.')

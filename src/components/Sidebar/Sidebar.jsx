@@ -2,14 +2,31 @@ import { useState, useRef } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
+import { CollectionGroup } from './CollectionGroup'
 import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
+
+function buildGroups(index, collections) {
+  const byId = new Map(index.map(e => [e.id, e]))
+  const groups = collections.map(c => ({
+    id: c.id,
+    name: c.name,
+    entries: c.songIds.map(id => byId.get(id)).filter(Boolean),
+  }))
+  const assignedIds = new Set(collections.flatMap(c => c.songIds))
+  const uncategorized = index.filter(e => !assignedIds.has(e.id))
+  if (uncategorized.length > 0) {
+    groups.unshift({ id: '__uncategorized__', name: 'Uncategorized', entries: uncategorized })
+  }
+  return groups
+}
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
+  const collections = useLibraryStore(s => s.collections)
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -28,12 +45,15 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     onSuccess: onImportSuccess,
   })
 
-  const filtered = query.trim()
+  const trimmedQuery = query.trim()
+  const filtered = trimmedQuery
     ? index.filter(e =>
-        e.title.toLowerCase().includes(query.toLowerCase()) ||
-        (e.artist ?? '').toLowerCase().includes(query.toLowerCase())
+        e.title.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+        (e.artist ?? '').toLowerCase().includes(trimmedQuery.toLowerCase())
       )
-    : index
+    : []
+
+  const groups = !trimmedQuery ? buildGroups(index, collections) : []
 
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
@@ -72,13 +92,28 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
       {/* Song list */}
       <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
-        {filtered.map(entry => (
-          <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
-        ))}
-        {filtered.length === 0 && (
-          <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-            {query.trim() ? 'No matches' : 'No songs yet'}
-          </li>
+        {trimmedQuery ? (
+          <>
+            {filtered.map(entry => (
+              <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
+            ))}
+            {filtered.length === 0 && (
+              <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                No matches
+              </li>
+            )}
+          </>
+        ) : (
+          <>
+            {groups.map(group => (
+              <CollectionGroup key={group.id} group={group} onSelect={onSongSelect} />
+            ))}
+            {groups.length === 0 && (
+              <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                No songs yet
+              </li>
+            )}
+          </>
         )}
       </ul>
 
