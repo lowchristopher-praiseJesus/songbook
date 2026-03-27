@@ -237,6 +237,6 @@ No retries on failure.
 - `sbpParser.js` — untouched
 - `contentParser.js` — `isChord()` is exported (one-line addition); no other changes
 - `chordUtils.js` — untouched (transpose works on any `[Chord]` content)
-- `libraryStore.js` — untouched (`addSong` already accepts the canonical song shape)
+- `libraryStore.js` — untouched (`addSongs` already accepts the canonical song shape)
 - All display components — untouched
 - Routing — no new routes; feature lives entirely in a modal
