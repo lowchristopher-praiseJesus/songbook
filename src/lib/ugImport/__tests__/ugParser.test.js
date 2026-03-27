@@ -155,6 +155,25 @@ describe('parseUGMarkdown — noise stripping', () => {
     expect(song.rawText).not.toContain('Related tabs')
   })
 
+  it('starts collecting at first chord line when no section header precedes it', () => {
+    // Simulates a song where Verse 1 is unlabeled on UG
+    const md = [
+      '# Hallelujah Chords by Leonard Cohen',
+      'by [Leonard Cohen](https://url)',
+      '5,478,786 views',
+      'C  Am',
+      'I heard there was a secret chord',
+      '[Verse 2]',
+      'C  Am',
+      'Your faith was strong',
+    ].join('\n')
+    const song = parseUGMarkdown(md)
+    // Verse 1 content (unlabeled) should be included
+    expect(song.rawText).toContain('secret chord')
+    // Verse 2 should also be present
+    expect(song.sections.some(s => s.label === 'Verse 2')).toBe(true)
+  })
+
   it('stops at "Last update:" footer marker', () => {
     const md = '[Verse 1]\nG  D\nHello\nLast update: Jan 28, 2023\ncomment text'
     const song = parseUGMarkdown(md)

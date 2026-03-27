@@ -154,8 +154,13 @@ export function parseUGMarkdown(markdown = '', url = '') {
       continue
     }
 
-    // Skip pre-song noise (everything before the first section header)
-    if (!started) continue
+    // Skip pre-song noise — but also start collecting at the first chord line,
+    // since some UG songs have an unlabeled Verse 1 before any section header.
+    if (!started) {
+      if (!isChordLine(line)) continue
+      started = true
+      // fall through to collect this chord line
+    }
 
     if (inTab) continue
 
