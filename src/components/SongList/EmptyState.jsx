@@ -10,7 +10,7 @@ export function EmptyState({ onFileChange }) {
         Import File
         <input
           type="file"
-          accept=".sbp,.sbpbackup"
+          accept=".sbp,.sbpbackup,application/zip,public.data"
           multiple
           className="hidden"
           onChange={onFileChange}
