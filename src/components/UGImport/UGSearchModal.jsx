@@ -20,6 +20,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
 
   const addSongs = useLibraryStore(s => s.addSongs)
   const replaceSong = useLibraryStore(s => s.replaceSong)
+  const selectSong = useLibraryStore(s => s.selectSong)
 
   const importingRef = useRef(false)
 
@@ -82,7 +83,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
         const resolution = await onDuplicateCheck(song.meta.title)
         if (resolution === 'replace') {
           replaceSong(duplicate.id, song)
-          onSongSelect(duplicate.id)
+          selectSong(duplicate.id)
+          onSongSelect()
           onImportSuccess?.()
           onAddToast(`Imported: ${song.meta.title}`, 'success')
           resetAndClose()
@@ -108,7 +110,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       }
 
       const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
-      if (newEntry) onSongSelect(newEntry.id)
+      if (newEntry) selectSong(newEntry.id)
+      onSongSelect()
       onImportSuccess?.()
       onAddToast(`Imported: ${song.meta.title}`, 'success')
       resetAndClose()
