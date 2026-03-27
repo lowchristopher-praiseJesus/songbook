@@ -28,6 +28,18 @@ describe('searchUG', () => {
     expect(results[1].url).toContain('/chords/')
   })
 
+  it('accepts modern UG tab URL format (.../tab/{artist}/{song}-chords-{id})', async () => {
+    mockFetch(200, {
+      data: [
+        { url: 'https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-chords-65946', title: 'Hotel California Chords by Eagles', description: '' },
+        { url: 'https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-bass-12345', title: 'Hotel California Bass by Eagles', description: '' },
+      ]
+    })
+    const results = await searchUG('hotel california', 'test-key')
+    expect(results).toHaveLength(1)
+    expect(results[0].url).toContain('-chords-')
+  })
+
   it('sends correct query and auth header', async () => {
     mockFetch(200, { data: [] })
     await searchUG('amazing grace', 'my-api-key')

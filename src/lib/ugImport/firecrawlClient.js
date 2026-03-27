@@ -1,7 +1,9 @@
 const FIRECRAWL_BASE = 'https://api.firecrawl.dev/v1'
 
-// Accepts both /guitar-chords/ and /chords/ UG URL patterns
-const UG_CHORD_URL_RE = /ultimate-guitar\.com\/(guitar-chords|chords)\//
+// Accepts UG chord chart URLs:
+//   modern: tabs.ultimate-guitar.com/tab/{artist}/{song}-chords-{id}
+//   legacy: ultimate-guitar.com/guitar-chords/... or .../chords/...
+const UG_CHORD_URL_RE = /ultimate-guitar\.com\/(guitar-chords|chords\/|tab\/[^?#]+-chords)/i
 
 async function firecrawlPost(endpoint, body, apiKey) {
   let res
