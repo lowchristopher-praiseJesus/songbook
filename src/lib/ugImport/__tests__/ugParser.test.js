@@ -121,6 +121,48 @@ describe('parseUGMarkdown — [Tab] skip', () => {
   })
 })
 
+describe('parseUGMarkdown — noise stripping', () => {
+  it('skips pre-song header noise before first section header', () => {
+    const md = [
+      '# Hallelujah Chords by Leonard Cohen',
+      'by [Leonard Cohen](https://ultimate-guitar.com/artist/leonard_cohen)',
+      '5,478,786 views81,358 saves',
+      'Author: Unregistered',
+      'Capo: 5th fret',
+      '[Verse 1]',
+      'C  Am',
+      'I heard there was a secret chord',
+    ].join('\n')
+    const song = parseUGMarkdown(md)
+    expect(song.sections).toHaveLength(1)
+    expect(song.sections[0].label).toBe('Verse 1')
+    // Pre-song lines should not appear in rawText
+    expect(song.rawText).not.toContain('5,478,786')
+    expect(song.rawText).not.toContain('Author:')
+  })
+
+  it('stops at "PrintCreate correction" footer marker', () => {
+    const md = [
+      '[Verse 1]',
+      'G  D',
+      'Hello world',
+      'PrintCreate correctionReport bad tab',
+      'Last update: Jan 28, 2023',
+      'Related tabs...',
+    ].join('\n')
+    const song = parseUGMarkdown(md)
+    expect(song.rawText).not.toContain('Last update')
+    expect(song.rawText).not.toContain('Related tabs')
+  })
+
+  it('stops at "Last update:" footer marker', () => {
+    const md = '[Verse 1]\nG  D\nHello\nLast update: Jan 28, 2023\ncomment text'
+    const song = parseUGMarkdown(md)
+    expect(song.rawText).not.toContain('Last update')
+    expect(song.rawText).not.toContain('comment text')
+  })
+})
+
 describe('parseUGMarkdown — output shape', () => {
   it('returns rawText string', () => {
     const md = '[Verse 1]\nG  D\nHello world'

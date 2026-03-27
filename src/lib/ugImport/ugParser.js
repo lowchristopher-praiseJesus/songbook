@@ -20,6 +20,15 @@ function isTabHeader(line) {
   return /^\[Tab\]$/i.test(line.trim())
 }
 
+// Lines that signal the UG page footer — everything from here is noise
+function isFooterLine(trimmed) {
+  return /^PrintCreate/i.test(trimmed) ||
+    /^Last update:/i.test(trimmed) ||
+    /^Please,?\s+rate/i.test(trimmed) ||
+    /^Create correction/i.test(trimmed) ||
+    /^Report bad tab/i.test(trimmed)
+}
+
 // Expand tab characters to 4-space tab stops
 function expandTabs(str) {
   let result = ''
@@ -121,9 +130,13 @@ export function parseUGMarkdown(markdown = '', url = '') {
   const rawLines = markdown.split('\n')
   const contentLines = []  // lines to feed to chord conversion
   let inTab = false
+  let started = false  // don't collect until we see the first section header
 
   for (const line of rawLines) {
     const trimmed = line.trim()
+
+    // Footer markers — everything from here is UG page chrome, stop processing
+    if (isFooterLine(trimmed)) break
 
     // Detect [Tab] header → start skipping
     if (isTabHeader(trimmed)) {
@@ -131,14 +144,18 @@ export function parseUGMarkdown(markdown = '', url = '') {
       continue
     }
 
-    // Any section header ends Tab-skip mode
+    // Any section header ends Tab-skip mode and marks start of song content
     if (isSectionHeader(trimmed)) {
       inTab = false
+      started = true
       // [Tab] itself is handled above; other section headers become {c:}
       const header = toSectionHeader(trimmed)
       if (header) contentLines.push(header)
       continue
     }
+
+    // Skip pre-song noise (everything before the first section header)
+    if (!started) continue
 
     if (inTab) continue
 
