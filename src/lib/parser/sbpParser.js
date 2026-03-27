@@ -1,10 +1,9 @@
 import JSZip from 'jszip'
 import { parseContent } from './contentParser'
 
-// SongBook Pro stores key as a chromatic index starting at A=0.
-// Major keys:  0–11  (A=0 root index)
-// Minor keys: 12–23  (12 + A=0 index of the relative major root)
-// We convert to standard C=0 to match TransposeControl and chordUtils.
+// SongBook Pro stores key as a chromatic index using C=0.
+// Major keys:  0–11  (C=0, Db=1, D=2, Eb=3, E=4, F=5, F#=6, G=7, Ab=8, A=9, Bb=10, B=11)
+// Minor keys: 12–23  (12 + C=0 index of the minor root)
 const KEY_NAMES       = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const MINOR_KEY_NAMES = ['Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm']
 // Keys that prefer flat notation (C=0): Db(1), Eb(3), F(5), Ab(8), Bb(10)
@@ -34,19 +33,17 @@ export async function parseSbpFile(arrayBuffer) {
 }
 
 function songFromJson(s) {
-  const rawKey = typeof s.key === 'number' ? s.key : 3  // default C (sbp A=0=3)
+  const rawKey = typeof s.key === 'number' ? s.key : 0  // default C
   const isMinor = rawKey >= 12
 
   let keyIndex, usesFlats
   if (isMinor) {
-    // sbp stores 12 + A=0 index of the relative major root
-    // minor root in C=0: ((rawKey - 6) % 12 + 12) % 12
-    keyIndex = ((rawKey - 6) % 12 + 12) % 12
+    // Minor keys stored as 12 + C=0 index of the minor root
+    keyIndex = (rawKey - 12) % 12
     const relMajorC0 = (keyIndex + 3) % 12
     usesFlats = FLAT_KEY_INDICES.has(relMajorC0)
   } else {
-    const a0Index = ((rawKey % 12) + 12) % 12
-    keyIndex = (a0Index + 9) % 12  // A=0 → C=0
+    keyIndex = rawKey % 12  // SBP uses C=0 directly
     usesFlats = FLAT_KEY_INDICES.has(keyIndex)
   }
 

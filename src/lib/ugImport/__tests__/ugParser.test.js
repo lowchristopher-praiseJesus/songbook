@@ -257,6 +257,33 @@ describe('parseUGPage — store.page_data JSON extraction', () => {
   })
 })
 
+describe('parseUGPage — [ch] chord-above-lyrics with multiple chords', () => {
+  function makeHtml(pageData) {
+    return `<html><head><script>store.page_data = ${JSON.stringify(pageData)};</script></head></html>`
+  }
+
+  it('preserves all chords including Dm7 and G/B from [ch]-tagged chord line', () => {
+    const data = {
+      tab: { song_name: 'As The Deer', artist_name: 'Matt Redman', capo: 0 },
+      tab_view: {
+        wiki_tab: {
+          content: '[Verse 1]\n         [ch]F[/ch]  [ch]Dm7[/ch]  [ch]G7[/ch]   [ch]C[/ch]   [ch]G/B[/ch]\nAnd I long to worship Thee.',
+        },
+      },
+    }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    const line = song.sections[0].lines[0]
+    expect(line.type).toBe('lyric')
+    const chordNames = line.chords.map(c => c.chord)
+    expect(chordNames).toContain('F')
+    expect(chordNames).toContain('Dm7')
+    expect(chordNames).toContain('G7')
+    expect(chordNames).toContain('C')
+    expect(chordNames).toContain('G/B')
+    expect(chordNames).toHaveLength(5)
+  })
+})
+
 describe('parseUGMarkdown — output shape', () => {
   it('returns rawText string', () => {
     const md = '[Verse 1]\nG  D\nHello world'
