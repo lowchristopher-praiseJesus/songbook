@@ -176,7 +176,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       <input
         ref={fileInputRef}
         type="file"
-        accept=".sbp,*/*"
+        accept=".sbp,.sbpbackup"
         multiple
         className="hidden"
         onChange={handleFileInput}

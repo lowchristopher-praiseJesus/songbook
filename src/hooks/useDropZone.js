@@ -17,7 +17,7 @@ export function useDropZone(onFiles) {
   const onDrop = useCallback((e) => {
     e.preventDefault()
     setIsDragging(false)
-    const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.sbp'))
+    const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.sbp') || f.name.endsWith('.sbpbackup'))
     if (files.length > 0) onFiles(files)
   }, [onFiles])
 

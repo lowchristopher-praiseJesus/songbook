@@ -21,8 +21,8 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
 
   const importFiles = useCallback(async (files) => {
     for (const file of files) {
-      if (!file.name.endsWith('.sbp')) {
-        onError(`"${file.name}" is not a .sbp file`)
+      if (!file.name.endsWith('.sbp') && !file.name.endsWith('.sbpbackup')) {
+        onError(`"${file.name}" is not a .sbp or .sbpbackup file`)
         continue
       }
       try {
