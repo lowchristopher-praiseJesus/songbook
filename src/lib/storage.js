@@ -4,6 +4,7 @@ const THEME_KEY = 'songsheet_theme'
 const LAST_SONG_KEY = 'songsheet_last_song_id'
 const TRANSPOSE_PREFIX = 'songsheet_transpose_'
 const COLLECTIONS_KEY = 'songsheet_collections'
+const FIRECRAWL_KEY = 'songsheet_firecrawl_key'
 
 /**
  * Save a song to localStorage. Throws QuotaExceededError if storage is full.
@@ -100,5 +101,5 @@ export function getStorageStats() {
   return { usedBytes, limitBytes: 5 * 1024 * 1024 }
 }
 
-export const getFirecrawlKey = () => localStorage.getItem('songsheet_firecrawl_key') ?? ''
-export const setFirecrawlKey = (key) => localStorage.setItem('songsheet_firecrawl_key', key)
+export const getFirecrawlKey = () => localStorage.getItem(FIRECRAWL_KEY) ?? ''
+export const setFirecrawlKey = (key) => localStorage.setItem(FIRECRAWL_KEY, key)
