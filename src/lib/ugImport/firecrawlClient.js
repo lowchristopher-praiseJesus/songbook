@@ -37,12 +37,17 @@ export async function searchUG(query, apiKey) {
 }
 
 /**
- * Scrape a UG chord chart URL and return the markdown content string.
+ * Scrape a UG chord chart URL.
+ * Returns { rawHtml, markdown } — rawHtml is used to extract store.page_data;
+ * markdown is the fallback if JSON extraction fails.
  */
 export async function scrapeURL(url, apiKey) {
   const data = await firecrawlPost('/scrape', {
     url,
-    formats: ['markdown'],
+    formats: ['rawHtml', 'markdown'],
   }, apiKey)
-  return data.data?.markdown ?? data.markdown ?? ''
+  return {
+    rawHtml:  data.data?.rawHtml  ?? data.rawHtml  ?? '',
+    markdown: data.data?.markdown ?? data.markdown ?? '',
+  }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseUGMarkdown } from '../ugParser'
+import { parseUGMarkdown, parseUGPage } from '../ugParser'
 
 describe('parseUGMarkdown — metadata', () => {
   it('extracts title and artist from H1', () => {
@@ -179,6 +179,65 @@ describe('parseUGMarkdown — noise stripping', () => {
     const song = parseUGMarkdown(md)
     expect(song.rawText).not.toContain('Last update')
     expect(song.rawText).not.toContain('comment text')
+  })
+})
+
+describe('parseUGPage — store.page_data JSON extraction', () => {
+  function makeHtml(pageData) {
+    return `<html><head><script>store.page_data = ${JSON.stringify(pageData)};</script></head></html>`
+  }
+
+  const basePageData = {
+    tab: { song_name: 'Hallelujah', artist_name: 'Leonard Cohen', capo: 5 },
+    tab_view: {
+      wiki_tab: {
+        content: '[Verse 1]\n[ch]C[/ch]  [ch]Am[/ch]\nI heard there was a secret chord\n[Chorus]\n[ch]F[/ch]  [ch]Am[/ch]\nHallelujah',
+      },
+    },
+  }
+
+  it('extracts title, artist, and capo from JSON', () => {
+    const song = parseUGPage({ rawHtml: makeHtml(basePageData) })
+    expect(song.meta.title).toBe('Hallelujah')
+    expect(song.meta.artist).toBe('Leonard Cohen')
+    expect(song.meta.capo).toBe(5)
+  })
+
+  it('strips [ch]/[/ch] tags and converts chord-above-lyrics', () => {
+    const song = parseUGPage({ rawHtml: makeHtml(basePageData) })
+    // Should have section with chords
+    expect(song.sections[0].label).toBe('Verse 1')
+    const line = song.sections[0].lines[0]
+    expect(line.chords.map(c => c.chord)).toContain('C')
+    expect(line.chords.map(c => c.chord)).toContain('Am')
+  })
+
+  it('strips [tab]...[/tab] blocks', () => {
+    const data = {
+      ...basePageData,
+      tab_view: {
+        wiki_tab: {
+          content: '[Verse 1]\n[ch]G[/ch]  [ch]D[/ch]\nHello\n[tab]\ne|--0--|\n[/tab]\n[Chorus]\n[ch]C[/ch]  [ch]G[/ch]\nSing',
+        },
+      },
+    }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    expect(song.rawText).not.toContain('e|--0--|')
+    expect(song.sections.some(s => s.label === 'Chorus')).toBe(true)
+  })
+
+  it('falls back to markdown when store.page_data is absent', () => {
+    const markdown = '# Hallelujah Chords by Leonard Cohen\n[Verse 1]\nG  D\nHello'
+    const song = parseUGPage({ rawHtml: '<html>no data here</html>', markdown })
+    expect(song.meta.title).toBe('Hallelujah')
+    expect(song.meta.artist).toBe('Leonard Cohen')
+  })
+
+  it('falls back to markdown when wiki_tab.content is absent', () => {
+    const data = { tab: { song_name: 'Test', artist_name: 'Artist' }, tab_view: {} }
+    const markdown = '# Test Chords by Artist\n[Verse 1]\nG  D\nHello'
+    const song = parseUGPage({ rawHtml: makeHtml(data), markdown })
+    expect(song.sections.length).toBeGreaterThan(0)
   })
 })
 

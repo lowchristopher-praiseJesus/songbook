@@ -63,26 +63,29 @@ describe('searchUG', () => {
 })
 
 describe('scrapeURL', () => {
-  it('returns markdown from nested data.markdown shape', async () => {
-    mockFetch(200, { data: { markdown: '# Song Chords by Artist\n\n[Verse]\nG  D\nHello' } })
-    const md = await scrapeURL('https://ultimate-guitar.com/guitar-chords/foo', 'key')
-    expect(md).toContain('# Song Chords by Artist')
+  it('returns rawHtml and markdown from nested data shape', async () => {
+    mockFetch(200, { data: { rawHtml: '<html/>', markdown: '# Song Chords by Artist' } })
+    const result = await scrapeURL('https://ultimate-guitar.com/tab/eagles/foo-chords-123', 'key')
+    expect(result.rawHtml).toBe('<html/>')
+    expect(result.markdown).toContain('# Song Chords by Artist')
   })
 
-  it('returns markdown from top-level markdown shape', async () => {
-    mockFetch(200, { markdown: '# Song Chords by Artist\n\n[Verse]\nG  D\nHello' })
-    const md = await scrapeURL('https://ultimate-guitar.com/guitar-chords/foo', 'key')
-    expect(md).toContain('# Song Chords by Artist')
+  it('returns rawHtml and markdown from top-level shape', async () => {
+    mockFetch(200, { rawHtml: '<html/>', markdown: '# Song Chords by Artist' })
+    const result = await scrapeURL('https://ultimate-guitar.com/tab/eagles/foo-chords-123', 'key')
+    expect(result.rawHtml).toBe('<html/>')
+    expect(result.markdown).toContain('# Song Chords by Artist')
   })
 
-  it('sends correct URL and auth header', async () => {
-    mockFetch(200, { data: { markdown: '' } })
-    await scrapeURL('https://ultimate-guitar.com/guitar-chords/foo', 'my-key')
+  it('sends rawHtml and markdown formats in request', async () => {
+    mockFetch(200, { data: { rawHtml: '', markdown: '' } })
+    await scrapeURL('https://ultimate-guitar.com/tab/eagles/foo-chords-123', 'my-key')
     const [url, opts] = global.fetch.mock.calls[0]
     expect(url).toContain('/scrape')
     expect(opts.headers['Authorization']).toBe('Bearer my-key')
     const body = JSON.parse(opts.body)
-    expect(body.url).toBe('https://ultimate-guitar.com/guitar-chords/foo')
+    expect(body.url).toBe('https://ultimate-guitar.com/tab/eagles/foo-chords-123')
+    expect(body.formats).toContain('rawHtml')
     expect(body.formats).toContain('markdown')
   })
 

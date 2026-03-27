@@ -4,7 +4,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
 import { searchUG, scrapeURL } from '../../lib/ugImport/firecrawlClient'
-import { parseUGMarkdown } from '../../lib/ugImport/ugParser'
+import { parseUGPage } from '../../lib/ugImport/ugParser'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -66,8 +66,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setStatus('importing')
     setError(null)
     try {
-      const markdown = await scrapeURL(result.url, apiKey)
-      const song = parseUGMarkdown(markdown, result.url)
+      const scraped = await scrapeURL(result.url, apiKey)
+      const song = parseUGPage(scraped, result.url)
 
       if (!song.sections.length) {
         setStatus('results')
