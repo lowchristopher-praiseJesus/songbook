@@ -6,10 +6,12 @@ import { CollectionGroup } from './CollectionGroup'
 import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
+import { UGSearchModal } from '../UGImport/UGSearchModal'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
+  const [ugModalOpen, setUgModalOpen] = useState(false)
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
@@ -103,14 +105,21 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         )}
       </ul>
 
-      {/* Import button */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+      {/* Import / Search buttons */}
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
         <Button
           variant="primary"
           className="w-full"
           onClick={() => fileInputRef.current?.click()}
         >
           + Import
+        </Button>
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => setUgModalOpen(true)}
+        >
+          Search Ultimate Guitar
         </Button>
         <input
           ref={fileInputRef}
@@ -138,6 +147,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         </div>
       </Modal>
     </aside>
+      <UGSearchModal
+        isOpen={ugModalOpen}
+        onClose={() => setUgModalOpen(false)}
+        onSongSelect={onSongSelect}
+        onImportSuccess={onImportSuccess}
+        onAddToast={onAddToast}
+      />
     </>
   )
 }
