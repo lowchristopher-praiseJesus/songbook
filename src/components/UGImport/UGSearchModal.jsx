@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
@@ -21,16 +21,17 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   const addSongs = useLibraryStore(s => s.addSongs)
   const replaceSong = useLibraryStore(s => s.replaceSong)
 
-  // resetAndClose is defined as a plain function (not useCallback) — it is only
-  // called from event handlers and async flows, never from render, so no dep-array concern.
-  function resetAndClose() {
+  const importingRef = useRef(false)
+
+  const resetAndClose = useCallback(() => {
     setQuery('')
     setStatus('idle')
     setResults([])
     setError(null)
     setDuplicateState(null)
+    importingRef.current = false
     onClose()
-  }
+  }, [onClose])
 
   async function handleSearch(e) {
     e.preventDefault()
@@ -59,6 +60,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   }
 
   const handleSelect = useCallback(async (result) => {
+    if (importingRef.current) return
+    importingRef.current = true
     const apiKey = getFirecrawlKey()
     setStatus('importing')
     setError(null)
@@ -91,6 +94,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
         // 'keep-both' falls through to addSongs — new UUID is assigned
       }
 
+      const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
+
       try {
         addSongs([song])
       } catch (e) {
@@ -102,7 +107,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
         throw e
       }
 
-      const newEntry = useLibraryStore.getState().index.find(e => e.title === song.meta.title)
+      const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
       if (newEntry) onSongSelect(newEntry.id)
       onImportSuccess?.()
       onAddToast(`Imported: ${song.meta.title}`, 'success')
@@ -110,8 +115,9 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     } catch (err) {
       setStatus('results')
       setError(errorMessage(err))
+      importingRef.current = false
     }
-  }, [addSongs, replaceSong, onSongSelect, onImportSuccess, onAddToast, onClose])
+  }, [addSongs, replaceSong, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
 
   const apiKey = getFirecrawlKey()
   const noKey = !apiKey
