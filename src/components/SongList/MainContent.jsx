@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
@@ -14,7 +14,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
   const selectSong = useLibraryStore(s => s.selectSong)
-  const fileInputRef = useRef()
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
   const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
@@ -110,7 +109,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {!activeSong
-        ? <EmptyState onImport={() => fileInputRef.current?.click()} />
+        ? <EmptyState onFileChange={handleFileInput} />
         : <div
             key={activeSongId}
             className={`h-full overflow-x-hidden
@@ -172,15 +171,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
           >−</button>
         </div>
       )}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".sbp,.sbpbackup"
-        multiple
-        className="hidden"
-        onChange={handleFileInput}
-      />
 
       {/* Duplicate resolution modal */}
       <Modal

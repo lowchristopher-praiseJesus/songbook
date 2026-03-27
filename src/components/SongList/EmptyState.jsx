@@ -1,4 +1,4 @@
-export function EmptyState({ onImport }) {
+export function EmptyState({ onFileChange }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-8">
       <div className="text-6xl mb-4 select-none">🎵</div>
@@ -6,13 +6,16 @@ export function EmptyState({ onImport }) {
       <p className="text-gray-500 dark:text-gray-400 mb-6">
         Drag a .sbp file here to get started
       </p>
-      <button
-        type="button"
-        onClick={onImport}
-        className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      >
+      <label className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500">
         Import File
-      </button>
+        <input
+          type="file"
+          accept=".sbp,.sbpbackup"
+          multiple
+          className="hidden"
+          onChange={onFileChange}
+        />
+      </label>
     </div>
   )
 }
