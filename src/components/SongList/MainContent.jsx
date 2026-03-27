@@ -8,11 +8,13 @@ import { SongList } from './SongList'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
+import { buildGroups } from '../../lib/collectionUtils'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
+  const collections = useLibraryStore(s => s.collections)
   const selectSong = useLibraryStore(s => s.selectSong)
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
@@ -21,9 +23,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
 
-  const currentIdx = index.findIndex(e => e.id === activeSongId)
-  const prevEntry = currentIdx > 0 ? index[currentIdx - 1] : null
-  const nextEntry = currentIdx < index.length - 1 ? index[currentIdx + 1] : null
+  const navOrder = buildGroups(index, collections).flatMap(g => g.entries)
+  const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
+  const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
+  const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
