@@ -1,8 +1,8 @@
 // src/components/Settings/SettingsPanel.jsx
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLibraryStore } from '../../store/libraryStore'
-import { getStorageStats } from '../../lib/storage'
+import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/storage'
 import { Button } from '../UI/Button'
 
 export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
@@ -10,6 +10,13 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
   const index = useLibraryStore(s => s.index)
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const stats = getStorageStats()
+  const [firecrawlKey, setFirecrawlKeyState] = useState(getFirecrawlKey)
+  const [showKey, setShowKey] = useState(false)
+
+  function handleKeyChange(e) {
+    setFirecrawlKeyState(e.target.value)
+    setFirecrawlKey(e.target.value)
+  }
 
   useEffect(() => {
     function onKey(e) {
@@ -67,6 +74,36 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
             </span>
             <span className="text-sm text-gray-700 dark:text-gray-300">Lyrics only (hide chords)</span>
           </button>
+        </div>
+
+        {/* Firecrawl API Key */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2 dark:text-gray-300">
+            Firecrawl API Key
+            <span className="ml-1 text-xs font-normal text-gray-400">(for UG search)</span>
+          </label>
+          <div className="flex gap-2">
+            <input
+              type={showKey ? 'text' : 'password'}
+              value={firecrawlKey}
+              onChange={handleKeyChange}
+              placeholder="fc-…"
+              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onClick={() => setShowKey(v => !v)}
+              className="px-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label={showKey ? 'Hide key' : 'Show key'}
+            >
+              {showKey ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            Stored locally. Get a key at firecrawl.dev.
+          </p>
         </div>
 
         {/* Storage stats */}

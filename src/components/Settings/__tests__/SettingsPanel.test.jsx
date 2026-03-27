@@ -19,9 +19,11 @@ vi.mock('../../../store/libraryStore', () => ({
     selector({ index: mockIndex, deleteSong: mockDeleteSong }),
 }))
 
-// Mock getStorageStats
+// Mock storage module
 vi.mock('../../../lib/storage', () => ({
   getStorageStats: () => ({ usedBytes: 512 * 1024, limitBytes: 5 * 1024 * 1024 }),
+  getFirecrawlKey: () => '',
+  setFirecrawlKey: () => {},
 }))
 
 describe('SettingsPanel', () => {
