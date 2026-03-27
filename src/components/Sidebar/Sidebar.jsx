@@ -129,7 +129,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/octet-stream,application/zip,*/*"
+          accept=".sbp,.sbpbackup"
           multiple
           className="hidden"
           onChange={handleFileInput}
