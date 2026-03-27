@@ -102,4 +102,6 @@ export function getStorageStats() {
 }
 
 export const getFirecrawlKey = () => localStorage.getItem(FIRECRAWL_KEY) ?? ''
-export const setFirecrawlKey = (key) => localStorage.setItem(FIRECRAWL_KEY, key)
+export const setFirecrawlKey = (key) => key
+  ? localStorage.setItem(FIRECRAWL_KEY, key)
+  : localStorage.removeItem(FIRECRAWL_KEY)

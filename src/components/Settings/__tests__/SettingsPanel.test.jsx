@@ -20,10 +20,12 @@ vi.mock('../../../store/libraryStore', () => ({
 }))
 
 // Mock storage module
+const mockSetFirecrawlKey = vi.fn()
+let mockGetFirecrawlKey = () => ''
 vi.mock('../../../lib/storage', () => ({
   getStorageStats: () => ({ usedBytes: 512 * 1024, limitBytes: 5 * 1024 * 1024 }),
-  getFirecrawlKey: () => '',
-  setFirecrawlKey: () => {},
+  getFirecrawlKey: (...args) => mockGetFirecrawlKey(...args),
+  setFirecrawlKey: (...args) => mockSetFirecrawlKey(...args),
 }))
 
 describe('SettingsPanel', () => {
@@ -35,6 +37,8 @@ describe('SettingsPanel', () => {
     mockIndex = []
     mockDeleteSong.mockReset()
     mockSetTheme.mockReset()
+    mockSetFirecrawlKey.mockReset()
+    mockGetFirecrawlKey = () => ''
   })
 
   afterEach(() => {
@@ -163,5 +167,38 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel onClose={onClose} />)
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  // --- Firecrawl API key field ---
+
+  it('Firecrawl key input renders with type="password" and placeholder "fc-…"', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    const input = screen.getByPlaceholderText('fc-…')
+    expect(input).toBeInTheDocument()
+    expect(input).toHaveAttribute('type', 'password')
+  })
+
+  it('clicking Show toggles button label to Hide and input type to text', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    const showBtn = screen.getByLabelText('Show Firecrawl API key')
+    expect(showBtn).toHaveTextContent('Show')
+    fireEvent.click(showBtn)
+    expect(screen.getByLabelText('Hide Firecrawl API key')).toHaveTextContent('Hide')
+    const input = screen.getByPlaceholderText('fc-…')
+    expect(input).toHaveAttribute('type', 'text')
+  })
+
+  it('typing in the Firecrawl key input calls setFirecrawlKey with the new value', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    const input = screen.getByPlaceholderText('fc-…')
+    fireEvent.change(input, { target: { value: 'fc-testkey123' } })
+    expect(mockSetFirecrawlKey).toHaveBeenCalledWith('fc-testkey123')
+  })
+
+  it('Firecrawl key input pre-populates when getFirecrawlKey returns a value', () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    render(<SettingsPanel onClose={onClose} />)
+    const input = screen.getByPlaceholderText('fc-…')
+    expect(input).toHaveValue('fc-existingkey')
   })
 })

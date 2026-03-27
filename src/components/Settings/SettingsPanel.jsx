@@ -78,12 +78,13 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
 
         {/* Firecrawl API Key */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 dark:text-gray-300">
+          <label htmlFor="firecrawl-api-key" className="block text-sm font-medium mb-2 dark:text-gray-300">
             Firecrawl API Key
             <span className="ml-1 text-xs font-normal text-gray-400">(for UG search)</span>
           </label>
           <div className="flex gap-2">
             <input
+              id="firecrawl-api-key"
               type={showKey ? 'text' : 'password'}
               value={firecrawlKey}
               onChange={handleKeyChange}
@@ -96,7 +97,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
               type="button"
               onClick={() => setShowKey(v => !v)}
               className="px-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              aria-label={showKey ? 'Hide key' : 'Show key'}
+              aria-label={showKey ? 'Hide Firecrawl API key' : 'Show Firecrawl API key'}
             >
               {showKey ? 'Hide' : 'Show'}
             </button>
