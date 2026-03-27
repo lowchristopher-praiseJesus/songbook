@@ -99,3 +99,6 @@ export function getStorageStats() {
   }
   return { usedBytes, limitBytes: 5 * 1024 * 1024 }
 }
+
+export const getFirecrawlKey = () => localStorage.getItem('songsheet_firecrawl_key') ?? ''
+export const setFirecrawlKey = (key) => localStorage.setItem('songsheet_firecrawl_key', key)
