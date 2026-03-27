@@ -129,6 +129,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         <input
           ref={fileInputRef}
           type="file"
+          accept="*/*"
           multiple
           className="hidden"
           onChange={handleFileInput}
