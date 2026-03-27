@@ -60,19 +60,20 @@ describe('parseUGMarkdown — section headers', () => {
 
 describe('parseUGMarkdown — chord-above-lyrics conversion', () => {
   it('inserts chords inline at matching column positions', () => {
-    // chord line:  "Am              E7"   (E7 at col 16)
+    // chord line:  "Am              E7"   (Am at col 0, E7 at col 16)
     // lyric line:  "On a dark desert highway"
-    // merged:      "[Am]On a dark de[E7]sert highway"
-    // position is the lyric-char index at insertion time, not the column:
-    //   Am inserted before any lyric chars → position 0
-    //   E7 inserted after "On a dark de" (12 chars) → position 12
+    // E7 at col 16 = the space before "highway" → merged:
+    //   "[Am]On a dark desert[E7] highway"
+    // parseContent counts lyric chars before each chord marker:
+    //   Am → 0 lyric chars before it → position 0
+    //   E7 → "On a dark desert" = 16 lyric chars before it → position 16
     const md = '[Verse 1]\nAm              E7\nOn a dark desert highway'
     const song = parseUGMarkdown(md)
     const line = song.sections[0].lines[0]
     expect(line.chords[0].chord).toBe('Am')
     expect(line.chords[0].position).toBe(0)
     expect(line.chords[1].chord).toBe('E7')
-    expect(line.chords[1].position).toBe(12)
+    expect(line.chords[1].position).toBe(16)
   })
 
   it('pads lyric with spaces when shorter than chord line', () => {

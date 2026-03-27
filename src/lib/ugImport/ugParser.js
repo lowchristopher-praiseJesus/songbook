@@ -62,24 +62,18 @@ function mergeChordAboveLyric(chordLine, lyricLine) {
 
   if (chords.length === 0) return expandedLyric.trimEnd()
 
-  // Compute each chord's adjusted lyric insertion position.
-  // Each preceding [X] contributes (name.length + 2) chars to the merged
-  // line but occupies zero lyric chars, so subtract accumulated overhead.
-  let accumulatedOverhead = 0
-  const insertions = chords.map(({ name, pos }) => {
-    const lyricPos = Math.max(0, pos - accumulatedOverhead)
-    accumulatedOverhead += name.length + 2
-    return { name, lyricPos }
-  })
-
-  const maxLyricPos = insertions[insertions.length - 1].lyricPos
-  let lyric = expandedLyric.length > maxLyricPos
+  // Pad lyric so the rightmost chord position is reachable
+  const maxPos = chords[chords.length - 1].pos
+  let lyric = expandedLyric.length > maxPos
     ? expandedLyric
-    : expandedLyric.padEnd(maxLyricPos + 1)
+    : expandedLyric.padEnd(maxPos + 1)
 
-  for (let i = insertions.length - 1; i >= 0; i--) {
-    const { name, lyricPos } = insertions[i]
-    lyric = lyric.slice(0, lyricPos) + `[${name}]` + lyric.slice(lyricPos)
+  // Insert right-to-left using original column positions directly.
+  // Right-to-left means each splice only shifts characters to its right,
+  // so positions to the left are unaffected — no offset adjustment needed.
+  for (let i = chords.length - 1; i >= 0; i--) {
+    const { name, pos } = chords[i]
+    lyric = lyric.slice(0, pos) + `[${name}]` + lyric.slice(pos)
   }
 
   return lyric.trimEnd()
