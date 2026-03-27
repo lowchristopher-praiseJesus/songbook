@@ -126,7 +126,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     <Modal isOpen={isOpen} title="Search Ultimate Guitar" onClose={resetAndClose}>
       {noKey ? (
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Add your Firecrawl API key in <strong>Settings</strong> (⚙️ top right) to search Ultimate Guitar.
+          Add your Firecrawl API key in <strong>Settings</strong> (top right) to search Ultimate Guitar.
         </p>
       ) : (
         <>

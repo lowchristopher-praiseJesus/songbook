@@ -71,10 +71,6 @@ export function setTransposeState(songId, state) {
   localStorage.setItem(TRANSPOSE_PREFIX + songId, JSON.stringify(state))
 }
 
-/**
- * Returns estimated storage usage for all songsheet_ keys.
- * Uses 2 bytes/char approximation (UTF-16 encoding).
- */
 export function loadCollections() {
   const raw = localStorage.getItem(COLLECTIONS_KEY)
   if (raw === null) return []
