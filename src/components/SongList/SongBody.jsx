@@ -53,7 +53,7 @@ function ChordedLine({ line, fontSize }) {
   }
 
   return (
-    <span>
+    <span style={{ whiteSpace: 'pre-wrap' }}>
       {groups.map((group) => {
         if (group.type === 'space') {
           return <span key={`sp${group.key}`}> </span>
