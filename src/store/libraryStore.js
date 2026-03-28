@@ -148,6 +148,19 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Rename a collection.
+   */
+  renameCollection(collectionId, newName) {
+    const trimmed = newName.trim()
+    if (!trimmed) return
+    const collections = get().collections.map(c =>
+      c.id === collectionId ? { ...c, name: trimmed } : c
+    )
+    saveCollections(collections)
+    set({ collections })
+  },
+
+  /**
    * Delete all songs in a collection and remove the collection itself.
    */
   deleteCollection(collectionId) {
