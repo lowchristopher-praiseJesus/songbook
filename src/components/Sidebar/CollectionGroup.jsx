@@ -72,7 +72,7 @@ export function CollectionGroup({ group, onSelect }) {
             </span>
           </button>
         )}
-        {!isSpecial && !editing && (
+        {!editing && (
           <>
             <button
               type="button"
@@ -85,17 +85,19 @@ export function CollectionGroup({ group, onSelect }) {
             >
               ✏️
             </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              aria-label={`Delete collection ${group.name}`}
-              className="ml-1 mr-1 p-1 rounded shrink-0
-                [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
-                focus:opacity-100 transition-opacity
-                hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
-            >
-              🗑
-            </button>
+            {!isSpecial && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                aria-label={`Delete collection ${group.name}`}
+                className="ml-1 mr-1 p-1 rounded shrink-0
+                  [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
+                  focus:opacity-100 transition-opacity
+                  hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
+              >
+                🗑
+              </button>
+            )}
           </>
         )}
       </div>

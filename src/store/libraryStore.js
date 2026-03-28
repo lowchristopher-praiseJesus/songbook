@@ -149,10 +149,33 @@ export const useLibraryStore = create((set, get) => ({
 
   /**
    * Rename a collection.
+   * When collectionId is '__uncategorized__', promotes the virtual uncategorized
+   * group into a real persisted collection with the given name.
    */
   renameCollection(collectionId, newName) {
     const trimmed = newName.trim()
     if (!trimmed) return
+
+    if (collectionId === '__uncategorized__') {
+      const assignedIds = new Set(get().collections.flatMap(c => c.songIds))
+      const uncategorizedIds = get().index.filter(e => !assignedIds.has(e.id)).map(e => e.id)
+      if (uncategorizedIds.length === 0) return
+      const newCollection = {
+        id: uuidv4(),
+        name: trimmed,
+        createdAt: new Date().toISOString(),
+        songIds: uncategorizedIds,
+      }
+      const collections = [...get().collections, newCollection]
+      const index = get().index.map(e =>
+        uncategorizedIds.includes(e.id) ? { ...e, collectionId: newCollection.id } : e
+      )
+      saveCollections(collections)
+      saveIndex(index)
+      set({ collections, index })
+      return
+    }
+
     const collections = get().collections.map(c =>
       c.id === collectionId ? { ...c, name: trimmed } : c
     )
