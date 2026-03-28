@@ -57,11 +57,18 @@ export const useLibraryStore = create((set, get) => ({
    * Songs without an id get a new UUID assigned.
    * Maintains alphabetical sort order on the index.
    * If collectionName is provided, creates a new collection for these songs.
+   * If collectionSource is also provided, looks for an existing collection with
+   * that source tag first and adds to it rather than creating a duplicate.
    */
-  addSongs(songs, collectionName = null) {
+  addSongs(songs, collectionName = null, collectionSource = null) {
     const currentIndex = [...get().index]
     const currentCollections = [...get().collections]
     const newSongIds = []
+
+    // Find an existing collection by source tag (e.g. 'ug') to avoid duplicates
+    const sourceCollection = collectionSource
+      ? currentCollections.find(c => c.source === collectionSource)
+      : null
 
     for (const rawSong of songs) {
       const { _preservedCollectionId, ...songData } = rawSong
@@ -73,8 +80,11 @@ export const useLibraryStore = create((set, get) => ({
 
       const existingIdx = currentIndex.findIndex(e => e.id === song.id)
       const existingCollectionId = existingIdx >= 0 ? currentIndex[existingIdx].collectionId : (_preservedCollectionId ?? null)
-      const collectionId = collectionName ? null : existingCollectionId
-      // collectionId for named-collection songs is set after collection creation below
+      // When adding to a source-tagged collection we know the target ID immediately;
+      // when creating a new named collection the ID is patched below.
+      const collectionId = (collectionName || collectionSource)
+        ? (sourceCollection ? sourceCollection.id : null)
+        : existingCollectionId
 
       const entry = {
         id: song.id,
@@ -92,18 +102,27 @@ export const useLibraryStore = create((set, get) => ({
       }
     }
 
-    if (collectionName && newSongIds.length > 0) {
-      const newCollection = {
-        id: uuidv4(),
-        name: collectionName,
-        createdAt: new Date().toISOString(),
-        songIds: newSongIds,
-      }
-      currentCollections.push(newCollection)
-      // Assign collectionId to the new entries
-      for (const id of newSongIds) {
-        const idx = currentIndex.findIndex(e => e.id === id)
-        if (idx >= 0) currentIndex[idx] = { ...currentIndex[idx], collectionId: newCollection.id }
+    if ((collectionName || collectionSource) && newSongIds.length > 0) {
+      if (sourceCollection) {
+        // Add new songs to the existing source-tagged collection
+        const updated = { ...sourceCollection, songIds: [...sourceCollection.songIds, ...newSongIds] }
+        const cIdx = currentCollections.findIndex(c => c.id === sourceCollection.id)
+        currentCollections[cIdx] = updated
+      } else {
+        // Create a new collection (optionally tagged with source)
+        const newCollection = {
+          id: uuidv4(),
+          name: collectionName,
+          createdAt: new Date().toISOString(),
+          songIds: newSongIds,
+          ...(collectionSource ? { source: collectionSource } : {}),
+        }
+        currentCollections.push(newCollection)
+        // Patch collectionId into the new index entries
+        for (const id of newSongIds) {
+          const idx = currentIndex.findIndex(e => e.id === id)
+          if (idx >= 0) currentIndex[idx] = { ...currentIndex[idx], collectionId: newCollection.id }
+        }
       }
       saveCollections(currentCollections)
     }

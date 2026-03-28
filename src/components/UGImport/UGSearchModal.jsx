@@ -99,7 +99,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
 
       try {
-        addSongs([song])
+        addSongs([song], 'Ultimate Guitar', 'ug')
       } catch (e) {
         if (e.name === 'QuotaExceededError') {
           setStatus('results')
