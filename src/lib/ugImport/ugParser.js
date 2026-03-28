@@ -158,9 +158,14 @@ function processContentLines(text) {
       const nextIsContent = next !== undefined && !next.startsWith('{c:')
 
       if (nextIsContent && !isChordLine(next)) {
-        processedLines.push(mergeChordAboveLyric(line, next))
+        const merged = mergeChordAboveLyric(line, next)
+        console.log('[ugParser] chord:', JSON.stringify(line))
+        console.log('[ugParser] lyric:', JSON.stringify(next))
+        console.log('[ugParser] merged:', JSON.stringify(merged))
+        processedLines.push(merged)
         i += 2
       } else {
+        console.log('[ugParser] pure chord:', JSON.stringify(line), '| next:', JSON.stringify(next))
         processedLines.push(toPureChordLine(line))
         i++
       }
@@ -249,6 +254,7 @@ function parseFromStoreData(data, url) {
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
 
+  console.log('[ugParser] raw wiki_tab.content (first 800 chars):\n' + content.slice(0, 800))
   const contentString = processContentLines(content)
   return makeSong(contentString, {
     title, artist, key: 'C', keyIndex: 0, isMinor: false, usesFlats: false, capo,

@@ -18,7 +18,12 @@ function ChordedLine({ line, fontSize }) {
   let i = 0
   while (i < text.length) {
     if (text[i] === ' ') {
-      groups.push({ type: 'space', key: i })
+      if (chordAt.has(i)) {
+        // Chord aligned above a space — render as a single-space word with chord above
+        groups.push({ type: 'word', parts: [{ type: 'chord', chord: chordAt.get(i), char: ' ', key: i }], key: i })
+      } else {
+        groups.push({ type: 'space', key: i })
+      }
       i++
     } else {
       const groupStart = i
@@ -37,6 +42,13 @@ function ChordedLine({ line, fontSize }) {
       }
       if (buf) parts.push({ type: 'text', text: buf, key: bufStart })
       groups.push({ type: 'word', parts, key: groupStart })
+    }
+  }
+
+  // Chords positioned at or past end of text (e.g. chord aligned beyond last lyric char)
+  for (const { chord, position } of chords) {
+    if (position >= text.length) {
+      groups.push({ type: 'word', parts: [{ type: 'chord', chord, char: ' ', key: position }], key: position })
     }
   }
 
