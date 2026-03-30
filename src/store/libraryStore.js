@@ -269,7 +269,7 @@ export const useLibraryStore = create((set, get) => ({
 
     const newIndex = get().index.map(e =>
       e.id === id
-        ? { ...e, title: meta.title ?? e.title, artist: meta.artist ?? '' }
+        ? { ...e, title: meta.title ?? e.title, artist: meta.artist ?? e.artist }
         : e
     )
     saveIndex(newIndex)
