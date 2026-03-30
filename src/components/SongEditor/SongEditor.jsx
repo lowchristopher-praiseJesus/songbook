@@ -7,9 +7,11 @@ export function SongEditor({ songId }) {
   const updateSong = useLibraryStore(s => s.updateSong)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
 
-  const [meta, setMeta] = useState(() => ({ ...song.meta }))
-  const [rawText, setRawText] = useState(() => song.rawText ?? '')
+  const [meta, setMeta] = useState(() => song ? { ...song.meta } : {})
+  const [rawText, setRawText] = useState(() => song?.rawText ?? '')
   const [isDirty, setIsDirty] = useState(false)
+
+  if (!song) return null
 
   function handleMetaChange(field, value) {
     setMeta(m => ({ ...m, [field]: value }))
