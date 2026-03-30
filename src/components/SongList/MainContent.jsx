@@ -61,7 +61,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   // Desktop arrow-key navigation (skip when a modal is open or user is typing)
   useEffect(() => {
     function onKey(e) {
-      if (performanceSections) return
+      if (performanceSections || editingSongId) return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
       if (e.key === 'ArrowRight') { e.preventDefault(); goNext() }
@@ -69,7 +69,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goNext, goPrev, performanceSections])
+  }, [goNext, goPrev, performanceSections, editingSongId])
 
   function onDuplicateCheck(title) {
     return new Promise(resolve => setDuplicateState({ title, resolve }))
