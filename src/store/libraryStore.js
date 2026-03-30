@@ -141,7 +141,7 @@ export const useLibraryStore = create((set, get) => ({
     const song = loadSong(id)
     if (!song) return
     setLastSongId(id)
-    set({ activeSongId: id, activeSong: song })
+    set({ activeSongId: id, activeSong: song, editingSongId: null })
   },
 
   /**
