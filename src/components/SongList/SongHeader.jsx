@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
 
-export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf }) {
+export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit }) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
@@ -65,6 +65,13 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
           </button>
         )}
 
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+        >
+          Edit
+        </button>
         <button
           type="button"
           onClick={onPerformanceMode}

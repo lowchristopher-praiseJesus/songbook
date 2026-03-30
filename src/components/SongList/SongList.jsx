@@ -5,7 +5,7 @@ import { ChordStrip } from '../Chords/ChordStrip'
 import { exportLyricsPdf } from '../../lib/exportPdf'
 
 
-export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize = 16, onFontSizeChange, chordsOpen, onChordsToggle }) {
+export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize = 16, onFontSizeChange, chordsOpen, onChordsToggle, onEdit }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
 
   return (
@@ -16,6 +16,7 @@ export function SongList({ song, onPerformanceMode, lyricsOnly = false, fontSize
         lyricsOnly={lyricsOnly}
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
         onExportPdf={() => exportLyricsPdf(song.meta, song.sections)}
+        onEdit={onEdit}
       />
       {!lyricsOnly && (
         <ChordStrip

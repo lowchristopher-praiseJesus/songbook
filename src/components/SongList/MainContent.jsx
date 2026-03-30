@@ -8,6 +8,7 @@ import { SongList } from './SongList'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
+import { SongEditor } from '../SongEditor/SongEditor'
 import { buildGroups } from '../../lib/collectionUtils'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
@@ -16,6 +17,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
   const selectSong = useLibraryStore(s => s.selectSong)
+  const editingSongId = useLibraryStore(s => s.editingSongId)
+  const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
   const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
@@ -111,26 +114,29 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {!activeSong
-        ? <EmptyState onFileChange={handleFileInput} />
-        : <div
-            key={activeSongId}
-            className={`h-full overflow-x-hidden
-              ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
-              ${swipeDir === 'right' ? 'animate-slideFromLeft'  : ''}
-            `}
-            onAnimationEnd={() => setSwipeDir(null)}
-          >
-            <SongList
-              song={activeSong}
-              onPerformanceMode={setPerformanceSections}
-              lyricsOnly={lyricsOnly}
-              fontSize={fontSize}
-              onFontSizeChange={onFontSizeChange}
-              chordsOpen={chordsOpen}
-              onChordsToggle={() => setChordsOpen(o => !o)}
-            />
-          </div>
+      {editingSongId
+        ? <SongEditor songId={editingSongId} />
+        : !activeSong
+          ? <EmptyState onFileChange={handleFileInput} />
+          : <div
+              key={activeSongId}
+              className={`h-full overflow-x-hidden
+                ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
+                ${swipeDir === 'right' ? 'animate-slideFromLeft'  : ''}
+              `}
+              onAnimationEnd={() => setSwipeDir(null)}
+            >
+              <SongList
+                song={activeSong}
+                onPerformanceMode={setPerformanceSections}
+                lyricsOnly={lyricsOnly}
+                fontSize={fontSize}
+                onFontSizeChange={onFontSizeChange}
+                chordsOpen={chordsOpen}
+                onChordsToggle={() => setChordsOpen(o => !o)}
+                onEdit={() => setEditingSongId(activeSongId)}
+              />
+            </div>
       }
 
       {/* Swipe navigation hint */}
