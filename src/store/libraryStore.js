@@ -5,6 +5,7 @@ import {
   loadIndex, saveIndex, getLastSongId, setLastSongId, clearLastSongId,
   loadCollections, saveCollections,
 } from '../lib/storage'
+import { parseContent } from '../lib/parser/contentParser'
 
 export const useLibraryStore = create((set, get) => ({
   // State
@@ -12,6 +13,7 @@ export const useLibraryStore = create((set, get) => ({
   collections: [],     // [{id, name, createdAt, songIds}]
   activeSongId: null,
   activeSong: null,    // Full song object (loaded from localStorage)
+  editingSongId: null, // id of the song currently being edited, or null
 
   /**
    * Initialize from localStorage on app start.
@@ -226,6 +228,55 @@ export const useLibraryStore = create((set, get) => ({
       index: newIndex,
       collections: newCollections,
       ...(wasActive ? { activeSongId: null, activeSong: null } : {}),
+    })
+  },
+
+  /**
+   * Set or clear the song currently being edited.
+   */
+  setEditingSongId(id) {
+    set({ editingSongId: id })
+  },
+
+  /**
+   * Update an existing song's metadata and content.
+   * Re-parses sections from rawText and derives keyIndex/usesFlats from the key name.
+   * Updates localStorage, the in-memory index, and refreshes activeSong if needed.
+   */
+  updateSong(id, { meta, rawText }) {
+    const song = loadSong(id)
+    if (!song) return
+
+    const KEY_TO_INDEX = {
+      C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
+      E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
+      Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+    }
+    const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
+
+    const keyIndex = KEY_TO_INDEX[meta.key] ?? song.meta.keyIndex
+    const usesFlats = FLAT_KEY_NAMES.has(meta.key)
+    const sections = parseContent(rawText)
+
+    const updatedSong = {
+      ...song,
+      rawText,
+      meta: { ...song.meta, ...meta, keyIndex, usesFlats },
+      sections,
+    }
+
+    saveSong(updatedSong)
+
+    const newIndex = get().index.map(e =>
+      e.id === id
+        ? { ...e, title: meta.title ?? e.title, artist: meta.artist ?? '' }
+        : e
+    )
+    saveIndex(newIndex)
+
+    set({
+      index: newIndex,
+      ...(get().activeSongId === id ? { activeSong: updatedSong } : {}),
     })
   },
 
