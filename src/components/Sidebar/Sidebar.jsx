@@ -166,22 +166,21 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             >
               + Import
             </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => setUgModalOpen(true)}
-              >
-                Search UG
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={toggleExportMode}
-                aria-label="Export songs"
-              >
-                Export
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={toggleExportMode}
+              aria-label="Export songs"
+            >
+              Export
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setUgModalOpen(true)}
+            >
+              Search UG
+            </Button>
           </>
         )}
         <input
