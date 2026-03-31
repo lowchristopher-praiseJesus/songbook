@@ -14,6 +14,8 @@ export const useLibraryStore = create((set, get) => ({
   activeSongId: null,
   activeSong: null,    // Full song object (loaded from localStorage)
   editingSongId: null, // id of the song currently being edited, or null
+  isExportMode: false,
+  selectedSongIds: new Set(), // Set<id> of songs checked for export
 
   /**
    * Initialize from localStorage on app start.
@@ -277,6 +279,38 @@ export const useLibraryStore = create((set, get) => ({
     set({
       index: newIndex,
       ...(get().activeSongId === id ? { activeSong: updatedSong } : {}),
+    })
+  },
+
+  /** Enter or exit export mode. Clears selection when exiting. */
+  toggleExportMode() {
+    set(s => ({ isExportMode: !s.isExportMode, selectedSongIds: new Set() }))
+  },
+
+  /** Toggle a single song in/out of the export selection. */
+  toggleSongSelection(id) {
+    set(s => {
+      const next = new Set(s.selectedSongIds)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { selectedSongIds: next }
+    })
+  },
+
+  /**
+   * Toggle all/none for a group of song IDs.
+   * If every id is already selected, deselects them all; otherwise selects all.
+   */
+  toggleGroupSelection(songIds) {
+    set(s => {
+      const allSelected = songIds.length > 0 && songIds.every(id => s.selectedSongIds.has(id))
+      const next = new Set(s.selectedSongIds)
+      if (allSelected) {
+        songIds.forEach(id => next.delete(id))
+      } else {
+        songIds.forEach(id => next.add(id))
+      }
+      return { selectedSongIds: next }
     })
   },
 

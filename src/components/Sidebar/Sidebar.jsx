@@ -7,14 +7,21 @@ import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
+import { exportSongsAsSbp } from '../../lib/exportSbp'
+import { loadSong } from '../../lib/storage'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
+  const [filenameModalOpen, setFilenameModalOpen] = useState(false)
+  const [filenameInput, setFilenameInput] = useState('')
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
+  const isExportMode = useLibraryStore(s => s.isExportMode)
+  const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
+  const toggleExportMode = useLibraryStore(s => s.toggleExportMode)
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -46,6 +53,33 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
     e.target.value = ''
+  }
+
+  function openFilenameModal() {
+    const today = new Date().toISOString().slice(0, 10)
+    setFilenameInput(`Songbook Export ${today}`)
+    setFilenameModalOpen(true)
+  }
+
+  async function handleExportConfirm() {
+    const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
+    let name = filenameInput.trim() || 'Songbook Export'
+    if (!name.endsWith('.sbp')) name += '.sbp'
+
+    try {
+      const blob = await exportSongsAsSbp(songs)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = name
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      onAddToast('Export failed: ' + err.message, 'error')
+    }
+
+    setFilenameModalOpen(false)
+    toggleExportMode()
   }
 
   return (
@@ -105,22 +139,51 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         )}
       </ul>
 
-      {/* Import / Search buttons */}
+      {/* Footer: normal mode → Import + Export; export mode → selection bar */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        <Button
-          variant="primary"
-          className="w-full"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          + Import
-        </Button>
-        <Button
-          variant="secondary"
-          className="w-full"
-          onClick={() => setUgModalOpen(true)}
-        >
-          Search Ultimate Guitar
-        </Button>
+        {isExportMode ? (
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-sm text-gray-600 dark:text-gray-300">
+              {selectedSongIds.size} selected
+            </span>
+            <Button
+              variant="primary"
+              disabled={selectedSongIds.size === 0}
+              onClick={openFilenameModal}
+            >
+              Export
+            </Button>
+            <Button variant="ghost" onClick={toggleExportMode}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Button
+              variant="primary"
+              className="w-full"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              + Import
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setUgModalOpen(true)}
+              >
+                Search UG
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={toggleExportMode}
+                aria-label="Export songs"
+              >
+                Export
+              </Button>
+            </div>
+          </>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -147,6 +210,33 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         </div>
       </Modal>
     </aside>
+
+      {/* Filename modal */}
+      <Modal
+        isOpen={filenameModalOpen}
+        title="Export as .sbp"
+        onClose={() => setFilenameModalOpen(false)}
+      >
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+          {selectedSongIds.size} song{selectedSongIds.size !== 1 ? 's' : ''} will be exported.
+        </p>
+        <input
+          type="text"
+          value={filenameInput}
+          onChange={e => setFilenameInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleExportConfirm() }}
+          autoFocus
+          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+            focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+          placeholder="Filename"
+        />
+        <div className="flex gap-2 justify-end">
+          <Button variant="ghost" onClick={() => setFilenameModalOpen(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleExportConfirm}>Download</Button>
+        </div>
+      </Modal>
+
       <UGSearchModal
         isOpen={ugModalOpen}
         onClose={() => setUgModalOpen(false)}

@@ -7,8 +7,12 @@ export function CollectionGroup({ group, onSelect }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
   const inputRef = useRef(null)
+  const checkboxRef = useRef(null)
   const deleteCollection = useLibraryStore(s => s.deleteCollection)
   const renameCollection = useLibraryStore(s => s.renameCollection)
+  const isExportMode = useLibraryStore(s => s.isExportMode)
+  const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
+  const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
 
   useEffect(() => {
     if (editing) {
@@ -16,6 +20,18 @@ export function CollectionGroup({ group, onSelect }) {
       inputRef.current?.select()
     }
   }, [editing, group.name])
+
+  // Tri-state checkbox logic
+  const groupIds = group.entries.map(e => e.id)
+  const selectedCount = groupIds.filter(id => selectedSongIds.has(id)).length
+  const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
+  const someSelected = selectedCount > 0 && !allSelected
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
 
   function handleDelete(e) {
     e.stopPropagation()
@@ -46,6 +62,16 @@ export function CollectionGroup({ group, onSelect }) {
   return (
     <li>
       <div className="flex items-center group">
+        {isExportMode && (
+          <input
+            ref={checkboxRef}
+            type="checkbox"
+            checked={allSelected}
+            onChange={() => toggleGroupSelection(groupIds)}
+            onClick={e => e.stopPropagation()}
+            className="ml-2 mr-1 h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+          />
+        )}
         {editing ? (
           <input
             ref={inputRef}
@@ -72,7 +98,7 @@ export function CollectionGroup({ group, onSelect }) {
             </span>
           </button>
         )}
-        {!editing && (
+        {!editing && !isExportMode && (
           <>
             <button
               type="button"
