@@ -89,3 +89,42 @@ describe('POST /share/upload', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('GET /share/:code', () => {
+  it('streams blob for a valid non-expired share', async () => {
+    const body = new Uint8Array([10, 20, 30]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('dl-valid', body, {
+      customMetadata: { expiresAt: expiresAt.toISOString() },
+    });
+
+    const res = await SELF.fetch('http://example.com/share/dl-valid', {
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('application/zip');
+    const buf = new Uint8Array(await res.arrayBuffer());
+    expect(buf).toEqual(body);
+  });
+
+  it('returns 404 for unknown share code', async () => {
+    const res = await SELF.fetch('http://example.com/share/no-such-code', {
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ error: 'not_found' });
+  });
+
+  it('returns 410 for an expired share', async () => {
+    const past = new Date(Date.now() - 1000);
+    await env.R2_BUCKET.put('dl-expired', new Uint8Array([1]), {
+      customMetadata: { expiresAt: past.toISOString() },
+    });
+
+    const res = await SELF.fetch('http://example.com/share/dl-expired', {
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.status).toBe(410);
+    expect(await res.json()).toMatchObject({ error: 'expired' });
+  });
+});

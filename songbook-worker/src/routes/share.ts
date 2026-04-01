@@ -19,4 +19,18 @@ share.post('/upload', async (c) => {
   return c.json({ shareCode, shareUrl, expiresAt: expiresAt.toISOString() });
 });
 
+share.get('/:code', async (c) => {
+  const shareCode = c.req.param('code');
+  const result = await getShareIfValid(c.env.R2_BUCKET, shareCode);
+
+  if ('error' in result) {
+    const status = result.error === 'not_found' ? 404 : 410;
+    return c.json({ error: result.error }, status);
+  }
+
+  return new Response(result.object.body, {
+    headers: { 'Content-Type': 'application/zip' },
+  });
+});
+
 export default share;
