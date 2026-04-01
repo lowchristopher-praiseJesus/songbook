@@ -25,9 +25,13 @@ export function ShareModal({ isOpen, songs, onClose }) {
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard unavailable — user can manually copy the URL
+    }
   }
 
   function handleClose() {
