@@ -33,11 +33,11 @@ export default function App() {
       .then(songs => setShareSongs(songs))
       .catch(err => {
         if (err.code === 'expired') {
-          addToast({ message: 'This share link has expired.', type: 'error' })
+          addToast('This share link has expired.', 'error')
         } else if (err.code === 'not_found') {
-          addToast({ message: 'Share link not found.', type: 'error' })
+          addToast('Share link not found.', 'error')
         } else {
-          addToast({ message: 'Could not load shared songs.', type: 'error' })
+          addToast('Could not load shared songs.', 'error')
         }
         clearShareParam()
       })
@@ -52,7 +52,7 @@ export default function App() {
   function handleShareImport() {
     if (shareSongs) {
       addSongs(shareSongs, 'Shared Songs')
-      addToast({ message: `${shareSongs.length} song${shareSongs.length !== 1 ? 's' : ''} imported.`, type: 'success' })
+      addToast(`${shareSongs.length} song${shareSongs.length !== 1 ? 's' : ''} imported.`, 'success')
     }
     setShareSongs(null)
     clearShareParam()

@@ -1,16 +1,32 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import type { Env } from './types';
 import share from './routes/share';
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', async (c, next) => {
-  return cors({
-    origin: c.env.APP_ORIGIN,
-    allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'X-Expires-In-Days'],
-  })(c, next);
+  const requestOrigin = c.req.header('Origin') ?? '';
+  const appOrigin = c.env.APP_ORIGIN ?? '';
+  const allowed = appOrigin && requestOrigin === appOrigin;
+
+  if (c.req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+
+  await next();
+
+  if (allowed) {
+    c.res.headers.set('Access-Control-Allow-Origin', requestOrigin);
+    c.res.headers.set('Vary', 'Origin');
+  }
 });
 
 app.get('/health', (c) => c.json({ ok: true }));
