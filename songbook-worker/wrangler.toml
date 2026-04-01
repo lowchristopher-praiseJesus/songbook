@@ -1,0 +1,10 @@
+name = "songbook-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "songbook-shares"
+
+# APP_ORIGIN is set as a secret: wrangler secret put APP_ORIGIN
