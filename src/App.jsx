@@ -7,16 +7,61 @@ import { useLocalStorage } from './hooks/useLocalStorage'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { MainContent } from './components/SongList/MainContent'
 import { SettingsPanel } from './components/Settings/SettingsPanel'
+import { ImportConfirmModal } from './components/Share/ImportConfirmModal'
+import { fetchShare } from './lib/shareApi'
+import { parseSbpFile } from './lib/parser/sbpParser'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
+  const addSongs = useLibraryStore(state => state.addSongs)
   const { toasts, addToast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
+  const [shareSongs, setShareSongs] = useState(null)
 
   useEffect(() => { init() }, [init])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const shareCode = params.get('share')
+    if (!shareCode) return
+
+    fetchShare(shareCode)
+      .then(buf => parseSbpFile(buf))
+      .then(songs => setShareSongs(songs))
+      .catch(err => {
+        if (err.code === 'expired') {
+          addToast({ message: 'This share link has expired.', type: 'error' })
+        } else if (err.code === 'not_found') {
+          addToast({ message: 'Share link not found.', type: 'error' })
+        } else {
+          addToast({ message: 'Could not load shared songs.', type: 'error' })
+        }
+        clearShareParam()
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function clearShareParam() {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('share')
+    window.history.replaceState({}, '', url.toString())
+  }
+
+  function handleShareImport() {
+    if (shareSongs) {
+      addSongs(shareSongs, 'Shared Songs')
+      addToast({ message: `${shareSongs.length} song${shareSongs.length !== 1 ? 's' : ''} imported.`, type: 'success' })
+    }
+    setShareSongs(null)
+    clearShareParam()
+  }
+
+  function handleShareCancel() {
+    setShareSongs(null)
+    clearShareParam()
+  }
 
   return (
     <ThemeProvider>
@@ -62,6 +107,12 @@ export default function App() {
           onToggleLyricsOnly={() => setLyricsOnly(v => !v)}
         />
       )}
+      <ImportConfirmModal
+        isOpen={shareSongs !== null}
+        songs={shareSongs ?? []}
+        onImport={handleShareImport}
+        onCancel={handleShareCancel}
+      />
     </ThemeProvider>
   )
 }
