@@ -11,6 +11,7 @@ share.post('/upload', async (c) => {
 
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'no_body' }, 400);
+  if (body.byteLength > 10 * 1024 * 1024) return c.json({ error: 'too_large' }, 413);
 
   const shareCode = crypto.randomUUID();
   await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt);

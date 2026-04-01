@@ -1,4 +1,7 @@
 const WORKER_URL = import.meta.env.VITE_WORKER_URL;
+if (!WORKER_URL && import.meta.env.DEV) {
+  console.warn('VITE_WORKER_URL is not set. Create .env.local with VITE_WORKER_URL=https://...');
+}
 
 export async function uploadShare(blob, expiresInDays = 7) {
   const res = await fetch(`${WORKER_URL}/share/upload`, {
