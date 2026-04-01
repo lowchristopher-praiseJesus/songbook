@@ -9,6 +9,7 @@ import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { exportSongsAsSbp } from '../../lib/exportSbp'
 import { loadSong } from '../../lib/storage'
+import { ShareModal } from '../Share/ShareModal'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
@@ -16,6 +17,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [ugModalOpen, setUgModalOpen] = useState(false)
   const [filenameModalOpen, setFilenameModalOpen] = useState(false)
   const [filenameInput, setFilenameInput] = useState('')
+  const [choiceModalOpen, setChoiceModalOpen] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
@@ -61,6 +64,20 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     setFilenameModalOpen(true)
   }
 
+  function openChoiceModal() {
+    setChoiceModalOpen(true)
+  }
+
+  function handleChooseDownload() {
+    setChoiceModalOpen(false)
+    openFilenameModal()
+  }
+
+  function handleChooseShare() {
+    setChoiceModalOpen(false)
+    setShareModalOpen(true)
+  }
+
   async function handleExportConfirm() {
     const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
     let name = filenameInput.trim() || 'Songbook Export'
@@ -81,6 +98,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     setFilenameModalOpen(false)
     toggleExportMode()
   }
+
+  const selectedSongs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
 
   return (
     <>
@@ -149,7 +168,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             <Button
               variant="primary"
               disabled={selectedSongIds.size === 0}
-              onClick={openFilenameModal}
+              onClick={openChoiceModal}
             >
               Export
             </Button>
@@ -235,6 +254,27 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           <Button variant="primary" onClick={handleExportConfirm}>Download</Button>
         </div>
       </Modal>
+
+      <Modal
+        isOpen={choiceModalOpen}
+        title={`Export ${selectedSongIds.size} song${selectedSongIds.size !== 1 ? 's' : ''}`}
+        onClose={() => setChoiceModalOpen(false)}
+      >
+        <div className="flex flex-col gap-3">
+          <Button variant="secondary" className="w-full" onClick={handleChooseDownload}>
+            Download .sbp
+          </Button>
+          <Button variant="secondary" className="w-full" onClick={handleChooseShare}>
+            Share via link
+          </Button>
+        </div>
+      </Modal>
+
+      <ShareModal
+        isOpen={shareModalOpen}
+        songs={selectedSongs}
+        onClose={() => { setShareModalOpen(false); toggleExportMode() }}
+      />
 
       <UGSearchModal
         isOpen={ugModalOpen}
