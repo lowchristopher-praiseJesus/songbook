@@ -4,6 +4,7 @@ export function useAutoScroll(containerRef, targetDuration) {
   const [isScrolling, setIsScrolling] = useState(false)
   const rafRef = useRef(null)
   const pxPerFrameRef = useRef(0)
+  const accRef = useRef(0) // fractional pixel accumulator
 
   const stop = useCallback(() => {
     if (rafRef.current !== null) {
@@ -19,8 +20,14 @@ export function useAutoScroll(containerRef, targetDuration) {
   tickRef.current = function tick() {
     const el = containerRef.current
     if (!el || rafRef.current === null) return
-    el.scrollTop += pxPerFrameRef.current
-    // -1 accounts for sub-pixel rounding: scrollTop is a float in modern browsers
+    // Accumulate fractional pixels — scrollTop is pixel-rounded on read,
+    // so direct sub-pixel increments never advance. Flush only whole pixels.
+    accRef.current += pxPerFrameRef.current
+    const px = Math.floor(accRef.current)
+    if (px > 0) {
+      el.scrollTop += px
+      accRef.current -= px
+    }
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
       stop()
       return
@@ -35,6 +42,7 @@ export function useAutoScroll(containerRef, targetDuration) {
     const scrollable = el.scrollHeight - el.clientHeight
     if (scrollable <= 0) return
     pxPerFrameRef.current = scrollable / (targetDuration * 60)
+    accRef.current = 0
     setIsScrolling(true)
     rafRef.current = requestAnimationFrame(tickRef.current)
   }, [containerRef, targetDuration])
