@@ -13,6 +13,10 @@ import { buildGroups } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 
+function formatDuration(s) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
@@ -104,10 +108,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
     e.target.value = ''
-  }
-
-  function formatDuration(s) {
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
   return (
