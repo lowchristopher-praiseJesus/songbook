@@ -32,7 +32,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const containerRef = useRef(null)
-  const { targetDuration, setTargetDuration } = useScrollSettings()
+  const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
 
   const navOrder = buildGroups(index, collections).flatMap(g => g.entries)
