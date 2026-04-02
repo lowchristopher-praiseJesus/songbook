@@ -10,6 +10,7 @@ import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { exportSongsAsSbp } from '../../lib/exportSbp'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
+import { exportPresentationPdf } from '../../lib/exportPresentationPdf'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
@@ -76,6 +77,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   function handleChooseShare() {
     setChoiceModalOpen(false)
     setShareModalOpen(true)
+  }
+
+  function handleChoosePresentationPdf() {
+    setChoiceModalOpen(false)
+    const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
+    exportPresentationPdf(songs)
+    toggleExportMode()
   }
 
   async function handleExportConfirm() {
@@ -266,6 +274,9 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           </Button>
           <Button variant="secondary" className="w-full" onClick={handleChooseShare}>
             Share via link
+          </Button>
+          <Button variant="secondary" className="w-full" onClick={handleChoosePresentationPdf}>
+            Presentation PDF
           </Button>
         </div>
       </Modal>
