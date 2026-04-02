@@ -20,6 +20,7 @@ export function useAutoScroll(containerRef, targetDuration) {
     const el = containerRef.current
     if (!el || rafRef.current === null) return
     el.scrollTop += pxPerFrameRef.current
+    // -1 accounts for sub-pixel rounding: scrollTop is a float in modern browsers
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
       stop()
       return
@@ -28,6 +29,7 @@ export function useAutoScroll(containerRef, targetDuration) {
   }
 
   const start = useCallback(() => {
+    if (rafRef.current !== null) return
     const el = containerRef.current
     if (!el) return
     const scrollable = el.scrollHeight - el.clientHeight

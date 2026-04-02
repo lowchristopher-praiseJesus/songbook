@@ -59,6 +59,14 @@ describe('useAutoScroll', () => {
     expect(containerRef.current.scrollTop).toBeCloseTo(1)
   })
 
+  it('start() while already scrolling is a no-op', () => {
+    const containerRef = makeContainerRef()
+    const { result } = renderHook(() => useAutoScroll(containerRef, 90))
+    act(() => result.current.start())
+    act(() => result.current.start()) // second call should be ignored
+    expect(requestAnimationFrame).toHaveBeenCalledOnce() // only one rAF scheduled
+  })
+
   it('stops automatically when bottom is reached', () => {
     // scrollable = 600; start with scrollTop already at 600 (bottom)
     const containerRef = makeContainerRef(1000, 400, 600)
