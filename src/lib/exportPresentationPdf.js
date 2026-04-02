@@ -64,7 +64,35 @@ function measureSections(doc, sections, fontSize, maxW = MAX_W) {
  */
 function splitSections(doc, sections, fontSize) {
   const filtered = sections.filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
-  if (filtered.length <= 1) return { left: filtered, right: [] }
+  if (filtered.length === 0) return { left: [], right: [] }
+
+  // When there is only one section, split its lines into two halves
+  if (filtered.length === 1) {
+    const section = filtered[0]
+    const lines = section.lines ?? []
+    const lyricLines = lines.filter(l => l.type !== 'chord')
+    if (lyricLines.length <= 1) return { left: filtered, right: [] }
+
+    // Find the line index closest to the height midpoint
+    const totalH = measureSections(doc, filtered, fontSize, COL_W)
+    const half = totalH / 2
+    let accumulated = 0
+    let splitAt = Math.ceil(lines.length / 2)
+
+    for (let i = 0; i < lines.length - 1; i++) {
+      const pseudoSection = { ...section, lines: [lines[i]] }
+      accumulated += measureSections(doc, [pseudoSection], fontSize, COL_W)
+      if (accumulated >= half) {
+        splitAt = i + 1
+        break
+      }
+    }
+
+    return {
+      left: [{ ...section, lines: lines.slice(0, splitAt) }],
+      right: [{ ...section, label: null, lines: lines.slice(splitAt) }],
+    }
+  }
 
   const totalH = measureSections(doc, filtered, fontSize, COL_W)
   const half = totalH / 2

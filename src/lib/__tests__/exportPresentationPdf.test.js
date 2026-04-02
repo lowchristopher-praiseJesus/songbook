@@ -42,6 +42,23 @@ function makeLongSong(n) {
   }
 }
 
+/**
+ * Build a song with ONE section containing `n` lyric lines.
+ * Simulates songs using [Verse]/[Chorus] format (not {c:} format) which parse
+ * as a single section.
+ * At MAX_FONT=32, each lyric line ≈ 44.8pt (32*1.4).
+ * 10 lines ≈ 448pt > 405pt threshold → should trigger two-column split within the section.
+ */
+function makeSingleSectionSong(n) {
+  return {
+    meta: { title: 'Single Section Song', artist: null },
+    sections: [{
+      label: 'Verse',
+      lines: Array.from({ length: n }, (_, i) => ({ type: 'lyric', content: `Line ${i + 1}` })),
+    }],
+  }
+}
+
 describe('exportPresentationPdf', () => {
   it('does nothing when songs array is empty', () => {
     exportPresentationPdf([])
@@ -110,6 +127,24 @@ describe('exportPresentationPdf', () => {
   it('does not use two-column layout for a short song', () => {
     // 2 sections comfortably fit single-col (see makeLongSong comment)
     const song = makeLongSong(2)
+    exportPresentationPdf([song])
+    const xValues = mockDoc.text.mock.calls.map(c => c[1])
+    expect(xValues).not.toContain(260)
+    expect(xValues).not.toContain(700)
+  })
+
+  it('uses two columns for a single-section song with many lyric lines', () => {
+    // 10 lyric lines in one section ≈ 448pt > 405pt threshold
+    const song = makeSingleSectionSong(10)
+    exportPresentationPdf([song])
+    const xValues = mockDoc.text.mock.calls.map(c => c[1])
+    expect(xValues).toContain(260)
+    expect(xValues).toContain(700)
+  })
+
+  it('does not split a single-section song with few lyric lines', () => {
+    // 2 lyric lines in one section ≈ 90pt < 405pt threshold → single col
+    const song = makeSingleSectionSong(2)
     exportPresentationPdf([song])
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).not.toContain(260)
