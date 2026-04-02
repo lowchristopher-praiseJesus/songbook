@@ -82,7 +82,11 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   function handleChoosePresentationPdf() {
     setChoiceModalOpen(false)
     const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
-    exportPresentationPdf(songs)
+    try {
+      exportPresentationPdf(songs)
+    } catch (err) {
+      onAddToast('PDF export failed: ' + err.message, 'error')
+    }
     toggleExportMode()
   }
 
