@@ -25,6 +25,7 @@ function measureHeader(doc, song, fontSize) {
   const titleLineH = titleSize * 1.3
   const artistLineH = artistSize * 1.3
   let h = 0
+  doc.setFont('helvetica', 'bold')
   doc.setFontSize(titleSize)
   h += doc.splitTextToSize(song.meta.title ?? 'Untitled', MAX_W).length * titleLineH
   if (song.meta.artist) h += artistLineH + 4
@@ -41,6 +42,7 @@ function measureSections(doc, sections, fontSize, maxW = MAX_W) {
   const lineH = fontSize * 1.4
   const labelLineH = labelSize * 1.4
   let h = 0
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(fontSize)
   for (const section of sections) {
     if (!(section.lines ?? []).some(l => l.type === 'lyric')) continue
