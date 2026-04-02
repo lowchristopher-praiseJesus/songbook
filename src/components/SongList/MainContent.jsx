@@ -10,6 +10,8 @@ import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 import { SongEditor } from '../SongEditor/SongEditor'
 import { buildGroups } from '../../lib/collectionUtils'
+import { useScrollSettings } from '../../hooks/useScrollSettings'
+import { useAutoScroll } from '../../hooks/useAutoScroll'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -25,6 +27,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const [swipeDir, setSwipeDir] = useState(null)      // 'left' | 'right' | null
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
+  const containerRef = useRef(null)
+  const { targetDuration, setTargetDuration } = useScrollSettings()
+  const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
 
   const navOrder = buildGroups(index, collections).flatMap(g => g.entries)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
@@ -38,6 +43,11 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   }
 
   useEffect(() => () => clearTimeout(hintTimerRef.current), [])
+
+  useEffect(() => {
+    if (isScrolling) stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSongId])
 
   const goNext = useCallback(() => {
     if (!nextEntry) return
@@ -96,8 +106,13 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     e.target.value = ''
   }
 
+  function formatDuration(s) {
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  }
+
   return (
     <main
+      ref={containerRef}
       className={`flex-1 overflow-y-auto relative transition-colors
         ${isDragging ? 'ring-4 ring-indigo-400 ring-inset bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
       onDragOver={onDragOver}
@@ -152,7 +167,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {/* Floating font-size controls */}
+      {/* Floating font-size + auto-scroll controls */}
       {activeSong && (
         <div className="fixed bottom-4 right-4 flex flex-col gap-1 z-20 pointer-events-auto"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
@@ -178,6 +193,52 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
               disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Decrease font size"
           >−</button>
+
+          {isScrolling && (
+            <>
+              <div className="h-1" />
+              <button
+                type="button"
+                onClick={() => setTargetDuration(targetDuration + 5)}
+                disabled={targetDuration >= 600}
+                className="w-8 h-8 flex items-center justify-center rounded-full
+                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
+                  text-lg font-light leading-none select-none
+                  opacity-70 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Increase scroll duration"
+              >+</button>
+              <span className="w-8 h-6 flex items-center justify-center
+                text-xs text-gray-500 dark:text-gray-400 font-mono select-none tabular-nums">
+                {formatDuration(targetDuration)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setTargetDuration(targetDuration - 5)}
+                disabled={targetDuration <= 30}
+                className="w-8 h-8 flex items-center justify-center rounded-full
+                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
+                  text-lg font-light leading-none select-none
+                  opacity-70 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Decrease scroll duration"
+              >−</button>
+              <div className="h-1" />
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={isScrolling ? stop : start}
+            className={`w-8 h-8 flex items-center justify-center rounded-full
+              text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+              active:opacity-100 transition-opacity duration-150
+              ${isScrolling
+                ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-90'
+                : 'bg-gray-500/30 dark:bg-white/20 opacity-70'
+              }`}
+            aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
+          >{isScrolling ? '⏹' : '▶'}</button>
         </div>
       )}
 
