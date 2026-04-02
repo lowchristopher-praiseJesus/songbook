@@ -218,7 +218,7 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
  *   Every song renders at globalFont → font variation across pages = 0.
  *
  * @param {Array<{ meta: { title: string, artist: string|null }, sections: Section[] }>} songs
- * @param {Object} bgImage - Background image object (e.g., from Canvas.toDataURL())
+ * @param {HTMLImageElement} bgImage - Pre-loaded image element drawn full-bleed behind each page
  */
 export function exportPresentationPdf(songs, bgImage) {
   if (!songs.length) return
