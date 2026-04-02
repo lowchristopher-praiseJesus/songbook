@@ -79,7 +79,7 @@ function splitSections(doc, sections, fontSize) {
 
 /**
  * Find the largest font at which the song fits in single-column or two-column layout.
- * Returns { font: number, cols: 1 | 2 }.
+ * Returns { font: number }.
  */
 function findBestFont(doc, song) {
   for (let fs = MAX_FONT; fs >= MIN_FONT; fs--) {
