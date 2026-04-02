@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Get a Firecrawl API Key</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.7;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 24px 60px;
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .step {
+            margin: 48px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: #ff4500;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .step-body {
+            margin-left: 64px;
+        }
+
+        .step-body p {
+            font-size: 1.05rem;
+            color: #444;
+            margin-bottom: 16px;
+        }
+
+        .screenshot-wrapper {
+            margin: 24px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .screenshot-wrapper:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .screenshot-wrapper img {
+            width: 100%;
+            display: block;
+        }
+
+        .caption {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        .callout {
+            background: #fff4f0;
+            border-left: 4px solid #ff4500;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .callout strong {
+            color: #ff4500;
+        }
+
+        .options-list {
+            list-style: none;
+            margin: 12px 0;
+        }
+
+        .options-list li {
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1rem;
+        }
+
+        .options-list li .icon {
+            font-size: 1.3rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ddd, transparent);
+            margin: 48px 64px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 24px;
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        /* Lightbox */
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: zoom-out;
+            padding: 32px;
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-overlay img {
+            max-width: 95%;
+            max-height: 95vh;
+            border-radius: 8px;
+            box-shadow: 0 0 60px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.7rem; }
+            .step-body { margin-left: 0; margin-top: 12px; }
+            .step-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .divider { margin: 32px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>How to Get a Firecrawl API Key</h1>
+    <p>A quick, step-by-step guide to signing up and grabbing your API key in under two minutes.</p>
+</div>
+
+<div class="container">
+
+    <!-- Step 1 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <h2>Go to the Firecrawl Homepage</h2>
+        </div>
+        <div class="step-body">
+            <p>
+                Open your browser and navigate to <strong>firecrawl.dev</strong>. You'll see the main landing page with the tagline
+                <em>"Power AI agents with clean web data"</em>. Look for the orange <strong>Sign up</strong> button in the
+                top-right corner of the navigation bar and click it.
+            </p>
+            <div class="screenshot-wrapper" onclick="openLightbox(this)">
+                <img src="Firecrawl Homepage.png" alt="Firecrawl homepage showing the Sign up button in the top-right corner">
+                <div class="caption">The Firecrawl homepage &mdash; click the orange "Sign up" button in the top-right corner.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Step 2 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <h2>Create Your Account</h2>
+        </div>
+        <div class="step-body">
+            <p>
+                After clicking <strong>Sign up</strong>, you'll be taken to the account creation page.
+                Make sure the <strong>Sign Up</strong> tab is selected at the top. You have three options to create your account:
+            </p>
+            <ul class="options-list">
+                <li><span class="icon">📧</span> <span><strong>Email &amp; Password</strong> &mdash; Enter your email and choose a password, then click the orange <em>Create Account</em> button.</span></li>
+                <li><span class="icon">G</span> <span><strong>Continue with Google</strong> &mdash; Sign in instantly using your Google account. Fastest option if you're already logged into Google.</span></li>
+                <li><span class="icon">🐙</span> <span><strong>Continue with GitHub</strong> &mdash; Ideal for developers who prefer to link their GitHub identity.</span></li>
+            </ul>
+            <div class="callout">
+                <strong>Tip:</strong> Choose whichever method is most convenient. All three options give you the same access and free-tier credits.
+            </div>
+            <div class="screenshot-wrapper" onclick="openLightbox(this)">
+                <img src="Firecrawl Sign Up Page.png" alt="Firecrawl sign up page showing email/password fields, Google, and GitHub options">
+                <div class="caption">The Sign Up page &mdash; use email/password, Google, or GitHub to create your account.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Step 3 -->
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <h2>Copy Your API Key from the Dashboard</h2>
+        </div>
+        <div class="step-body">
+            <p>
+                Once you've signed up (or logged in), you'll land on the <strong>Firecrawl Dashboard</strong>.
+                Your API key is displayed right on the Overview page in the <strong>"API Key"</strong> section on the right side.
+            </p>
+            <p>
+                The key is partially masked for security (e.g. <code>fc-2•••••••28f9</code>). To copy it:
+            </p>
+            <ul class="options-list">
+                <li><span class="icon">👁️</span> <span>Click the <strong>eye icon</strong> to reveal the full key.</span></li>
+                <li><span class="icon">📋</span> <span>Click the <strong>copy icon</strong> (next to the eye) to copy the key to your clipboard.</span></li>
+            </ul>
+            <div class="callout">
+                <strong>Keep it safe:</strong> Treat your API key like a password. Don't commit it to public repositories or share it publicly. Use environment variables to store it in your projects.
+            </div>
+            <div class="screenshot-wrapper" onclick="openLightbox(this)">
+                <img src="Firecrawl Dashboard.png" alt="Firecrawl dashboard with the API Key section circled in red on the right side">
+                <div class="caption">The Dashboard &mdash; your API key is in the circled section on the right. Click the copy icon to grab it.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="step">
+        <div class="step-header">
+            <div class="step-number">✓</div>
+            <h2>You're All Set!</h2>
+        </div>
+        <div class="step-body">
+            <p>
+                Paste your API key into your project's configuration or environment variables and start using the Firecrawl API
+                to search, scrape, and crawl the web. Check out the
+                <strong>Firecrawl Docs</strong> for integration guides and code examples.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Enlarged screenshot">
+</div>
+
+<footer>
+    Firecrawl API Key Guide
+</footer>
+
+<script>
+    // Scroll-reveal animation
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.step').forEach(el => observer.observe(el));
+
+    // Lightbox
+    function openLightbox(wrapper) {
+        const src = wrapper.querySelector('img').src;
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox').classList.add('active');
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+</script>
+
+</body>
+</html>

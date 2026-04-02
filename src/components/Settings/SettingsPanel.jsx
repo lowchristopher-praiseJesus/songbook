@@ -103,7 +103,15 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-400">
-            Stored locally. Get a key at firecrawl.dev.
+            Stored locally.{' '}
+            <a
+              href="/Documentation-songbook/firecrawl-api-key-guide.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              How to get a Firecrawl API key
+            </a>
           </p>
         </div>
 
