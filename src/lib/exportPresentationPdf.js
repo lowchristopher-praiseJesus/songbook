@@ -143,7 +143,7 @@ function renderHeader(doc, song, fontSize) {
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(titleSize)
-  doc.setTextColor(0, 0, 0)
+  doc.setTextColor(35, 18, 6)
   const titleLines = doc.splitTextToSize(song.meta.title ?? 'Untitled', MAX_W)
   doc.text(titleLines, PAGE_W / 2, y, { align: 'center' })
   y += titleLines.length * titleLineH
@@ -151,9 +151,9 @@ function renderHeader(doc, song, fontSize) {
   if (song.meta.artist) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(artistSize)
-    doc.setTextColor(100, 100, 100)
+    doc.setTextColor(90, 62, 42)
     doc.text(song.meta.artist, PAGE_W / 2, y, { align: 'center' })
-    doc.setTextColor(0, 0, 0)
+    doc.setTextColor(35, 18, 6)
     y += artistLineH + 4
   }
 
@@ -179,9 +179,9 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
       y += 6
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(labelSize)
-      doc.setTextColor(80, 80, 180)
+      doc.setTextColor(115, 22, 22)
       doc.text(section.label.toUpperCase(), cx, y, { align: 'center' })
-      doc.setTextColor(0, 0, 0)
+      doc.setTextColor(35, 18, 6)
       y += labelLineH + 4
     }
 
@@ -218,8 +218,9 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
  *   Every song renders at globalFont → font variation across pages = 0.
  *
  * @param {Array<{ meta: { title: string, artist: string|null }, sections: Section[] }>} songs
+ * @param {Object} bgImage - Background image object (e.g., from Canvas.toDataURL())
  */
-export function exportPresentationPdf(songs) {
+export function exportPresentationPdf(songs, bgImage) {
   if (!songs.length) return
 
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
@@ -233,6 +234,8 @@ export function exportPresentationPdf(songs) {
   // Pass 2: render each song at globalFont
   songs.forEach((song, i) => {
     if (i > 0) doc.addPage()
+
+    doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
 
     const sections = song.sections ?? []
     const startY = renderHeader(doc, song, globalFont)

@@ -9,10 +9,13 @@ const mockDoc = {
   text: vi.fn(),
   splitTextToSize: vi.fn((text) => (text ? [text] : [''])),
   addPage: vi.fn(),
+  addImage: vi.fn(),
   save: vi.fn(),
 }
 
 vi.mock('jspdf', () => ({ default: vi.fn(() => mockDoc) }))
+
+const mockBg = { src: '' }
 
 beforeEach(() => {
   Object.values(mockDoc).forEach(fn => typeof fn === 'function' && fn.mockClear?.())
@@ -61,18 +64,18 @@ function makeSingleSectionSong(n) {
 
 describe('exportPresentationPdf', () => {
   it('does nothing when songs array is empty', () => {
-    exportPresentationPdf([])
+    exportPresentationPdf([], mockBg)
     expect(mockDoc.save).not.toHaveBeenCalled()
   })
 
   it('saves a PDF with a date-based filename', () => {
-    exportPresentationPdf([makeSong('Amazing Grace', 'John Newton')])
+    exportPresentationPdf([makeSong('Amazing Grace', 'John Newton')], mockBg)
     expect(mockDoc.save).toHaveBeenCalledOnce()
     expect(mockDoc.save.mock.calls[0][0]).toMatch(/Presentation.*\.pdf$/)
   })
 
   it('does not call addPage for a single song', () => {
-    exportPresentationPdf([makeSong('Song A', 'Artist')])
+    exportPresentationPdf([makeSong('Song A', 'Artist')], mockBg)
     expect(mockDoc.addPage).not.toHaveBeenCalled()
   })
 
@@ -81,12 +84,12 @@ describe('exportPresentationPdf', () => {
       makeSong('Song A', 'Artist'),
       makeSong('Song B', 'Artist'),
       makeSong('Song C', 'Artist'),
-    ])
+    ], mockBg)
     expect(mockDoc.addPage).toHaveBeenCalledTimes(2)
   })
 
   it('renders title text for each song', () => {
-    exportPresentationPdf([makeSong('My Song', 'My Artist')])
+    exportPresentationPdf([makeSong('My Song', 'My Artist')], mockBg)
     const textArgs = mockDoc.text.mock.calls.map(c => c[0])
     expect(textArgs.some(t => (Array.isArray(t) ? t.includes('My Song') : t === 'My Song'))).toBe(true)
   })
@@ -99,17 +102,17 @@ describe('exportPresentationPdf', () => {
         { type: 'chord', content: '', chords: [{ chord: 'G', position: 0 }] },
       ],
     }])
-    expect(() => exportPresentationPdf([song])).not.toThrow()
+    expect(() => exportPresentationPdf([song], mockBg)).not.toThrow()
     expect(mockDoc.save).toHaveBeenCalledOnce()
   })
 
   it('handles songs with no artist gracefully', () => {
-    expect(() => exportPresentationPdf([makeSong('No Artist', null)])).not.toThrow()
+    expect(() => exportPresentationPdf([makeSong('No Artist', null)], mockBg)).not.toThrow()
     expect(mockDoc.save).toHaveBeenCalledOnce()
   })
 
   it('renders all text with centre alignment', () => {
-    exportPresentationPdf([makeSong('My Song', 'My Artist')])
+    exportPresentationPdf([makeSong('My Song', 'My Artist')], mockBg)
     const opts = mockDoc.text.mock.calls.map(c => c[3])
     expect(opts.every(o => o?.align === 'center')).toBe(true)
   })
@@ -117,7 +120,7 @@ describe('exportPresentationPdf', () => {
   it('uses two columns when content overflows single-column', () => {
     // 4 sections overflow single-col at MAX_FONT (see makeLongSong comment)
     const song = makeLongSong(4)
-    exportPresentationPdf([song])
+    exportPresentationPdf([song], mockBg)
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     // Column centres 260 and 700 must both appear (section content calls)
     expect(xValues).toContain(260)
@@ -127,7 +130,7 @@ describe('exportPresentationPdf', () => {
   it('does not use two-column layout for a short song', () => {
     // 2 sections comfortably fit single-col (see makeLongSong comment)
     const song = makeLongSong(2)
-    exportPresentationPdf([song])
+    exportPresentationPdf([song], mockBg)
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).not.toContain(260)
     expect(xValues).not.toContain(700)
@@ -136,7 +139,7 @@ describe('exportPresentationPdf', () => {
   it('uses two columns for a single-section song with many lyric lines', () => {
     // 10 lyric lines in one section ≈ 448pt > 405pt threshold
     const song = makeSingleSectionSong(10)
-    exportPresentationPdf([song])
+    exportPresentationPdf([song], mockBg)
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).toContain(260)
     expect(xValues).toContain(700)
@@ -145,9 +148,18 @@ describe('exportPresentationPdf', () => {
   it('does not split a single-section song with few lyric lines', () => {
     // 2 lyric lines in one section ≈ 90pt < 405pt threshold → single col
     const song = makeSingleSectionSong(2)
-    exportPresentationPdf([song])
+    exportPresentationPdf([song], mockBg)
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).not.toContain(260)
     expect(xValues).not.toContain(700)
+  })
+
+  it('draws the background image on every page', () => {
+    exportPresentationPdf([
+      makeSong('Song A', 'Artist'),
+      makeSong('Song B', 'Artist'),
+    ], mockBg)
+    expect(mockDoc.addImage).toHaveBeenCalledTimes(2)
+    expect(mockDoc.addImage).toHaveBeenCalledWith(mockBg, 'PNG', 0, 0, 960, 540)
   })
 })
