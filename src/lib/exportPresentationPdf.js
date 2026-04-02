@@ -41,13 +41,13 @@ function measureSections(doc, sections, fontSize, maxW = MAX_W) {
   const lineH = fontSize * 1.4
   const labelLineH = labelSize * 1.4
   let h = 0
+  doc.setFontSize(fontSize)
   for (const section of sections) {
     if (!(section.lines ?? []).some(l => l.type === 'lyric')) continue
     if (section.label) h += 6 + labelLineH + 4
     for (const line of section.lines ?? []) {
       if (line.type === 'chord') continue
       if (line.type === 'blank') { h += lineH * 0.5; continue }
-      doc.setFontSize(fontSize)
       h += doc.splitTextToSize(line.content ?? '', maxW).length * lineH
     }
     h += lineH * 0.4
@@ -85,14 +85,14 @@ function findBestFont(doc, song) {
   for (let fs = MAX_FONT; fs >= MIN_FONT; fs--) {
     const contentH = USABLE_H - measureHeader(doc, song, fs)
     const sections = song.sections ?? []
-    if (measureSections(doc, sections, fs) <= contentH) return { font: fs, cols: 1 }
+    if (measureSections(doc, sections, fs) <= contentH) return { font: fs }
     const { left, right } = splitSections(doc, sections, fs)
     if (
       measureSections(doc, left, fs, COL_W) <= contentH &&
       measureSections(doc, right, fs, COL_W) <= contentH
-    ) return { font: fs, cols: 2 }
+    ) return { font: fs }
   }
-  return { font: MIN_FONT, cols: 2 }
+  return { font: MIN_FONT }
 }
 
 // ---------------------------------------------------------------------------
