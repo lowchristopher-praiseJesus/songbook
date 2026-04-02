@@ -13,6 +13,7 @@ const COL_GAP = 40
 const COL_W = (MAX_W - COL_GAP) / 2           // 400 pt per column
 const COL1_CX = MARGIN_X + COL_W / 2          // 260 pt (left column centre)
 const COL2_CX = MARGIN_X + COL_W + COL_GAP + COL_W / 2  // 700 pt (right column centre)
+const TWO_COL_THRESHOLD = PAGE_H * 0.75        // 405 pt — use two columns when lyric content exceeds this
 
 // ---------------------------------------------------------------------------
 // Measurement helpers
@@ -85,9 +86,9 @@ function splitSections(doc, sections, fontSize) {
  */
 function findBestFont(doc, song) {
   for (let fs = MAX_FONT; fs >= MIN_FONT; fs--) {
-    const contentH = USABLE_H - measureHeader(doc, song, fs)
     const sections = song.sections ?? []
-    if (measureSections(doc, sections, fs) <= contentH) return { font: fs }
+    if (measureSections(doc, sections, fs) <= TWO_COL_THRESHOLD) return { font: fs }
+    const contentH = USABLE_H - measureHeader(doc, song, fs)
     const { left, right } = splitSections(doc, sections, fs)
     if (
       measureSections(doc, left, fs, COL_W) <= contentH &&
@@ -205,11 +206,10 @@ export function exportPresentationPdf(songs) {
   songs.forEach((song, i) => {
     if (i > 0) doc.addPage()
 
-    const contentH = USABLE_H - measureHeader(doc, song, globalFont)
     const sections = song.sections ?? []
     const startY = renderHeader(doc, song, globalFont)
 
-    if (measureSections(doc, sections, globalFont) > contentH) {
+    if (measureSections(doc, sections, globalFont) > TWO_COL_THRESHOLD) {
       // Two-column layout
       const { left, right } = splitSections(doc, sections, globalFont)
       renderSections(doc, left, globalFont, COL1_CX, COL_W, startY)
