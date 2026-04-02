@@ -117,7 +117,7 @@ function renderSong(doc, song, fontSize) {
 export function exportPresentationPdf(songs) {
   if (!songs.length) return
 
-  const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H] })
+  const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
 
   songs.forEach((song, i) => {
     if (i > 0) doc.addPage()
