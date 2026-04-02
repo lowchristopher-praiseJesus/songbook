@@ -112,7 +112,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
 
   return (
     <main
-      ref={containerRef}
       className={`flex-1 overflow-y-auto relative transition-colors
         ${isDragging ? 'ring-4 ring-indigo-400 ring-inset bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
       onDragOver={onDragOver}
@@ -134,6 +133,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         : !activeSong
           ? <EmptyState onFileChange={handleFileInput} />
           : <div
+              ref={containerRef}
               key={activeSongId}
               className={`h-full overflow-x-hidden
                 ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
