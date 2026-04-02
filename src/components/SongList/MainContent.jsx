@@ -12,10 +12,7 @@ import { SongEditor } from '../SongEditor/SongEditor'
 import { buildGroups } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
-
-function formatDuration(s) {
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-}
+import { formatDuration } from '../../lib/formatDuration'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
   const activeSong = useLibraryStore(s => s.activeSong)

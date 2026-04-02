@@ -5,6 +5,9 @@ import { loadSong } from '../../lib/storage'
 import { SongBody } from '../SongList/SongBody'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { ChordStrip } from '../Chords/ChordStrip'
+import { useScrollSettings } from '../../hooks/useScrollSettings'
+import { useAutoScroll } from '../../hooks/useAutoScroll'
+import { formatDuration } from '../../lib/formatDuration'
 
 export function PerformanceModal({ song: initialSong, sections: initialSections, lyricsOnly = false, onClose }) {
   const index = useLibraryStore(s => s.index)
@@ -17,6 +20,14 @@ export function PerformanceModal({ song: initialSong, sections: initialSections,
   const [chordsOpen, setChordsOpen] = useState(true)
 
   const containerRef = useRef()
+  const { targetDuration, setTargetDuration } = useScrollSettings(song.id)
+  const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
+
+  // Stop scroll when the user swipes to a different song
+  useEffect(() => {
+    if (isScrolling) stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [song.id])
 
   const currentIdx = index.findIndex(e => e.id === song.id)
   const prevEntry = currentIdx > 0 ? index[currentIdx - 1] : null
@@ -128,6 +139,54 @@ export function PerformanceModal({ song: initialSong, sections: initialSections,
           performanceMode={true}
           lyricsOnly={lyricsOnly}
         />
+      </div>
+
+      {/* Auto-scroll controls */}
+      <div className="fixed bottom-4 right-4 flex flex-col gap-1 z-60 pointer-events-auto"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        {isScrolling && (
+          <>
+            <button
+              type="button"
+              onClick={() => setTargetDuration(targetDuration + 5)}
+              disabled={targetDuration >= 600}
+              className="w-8 h-8 flex items-center justify-center rounded-full
+                bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
+                text-lg font-light leading-none select-none
+                opacity-70 active:opacity-100 transition-opacity duration-150
+                disabled:opacity-20 disabled:cursor-not-allowed"
+              aria-label="Increase scroll duration"
+            >+</button>
+            <span className="w-8 h-6 flex items-center justify-center
+              text-xs text-gray-500 dark:text-gray-400 font-mono select-none tabular-nums">
+              {formatDuration(targetDuration)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setTargetDuration(targetDuration - 5)}
+              disabled={targetDuration <= 30}
+              className="w-8 h-8 flex items-center justify-center rounded-full
+                bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
+                text-lg font-light leading-none select-none
+                opacity-70 active:opacity-100 transition-opacity duration-150
+                disabled:opacity-20 disabled:cursor-not-allowed"
+              aria-label="Decrease scroll duration"
+            >−</button>
+            <div className="h-1" />
+          </>
+        )}
+        <button
+          type="button"
+          onClick={isScrolling ? stop : start}
+          className={`w-8 h-8 flex items-center justify-center rounded-full
+            text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+            active:opacity-100 transition-opacity duration-150
+            ${isScrolling
+              ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-90'
+              : 'bg-gray-500/30 dark:bg-white/20 opacity-70'
+            }`}
+          aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
+        >{isScrolling ? '⏹' : '▶'}</button>
       </div>
     </div>
   )
