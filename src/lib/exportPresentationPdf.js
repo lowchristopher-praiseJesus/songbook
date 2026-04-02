@@ -34,14 +34,14 @@ function measureSong(doc, song, fontSize) {
   h += 20
 
   for (const section of song.sections ?? []) {
-    const hasLyrics = section.lines.some(l => l.type === 'lyric')
+    const hasLyrics = (section.lines ?? []).some(l => l.type === 'lyric')
     if (!hasLyrics) continue
 
     if (section.label) {
       h += 6 + labelLineH + 4
     }
 
-    for (const line of section.lines) {
+    for (const line of section.lines ?? []) {
       if (line.type === 'chord') continue
       if (line.type === 'blank') { h += lineH * 0.5; continue }
       doc.setFontSize(fontSize)
@@ -87,7 +87,7 @@ function renderSong(doc, song, fontSize) {
 
   // Sections
   for (const section of song.sections ?? []) {
-    const hasLyrics = section.lines.some(l => l.type === 'lyric')
+    const hasLyrics = (section.lines ?? []).some(l => l.type === 'lyric')
     if (!hasLyrics) continue
 
     if (section.label) {
@@ -100,7 +100,7 @@ function renderSong(doc, song, fontSize) {
       y += labelLineH + 4
     }
 
-    for (const line of section.lines) {
+    for (const line of section.lines ?? []) {
       if (line.type === 'chord') continue
       if (line.type === 'blank') { y += lineH * 0.5; continue }
       doc.setFont('helvetica', 'normal')
