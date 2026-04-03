@@ -10,7 +10,7 @@ import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { exportSongsAsSbp } from '../../lib/exportSbp'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
-import { exportPresentationPdf } from '../../lib/exportPresentationPdf'
+import { ExportBackgroundModal } from './ExportBackgroundModal'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
@@ -20,6 +20,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [filenameInput, setFilenameInput] = useState('')
   const [choiceModalOpen, setChoiceModalOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [backgroundModalOpen, setBackgroundModalOpen] = useState(false)
+  const [pendingSongs, setPendingSongs] = useState([])
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
@@ -82,11 +84,12 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   function handleChoosePresentationPdf() {
     setChoiceModalOpen(false)
     const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
-    try {
-      exportPresentationPdf(songs)
-    } catch (err) {
-      onAddToast('PDF export failed: ' + err.message, 'error')
-    }
+    setPendingSongs(songs)
+    setBackgroundModalOpen(true)
+  }
+
+  function handleBackgroundModalClose() {
+    setBackgroundModalOpen(false)
     toggleExportMode()
   }
 
@@ -289,6 +292,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         isOpen={shareModalOpen}
         songs={selectedSongs}
         onClose={() => { setShareModalOpen(false); toggleExportMode() }}
+      />
+
+      <ExportBackgroundModal
+        isOpen={backgroundModalOpen}
+        songs={pendingSongs}
+        onClose={handleBackgroundModalClose}
+        onAddToast={onAddToast}
       />
 
       <UGSearchModal
