@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import {
   saveSong, loadSong, deleteSong as deleteFromStorage,
   loadIndex, saveIndex, getLastSongId, setLastSongId, clearLastSongId,
-  loadCollections, saveCollections,
+  loadCollections, saveCollections, getViewMode, saveViewMode,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
 
@@ -16,6 +16,7 @@ export const useLibraryStore = create((set, get) => ({
   editingSongId: null, // id of the song currently being edited, or null
   isExportMode: false,
   selectedSongIds: new Set(), // Set<id> of songs checked for export
+  viewMode: 'collections',   // 'collections' | 'allSongs'
 
   /**
    * Initialize from localStorage on app start.
@@ -53,6 +54,7 @@ export const useLibraryStore = create((set, get) => ({
       collections,
       activeSongId: activeSong ? activeSong.id : null,
       activeSong,
+      viewMode: getViewMode(),
     })
   },
 
@@ -312,6 +314,12 @@ export const useLibraryStore = create((set, get) => ({
       }
       return { selectedSongIds: next }
     })
+  },
+
+  /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
+  setViewMode(mode) {
+    saveViewMode(mode)
+    set({ viewMode: mode })
   },
 
   /**
