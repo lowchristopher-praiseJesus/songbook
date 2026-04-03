@@ -20,7 +20,9 @@ export function buildGroups(index, collections) {
  */
 export function buildNavOrder(index, collections, viewMode) {
   if (viewMode === 'allSongs') {
-    return [...index].sort((a, b) => a.title.localeCompare(b.title))
+    return [...index].sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+    )
   }
   return buildGroups(index, collections).flatMap(g => g.entries)
 }
