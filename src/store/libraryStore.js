@@ -338,6 +338,33 @@ export const useLibraryStore = create((set, get) => ({
     set({ viewMode: mode })
   },
 
+  /** Create a new empty collection with the given name. No-op if name is blank. */
+  createCollection(name) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const newCollection = {
+      id: uuidv4(),
+      name: trimmed,
+      createdAt: new Date().toISOString(),
+      songIds: [],
+    }
+    const collections = [...get().collections, newCollection]
+    saveCollections(collections)
+    set({ collections })
+  },
+
+  /**
+   * Replace the songIds array on a collection.
+   * Used by AddSongsModal to apply the user's checked selection.
+   */
+  setCollectionSongs(collectionId, songIds) {
+    const collections = get().collections.map(c =>
+      c.id === collectionId ? { ...c, songIds } : c
+    )
+    saveCollections(collections)
+    set({ collections })
+  },
+
   /**
    * Replace an existing song (used for "overwrite" duplicate resolution).
    */
