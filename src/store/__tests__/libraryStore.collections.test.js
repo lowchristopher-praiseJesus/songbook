@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useLibraryStore } from '../libraryStore'
-import { loadCollections } from '../../lib/storage'
+import { loadCollections, saveCollections } from '../../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -45,14 +45,9 @@ describe('createCollection', () => {
 
 describe('setCollectionSongs', () => {
   beforeEach(() => {
-    useLibraryStore.setState({
-      collections: [
-        { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['a', 'b'] },
-      ],
-    })
-    localStorage.setItem('songsheet_collections', JSON.stringify([
-      { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['a', 'b'] },
-    ]))
+    const seed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['a', 'b'] }]
+    useLibraryStore.setState({ collections: seed })
+    saveCollections(seed)
   })
 
   it('replaces songIds on the named collection', () => {

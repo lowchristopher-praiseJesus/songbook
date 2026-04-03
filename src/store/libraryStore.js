@@ -358,6 +358,7 @@ export const useLibraryStore = create((set, get) => ({
    * Used by AddSongsModal to apply the user's checked selection.
    */
   setCollectionSongs(collectionId, songIds) {
+    if (!get().collections.some(c => c.id === collectionId)) return
     const collections = get().collections.map(c =>
       c.id === collectionId ? { ...c, songIds } : c
     )
