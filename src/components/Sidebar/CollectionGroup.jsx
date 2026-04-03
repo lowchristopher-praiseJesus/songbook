@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { SongListItem } from './SongListItem'
 
-export function CollectionGroup({ group, onSelect }) {
+export function CollectionGroup({ group, onSelect, onAddSongs }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
@@ -100,6 +100,19 @@ export function CollectionGroup({ group, onSelect }) {
         )}
         {!editing && !isExportMode && (
           <>
+            {!isSpecial && (
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); onAddSongs(group.id) }}
+                aria-label={`Add songs to ${group.name}`}
+                className="ml-1 p-1 rounded shrink-0 text-xs font-bold
+                  [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
+                  focus:opacity-100 transition-opacity
+                  hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
+              >
+                +
+              </button>
+            )}
             <button
               type="button"
               onClick={handleEditClick}
