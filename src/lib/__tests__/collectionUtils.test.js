@@ -51,10 +51,11 @@ describe('buildGroups', () => {
     expect(groups[0].entries.map(e => e.id)).toEqual(['b', 'a'])
   })
 
-  it('prepends uncategorized group for songs with no collectionId', () => {
+  it('omits songs with no collectionId from collections view', () => {
     const idx = [...index, { id: 'u', title: 'Uncategorized Song', artist: '', collectionId: null }]
     const groups = buildGroups(idx, collections)
-    expect(groups[0].id).toBe('__uncategorized__')
-    expect(groups[0].entries[0].id).toBe('u')
+    // Songs without a collection are not shown in the Collections view
+    expect(groups).toHaveLength(2)
+    expect(groups.every(g => g.id !== '__uncategorized__')).toBe(true)
   })
 })
