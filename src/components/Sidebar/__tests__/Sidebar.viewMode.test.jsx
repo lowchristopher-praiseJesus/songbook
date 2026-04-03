@@ -39,6 +39,10 @@ vi.mock('../../../lib/storage', () => ({
   loadSong: vi.fn(() => null),
 }))
 
+vi.mock('../AllSongsList', () => ({
+  AllSongsList: () => <ul data-testid="all-songs-list" />,
+}))
+
 const defaultProps = {
   isOpen: true,
   onAddToast: vi.fn(),
@@ -70,5 +74,14 @@ describe('Sidebar view toggle', () => {
     render(<Sidebar {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: 'Collections' }))
     expect(mockSetViewMode).toHaveBeenCalledWith('collections')
+  })
+
+  it('hides the view toggle while a search query is active', () => {
+    render(<Sidebar {...defaultProps} />)
+    const input = screen.getByPlaceholderText('Search songs...')
+    expect(screen.getByRole('button', { name: 'Collections' })).toBeInTheDocument()
+    fireEvent.change(input, { target: { value: 'grace' } })
+    expect(screen.queryByRole('button', { name: 'Collections' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'All Songs' })).not.toBeInTheDocument()
   })
 })
