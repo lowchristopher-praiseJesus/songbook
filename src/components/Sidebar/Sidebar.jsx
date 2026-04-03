@@ -11,6 +11,7 @@ import { exportSongsAsSbp } from '../../lib/exportSbp'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
+import { AllSongsList } from './AllSongsList'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
@@ -28,6 +29,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleExportMode = useLibraryStore(s => s.toggleExportMode)
+  const viewMode = useLibraryStore(s => s.viewMode)
+  const setViewMode = useLibraryStore(s => s.setViewMode)
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -134,7 +137,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'}
       `}>
       {/* Search */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-3 pb-0 border-b border-gray-200 dark:border-gray-700">
         <input
           type="text"
           placeholder="Search songs..."
@@ -142,8 +145,35 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           onChange={e => setQuery(e.target.value)}
           className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
             bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-            focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
         />
+        {/* View mode toggle — hidden while search is active */}
+        {!trimmedQuery && (
+          <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-0.5 mb-3">
+            <button
+              type="button"
+              onClick={() => setViewMode('collections')}
+              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+                viewMode === 'collections'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Collections
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('allSongs')}
+              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+                viewMode === 'allSongs'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              All Songs
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Song list */}
@@ -158,6 +188,17 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                 No matches
               </li>
             )}
+          </>
+        ) : viewMode === 'allSongs' ? (
+          <>
+            {index.length > 0
+              ? <AllSongsList entries={index} onSelect={onSongSelect} />
+              : (
+                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                  No songs yet
+                </li>
+              )
+            }
           </>
         ) : (
           <>
