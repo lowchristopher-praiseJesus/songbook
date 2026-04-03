@@ -9,7 +9,7 @@ import { parseContent } from '../lib/parser/contentParser'
 
 export const useLibraryStore = create((set, get) => ({
   // State
-  index: [],           // [{id, title, artist, importedAt, collectionId}]
+  index: [],           // [{id, title, artist, importedAt}]
   collections: [],     // [{id, name, createdAt, songIds}]
   activeSongId: null,
   activeSong: null,    // Full song object (loaded from localStorage)
@@ -78,27 +78,19 @@ export const useLibraryStore = create((set, get) => ({
       : null
 
     for (const rawSong of songs) {
-      const { _preservedCollectionId, ...songData } = rawSong
-      const song = { ...songData }
+      const song = { ...rawSong }
       if (!song.id) song.id = uuidv4()
       if (!song.importedAt) song.importedAt = new Date().toISOString()
 
       saveSong(song)  // may throw QuotaExceededError — intentionally not caught here
 
       const existingIdx = currentIndex.findIndex(e => e.id === song.id)
-      const existingCollectionId = existingIdx >= 0 ? currentIndex[existingIdx].collectionId : (_preservedCollectionId ?? null)
-      // When adding to a source-tagged collection we know the target ID immediately;
-      // when creating a new named collection the ID is patched below.
-      const collectionId = (collectionName || collectionSource)
-        ? (sourceCollection ? sourceCollection.id : null)
-        : existingCollectionId
 
       const entry = {
         id: song.id,
         title: song.meta.title,
         artist: song.meta.artist ?? '',
         importedAt: song.importedAt,
-        collectionId,
       }
 
       if (existingIdx >= 0) {
@@ -125,11 +117,6 @@ export const useLibraryStore = create((set, get) => ({
           ...(collectionSource ? { source: collectionSource } : {}),
         }
         currentCollections.push(newCollection)
-        // Patch collectionId into the new index entries
-        for (const id of newSongIds) {
-          const idx = currentIndex.findIndex(e => e.id === id)
-          if (idx >= 0) currentIndex[idx] = { ...currentIndex[idx], collectionId: newCollection.id }
-        }
       }
       saveCollections(currentCollections)
     }
@@ -211,28 +198,16 @@ export const useLibraryStore = create((set, get) => ({
 
   /**
    * Remove a collection without deleting its songs.
-   * Songs become uncategorized (collectionId: null) and remain in the library.
+   * Songs remain in the library; membership is purely tracked via collections[j].songIds.
    */
   deleteCollection(collectionId) {
-    const collection = get().collections.find(c => c.id === collectionId)
-    if (!collection) return
-
-    const memberIds = new Set(collection.songIds)
-
-    const newIndex = get().index.map(e =>
-      memberIds.has(e.id) ? { ...e, collectionId: null } : e
-    )
-    saveIndex(newIndex)
-
     const newCollections = get().collections.filter(c => c.id !== collectionId)
     saveCollections(newCollections)
-
-    set({ index: newIndex, collections: newCollections })
+    set({ collections: newCollections })
   },
 
   /**
-   * Remove a song from its collection without deleting it from the library.
-   * The song becomes uncategorized (collectionId: null).
+   * Remove a song from a specific collection without deleting it from the library.
    * Drops the collection if it becomes empty.
    */
   removeSongFromCollection(songId, collectionId) {
@@ -243,13 +218,7 @@ export const useLibraryStore = create((set, get) => ({
       )
       .filter(c => c.songIds.length > 0)
     saveCollections(collections)
-
-    const index = get().index.map(e =>
-      e.id === songId ? { ...e, collectionId: null } : e
-    )
-    saveIndex(index)
-
-    set({ collections, index })
+    set({ collections })
   },
 
   /**
@@ -369,17 +338,13 @@ export const useLibraryStore = create((set, get) => ({
 
   /**
    * Replace an existing song (used for "overwrite" duplicate resolution).
+   * The same song ID is reused so all collections retain their membership automatically.
    */
   replaceSong(id, newSong) {
     deleteFromStorage(id)
-    // Preserve collectionId before removing from index
-    const existingEntry = get().index.find(e => e.id === id)
-    const collectionId = existingEntry?.collectionId ?? null
-    // Remove from index first (addSongs will re-add and save final index)
     const filteredIndex = get().index.filter(e => e.id !== id)
     set({ index: filteredIndex })
-    get().addSongs([{ ...newSong, id, _preservedCollectionId: collectionId }])
-    // If this was the active song, refresh the in-memory view
+    get().addSongs([{ ...newSong, id }])
     if (get().activeSongId === id) {
       get().selectSong(id)
     }

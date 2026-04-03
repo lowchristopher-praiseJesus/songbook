@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useLibraryStore } from '../libraryStore'
-import { loadCollections, saveCollections, saveIndex, saveSong } from '../../lib/storage'
+import { loadCollections, saveCollections, loadIndex, saveIndex, saveSong } from '../../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -77,6 +77,42 @@ describe('setCollectionSongs', () => {
     useLibraryStore.getState().setCollectionSongs('c1', ['x'])
     const { collections } = useLibraryStore.getState()
     expect(collections.find(c => c.id === 'c2').songIds).toEqual(['b'])
+  })
+})
+
+describe('deleteCollection', () => {
+  it('removes the collection without touching index entries', () => {
+    saveSong({ id: 's1', meta: { title: 'Song', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })
+    saveIndex([{ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }])
+    useLibraryStore.setState({
+      index: [{ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }],
+      collections: [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1'] }],
+    })
+    useLibraryStore.getState().deleteCollection('c1')
+    const { collections, index } = useLibraryStore.getState()
+    expect(collections).toHaveLength(0)
+    // index entry must not have been modified (no collectionId to clear)
+    expect(index[0]).toEqual({ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' })
+  })
+})
+
+describe('replaceSong preserves collection membership', () => {
+  it('keeps song in all collections it belonged to after replace', () => {
+    const song = { id: 's1', meta: { title: 'Song', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] }
+    saveSong(song)
+    saveIndex([{ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }])
+    useLibraryStore.setState({
+      index: [{ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }],
+      collections: [
+        { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1'] },
+        { id: 'c2', name: 'Worship', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1'] },
+      ],
+    })
+    const newSong = { ...song, meta: { ...song.meta, title: 'Renamed Song' } }
+    useLibraryStore.getState().replaceSong('s1', newSong)
+    const { collections } = useLibraryStore.getState()
+    expect(collections.find(c => c.id === 'c1').songIds).toContain('s1')
+    expect(collections.find(c => c.id === 'c2').songIds).toContain('s1')
   })
 })
 
