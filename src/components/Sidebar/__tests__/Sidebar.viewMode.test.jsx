@@ -16,6 +16,7 @@ vi.mock('../../../store/libraryStore', () => ({
       toggleExportMode: vi.fn(),
       viewMode: mockViewMode,
       setViewMode: mockSetViewMode,
+      createCollection: vi.fn(),
     }),
 }))
 

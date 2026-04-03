@@ -12,6 +12,7 @@ import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
 import { AllSongsList } from './AllSongsList'
+import { AddSongsModal } from './AddSongsModal'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
   const [query, setQuery] = useState('')
@@ -31,6 +32,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const toggleExportMode = useLibraryStore(s => s.toggleExportMode)
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
+  const createCollection = useLibraryStore(s => s.createCollection)
+  const [creatingCollection, setCreatingCollection] = useState(false)
+  const [collectionDraft, setCollectionDraft] = useState('')
+  const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -41,6 +46,14 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     const { resolve } = duplicateState
     setDuplicateState(null)
     resolve(resolution)
+  }
+
+  function confirmCreate() {
+    if (collectionDraft.trim()) {
+      createCollection(collectionDraft.trim())
+    }
+    setCreatingCollection(false)
+    setCollectionDraft('')
   }
 
   const { importFiles } = useFileImport({
@@ -202,10 +215,52 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           </>
         ) : (
           <>
+            {/* New Collection trigger */}
+            <li>
+              {creatingCollection ? (
+                <div className="px-1 py-1">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={collectionDraft}
+                    onChange={e => setCollectionDraft(e.target.value)}
+                    placeholder="Collection name…"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { e.preventDefault(); confirmCreate() }
+                      if (e.key === 'Escape') { setCreatingCollection(false); setCollectionDraft('') }
+                    }}
+                    onBlur={confirmCreate}
+                    className="w-full px-2 py-1 text-xs rounded border border-indigo-400
+                      bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                      outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 px-1">
+                    Enter to create · Esc to cancel
+                  </p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCreatingCollection(true)}
+                  className="w-full flex items-center gap-1 px-2 py-1 text-xs
+                    text-indigo-500 dark:text-indigo-400
+                    border border-dashed border-gray-300 dark:border-gray-600 rounded
+                    hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
+                    transition-colors"
+                >
+                  + New Collection
+                </button>
+              )}
+            </li>
             {groups.map(group => (
-              <CollectionGroup key={group.id} group={group} onSelect={onSongSelect} />
+              <CollectionGroup
+                key={group.id}
+                group={group}
+                onSelect={onSongSelect}
+                onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
+              />
             ))}
-            {groups.length === 0 && (
+            {groups.length === 0 && !creatingCollection && (
               <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
                 No songs yet
               </li>
@@ -348,6 +403,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         onSongSelect={onSongSelect}
         onImportSuccess={onImportSuccess}
         onAddToast={onAddToast}
+      />
+
+      <AddSongsModal
+        isOpen={!!addSongsTarget}
+        collectionId={addSongsTarget?.id ?? null}
+        collectionName={addSongsTarget?.name ?? ''}
+        onClose={() => setAddSongsTarget(null)}
       />
     </>
   )
