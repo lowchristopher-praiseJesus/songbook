@@ -53,6 +53,7 @@ export default function App() {
     if (shareSongs) {
       addSongs(shareSongs, 'Shared Songs')
       addToast(`${shareSongs.length} song${shareSongs.length !== 1 ? 's' : ''} imported.`, 'success')
+      setSidebarOpen(true)
     }
     setShareSongs(null)
     clearShareParam()
