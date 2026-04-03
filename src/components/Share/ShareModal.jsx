@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare } from '../../lib/shareApi';
@@ -7,6 +7,12 @@ import { exportSongsAsSbp } from '../../lib/exportSbp';
 export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [step, setStep] = useState('idle');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
+
+  // Sync nameValue from prop each time the modal opens (useState initial value
+  // is only evaluated once on mount, so prop changes after mount are ignored).
+  useEffect(() => {
+    if (isOpen) setNameValue(collectionName ?? '')
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [shareUrl, setShareUrl] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
