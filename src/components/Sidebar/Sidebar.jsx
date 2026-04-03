@@ -238,7 +238,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                       if (creatingEscapeRef.current) { creatingEscapeRef.current = false; return }
                       confirmCreate()
                     }}
-                    className="w-full px-2 py-1 text-xs rounded border border-indigo-400
+                    className="w-full px-2 py-1 text-[16px] rounded border border-indigo-400
                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                       outline-none focus:ring-2 focus:ring-indigo-500"
                   />
