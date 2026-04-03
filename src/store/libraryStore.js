@@ -209,30 +209,46 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
-   * Delete all songs in a collection and remove the collection itself.
+   * Remove a collection without deleting its songs.
+   * Songs become uncategorized (collectionId: null) and remain in the library.
    */
   deleteCollection(collectionId) {
     const collection = get().collections.find(c => c.id === collectionId)
     if (!collection) return
 
-    const idsToDelete = new Set(collection.songIds)
+    const memberIds = new Set(collection.songIds)
 
-    idsToDelete.forEach(id => deleteFromStorage(id))
-
-    const newIndex = get().index.filter(e => !idsToDelete.has(e.id))
+    const newIndex = get().index.map(e =>
+      memberIds.has(e.id) ? { ...e, collectionId: null } : e
+    )
     saveIndex(newIndex)
 
     const newCollections = get().collections.filter(c => c.id !== collectionId)
     saveCollections(newCollections)
 
-    const wasActive = idsToDelete.has(get().activeSongId)
-    if (wasActive) clearLastSongId()
+    set({ index: newIndex, collections: newCollections })
+  },
 
-    set({
-      index: newIndex,
-      collections: newCollections,
-      ...(wasActive ? { activeSongId: null, activeSong: null } : {}),
-    })
+  /**
+   * Remove a song from its collection without deleting it from the library.
+   * The song becomes uncategorized (collectionId: null).
+   * Drops the collection if it becomes empty.
+   */
+  removeSongFromCollection(songId, collectionId) {
+    const collections = get().collections
+      .map(c => c.id === collectionId
+        ? { ...c, songIds: c.songIds.filter(id => id !== songId) }
+        : c
+      )
+      .filter(c => c.songIds.length > 0)
+    saveCollections(collections)
+
+    const index = get().index.map(e =>
+      e.id === songId ? { ...e, collectionId: null } : e
+    )
+    saveIndex(index)
+
+    set({ collections, index })
   },
 
   /**

@@ -3,18 +3,26 @@ import { useLibraryStore } from '../../store/libraryStore'
 export function SongListItem({ entry, onSelect }) {
   const selectSong = useLibraryStore(s => s.selectSong)
   const deleteSong = useLibraryStore(s => s.deleteSong)
+  const removeSongFromCollection = useLibraryStore(s => s.removeSongFromCollection)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleSongSelection = useLibraryStore(s => s.toggleSongSelection)
+  const viewMode = useLibraryStore(s => s.viewMode)
 
   const isActive = !isExportMode && activeSongId === entry.id
   const isSelected = isExportMode && selectedSongIds.has(entry.id)
 
   function handleDelete(e) {
     e.stopPropagation()
-    if (window.confirm(`Delete "${entry.title}"?`)) {
-      deleteSong(entry.id)
+    if (viewMode === 'collections' && entry.collectionId !== null) {
+      if (window.confirm(`Remove "${entry.title}" from this collection?`)) {
+        removeSongFromCollection(entry.id, entry.collectionId)
+      }
+    } else {
+      if (window.confirm(`Delete "${entry.title}"?`)) {
+        deleteSong(entry.id)
+      }
     }
   }
 
