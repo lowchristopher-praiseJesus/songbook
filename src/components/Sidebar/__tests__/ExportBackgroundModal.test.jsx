@@ -57,4 +57,14 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} isOpen={false} />)
     expect(screen.queryByRole('button', { name: /export/i })).not.toBeInTheDocument()
   })
+
+  it('shows a toast and keeps modal open when export fails', () => {
+    const onClose = vi.fn()
+    const onAddToast = vi.fn()
+    exportPresentationPdf.mockImplementation(() => { throw new Error('jsPDF failed') })
+    render(<ExportBackgroundModal {...defaultProps} onClose={onClose} onAddToast={onAddToast} />)
+    fireEvent.click(screen.getByRole('button', { name: /export/i }))
+    expect(onAddToast).toHaveBeenCalledWith('PDF export failed: jsPDF failed', 'error')
+    expect(onClose).not.toHaveBeenCalled()
+  })
 })

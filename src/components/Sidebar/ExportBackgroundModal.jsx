@@ -32,10 +32,10 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
   function handleExport() {
     try {
       exportPresentationPdf(songs, bgImage)
+      onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
     }
-    onClose()
   }
 
   return (
