@@ -36,6 +36,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [creatingCollection, setCreatingCollection] = useState(false)
   const [collectionDraft, setCollectionDraft] = useState('')
   const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
+  const creatingEscapeRef = useRef(false)
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -227,9 +228,16 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                     placeholder="Collection name…"
                     onKeyDown={e => {
                       if (e.key === 'Enter') { e.preventDefault(); confirmCreate() }
-                      if (e.key === 'Escape') { setCreatingCollection(false); setCollectionDraft('') }
+                      if (e.key === 'Escape') {
+                        creatingEscapeRef.current = true
+                        setCreatingCollection(false)
+                        setCollectionDraft('')
+                      }
                     }}
-                    onBlur={confirmCreate}
+                    onBlur={() => {
+                      if (creatingEscapeRef.current) { creatingEscapeRef.current = false; return }
+                      confirmCreate()
+                    }}
                     className="w-full px-2 py-1 text-xs rounded border border-indigo-400
                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                       outline-none focus:ring-2 focus:ring-indigo-500"
