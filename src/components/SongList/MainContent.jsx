@@ -9,7 +9,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 import { SongEditor } from '../SongEditor/SongEditor'
-import { buildGroups } from '../../lib/collectionUtils'
+import { buildNavOrder } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
@@ -22,6 +22,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const selectSong = useLibraryStore(s => s.selectSong)
   const editingSongId = useLibraryStore(s => s.editingSongId)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
+  const viewMode = useLibraryStore(s => s.viewMode)
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
   const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
@@ -32,7 +33,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
 
-  const navOrder = buildGroups(index, collections).flatMap(g => g.entries)
+  const navOrder = buildNavOrder(index, collections, viewMode)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
   const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
   const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
