@@ -3,7 +3,7 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { SongListItem } from './SongListItem'
 
 export function CollectionGroup({ group, onSelect }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
   const inputRef = useRef(null)
