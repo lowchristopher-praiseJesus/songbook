@@ -16,7 +16,10 @@ export function AddSongsModal({ isOpen, collectionId, collectionName, onClose })
       setCheckedIds(new Set(col?.songIds ?? []))
       setFilter('')
     }
-  }, [isOpen, collectionId, collections])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, collectionId])
+
+  if (!isOpen) return null
 
   const sorted = [...index].sort((a, b) => a.title.localeCompare(b.title))
   const trimmed = filter.trim().toLowerCase()
@@ -54,6 +57,7 @@ export function AddSongsModal({ isOpen, collectionId, collectionName, onClose })
     <Modal isOpen={isOpen} title={`Add songs to "${collectionName}"`} onClose={onClose}>
       <input
         type="text"
+        aria-label="Filter songs"
         placeholder="Filter songs..."
         value={filter}
         onChange={e => setFilter(e.target.value)}
