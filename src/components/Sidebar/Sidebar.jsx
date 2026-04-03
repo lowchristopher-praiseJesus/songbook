@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
@@ -36,7 +36,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [creatingCollection, setCreatingCollection] = useState(false)
   const [collectionDraft, setCollectionDraft] = useState('')
   const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
+  const [exportSourceName, setExportSourceName] = useState(null)
   const creatingEscapeRef = useRef(false)
+
+  // Clear tracked collection name when export mode is turned off
+  useEffect(() => {
+    if (!isExportMode) setExportSourceName(null)
+  }, [isExportMode])
 
   // Duplicate resolution: show inline modal, resolve via Promise
   function onDuplicateCheck(title) {
@@ -132,13 +138,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   }
 
   const selectedSongs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
-
-  // If all selected songs belong to exactly one named collection, pre-fill its name
-  const selectedIdsArray = [...selectedSongIds]
-  const matchingCollections = collections.filter(c =>
-    selectedIdsArray.some(id => c.songIds.includes(id))
-  )
-  const activeCollectionName = matchingCollections.length === 1 ? matchingCollections[0].name : null
 
   return (
     <>
@@ -273,6 +272,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                 group={group}
                 onSelect={onSongSelect}
                 onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
+                onGroupCheckboxChange={setExportSourceName}
               />
             ))}
             {groups.length === 0 && !creatingCollection && (
@@ -402,7 +402,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <ShareModal
         isOpen={shareModalOpen}
         songs={selectedSongs}
-        collectionName={activeCollectionName}
+        collectionName={exportSourceName}
         onClose={() => { setShareModalOpen(false); toggleExportMode() }}
       />
 

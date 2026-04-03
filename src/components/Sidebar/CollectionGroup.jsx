@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { SongListItem } from './SongListItem'
 
-export function CollectionGroup({ group, onSelect, onAddSongs = () => {} }) {
+export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGroupCheckboxChange = () => {} }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
@@ -67,7 +67,10 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {} }) {
             ref={checkboxRef}
             type="checkbox"
             checked={allSelected}
-            onChange={() => toggleGroupSelection(groupIds)}
+            onChange={() => {
+              onGroupCheckboxChange(allSelected ? null : group.name)
+              toggleGroupSelection(groupIds)
+            }}
             onClick={e => e.stopPropagation()}
             className="ml-2 mr-1 h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
           />
