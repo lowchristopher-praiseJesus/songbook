@@ -71,7 +71,7 @@ describe('ExportBackgroundModal', () => {
   it('renders Font size input with default 20', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
     expect(screen.getByText('Font size')).toBeInTheDocument()
-    expect(screen.getByRole('spinbutton')).toHaveValue(20)
+    expect(screen.getByRole('spinbutton')).toHaveValue(20)  // string '20' renders as numeric 20
   })
 
   it('renders Max columns button group', () => {

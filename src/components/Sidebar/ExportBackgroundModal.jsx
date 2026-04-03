@@ -7,7 +7,7 @@ import defaultBgUrl from '../../assets/Background.png'
 export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
   const [previewUrl, setPreviewUrl] = useState(defaultBgUrl)
   const [bgImage, setBgImage] = useState(null)
-  const [fontSize, setFontSize] = useState(20)
+  const [fontSizeStr, setFontSizeStr] = useState('20')
   const [maxCols, setMaxCols] = useState(2)
 
   useEffect(() => {
@@ -33,7 +33,8 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
 
   function handleExport() {
     try {
-      exportPresentationPdf(songs, bgImage, { desiredFont: fontSize, maxCols })
+      const desiredFont = Math.min(32, Math.max(8, Number(fontSizeStr) || 20))
+      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
@@ -59,8 +60,12 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
               type="number"
               min={8}
               max={32}
-              value={fontSize}
-              onChange={e => setFontSize(Math.min(32, Math.max(8, Number(e.target.value))))}
+              value={fontSizeStr}
+              onChange={e => setFontSizeStr(e.target.value)}
+              onBlur={e => {
+                const clamped = Math.min(32, Math.max(8, Number(e.target.value) || 20))
+                setFontSizeStr(String(clamped))
+              }}
               className="w-20 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </label>
