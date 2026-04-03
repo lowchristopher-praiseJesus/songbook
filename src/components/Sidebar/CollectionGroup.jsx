@@ -35,7 +35,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {} }) {
 
   function handleDelete(e) {
     e.stopPropagation()
-    if (window.confirm(`Delete all ${group.entries.length} song${group.entries.length !== 1 ? 's' : ''} in "${group.name}"?`)) {
+    if (window.confirm(`Remove collection "${group.name}"? The ${group.entries.length} song${group.entries.length !== 1 ? 's' : ''} will remain in your library.`)) {
       deleteCollection(group.id)
     }
   }
@@ -144,7 +144,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {} }) {
       {open && (
         <ul className="ml-2 space-y-0.5">
           {group.entries.map(entry => (
-            <SongListItem key={entry.id} entry={entry} onSelect={onSelect} />
+            <SongListItem key={entry.id} entry={entry} onSelect={onSelect} collectionId={group.id} />
           ))}
         </ul>
       )}

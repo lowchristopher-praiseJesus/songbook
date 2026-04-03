@@ -180,12 +180,8 @@ export const useLibraryStore = create((set, get) => ({
         songIds: uncategorizedIds,
       }
       const collections = [...get().collections, newCollection]
-      const index = get().index.map(e =>
-        uncategorizedIds.includes(e.id) ? { ...e, collectionId: newCollection.id } : e
-      )
       saveCollections(collections)
-      saveIndex(index)
-      set({ collections, index })
+      set({ collections })
       return
     }
 
