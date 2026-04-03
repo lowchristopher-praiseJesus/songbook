@@ -49,7 +49,7 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: /export/i }))
     expect(exportPresentationPdf).toHaveBeenCalledOnce()
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage))
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 2 })
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -66,5 +66,32 @@ describe('ExportBackgroundModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /export/i }))
     expect(onAddToast).toHaveBeenCalledWith('PDF export failed: jsPDF failed', 'error')
     expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('renders Font size input with default 20', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    expect(screen.getByText('Font size')).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton')).toHaveValue(20)
+  })
+
+  it('renders Max columns button group', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    expect(screen.getByText('Max columns')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument()
+  })
+
+  it('passes changed font size to exportPresentationPdf', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '14' } })
+    fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 14, maxCols: 2 })
+  })
+
+  it('passes maxCols=1 when column 1 button is clicked', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: '1' }))
+    fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 1 })
   })
 })

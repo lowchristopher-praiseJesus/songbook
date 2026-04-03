@@ -109,21 +109,34 @@ function splitSections(doc, sections, fontSize) {
 }
 
 /**
- * Find the largest font at which the song fits in single-column or two-column layout.
- * Returns { font: number }.
+ * Starting at desiredFont, step down up to 2pt until the song fits
+ * within the given column constraint, or return desiredFont-2 as fallback.
+ *
+ * @param {jsPDF} doc
+ * @param {object} song
+ * @param {number} desiredFont  Caller-specified starting size
+ * @param {number} maxCols      1 = force single-column; 2 = allow two-column
+ * @returns {{ font: number }}
  */
-function findBestFont(doc, song) {
-  for (let fs = MAX_FONT; fs >= MIN_FONT; fs--) {
-    const sections = song.sections ?? []
-    if (measureSections(doc, sections, fs) <= TWO_COL_THRESHOLD) return { font: fs }
+function findBestFontConstrained(doc, song, desiredFont, maxCols) {
+  const sections = song.sections ?? []
+  const low = Math.max(desiredFont - 2, MIN_FONT)
+
+  for (let fs = desiredFont; fs >= low; fs--) {
     const contentH = USABLE_H - measureHeader(doc, song, fs)
-    const { left, right } = splitSections(doc, sections, fs)
-    if (
-      measureSections(doc, left, fs, COL_W) <= contentH &&
-      measureSections(doc, right, fs, COL_W) <= contentH
-    ) return { font: fs }
+
+    if (maxCols === 1) {
+      if (measureSections(doc, sections, fs) <= contentH) return { font: fs }
+    } else {
+      if (measureSections(doc, sections, fs) <= TWO_COL_THRESHOLD) return { font: fs }
+      const { left, right } = splitSections(doc, sections, fs)
+      if (
+        measureSections(doc, left, fs, COL_W) <= contentH &&
+        measureSections(doc, right, fs, COL_W) <= contentH
+      ) return { font: fs }
+    }
   }
-  return { font: MIN_FONT }
+  return { font: low }
 }
 
 // ---------------------------------------------------------------------------
@@ -218,18 +231,21 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
  *   Every song renders at globalFont → font variation across pages = 0.
  *
  * @param {Array<{ meta: { title: string, artist: string|null }, sections: Section[] }>} songs
- * @param {HTMLImageElement} bgImage - Pre-loaded image element drawn full-bleed behind each page
+ * @param {HTMLImageElement} bgImage  Pre-loaded image element drawn full-bleed behind each page
+ * @param {{ desiredFont?: number, maxCols?: number }} [options]
+ *   desiredFont — target font size (8–32); may decrease up to 2pt to fit. Default 20.
+ *   maxCols     — maximum columns per page (1 or 2). Default 2.
  */
-export function exportPresentationPdf(songs, bgImage) {
+export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2 } = {}) {
   if (!songs.length) return
 
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
 
   // Pass 1: find the largest font at which every song fits (1 or 2 cols)
   const globalFont = songs.reduce((min, song) => {
-    const { font } = findBestFont(doc, song)
+    const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols)
     return Math.min(min, font)
-  }, MAX_FONT)
+  }, desiredFont)
 
   // Pass 2: render each song at globalFont
   songs.forEach((song, i) => {
@@ -240,7 +256,7 @@ export function exportPresentationPdf(songs, bgImage) {
     const sections = song.sections ?? []
     const startY = renderHeader(doc, song, globalFont)
 
-    if (measureSections(doc, sections, globalFont) > TWO_COL_THRESHOLD) {
+    if (maxCols >= 2 && measureSections(doc, sections, globalFont) > TWO_COL_THRESHOLD) {
       // Two-column layout
       const { left, right } = splitSections(doc, sections, globalFont)
       renderSections(doc, left, globalFont, COL1_CX, COL_W, startY)

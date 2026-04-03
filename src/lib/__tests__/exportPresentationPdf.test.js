@@ -118,9 +118,9 @@ describe('exportPresentationPdf', () => {
   })
 
   it('uses two columns when content overflows single-column', () => {
-    // 4 sections overflow single-col at MAX_FONT (see makeLongSong comment)
+    // 4 sections at font 32 ≈ 407pt > 405pt threshold → triggers 2-col
     const song = makeLongSong(4)
-    exportPresentationPdf([song], mockBg)
+    exportPresentationPdf([song], mockBg, { desiredFont: 32 })
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     // Column centres 260 and 700 must both appear (section content calls)
     expect(xValues).toContain(260)
@@ -128,27 +128,27 @@ describe('exportPresentationPdf', () => {
   })
 
   it('does not use two-column layout for a short song', () => {
-    // 2 sections comfortably fit single-col (see makeLongSong comment)
+    // 2 sections at font 32 ≈ 204pt < 405pt threshold → single col
     const song = makeLongSong(2)
-    exportPresentationPdf([song], mockBg)
+    exportPresentationPdf([song], mockBg, { desiredFont: 32 })
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).not.toContain(260)
     expect(xValues).not.toContain(700)
   })
 
   it('uses two columns for a single-section song with many lyric lines', () => {
-    // 10 lyric lines in one section ≈ 448pt > 405pt threshold
+    // 10 lyric lines at font 32 ≈ 448pt > 405pt threshold
     const song = makeSingleSectionSong(10)
-    exportPresentationPdf([song], mockBg)
+    exportPresentationPdf([song], mockBg, { desiredFont: 32 })
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).toContain(260)
     expect(xValues).toContain(700)
   })
 
   it('does not split a single-section song with few lyric lines', () => {
-    // 2 lyric lines in one section ≈ 90pt < 405pt threshold → single col
+    // 2 lyric lines at font 32 ≈ 90pt < 405pt threshold → single col
     const song = makeSingleSectionSong(2)
-    exportPresentationPdf([song], mockBg)
+    exportPresentationPdf([song], mockBg, { desiredFont: 32 })
     const xValues = mockDoc.text.mock.calls.map(c => c[1])
     expect(xValues).not.toContain(260)
     expect(xValues).not.toContain(700)
@@ -161,5 +161,38 @@ describe('exportPresentationPdf', () => {
     ], mockBg)
     expect(mockDoc.addImage).toHaveBeenCalledTimes(2)
     expect(mockDoc.addImage).toHaveBeenCalledWith(mockBg, 'PNG', 0, 0, 960, 540)
+  })
+
+  describe('options parameter', () => {
+    it('accepts no options argument (backward compat)', () => {
+      exportPresentationPdf([makeSong('Song', 'Artist')], mockBg)
+      expect(mockDoc.save).toHaveBeenCalledOnce()
+    })
+
+    it('forces single-column when maxCols=1', () => {
+      // makeLongSong(4) at font 32 ≈ 407pt > 405pt threshold → would use 2-col without constraint
+      exportPresentationPdf([makeLongSong(4)], mockBg, { desiredFont: 32, maxCols: 1 })
+      const xValues = mockDoc.text.mock.calls.map(c => c[1])
+      expect(xValues).not.toContain(260)
+      expect(xValues).not.toContain(700)
+    })
+
+    it('allows two columns when maxCols=2', () => {
+      exportPresentationPdf([makeLongSong(4)], mockBg, { desiredFont: 32, maxCols: 2 })
+      const xValues = mockDoc.text.mock.calls.map(c => c[1])
+      expect(xValues).toContain(260)
+      expect(xValues).toContain(700)
+    })
+
+    it('uses desiredFont=16 as the base (setFontSize called with ≤16 for body text)', () => {
+      exportPresentationPdf([makeSong('Song', 'Artist')], mockBg, { desiredFont: 16, maxCols: 2 })
+      const calls = mockDoc.setFontSize.mock.calls.map(c => c[0])
+      expect(Math.min(...calls)).toBeLessThanOrEqual(16)
+    })
+
+    it('still saves PDF when content does not fit at desiredFont-2 (fallback)', () => {
+      exportPresentationPdf([makeLongSong(20)], mockBg, { desiredFont: 20, maxCols: 1 })
+      expect(mockDoc.save).toHaveBeenCalledOnce()
+    })
   })
 })
