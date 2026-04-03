@@ -94,6 +94,16 @@ describe('deleteCollection', () => {
     // index entry must not have been modified (no collectionId to clear)
     expect(index[0]).toEqual({ id: 's1', title: 'Song', artist: '', importedAt: '2026-01-01T00:00:00Z' })
   })
+
+  it('persists the removal to localStorage', () => {
+    saveCollections([{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1'] }])
+    useLibraryStore.setState({
+      collections: [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1'] }],
+    })
+    useLibraryStore.getState().deleteCollection('c1')
+    const saved = loadCollections()
+    expect(saved).toHaveLength(0)
+  })
 })
 
 describe('replaceSong preserves collection membership', () => {

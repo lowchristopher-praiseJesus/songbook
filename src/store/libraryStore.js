@@ -201,6 +201,7 @@ export const useLibraryStore = create((set, get) => ({
    * Songs remain in the library; membership is purely tracked via collections[j].songIds.
    */
   deleteCollection(collectionId) {
+    if (!get().collections.some(c => c.id === collectionId)) return
     const newCollections = get().collections.filter(c => c.id !== collectionId)
     saveCollections(newCollections)
     set({ collections: newCollections })
