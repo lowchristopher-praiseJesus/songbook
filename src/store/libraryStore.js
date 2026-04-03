@@ -20,31 +20,32 @@ export const useLibraryStore = create((set, get) => ({
 
   /**
    * Initialize from localStorage on app start.
-   * Repairs the index by removing entries whose song data is missing.
-   * Repairs collections by removing stale songIds and dropping empty collections.
+   * Repairs the index by removing entries whose song data is missing and stripping legacy collectionId field.
+   * Repairs collections by removing stale songIds, but preserves empty collections.
    */
   init() {
-    const index = loadIndex()
+    const rawIndex = loadIndex()
     const lastId = getLastSongId()
 
-    // Repair: remove index entries with missing data
-    const validIndex = index.filter(entry => loadSong(entry.id) !== null)
-    if (validIndex.length !== index.length) saveIndex(validIndex)
+    // Repair: remove index entries with missing data, strip legacy collectionId field
+    const validIdsSet = new Set()
+    const validIndex = rawIndex
+      .filter(entry => loadSong(entry.id) !== null)
+      .map(({ collectionId: _dropped, ...rest }) => rest)
+    validIndex.forEach(e => validIdsSet.add(e.id))
 
-    // Repair collections
-    const validIds = new Set(validIndex.map(e => e.id))
+    if (validIndex.length !== rawIndex.length || rawIndex.some(e => 'collectionId' in e)) {
+      saveIndex(validIndex)
+    }
+
+    // Repair collections: remove stale songIds, but keep empty collections
     let collections = loadCollections()
     let collectionsChanged = false
-    collections = collections
-      .map(c => {
-        const filtered = c.songIds.filter(id => validIds.has(id))
-        if (filtered.length !== c.songIds.length) collectionsChanged = true
-        return { ...c, songIds: filtered }
-      })
-      .filter(c => {
-        if (c.songIds.length === 0) { collectionsChanged = true; return false }
-        return true
-      })
+    collections = collections.map(c => {
+      const filtered = c.songIds.filter(id => validIdsSet.has(id))
+      if (filtered.length !== c.songIds.length) collectionsChanged = true
+      return { ...c, songIds: filtered }
+    })
     if (collectionsChanged) saveCollections(collections)
 
     const activeSong = lastId ? loadSong(lastId) : null

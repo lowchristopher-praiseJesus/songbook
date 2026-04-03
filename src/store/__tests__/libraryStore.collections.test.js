@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useLibraryStore } from '../libraryStore'
-import { loadCollections, saveCollections } from '../../lib/storage'
+import { loadCollections, saveCollections, saveIndex, saveSong } from '../../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -77,5 +77,25 @@ describe('setCollectionSongs', () => {
     useLibraryStore.getState().setCollectionSongs('c1', ['x'])
     const { collections } = useLibraryStore.getState()
     expect(collections.find(c => c.id === 'c2').songIds).toEqual(['b'])
+  })
+})
+
+describe('init() migration', () => {
+  it('strips collectionId from index entries on load', () => {
+    saveSong({ id: 's1', meta: { title: 'Song 1', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })
+    saveIndex([{ id: 's1', title: 'Song 1', artist: '', importedAt: '2026-01-01T00:00:00Z', collectionId: 'c1' }])
+    useLibraryStore.getState().init()
+    const { index } = useLibraryStore.getState()
+    expect(index[0]).not.toHaveProperty('collectionId')
+  })
+
+  it('preserves empty collections during repair', () => {
+    localStorage.setItem('songsheet_collections', JSON.stringify([
+      { id: 'c1', name: 'Empty Set', createdAt: '2026-01-01T00:00:00Z', songIds: [] },
+    ]))
+    useLibraryStore.getState().init()
+    const { collections } = useLibraryStore.getState()
+    expect(collections).toHaveLength(1)
+    expect(collections[0].name).toBe('Empty Set')
   })
 })
