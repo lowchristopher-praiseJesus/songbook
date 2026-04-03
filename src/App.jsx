@@ -30,7 +30,7 @@ export default function App() {
 
     fetchShare(shareCode)
       .then(buf => parseSbpFile(buf))
-      .then(songs => setShareSongs(songs))
+      .then(parsed => setShareSongs(parsed))
       .catch(err => {
         if (err.code === 'expired') {
           addToast('This share link has expired.', 'error')
@@ -51,8 +51,10 @@ export default function App() {
 
   function handleShareImport() {
     if (shareSongs) {
-      addSongs(shareSongs, 'Shared Songs')
-      addToast(`${shareSongs.length} song${shareSongs.length !== 1 ? 's' : ''} imported.`, 'success')
+      const name = shareSongs.collectionName || 'Shared Songs'
+      addSongs(shareSongs.songs, name)
+      const count = shareSongs.songs.length
+      addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       setSidebarOpen(true)
     }
     setShareSongs(null)
@@ -110,7 +112,8 @@ export default function App() {
       )}
       <ImportConfirmModal
         isOpen={shareSongs !== null}
-        songs={shareSongs ?? []}
+        songs={shareSongs?.songs ?? []}
+        collectionName={shareSongs?.collectionName ?? null}
         onImport={handleShareImport}
         onCancel={handleShareCancel}
       />

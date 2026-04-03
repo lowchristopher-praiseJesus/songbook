@@ -133,6 +133,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
   const selectedSongs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
 
+  // If all selected songs belong to exactly one named collection, pre-fill its name
+  const selectedIdsArray = [...selectedSongIds]
+  const matchingCollections = collections.filter(c =>
+    selectedIdsArray.some(id => c.songIds.includes(id))
+  )
+  const activeCollectionName = matchingCollections.length === 1 ? matchingCollections[0].name : null
+
   return (
     <>
       {/* Backdrop: mobile only — tap outside to close */}
@@ -395,6 +402,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <ShareModal
         isOpen={shareModalOpen}
         songs={selectedSongs}
+        collectionName={activeCollectionName}
         onClose={() => { setShareModalOpen(false); toggleExportMode() }}
       />
 

@@ -27,11 +27,11 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
       }
       try {
         const buf = await file.arrayBuffer()
-        const songs = await parseSbpFile(buf)
-        const collectionName = file.name.replace(/\.(sbp|sbpbackup)$/i, '')
+        const parsed = await parseSbpFile(buf)
+        const fileBasedName = file.name.replace(/\.(sbp|sbpbackup)$/i, '')
         const accepted = []
 
-        for (const song of songs) {
+        for (const song of parsed.songs) {
           const duplicate = indexRef.current.find(e => e.title === song.meta.title)
 
           if (duplicate) {
@@ -50,7 +50,8 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
 
         if (accepted.length > 0) {
           try {
-            addSongs(accepted, accepted.length > 1 ? collectionName : null)
+            const effectiveCollectionName = parsed.collectionName ?? (accepted.length > 1 ? fileBasedName : null)
+            addSongs(accepted, effectiveCollectionName)
           } catch (e) {
             if (e.name === 'QuotaExceededError') {
               onError('Storage is full. Please delete some songs before importing more.')
