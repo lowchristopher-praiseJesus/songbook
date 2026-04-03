@@ -5,6 +5,7 @@ const LAST_SONG_KEY = 'songsheet_last_song_id'
 const TRANSPOSE_PREFIX = 'songsheet_transpose_'
 const COLLECTIONS_KEY = 'songsheet_collections'
 const FIRECRAWL_KEY = 'songsheet_firecrawl_key'
+const VIEW_MODE_KEY = 'songsheet_view_mode'
 
 /**
  * Save a song to localStorage. Throws QuotaExceededError if storage is full.
@@ -101,3 +102,12 @@ export const getFirecrawlKey = () => localStorage.getItem(FIRECRAWL_KEY) ?? ''
 export const setFirecrawlKey = (key) => key
   ? localStorage.setItem(FIRECRAWL_KEY, key)
   : localStorage.removeItem(FIRECRAWL_KEY)
+
+export function getViewMode() {
+  const val = localStorage.getItem(VIEW_MODE_KEY)
+  return val === 'allSongs' ? 'allSongs' : 'collections'
+}
+
+export function saveViewMode(mode) {
+  localStorage.setItem(VIEW_MODE_KEY, mode)
+}

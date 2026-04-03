@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
   saveSong, loadSong, deleteSong, loadIndex, saveIndex,
-  getTheme, setTheme, getLastSongId, setLastSongId, getStorageStats
+  getTheme, setTheme, getLastSongId, setLastSongId, getStorageStats,
+  getViewMode, saveViewMode,
 } from '../storage'
 
 beforeEach(() => {
@@ -94,5 +95,27 @@ describe('getStorageStats', () => {
     saveSong({ id: 'big-song', importedAt: '', rawText: 'x'.repeat(1000), meta: { title: 'Big' }, sections: [] })
     const after = getStorageStats().usedBytes
     expect(after).toBeGreaterThan(before)
+  })
+})
+
+describe('viewMode', () => {
+  it('returns "collections" when nothing is stored', () => {
+    expect(getViewMode()).toBe('collections')
+  })
+
+  it('returns "allSongs" after saving allSongs', () => {
+    saveViewMode('allSongs')
+    expect(getViewMode()).toBe('allSongs')
+  })
+
+  it('returns "collections" after saving collections', () => {
+    saveViewMode('allSongs')
+    saveViewMode('collections')
+    expect(getViewMode()).toBe('collections')
+  })
+
+  it('ignores unknown values and returns "collections"', () => {
+    localStorage.setItem('songsheet_view_mode', 'garbage')
+    expect(getViewMode()).toBe('collections')
   })
 })
