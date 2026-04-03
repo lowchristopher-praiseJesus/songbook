@@ -12,3 +12,15 @@ export function buildGroups(index, collections) {
   }
   return groups
 }
+
+/**
+ * Returns a flat ordered array of song entries for prev/next navigation.
+ * In 'allSongs' mode: sorted A-Z by title.
+ * In 'collections' mode: follows collection order via buildGroups.
+ */
+export function buildNavOrder(index, collections, viewMode) {
+  if (viewMode === 'allSongs') {
+    return [...index].sort((a, b) => a.title.localeCompare(b.title))
+  }
+  return buildGroups(index, collections).flatMap(g => g.entries)
+}
