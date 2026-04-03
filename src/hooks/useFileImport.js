@@ -50,7 +50,7 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
 
         if (accepted.length > 0) {
           try {
-            addSongs(accepted, collectionName)
+            addSongs(accepted, accepted.length > 1 ? collectionName : null)
           } catch (e) {
             if (e.name === 'QuotaExceededError') {
               onError('Storage is full. Please delete some songs before importing more.')
