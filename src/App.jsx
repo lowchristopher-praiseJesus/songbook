@@ -18,6 +18,8 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
+  const [sessionLyricsOnly, setSessionLyricsOnly] = useState(false)
+  const effectiveLyricsOnly = lyricsOnly || sessionLyricsOnly
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
   const [shareSongs, setShareSongs] = useState(null)
 
@@ -55,10 +57,16 @@ export default function App() {
       addSongs(shareSongs.songs, name)
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
+      if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
       setSidebarOpen(true)
     }
     setShareSongs(null)
     clearShareParam()
+  }
+
+  function handleToggleLyricsOnly() {
+    setSessionLyricsOnly(false)
+    setLyricsOnly(!effectiveLyricsOnly)
   }
 
   function handleShareCancel() {
@@ -99,21 +107,22 @@ export default function App() {
             onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
             onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
           />
-          <MainContent onAddToast={addToast} lyricsOnly={lyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
+          <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
         </div>
       </div>
       <ToastContainer toasts={toasts} />
       {settingsOpen && (
         <SettingsPanel
           onClose={() => setSettingsOpen(false)}
-          lyricsOnly={lyricsOnly}
-          onToggleLyricsOnly={() => setLyricsOnly(v => !v)}
+          lyricsOnly={effectiveLyricsOnly}
+          onToggleLyricsOnly={handleToggleLyricsOnly}
         />
       )}
       <ImportConfirmModal
         isOpen={shareSongs !== null}
         songs={shareSongs?.songs ?? []}
         collectionName={shareSongs?.collectionName ?? null}
+        lyricsOnly={shareSongs?.lyricsOnly ?? false}
         onImport={handleShareImport}
         onCancel={handleShareCancel}
       />
