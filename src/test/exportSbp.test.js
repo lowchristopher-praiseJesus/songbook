@@ -74,4 +74,17 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.songs[1].name).toBe('Song Two')
     expect(json.songs[1].key).toBe(7)
   })
+
+  it('includes lyricsOnly:true in ZIP JSON when flag is true', async () => {
+    const buf = await buildSbpZip([mockSong], null, true).generateAsync({ type: 'uint8array' })
+    const zip = await JSZip.loadAsync(buf)
+    const text = await zip.file('dataFile.txt').async('string')
+    const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+    expect(json.lyricsOnly).toBe(true)
+  })
+
+  it('omits lyricsOnly from ZIP JSON when flag is false or omitted', async () => {
+    const { json } = await parseZip([mockSong])  // uses existing helper, no lyricsOnly
+    expect(json.lyricsOnly).toBeUndefined()
+  })
 })

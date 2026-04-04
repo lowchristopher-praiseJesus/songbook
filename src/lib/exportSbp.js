@@ -25,10 +25,11 @@ function songToSbpJson(song) {
  * Build a JSZip instance containing the SBP archive for the given songs.
  * Exported for testing (generate as 'uint8array' to avoid jsdom Blob limits).
  */
-export function buildSbpZip(songs, collectionName = null) {
+export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
   const sbpSongs = songs.map(songToSbpJson)
   const data = {
     ...(collectionName ? { collectionName } : {}),
+    ...(lyricsOnly ? { lyricsOnly: true } : {}),
     songs: sbpSongs,
     sets: [],
     folders: [],
@@ -47,6 +48,6 @@ export function buildSbpZip(songs, collectionName = null) {
  *   dataFile.txt  — "1.0\n" + JSON of {songs, sets, folders}
  *   dataFile.hash — placeholder MD5 (not validated by SongBook Pro on import)
  */
-export async function exportSongsAsSbp(songs, collectionName = null) {
-  return buildSbpZip(songs, collectionName).generateAsync({ type: 'blob' })
+export async function exportSongsAsSbp(songs, collectionName = null, lyricsOnly = false) {
+  return buildSbpZip(songs, collectionName, lyricsOnly).generateAsync({ type: 'blob' })
 }
