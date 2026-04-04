@@ -51,4 +51,32 @@ describe('ImportConfirmModal', () => {
     );
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('shows lyrics-only note when lyricsOnly prop is true', () => {
+    render(
+      <ImportConfirmModal
+        isOpen
+        songs={songs}
+        lyricsOnly={true}
+        onImport={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText(/chords will be hidden/i)
+    ).toBeInTheDocument();
+  });
+
+  it('does not show lyrics-only note when lyricsOnly prop is false', () => {
+    render(
+      <ImportConfirmModal
+        isOpen
+        songs={songs}
+        lyricsOnly={false}
+        onImport={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/chords will be hidden/i)).not.toBeInTheDocument();
+  });
 });

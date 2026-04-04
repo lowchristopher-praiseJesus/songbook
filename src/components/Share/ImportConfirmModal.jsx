@@ -1,7 +1,7 @@
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 
-export function ImportConfirmModal({ isOpen, songs, collectionName, onImport, onCancel }) {
+export function ImportConfirmModal({ isOpen, songs, collectionName, lyricsOnly = false, onImport, onCancel }) {
   const displayName = collectionName || 'Shared Songs'
   return (
     <Modal isOpen={isOpen} title="Shared Songbook" onClose={onCancel}>
@@ -15,6 +15,11 @@ export function ImportConfirmModal({ isOpen, songs, collectionName, onImport, on
           </li>
         ))}
       </ul>
+      {lyricsOnly && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Chords will be hidden — this collection was shared in lyrics-only mode.
+        </p>
+      )}
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Will be added to collection: <span className="font-medium text-gray-700 dark:text-gray-300">{displayName}</span>
       </p>
