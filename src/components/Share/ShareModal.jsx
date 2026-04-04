@@ -7,6 +7,7 @@ import { exportSongsAsSbp } from '../../lib/exportSbp';
 export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [step, setStep] = useState('idle');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
+  const [shareLyricsOnly, setShareLyricsOnly] = useState(false);
 
   // Sync nameValue from prop each time the modal opens (useState initial value
   // is only evaluated once on mount, so prop changes after mount are ignored).
@@ -21,7 +22,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   async function handleCreateLink() {
     setStep('uploading');
     try {
-      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null);
+      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly);
       const result = await uploadShare(blob, expiresInDays);
       setShareUrl(result.shareUrl);
       setExpiresAt(result.expiresAt);
@@ -47,6 +48,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     setExpiresInDays(7);
     setShareUrl('');
     setCopied(false);
+    setShareLyricsOnly(false);
     onClose();
   }
 
@@ -84,6 +86,24 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={shareLyricsOnly}
+              aria-label="Share lyrics only"
+              onClick={() => setShareLyricsOnly(v => !v)}
+              className="flex items-center gap-3 w-full text-left"
+            >
+              <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+                transition-colors duration-200
+                ${shareLyricsOnly ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                  ${shareLyricsOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+              </span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Share lyrics only</span>
+            </button>
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>

@@ -57,4 +57,28 @@ describe('ShareModal', () => {
     fireEvent.click(retryBtn);
     expect(screen.getByText('Create link')).toBeInTheDocument();
   });
+
+  it('renders "Share lyrics only" toggle unchecked by default', () => {
+    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    const toggle = screen.getByRole('switch', { name: /share lyrics only/i });
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('passes lyricsOnly=true to exportSongsAsSbp when toggle is on', async () => {
+    uploadShare.mockResolvedValue({
+      shareCode: 'x',
+      shareUrl: 'http://app?share=x',
+      expiresAt: new Date().toISOString(),
+    });
+    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('switch', { name: /share lyrics only/i }));
+    fireEvent.click(screen.getByText('Create link'));
+    await screen.findByDisplayValue('http://app?share=x');
+    expect(exportSongsAsSbp).toHaveBeenCalledWith(
+      songs,
+      null,  // nameValue is '' → ''.trim() || null = null
+      true
+    );
+  });
 });
