@@ -114,4 +114,21 @@ describe('parseSbpFile', () => {
     const { collectionName } = await parseSbpFile(buf)
     expect(collectionName).toBeNull()
   })
+
+  it('returns lyricsOnly:true when present in ZIP JSON', async () => {
+    const buf = await makeMockSbp(
+      [{ Id: 1, name: 'Song', author: '', key: 0, Capo: 0, TempoInt: 0, timeSig: '', Copyright: '', content: '', KeyShift: 0 }],
+      { lyricsOnly: true }
+    )
+    const result = await parseSbpFile(buf)
+    expect(result.lyricsOnly).toBe(true)
+  })
+
+  it('returns lyricsOnly:false when absent from ZIP JSON', async () => {
+    const buf = await makeMockSbp(
+      [{ Id: 1, name: 'Song', author: '', key: 0, Capo: 0, TempoInt: 0, timeSig: '', Copyright: '', content: '', KeyShift: 0 }]
+    )
+    const result = await parseSbpFile(buf)
+    expect(result.lyricsOnly).toBe(false)
+  })
 })

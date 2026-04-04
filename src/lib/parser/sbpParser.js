@@ -93,13 +93,17 @@ export async function parseSbpFile(arrayBuffer) {
   const jsonText = newlineIdx >= 0 ? text.slice(newlineIdx + 1) : text
 
   const data = JSON.parse(jsonText)
-  if (!data || !Array.isArray(data.songs)) return { songs: [], collectionName: null }
+  if (!data || !Array.isArray(data.songs)) return { songs: [], collectionName: null, lyricsOnly: false }
 
   const songs = data.songs
     .filter(s => !s.Deleted)
     .map(s => songFromJson(s))
 
-  return { songs, collectionName: data.collectionName ?? null }
+  return {
+    songs,
+    collectionName: data.collectionName ?? null,
+    lyricsOnly: data.lyricsOnly ?? false,
+  }
 }
 
 function songFromJson(s) {
