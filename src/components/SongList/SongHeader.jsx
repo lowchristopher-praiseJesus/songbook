@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
 
-export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit }) {
+export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit, headerRef }) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
+    <div ref={headerRef} className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
       <h1 className="text-2xl font-bold leading-tight">{meta.title}</h1>
       {meta.artist && (
         <p className="text-gray-500 dark:text-gray-400 mt-0.5">{meta.artist}</p>
