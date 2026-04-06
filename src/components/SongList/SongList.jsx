@@ -19,11 +19,11 @@ export function SongList({
   containerRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
-  const headerRef = useRef(null)
+  const bodyRef = useRef(null)
   const { fitFontSize, fitColumns, shadowRef } = useFitToScreen({
     enabled: isFit,
     containerRef,
-    headerRef,
+    bodyRef,
     lyricsOnly,
   })
 
@@ -39,7 +39,6 @@ export function SongList({
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
         onExportPdf={() => exportLyricsPdf(song.meta, song.sections)}
         onEdit={onEdit}
-        headerRef={headerRef}
       />
       {!lyricsOnly && (
         <ChordStrip
@@ -48,22 +47,24 @@ export function SongList({
           onToggle={onChordsToggle}
         />
       )}
-      <SongBody
-        sections={transpose.transposedSections}
-        fontSize={fontSize}
-        lyricsOnly={lyricsOnly}
-        fitMode={isFit && fitFontSize !== null}
-        fitColumns={fitColumns}
-      />
+      <div ref={bodyRef}>
+        <SongBody
+          sections={transpose.transposedSections}
+          fontSize={fontSize}
+          lyricsOnly={lyricsOnly}
+          fitMode={isFit && fitFontSize !== null}
+          fitColumns={fitColumns}
+        />
+      </div>
       {isFit && (
         <div
           ref={shadowRef}
           style={{
             position: 'absolute',
             top: '-9999px',
-            left: 0,
+            left: '1rem',
             visibility: 'hidden',
-            width: '100%',
+            width: 'calc(100% - 2rem)',
             overflow: 'hidden',
           }}
         >

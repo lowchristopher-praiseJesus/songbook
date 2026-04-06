@@ -5,7 +5,7 @@ const MAX_FONT = 28
 const MAX_COLS = 4
 const DEBOUNCE_MS = 100
 
-export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly }) {
+export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
   const [result, setResult] = useState({ fitFontSize: null, fitColumns: null })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
@@ -13,11 +13,15 @@ export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly })
 
   measureRef.current = function measure() {
     const container = containerRef?.current
-    const header = headerRef?.current
+    const body = bodyRef?.current
     const shadow = shadowRef?.current
-    if (!container || !header || !shadow) return
+    if (!container || !body || !shadow) return
 
-    const availableHeight = container.clientHeight - header.offsetHeight
+    const containerRect = container.getBoundingClientRect()
+    const bodyRect = body.getBoundingClientRect()
+    // Absolute offset of body from container top (scroll-independent)
+    const bodyTopInContainer = bodyRect.top - containerRect.top + container.scrollTop
+    const availableHeight = container.clientHeight - bodyTopInContainer
     if (availableHeight <= 0) return
 
     let best = null
