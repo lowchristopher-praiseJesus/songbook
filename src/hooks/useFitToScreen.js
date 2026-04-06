@@ -75,7 +75,7 @@ export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly })
       clearTimeout(timerRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, containerRef?.current])
+  }, [enabled])
 
   return { fitFontSize: result.fitFontSize, fitColumns: result.fitColumns, shadowRef }
 }
