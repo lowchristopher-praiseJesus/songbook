@@ -1,7 +1,9 @@
-function ChordedLine({ line, fontSize }) {
+function ChordedLine({ line, fontSize, fitMode }) {
   const text = line.content
   const chords = line.chords ?? []
-  const chordFontSize = Math.max(11, (fontSize ?? 16) - 3)
+  const chordFontSize = fitMode
+    ? 'max(11px, calc(var(--fit-fs, 16px) - 3px))'
+    : Math.max(11, (fontSize ?? 16) - 3)
 
   if (chords.length === 0) {
     return <span>{text}</span>
@@ -71,7 +73,10 @@ function ChordedLine({ line, fontSize }) {
                   >
                     <span
                       className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
-                      style={{ fontSize: chordFontSize, lineHeight: 1.2 }}
+                      style={fitMode
+                        ? { fontSize: 'max(11px, calc(var(--fit-fs, 16px) - 3px))', lineHeight: 1.2 }
+                        : { fontSize: chordFontSize, lineHeight: 1.2 }
+                      }
                       aria-hidden="true"
                     >
                       {part.chord}
@@ -87,7 +92,7 @@ function ChordedLine({ line, fontSize }) {
   )
 }
 
-function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
+function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode }) {
   const lines = section.lines
 
   // Pre-compute which chord-only lines will be absorbed into a following lyric line
@@ -134,7 +139,10 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
               <div
                 key={i}
                 className="font-mono font-bold text-indigo-600 dark:text-indigo-400 leading-none mb-1 whitespace-pre"
-                style={{ fontSize: Math.max(12, (fontSize ?? 16) - 2) }}
+                style={fitMode
+                  ? { fontSize: 'max(12px, calc(var(--fit-fs, 16px) - 2px))' }
+                  : { fontSize: Math.max(12, (fontSize ?? 16) - 2) }
+                }
                 aria-hidden="true"
               >
                 {lineStr}
@@ -157,9 +165,9 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
             <div
               key={i}
               className="leading-relaxed"
-              style={{ fontSize }}
+              style={fitMode ? { fontSize: 'var(--fit-fs, 16px)' } : { fontSize }}
             >
-              <ChordedLine line={effectiveLine} fontSize={fontSize} />
+              <ChordedLine line={effectiveLine} fontSize={fontSize} fitMode={fitMode} />
             </div>
           )
         })}
@@ -168,12 +176,22 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly }) {
   )
 }
 
-export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false }) {
+export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns }) {
   if (!sections?.length) return null
   return (
-    <div className="py-4">
+    <div
+      className="py-4"
+      style={fitMode && fitColumns ? { columnCount: fitColumns } : undefined}
+    >
       {sections.map((section, i) => (
-        <SongSection key={i} section={section} fontSize={fontSize} performanceMode={performanceMode} lyricsOnly={lyricsOnly} />
+        <SongSection
+          key={i}
+          section={section}
+          fontSize={fontSize}
+          performanceMode={performanceMode}
+          lyricsOnly={lyricsOnly}
+          fitMode={fitMode}
+        />
       ))}
     </div>
   )
