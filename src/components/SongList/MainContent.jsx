@@ -29,6 +29,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const [swipeDir, setSwipeDir] = useState(null)      // 'left' | 'right' | null
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
+  const [isFit, setIsFit] = useState(false)
   const containerRef = useRef(null)
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
@@ -148,6 +149,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 chordsOpen={chordsOpen}
                 onChordsToggle={() => setChordsOpen(o => !o)}
                 onEdit={() => setEditingSongId(activeSongId)}
+                isFit={isFit}
+                containerRef={containerRef}
               />
             </div>
       }
@@ -171,8 +174,20 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <button
             type="button"
+            onClick={() => setIsFit(f => !f)}
+            className={`w-8 h-8 flex items-center justify-center rounded-full
+              text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+              active:opacity-100 transition-opacity duration-150
+              ${isFit
+                ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-90'
+                : 'bg-gray-500/30 dark:bg-white/20 opacity-70'
+              }`}
+            aria-label="Fit song to screen"
+          >⤢</button>
+          <button
+            type="button"
             onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
-            disabled={fontSize >= 28}
+            disabled={fontSize >= 28 || isFit}
             className="w-8 h-8 flex items-center justify-center rounded-full
               bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
@@ -183,7 +198,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
           <button
             type="button"
             onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
-            disabled={fontSize <= 12}
+            disabled={fontSize <= 12 || isFit}
             className="w-8 h-8 flex items-center justify-center rounded-full
               bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
               text-lg font-light leading-none select-none
