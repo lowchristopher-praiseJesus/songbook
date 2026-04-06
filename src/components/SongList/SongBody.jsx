@@ -1,9 +1,7 @@
 function ChordedLine({ line, fontSize, fitMode }) {
   const text = line.content
   const chords = line.chords ?? []
-  const chordFontSize = fitMode
-    ? 'max(11px, calc(var(--fit-fs, 16px) - 3px))'
-    : Math.max(11, (fontSize ?? 16) - 3)
+  const chordFontSize = Math.max(11, (fontSize ?? 16) - 3)
 
   if (chords.length === 0) {
     return <span>{text}</span>
