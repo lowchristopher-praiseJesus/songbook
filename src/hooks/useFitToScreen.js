@@ -26,9 +26,15 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
 
     let best = null
 
+    // Use height:auto so the browser balances content across N columns.
+    // With a fixed height, CSS multi-column overflows horizontally (extra columns
+    // to the right), making scrollHeight === clientHeight regardless of content
+    // size — the check is blind. With height:auto + column-fill:balance (default),
+    // the rendered height ≈ total_content / N, which we compare to availableHeight.
+    shadow.style.height = 'auto'
+
     for (let cols = 1; cols <= MAX_COLS; cols++) {
       shadow.style.columnCount = cols
-      shadow.style.height = `${availableHeight}px`
 
       let lo = MIN_FONT
       let hi = MAX_FONT
@@ -37,9 +43,10 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
       while (lo <= hi) {
         const mid = Math.floor((lo + hi) / 2)
         shadow.style.setProperty('--fit-fs', `${mid}px`)
-        // Force synchronous layout reflow so scrollHeight is accurate
-        void shadow.offsetHeight
-        if (shadow.scrollHeight <= shadow.clientHeight) {
+        // getBoundingClientRect() forces synchronous layout and returns the
+        // actual rendered height of the balanced columns.
+        const h = shadow.getBoundingClientRect().height
+        if (h <= availableHeight) {
           colBest = mid
           lo = mid + 1
         } else {
