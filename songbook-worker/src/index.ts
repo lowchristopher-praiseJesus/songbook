@@ -1,13 +1,17 @@
 import { Hono } from 'hono';
 import type { Env } from './types';
 import share from './routes/share';
+import walkieShare from './routes/walkieShare';
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', async (c, next) => {
   const requestOrigin = c.req.header('Origin') ?? '';
   const appOrigin = c.env.APP_ORIGIN ?? '';
-  const allowed = appOrigin && requestOrigin === appOrigin;
+  const walkieOrigin = c.env.WALKIE_ORIGIN ?? '';
+  const allowed =
+    (appOrigin && requestOrigin === appOrigin) ||
+    (walkieOrigin && requestOrigin === walkieOrigin);
 
   if (c.req.method === 'OPTIONS') {
     return new Response(null, {
@@ -31,5 +35,6 @@ app.use('*', async (c, next) => {
 
 app.get('/health', (c) => c.json({ ok: true }));
 app.route('/share', share);
+app.route('/walkie-shares', walkieShare);
 
 export default app;
