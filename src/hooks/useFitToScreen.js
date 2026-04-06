@@ -9,8 +9,9 @@ export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly })
   const [result, setResult] = useState({ fitFontSize: null, fitColumns: null })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
+  const measureRef = useRef(null)
 
-  function measure() {
+  measureRef.current = function measure() {
     const container = containerRef?.current
     const header = headerRef?.current
     const shadow = shadowRef?.current
@@ -57,8 +58,7 @@ export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly })
       setResult({ fitFontSize: null, fitColumns: null })
       return
     }
-    measure()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    measureRef.current()
   }, [enabled, lyricsOnly])
 
   // ResizeObserver: re-measure on container size changes (debounced)
@@ -67,14 +67,13 @@ export function useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly })
     const el = containerRef.current
     const observer = new ResizeObserver(() => {
       clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(measure, DEBOUNCE_MS)
+      timerRef.current = setTimeout(() => measureRef.current(), DEBOUNCE_MS)
     })
     observer.observe(el)
     return () => {
       observer.disconnect()
       clearTimeout(timerRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled])
 
   return { fitFontSize: result.fitFontSize, fitColumns: result.fitColumns, shadowRef }

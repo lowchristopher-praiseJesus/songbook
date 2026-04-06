@@ -28,7 +28,10 @@ export function SongList({
   })
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 w-full relative">
+    <div
+      className="max-w-2xl mx-auto px-4 py-6 w-full relative"
+      style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
+    >
       <SongHeader
         meta={song.meta}
         transpose={transpose}
@@ -45,15 +48,13 @@ export function SongList({
           onToggle={onChordsToggle}
         />
       )}
-      <div style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}>
-        <SongBody
-          sections={transpose.transposedSections}
-          fontSize={fontSize}
-          lyricsOnly={lyricsOnly}
-          fitMode={isFit && fitFontSize !== null}
-          fitColumns={fitColumns}
-        />
-      </div>
+      <SongBody
+        sections={transpose.transposedSections}
+        fontSize={fontSize}
+        lyricsOnly={lyricsOnly}
+        fitMode={isFit && fitFontSize !== null}
+        fitColumns={fitColumns}
+      />
       {isFit && (
         <div
           ref={shadowRef}
