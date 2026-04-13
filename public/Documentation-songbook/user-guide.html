@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SongList — User Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --sidebar-w: 280px;
+      --sidebar-bg: #0e1117;
+      --sidebar-border: #1e2535;
+      --sidebar-text: #8892a4;
+      --sidebar-text-hover: #c9d1e0;
+      --sidebar-active-bg: rgba(99,102,241,.14);
+      --sidebar-active-text: #818cf8;
+      --sidebar-heading: #4a5568;
+
+      --content-bg: #fefdfb;
+      --content-max: 780px;
+
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --accent-light: #eef2ff;
+      --accent-mid: #c7d2fe;
+
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-tertiary: #9ca3af;
+
+      --border: #e9eaf0;
+      --border-strong: #d1d5db;
+
+      --code-bg: #f1f3f9;
+      --code-text: #4338ca;
+
+      --ph-bg: #fffbeb;
+      --ph-border: #fbbf24;
+      --ph-text: #92400e;
+      --ph-icon: #f59e0b;
+
+      --tip-bg: #f0fdf4;
+      --tip-border: #86efac;
+      --tip-text: #166534;
+
+      --warn-bg: #fefce8;
+      --warn-border: #fde047;
+      --warn-text: #713f12;
+
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow: 0 4px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,.12), 0 4px 10px rgba(0,0,0,.06);
+    }
+
+    /* ─── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--content-bg);
+      color: var(--text-primary);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      z-index: 100;
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      scrollbar-width: thin;
+      scrollbar-color: #1e2535 transparent;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 4px; }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+    .sidebar-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      letter-spacing: -.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-logo-note {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+    .sidebar-subtitle {
+      font-size: .72rem;
+      color: var(--sidebar-heading);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .sidebar-nav {
+      padding: 12px 0 24px;
+    }
+
+    .nav-section {
+      margin-bottom: 2px;
+    }
+
+    .nav-section-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 6px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: .7rem;
+      font-weight: 600;
+      color: var(--sidebar-heading);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      text-align: left;
+      transition: color .15s;
+    }
+    .nav-section-toggle:hover { color: #64748b; }
+    .nav-section-toggle .chevron {
+      font-size: .65rem;
+      transition: transform .2s;
+      color: var(--sidebar-heading);
+    }
+    .nav-section-toggle.open .chevron { transform: rotate(90deg); }
+
+    .nav-items {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .3s cubic-bezier(.4,0,.2,1);
+    }
+    .nav-items.open { max-height: 800px; }
+
+    .nav-item {
+      display: block;
+      padding: 5px 20px 5px 28px;
+      font-size: .82rem;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      transition: color .15s, background .15s;
+      border-radius: 0;
+      position: relative;
+    }
+    .nav-item:hover {
+      color: var(--sidebar-text-hover);
+      background: rgba(255,255,255,.03);
+    }
+    .nav-item.active {
+      color: var(--sidebar-active-text);
+      background: var(--sidebar-active-bg);
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--sidebar-active-text);
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* Top-level direct links */
+    .nav-direct {
+      display: block;
+      padding: 7px 20px;
+      font-size: .82rem;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      transition: color .15s, background .15s;
+    }
+    .nav-direct:hover { color: var(--sidebar-text-hover); }
+    .nav-direct.active { color: var(--sidebar-active-text); }
+
+    /* ─── Hamburger (mobile) ─────────────────────────────────────── */
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 14px; left: 14px;
+      z-index: 200;
+      width: 38px; height: 38px;
+      border: none;
+      background: var(--sidebar-bg);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      flex-direction: column;
+      gap: 5px;
+      padding: 10px;
+    }
+    .hamburger span {
+      display: block;
+      width: 18px; height: 2px;
+      background: #c9d1e0;
+      border-radius: 2px;
+      transition: transform .2s, opacity .2s;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 99;
+    }
+
+    /* ─── Main Content ───────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ─── Top Banner ─────────────────────────────────────────────── */
+    .banner {
+      background: linear-gradient(135deg, #0e1117 0%, #1a1f35 50%, #0e1117 100%);
+      padding: 64px 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(99,102,241,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .banner::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: 20%;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(167,139,250,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .banner-eyebrow {
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: #818cf8;
+      margin-bottom: 12px;
+    }
+    .banner-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.1;
+      letter-spacing: -.03em;
+      margin-bottom: 14px;
+    }
+    .banner-title em {
+      font-style: italic;
+      color: #a5b4fc;
+    }
+    .banner-desc {
+      font-size: .95rem;
+      color: #94a3b8;
+      max-width: 520px;
+      line-height: 1.65;
+    }
+    .banner-version {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 4px 10px;
+      border: 1px solid #1e2535;
+      border-radius: 20px;
+      font-size: .72rem;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── Content Area ───────────────────────────────────────────── */
+    .content {
+      padding: 0 48px 80px;
+      max-width: calc(var(--content-max) + 96px);
+    }
+
+    /* ─── Section ────────────────────────────────────────────────── */
+    .section {
+      padding-top: 64px;
+    }
+    .section + .section {
+      border-top: 1px solid var(--border);
+    }
+
+    .section-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 6px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -.02em;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .subsection {
+      margin-top: 36px;
+    }
+    .subsection-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subsection-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    p { color: var(--text-secondary); font-size: .93rem; margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ─── Screenshot Placeholder ─────────────────────────────────── */
+    .screenshot {
+      margin: 24px 0;
+      border: 2px dashed var(--ph-border);
+      border-radius: var(--radius);
+      background: var(--ph-bg);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      min-height: 180px;
+      position: relative;
+      overflow: hidden;
+    }
+    .screenshot::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(251,191,36,.04) 20px,
+        rgba(251,191,36,.04) 40px
+      );
+      pointer-events: none;
+    }
+    .screenshot-icon {
+      font-size: 2rem;
+      line-height: 1;
+      position: relative;
+    }
+    .screenshot-label {
+      font-weight: 600;
+      font-size: .88rem;
+      color: var(--ph-text);
+      position: relative;
+    }
+    .screenshot-desc {
+      font-size: .78rem;
+      color: #b45309;
+      opacity: .8;
+      position: relative;
+    }
+    .screenshot-tag {
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: .65rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--ph-icon);
+      background: rgba(251,191,36,.15);
+      padding: 2px 7px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* Wide screenshots */
+    .screenshot.tall { min-height: 260px; }
+    .screenshot.short { min-height: 120px; }
+
+    /* Real screenshots */
+    .screenshot-img {
+      display: block;
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin: 24px auto;
+    }
+
+    /* Side-by-side screenshot pair */
+    .screenshot-pair {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin: 24px 0;
+    }
+    .screenshot-pair-item {
+      flex: 1;
+      min-width: 0;
+    }
+    .screenshot-pair-item img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .screenshot-pair-caption {
+      text-align: center;
+      font-size: .75rem;
+      color: var(--text-tertiary);
+      margin-top: 7px;
+      font-weight: 500;
+    }
+    @media (max-width: 500px) {
+      .screenshot-pair { flex-direction: column; }
+      .screenshot-pair-item { max-width: 320px; margin: 0 auto; }
+    }
+
+    /* ─── Feature List ───────────────────────────────────────────── */
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .feature-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: .88rem;
+      color: var(--text-secondary);
+    }
+    .feature-list li::before {
+      content: '→';
+      color: var(--accent);
+      font-size: .8rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .feature-list li strong {
+      color: var(--text-primary);
+    }
+
+    /* ─── Step List ──────────────────────────────────────────────── */
+    .steps {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .step {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .step::before {
+      content: counter(step);
+      min-width: 26px; height: 26px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .72rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; color: var(--text-primary); font-size: .9rem; margin-bottom: 3px; }
+    .step-body span { font-size: .85rem; color: var(--text-secondary); }
+
+    /* ─── Inline Code ────────────────────────────────────────────── */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82em;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* ─── Key Badge ──────────────────────────────────────────────── */
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px; height: 22px;
+      padding: 0 6px;
+      background: var(--content-bg);
+      border: 1px solid var(--border-strong);
+      border-bottom: 2px solid #c1c7d4;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--text-primary);
+      box-shadow: 0 1px 0 rgba(0,0,0,.06);
+      white-space: nowrap;
+    }
+
+    /* ─── Tip / Warning Callout ──────────────────────────────────── */
+    .callout {
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin: 18px 0;
+      font-size: .86rem;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .callout.tip { background: var(--tip-bg); border-left: 3px solid var(--tip-border); }
+    .callout.warn { background: var(--warn-bg); border-left: 3px solid var(--warn-border); }
+    .callout-icon { flex-shrink: 0; font-size: 1rem; line-height: 1.5; }
+    .callout-body { color: var(--tip-text); }
+    .callout.warn .callout-body { color: var(--warn-text); }
+    .callout-body strong { display: block; margin-bottom: 2px; }
+
+    /* ─── Keyboard Shortcuts Table ───────────────────────────────── */
+    .shortcuts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: .85rem;
+    }
+    .shortcuts-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+    .shortcuts-table td {
+      padding: 9px 12px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .shortcuts-table tr:last-child td { border-bottom: none; }
+    .shortcuts-table tr:hover td { background: #f9fafb; }
+    .shortcuts-table td:first-child { width: 200px; }
+    .key-group { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* ─── Option Card Grid ───────────────────────────────────────── */
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .option-card {
+      background: #f8f9fc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .option-card-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .option-card-title { font-weight: 600; font-size: .88rem; color: var(--text-primary); margin-bottom: 4px; }
+    .option-card-desc { font-size: .8rem; color: var(--text-secondary); }
+
+    /* ─── Divider ────────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    /* ─── Format Box (syntax) ────────────────────────────────────── */
+    .syntax-box {
+      background: #0e1117;
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin: 16px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .syntax-comment { color: #4a5568; }
+    .syntax-section { color: #f59e0b; }
+    .syntax-chord { color: #818cf8; }
+    .syntax-lyric { color: #e2e8f0; }
+
+    /* ─── Inline icon button replica ────────────────────────────── */
+    .btn-replica {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      background: #f9fafb;
+      white-space: nowrap;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+      .hamburger {
+        display: flex;
+      }
+      .main {
+        margin-left: 0;
+      }
+      .banner {
+        padding: 56px 24px 44px;
+        padding-top: 72px;
+      }
+      .banner-title { font-size: 2.2rem; }
+      .content { padding: 0 24px 64px; }
+    }
+
+    @media (max-width: 500px) {
+      .banner-title { font-size: 1.8rem; }
+      .option-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ─── Animations ─────────────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .section {
+      animation: fadeIn .4s ease both;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" id="hamburger" aria-label="Open navigation">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="overlay"></div>
+
+<div class="layout">
+
+  <!-- ╔══ SIDEBAR ══╗ -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span class="sidebar-logo-note">🎵</span> SongList
+      </div>
+      <div class="sidebar-subtitle">User Guide</div>
+    </div>
+
+    <div class="sidebar-nav">
+
+      <a class="nav-direct active" href="#getting-started">Getting Started</a>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-library">
+          Song Library <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-library">
+          <a class="nav-item" href="#search">Search</a>
+          <a class="nav-item" href="#view-modes">View Modes</a>
+          <a class="nav-item" href="#collections">Collections</a>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-import">
+          Importing Songs <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-import">
+          <a class="nav-item" href="#import-sbp">Import .sbp Files</a>
+          <a class="nav-item" href="#duplicates">Handling Duplicates</a>
+          <a class="nav-item" href="#ug-search">Search Ultimate Guitar</a>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-viewing">
+          Viewing a Song <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-viewing">
+          <a class="nav-item" href="#song-header">Song Header & Info</a>
+          <a class="nav-item" href="#chord-strip">Chord Strip</a>
+          <a class="nav-item" href="#display-controls">Display Controls</a>
+          <a class="nav-item" href="#lyrics-only">Lyrics Only & PDF</a>
+        </div>
+      </div>
+
+      <a class="nav-direct" href="#transpose-capo">Transposing & Capo</a>
+      <a class="nav-direct" href="#auto-scroll">Auto-Scroll</a>
+      <a class="nav-direct" href="#song-navigation">Song Navigation</a>
+      <a class="nav-direct" href="#performance-mode">Performance Mode</a>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-editing">
+          Editing a Song <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-editing">
+          <a class="nav-item" href="#editor-metadata">Metadata Fields</a>
+          <a class="nav-item" href="#editor-content">Content Syntax</a>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-export">
+          Exporting Songs <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-export">
+          <a class="nav-item" href="#export-sbp">Download .sbp</a>
+          <a class="nav-item" href="#export-share">Share via Link</a>
+          <a class="nav-item" href="#export-pdf">Presentation PDF</a>
+        </div>
+      </div>
+
+      <a class="nav-direct" href="#share-import">Importing from a Link</a>
+      <a class="nav-direct" href="#settings">Settings</a>
+      <a class="nav-direct" href="#shortcuts">Tips & Shortcuts</a>
+
+    </div>
+  </nav>
+  <!-- ╚══ END SIDEBAR ══╝ -->
+
+  <div class="main">
+
+    <!-- ╔══ BANNER ══╗ -->
+    <div class="banner">
+      <div class="banner-eyebrow">Documentation</div>
+      <h1 class="banner-title">SongList<br><em>User Guide</em></h1>
+      <p class="banner-desc">
+        Built for worship leaders — import, organise, transpose, and perform chord charts, then share your entire set with your team in seconds.
+      </p>
+      <span class="banner-version">v1.0 · 2026</span>
+    </div>
+    <!-- ╚══ END BANNER ══╝ -->
+
+    <div class="content">
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 1. GETTING STARTED                             -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="getting-started">
+        <div class="section-number">01 — Getting Started</div>
+        <h2 class="section-title">Welcome to SongList</h2>
+
+        <p>SongList is a browser-based chord chart app built for <strong>worship leaders</strong>. It reads <strong>SongBook Pro</strong> <code>.sbp</code> files and displays them as interactive chord charts — complete with transposing, capo controls, a full-screen performance mode, and auto-scroll. When you're ready to lead, share your entire set list with your worship team via a single link so everyone walks in with the same songs.</p>
+        <p>Everything lives in your browser; there is no account to create and no data is sent to any server.</p>
+
+        <img src="images/SS-01.png" alt="Full app interface overview — top navigation bar, sidebar with a collection open and a song selected, Import/Export/Search UG buttons at the bottom" class="screenshot-img" />
+
+        <div class="subsection">
+          <h3 class="subsection-title">Interface Overview</h3>
+          <ul class="feature-list">
+            <li><strong>Top bar</strong> — App title on the left; the ⚙️ Settings button on the right. On mobile, a ☰ menu button opens the sidebar.</li>
+            <li><strong>Sidebar (left)</strong> — Your song library: search, collections, and import/export controls.</li>
+            <li><strong>Main area (right)</strong> — The active song's chord chart. Drag and drop <code>.sbp</code> files here at any time.</li>
+          </ul>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Importing Your First Song</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Click the + Import button</strong>
+                <span>It's at the bottom of the sidebar. A file picker will open.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Select one or more .sbp files</strong>
+                <span>You can import multiple files at once.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>The song appears in the sidebar and opens automatically</strong>
+                <span>Your library is saved in your browser's local storage — it persists across sessions.</span>
+              </div>
+            </div>
+          </div>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Drag & Drop</strong>
+              You can also drag <code>.sbp</code> files directly onto the main content area to import them — no need to use the sidebar button.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 2. SONG LIBRARY                                -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="song-library">
+        <div class="section-number">02 — Song Library</div>
+        <h2 class="section-title">The Song Library</h2>
+        <p>The sidebar is your song library. It lists all imported songs and lets you organise them into collections.</p>
+
+        <div class="subsection" id="search">
+          <h3 class="subsection-title">Search</h3>
+          <p>Type in the search bar at the top of the sidebar to filter songs by <strong>title</strong> or <strong>artist</strong>. The list updates instantly as you type. Clear the search field to return to the full library view.</p>
+          <img src="images/SS-02.png" alt="Sidebar search — 'Jesus' typed in the search bar with two matching songs filtered: Jesus Paid It All and Yeshua" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="view-modes">
+          <h3 class="subsection-title">View Modes</h3>
+          <p>When no search is active, a toggle beneath the search bar lets you switch between two views:</p>
+          <div class="option-grid">
+            <div class="option-card">
+              <div class="option-card-icon">📁</div>
+              <div class="option-card-title">Collections</div>
+              <div class="option-card-desc">Songs grouped into named collections (set lists, events, etc.).</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🎵</div>
+              <div class="option-card-title">All Songs</div>
+              <div class="option-card-desc">Every song in the library in one flat, alphabetical list.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="collections">
+          <h3 class="subsection-title">Collections</h3>
+          <p>Collections are named groups of songs — useful for organising set lists by event, date, or genre.</p>
+          <ul class="feature-list">
+            <li><strong>Create a collection</strong> — Click <span class="btn-replica">+ New Collection</span> in the Collections view, type a name, and press <span class="key">Enter</span> (or click away to confirm). Press <span class="key">Esc</span> to cancel.</li>
+            <li><strong>Add songs to a collection</strong> — Hover over a collection header and click the <strong>Add Songs</strong> button that appears. A modal will let you select songs from your library.</li>
+            <li><strong>Expand / collapse</strong> — Click a collection header to toggle its song list open or closed.</li>
+          </ul>
+          <img src="images/SS-03.png" alt="Collections view — two collections: JUDAH 25F collapsed (12 songs) and JUDAH LG 1 expanded showing its songs, with the New Collection button at the top" class="screenshot-img" />
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 3. IMPORTING SONGS                             -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="importing-songs">
+        <div class="section-number">03 — Importing Songs</div>
+        <h2 class="section-title">Importing Songs</h2>
+
+        <div class="subsection" id="import-sbp">
+          <h3 class="subsection-title">Import .sbp Files</h3>
+          <p>SongList reads <strong>SongBook Pro</strong> <code>.sbp</code> files. There are two ways to import:</p>
+          <ul class="feature-list">
+            <li><strong>Import button</strong> — Click <span class="btn-replica">+ Import</span> at the bottom of the sidebar and choose one or more files in the file picker.</li>
+            <li><strong>Drag & Drop</strong> — Drag one or more <code>.sbp</code> files from your computer and drop them anywhere on the main content area. The area highlights in blue when a drag is detected.</li>
+          </ul>
+          <img src="images/SS-04.png" alt="Empty state — 'No songs yet. Drag a .sbp file here to get started' with an Import File button" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="duplicates">
+          <h3 class="subsection-title">Handling Duplicates</h3>
+          <p>If an imported song's title matches an existing song in your library, a dialog will appear with three options:</p>
+          <ul class="feature-list">
+            <li><strong>Replace</strong> — Overwrites the existing song with the newly imported version.</li>
+            <li><strong>Keep Both</strong> — Adds the new song alongside the existing one as a separate entry.</li>
+            <li><strong>Skip</strong> — Ignores the duplicate and does not import it.</li>
+          </ul>
+          <img src="images/SS-05.png" alt="Duplicate Song dialog — 'A song titled Emmanuel already exists. What would you like to do?' with Replace, Keep Both, and Skip buttons" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="ug-search">
+          <h3 class="subsection-title">Search Ultimate Guitar</h3>
+          <p>SongList can search <strong>Ultimate Guitar</strong> and import chord charts directly from the web. This feature requires a free <strong>Firecrawl API key</strong>.</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Add your Firecrawl API key</strong>
+                <span>Go to ⚙️ Settings → Firecrawl API Key. Paste your key and it will be saved locally. <a href="firecrawl-api-key-guide.html" target="_blank" style="color:var(--accent)">How to get a Firecrawl API key →</a></span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click "Search UG" in the sidebar</strong>
+                <span>The Search Ultimate Guitar modal opens.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Enter a song title or artist name</strong>
+                <span>Results from Ultimate Guitar appear below.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click a result to import it</strong>
+                <span>SongList downloads and parses the chord chart automatically, then opens it.</span>
+              </div>
+            </div>
+          </div>
+          <div class="screenshot-pair">
+            <div class="screenshot-pair-item">
+              <img src="images/SS-06-1.png" alt="Search Ultimate Guitar modal — 'Silent night' typed in the search field with the Search button" />
+              <div class="screenshot-pair-caption">1 — Enter a song title</div>
+            </div>
+            <div class="screenshot-pair-item">
+              <img src="images/SS-06-2.png" alt="Search results — multiple versions of Silent Night chord charts listed from Ultimate Guitar" />
+              <div class="screenshot-pair-caption">2 — Select from results</div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <strong>No API key?</strong>
+              The Search UG button will show a prompt asking you to add your key in Settings. The key is stored only in your browser — it is never sent to any SongList server.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 4. VIEWING A SONG                              -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="viewing-a-song">
+        <div class="section-number">04 — Viewing a Song</div>
+        <h2 class="section-title">Viewing a Song</h2>
+        <p>Click any song in the sidebar to open it in the main content area.</p>
+
+        <img src="images/SS-07.png" alt="Full song view — 'Thou Art A Shield For Me' showing the song header with key, capo, info and edit controls, chord strip with Am/G/F diagrams, and lyrics with inline chords" class="screenshot-img" />
+
+        <div class="subsection" id="song-header">
+          <h3 class="subsection-title">Song Header & Info Panel</h3>
+          <p>The top of every song shows the <strong>title</strong>, <strong>artist</strong>, and a row of controls. If the song has tempo, time signature, CCLI number, or copyright data, an <strong>Info</strong> toggle link appears.</p>
+          <ul class="feature-list">
+            <li>Click <strong>Info ▼</strong> to expand a grid showing BPM, time signature, CCLI, and copyright.</li>
+            <li>Click <strong>Info ▲</strong> to collapse it again.</li>
+          </ul>
+          <img src="images/SS-08.png" alt="Song header with Info panel expanded — showing Key: C and Capo: 3 beneath the title and controls" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="chord-strip">
+          <h3 class="subsection-title">Chord Strip</h3>
+          <p>Directly below the header is the <strong>chord strip</strong> — a horizontal bar of chord diagrams for every unique chord in the song. Diagrams show fingering positions on a fretboard.</p>
+          <ul class="feature-list">
+            <li>Click the <strong>Chords ▲ / ▼</strong> toggle to show or hide the chord strip.</li>
+            <li>The chord strip updates automatically when you transpose the song or adjust the capo.</li>
+            <li>The chord strip is hidden in Lyrics Only mode.</li>
+          </ul>
+          <img src="images/SS-09.png" alt="Chord strip open — Am, G, and F chord diagrams displayed below the song header with the Chords toggle button" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="display-controls">
+          <h3 class="subsection-title">Font Size & Fit to Screen</h3>
+          <p>A set of floating buttons appears in the <strong>bottom-right corner</strong> whenever a song is open.</p>
+          <ul class="feature-list">
+            <li><strong>⤢ (Fit to Screen)</strong> — Automatically scales the font size so the entire song fits within the visible screen height without scrolling. When active, the button turns indigo. Tap again to return to manual font sizing.</li>
+            <li><strong>+</strong> — Increase font size (up to 28 px). Disabled while Fit to Screen is on.</li>
+            <li><strong>−</strong> — Decrease font size (down to 12 px). Disabled while Fit to Screen is on.</li>
+          </ul>
+          <p>Font size preference is saved across sessions.</p>
+          <img src="images/SS-10.png" alt="Floating display controls — arrow pointing to the bottom-right cluster of ⤢ fit, + and − font size, and ▶ auto-scroll buttons" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="lyrics-only">
+          <h3 class="subsection-title">Lyrics Only Mode & PDF Download</h3>
+          <p>Enabling <strong>Lyrics Only</strong> mode (in Settings) hides all chord annotations and the chord strip, showing just the song text. This is useful for singers or worship teams who don't need chords.</p>
+          <p>When Lyrics Only is active, a <span class="btn-replica">↓ PDF</span> button appears in the song header. Clicking it downloads a clean PDF of the song's lyrics for printing or sharing.</p>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Per-song PDF</strong>
+              The PDF button exports the single currently viewed song. To export multiple songs at once, see <a href="#export-pdf" style="color:var(--accent)">Presentation PDF</a>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 5. TRANSPOSING & CAPO                          -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="transpose-capo">
+        <div class="section-number">05 — Transposing & Capo</div>
+        <h2 class="section-title">Transposing & Capo</h2>
+        <p>SongList lets you change the displayed key of any song and set a capo fret, all without editing the original file.</p>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Transpose</h3>
+          <p>A <strong>key dropdown</strong> in the song header lists all 12 major (or minor) keys. Selecting a different key instantly transposes every chord in the song. The original key stored in the file is never modified — transpose is non-destructive.</p>
+          <img src="images/SS-11.png" alt="Transpose key dropdown open — all 12 major keys listed with C ticked as the current key" class="screenshot-img" />
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Capo</h3>
+          <p>The <strong>Capo</strong> control (next to the key dropdown) shows the current capo fret. Use the <strong>+</strong> and <strong>−</strong> buttons to increase or decrease it (0 – 7).</p>
+          <ul class="feature-list">
+            <li>Setting a capo shifts the displayed chords so they reflect what you actually play with a capo fitted at that fret.</li>
+            <li>Transpose and capo can be used together: e.g. set the key to G and capo 2 to play in A with open-G chord shapes.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 6. AUTO-SCROLL                                 -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="auto-scroll">
+        <div class="section-number">06 — Auto-Scroll</div>
+        <h2 class="section-title">Auto-Scroll</h2>
+        <p>Auto-scroll slowly and smoothly scrolls the song content from top to bottom at a speed you control — useful when performing and you need both hands free.</p>
+        <p>Auto-scroll is available in <strong>both the standard song view and Performance Mode</strong>.</p>
+
+        <img src="images/SS-12.png" alt="Auto-scroll active — ⏹ stop button highlighted in indigo, speed display showing 1:30, with + and − speed controls, arrow pointing to the button cluster" class="screenshot-img" />
+
+        <div class="subsection">
+          <h3 class="subsection-title">Controls</h3>
+          <ul class="feature-list">
+            <li><strong>▶ Start</strong> — Tap the play button (bottom right) to begin scrolling.</li>
+            <li><strong>⏹ Stop</strong> — Tap again to stop. The button turns indigo while scrolling is active.</li>
+            <li><strong>Speed +</strong> — Increases the target scroll duration by 5 seconds (slower scroll).</li>
+            <li><strong>Speed −</strong> — Decreases the target scroll duration by 5 seconds (faster scroll). Minimum is <code>0:30</code>.</li>
+            <li><strong>Duration display</strong> — Shows the current target scroll time (e.g. <code>1:30</code>) between the speed buttons. Maximum is <code>10:00</code>.</li>
+          </ul>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Speed saved per song</strong>
+            The scroll duration you set is saved individually for each song so you don't need to re-adjust each time you return to it.
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Auto-scroll stops on song change</strong>
+            Swiping or using arrow keys to navigate to the next song automatically stops the current scroll.
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 7. SONG NAVIGATION                             -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="song-navigation">
+        <div class="section-number">07 — Song Navigation</div>
+        <h2 class="section-title">Navigating Between Songs</h2>
+        <p>Move between songs in the current library view (Collections or All Songs) without touching the sidebar.</p>
+
+        <div class="option-grid">
+          <div class="option-card">
+            <div class="option-card-icon">👆</div>
+            <div class="option-card-title">Swipe (touch)</div>
+            <div class="option-card-desc">Swipe <strong>left</strong> for the next song, <strong>right</strong> for the previous song.</div>
+          </div>
+          <div class="option-card">
+            <div class="option-card-icon">⌨️</div>
+            <div class="option-card-title">Arrow Keys</div>
+            <div class="option-card-desc"><span class="key">→</span> for next, <span class="key">←</span> for previous. Works on desktop when no input is focused.</div>
+          </div>
+        </div>
+
+        <p style="margin-top:14px">After navigating, a brief <strong>swipe hint</strong> appears at the bottom of the screen showing the direction and the title of the song you've moved to.</p>
+
+        <img src="images/SS-13.png" alt="Swipe navigation hint — '← Yeshua' pill toast appearing at the bottom of the screen after swiping to the previous song" class="screenshot-img" />
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 8. PERFORMANCE MODE                            -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="performance-mode">
+        <div class="section-number">08 — Performance Mode</div>
+        <h2 class="section-title">Performance Mode</h2>
+        <p>Performance Mode opens a full-screen overlay optimised for use on stage — large text, clean layout, and no sidebar distractions.</p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-body">
+              <strong>Open a song in the main view</strong>
+              <span>Any song in your library works.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Click the ⛶ Performance button</strong>
+              <span>It's in the song header, top right. The full-screen overlay opens immediately.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Exit when done</strong>
+              <span>Click <span class="btn-replica">✕ Exit</span> in the top-right corner, or press <span class="key">Esc</span>.</span>
+            </div>
+          </div>
+        </div>
+
+        <img src="images/SS-14.png" alt="Performance Mode — 'Yeshua' by Jesus Image in full-screen view with large text, INTRO and VERSE section headers, sticky title bar with Exit button, and auto-scroll button bottom right" class="screenshot-img" />
+
+        <div class="subsection">
+          <h3 class="subsection-title">Keyboard Navigation in Performance Mode</h3>
+          <table class="shortcuts-table">
+            <thead>
+              <tr><th>Key</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><div class="key-group"><span class="key">↓</span></div></td><td>Scroll to the next section</td></tr>
+              <tr><td><div class="key-group"><span class="key">↑</span></div></td><td>Scroll to the previous section</td></tr>
+              <tr><td><div class="key-group"><span class="key">→</span></div></td><td>Go to the next song</td></tr>
+              <tr><td><div class="key-group"><span class="key">←</span></div></td><td>Go to the previous song</td></tr>
+              <tr><td><div class="key-group"><span class="key">Esc</span></div></td><td>Exit Performance Mode</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Chord Strip</h3>
+          <p>The chord strip is also shown in Performance Mode. Toggle it with the <strong>Chords ▲ / ▼</strong> button to show or hide it as needed.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Auto-Scroll in Performance Mode</h3>
+          <p>The same auto-scroll controls (<strong>▶ / ⏹</strong>, speed <strong>+ / −</strong>) are available in Performance Mode. See <a href="#auto-scroll" style="color:var(--accent)">Auto-Scroll</a> for full details.</p>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 9. EDITING A SONG                              -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="editing-a-song">
+        <div class="section-number">09 — Editing a Song</div>
+        <h2 class="section-title">Editing a Song</h2>
+        <p>Click the <span class="btn-replica">Edit</span> button in the song header to open the built-in editor. The main content area switches to an edit view with metadata fields at the top and a raw-text content editor below.</p>
+
+        <img src="images/SS-15.png" alt="Song editor open — 'Yeshua' with Title, Artist, Key, Capo, Tempo and Time Sig fields, and the raw content textarea showing {c:} section headers and [Chord] inline syntax" class="screenshot-img" />
+
+        <div class="subsection" id="editor-metadata">
+          <h3 class="subsection-title">Metadata Fields</h3>
+          <p>The metadata section lets you edit:</p>
+          <ul class="feature-list">
+            <li><strong>Title</strong> and <strong>Artist</strong></li>
+            <li><strong>Key</strong> — chromatic key index used for transposing</li>
+            <li><strong>Capo</strong> — default capo fret</li>
+            <li><strong>Tempo (BPM)</strong> and <strong>Time Signature</strong></li>
+            <li><strong>CCLI number</strong> and <strong>Copyright</strong></li>
+          </ul>
+        </div>
+
+        <div class="subsection" id="editor-content">
+          <h3 class="subsection-title">Content Syntax</h3>
+          <p>Song content is plain text with two special markers:</p>
+
+          <div class="syntax-box">
+            <span class="syntax-comment"># Section header</span><br>
+            <span class="syntax-section">{c: Verse 1}</span><br><br>
+            <span class="syntax-comment"># Chord before a syllable (no space between chord and word)</span><br>
+            <span class="syntax-lyric">El Shad</span><span class="syntax-chord">[Am]</span><span class="syntax-lyric">dai, El Shad</span><span class="syntax-chord">[F]</span><span class="syntax-lyric">dai</span><br><br>
+            <span class="syntax-comment"># Chord-only line (instrumental)</span><br>
+            <span class="syntax-chord">[Dm]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[G]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[C]</span>
+          </div>
+
+          <ul class="feature-list">
+            <li><code>{c: Section Name}</code> — Creates a bold section header (e.g. Verse, Chorus, Bridge).</li>
+            <li><code>[Chord]</code> — Places a chord directly above the following syllable. Put it immediately before the syllable with no space.</li>
+            <li>A line containing <em>only</em> chord tokens separated by spaces is rendered as a purely instrumental chord line.</li>
+          </ul>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Saving and Cancelling</h3>
+          <ul class="feature-list">
+            <li><span class="btn-replica">Save</span> — Commits your changes and returns to the song view.</li>
+            <li><span class="btn-replica">Cancel</span> — Discards changes. If you've made edits, a confirmation prompt will appear before discarding.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 10. EXPORTING SONGS                            -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="exporting-songs">
+        <div class="section-number">10 — Exporting Songs</div>
+        <h2 class="section-title">Exporting Songs</h2>
+        <p>Export lets you save or share selected songs. Start by entering <strong>Export Mode</strong>.</p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-body">
+              <strong>Click "Export" in the sidebar footer</strong>
+              <span>The sidebar enters selection mode. Checkboxes appear next to every song and collection.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Select songs</strong>
+              <span>Tick individual songs, or tick a collection header to select all songs within it.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Click "Export" (with a count)</strong>
+              <span>A choice modal appears with three export options.</span>
+            </div>
+          </div>
+        </div>
+
+        <img src="images/SS-16.png" alt="Export mode — 3 songs selected (Emmanuel, For You Alone, Give Me This Mountain) highlighted in indigo, with '3 selected · Export · Cancel' bar at the bottom" class="screenshot-img" />
+
+        <div class="subsection" id="export-sbp">
+          <h3 class="subsection-title">Download .sbp</h3>
+          <p>Packages the selected songs into a single <code>.sbp</code> file and downloads it to your device. You'll be prompted to choose a filename before the download begins.</p>
+          <p>The resulting file can be re-imported into SongList or opened in SongBook Pro.</p>
+        </div>
+
+        <div class="subsection" id="export-share">
+          <h3 class="subsection-title">Share via Link</h3>
+          <p>Uploads the selected songs to a temporary cloud store and generates a shareable URL — the fastest way to get your set list into the hands of your worship team, band members, or congregation. Anyone with the link can open it in SongList and import the songs with one tap, no account needed.</p>
+          <ul class="feature-list">
+            <li><strong>Collection name</strong> — Optional label that appears when the recipient imports the link. Pre-filled if you selected songs from a collection.</li>
+            <li><strong>Link expires in</strong> — Choose 1, 3, 7, 14, or 30 days. After expiry the link stops working.</li>
+            <li><strong>Share lyrics only</strong> — Toggle on to strip all chords before uploading; the recipient's session will also open in Lyrics Only mode.</li>
+          </ul>
+
+          <img src="images/SS-17.png" alt="Share via Link modal — 3 songs will be shared, collection name field, link expires in 7 days dropdown, Share lyrics only toggle, and Create link button" class="screenshot-img" />
+        </div>
+
+        <div class="subsection" id="export-pdf">
+          <h3 class="subsection-title">Presentation PDF</h3>
+          <p>Generates a multi-page PDF of the selected songs, formatted for projection or printing. A background picker appears before the PDF is generated, letting you choose a solid colour, a gradient, or upload a custom image.</p>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Single-song PDF</strong>
+              To export just one song as a simple lyrics PDF, use the <strong>↓ PDF</strong> button in the song header while Lyrics Only mode is active. See <a href="#lyrics-only" style="color:var(--accent)">Lyrics Only & PDF</a>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 11. IMPORTING FROM A SHARE LINK               -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="share-import">
+        <div class="section-number">11 — Share Link Import</div>
+        <h2 class="section-title">Importing from a Share Link</h2>
+        <p>When a worship leader shares a SongList link with you — whether you're a band member, vocalist, or congregation leader — simply open the URL in your browser. SongList will automatically detect the shared set and prompt you to import it.</p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-body">
+              <strong>Open the shared URL in your browser</strong>
+              <span>SongList loads and silently fetches the shared song data in the background.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Review the import confirmation</strong>
+              <span>A modal shows the number of songs, the collection name (if set), and whether the share is lyrics-only.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-body">
+              <strong>Click "Import" or "Cancel"</strong>
+              <span>Importing adds the songs to your library under the shared collection name. Cancel dismisses the prompt without adding any songs.</span>
+            </div>
+          </div>
+        </div>
+
+        <img src="images/SS-18.png" alt="Import confirmation modal — 'Shared Songbook' listing Emmanuel, For You Alone, and Give Me This Mountain, with a lyrics-only notice and 'Will be added to collection: Worship Night', Cancel and Import All buttons" class="screenshot-img" />
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Expired or not-found links</strong>
+            If the link has expired or is invalid, a toast notification will appear and no songs will be imported.
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 12. SETTINGS                                   -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="settings">
+        <div class="section-number">12 — Settings</div>
+        <h2 class="section-title">Settings</h2>
+        <p>Open Settings by clicking the <strong>⚙️</strong> button in the top-right corner of the app. Press <span class="key">Esc</span> to close.</p>
+
+        <img src="images/SS-19.png" alt="Settings panel — Light theme selected, Lyrics only toggle off, Firecrawl API key field with masked key, Library showing 32 songs with storage bar, and Clear All Data button" class="screenshot-img" />
+
+        <div class="subsection">
+          <h3 class="subsection-title">Theme</h3>
+          <p>Choose between <strong>Light</strong>, <strong>Dark</strong>, and <strong>System</strong>. System follows your operating system's appearance preference.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Lyrics Only</h3>
+          <p>Toggles Lyrics Only mode globally. When on, all chord annotations and the chord strip are hidden across every song. A <span class="btn-replica">↓ PDF</span> button appears in the song header for exporting lyrics.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Firecrawl API Key</h3>
+          <p>Required to use the <strong>Search Ultimate Guitar</strong> feature. Paste your key here; it's stored locally in your browser and never sent to any SongList server. Use the <strong>Show / Hide</strong> button to reveal or mask the key.</p>
+          <p><a href="firecrawl-api-key-guide.html" target="_blank" style="color:var(--accent)">How to get a Firecrawl API key →</a></p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Library Storage</h3>
+          <p>Shows the number of songs in your library and a visual bar indicating how much of your browser's local storage is in use.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Clear All Data</h3>
+          <p>Permanently deletes every song in your library. A confirmation prompt appears before anything is deleted. <strong>This cannot be undone.</strong></p>
+          <div class="callout warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <strong>Back up before clearing</strong>
+              Export your songs as an <code>.sbp</code> file first if you want to keep them. See <a href="#export-sbp" style="color:var(--accent)">Download .sbp</a>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 13. TIPS & SHORTCUTS                           -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="shortcuts">
+        <div class="section-number">13 — Tips & Shortcuts</div>
+        <h2 class="section-title">Tips & Keyboard Shortcuts</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">All Keyboard Shortcuts</h3>
+          <table class="shortcuts-table">
+            <thead>
+              <tr><th>Key(s)</th><th>Context</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="key-group"><span class="key">→</span></div></td>
+                <td>Song view</td>
+                <td>Go to next song</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">←</span></div></td>
+                <td>Song view</td>
+                <td>Go to previous song</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">→</span></div></td>
+                <td>Performance Mode</td>
+                <td>Go to next song</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">←</span></div></td>
+                <td>Performance Mode</td>
+                <td>Go to previous song</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">↓</span></div></td>
+                <td>Performance Mode</td>
+                <td>Scroll to next section</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">↑</span></div></td>
+                <td>Performance Mode</td>
+                <td>Scroll to previous section</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">Esc</span></div></td>
+                <td>Performance Mode</td>
+                <td>Exit Performance Mode</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">Esc</span></div></td>
+                <td>Settings</td>
+                <td>Close Settings panel</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">Enter</span></div></td>
+                <td>New Collection</td>
+                <td>Confirm collection name</td>
+              </tr>
+              <tr>
+                <td><div class="key-group"><span class="key">Esc</span></div></td>
+                <td>New Collection</td>
+                <td>Cancel new collection</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Worship Leader Tips</h3>
+          <ul class="feature-list">
+            <li><strong>Build a set list collection for each service</strong> — Create a collection per Sunday (e.g. "Easter Sunday") and add your songs. Navigate through the set live with <span class="key">→</span> / <span class="key">←</span> or a swipe.</li>
+            <li><strong>Share your set with the whole team</strong> — Use <strong>Export → Share via Link</strong> to send a single URL to your worship team, band, or congregation leaders. They tap the link, import the songs, and are ready to go — no app download required.</li>
+            <li><strong>Share lyrics only for singers and congregation</strong> — When sharing, toggle <strong>Share lyrics only</strong> so chord-free lyrics are what the recipient sees. Ideal for singers who don't need chord charts.</li>
+            <li><strong>Transpose on the fly for different vocalists</strong> — Transpose is non-destructive. If your lead singer needs a different key on the day, change it live without altering the stored song.</li>
+            <li><strong>Use Fit to Screen before leading</strong> — The ⤢ button scales the song to fill your screen so you can read it without scrolling, keeping your eyes up as much as possible.</li>
+            <li><strong>Dial in Auto-Scroll at rehearsal</strong> — Set the scroll speed for each song during the week so it flows naturally when you're leading.</li>
+            <li><strong>Generate a Presentation PDF for the projector team</strong> — The Presentation PDF export gives your visuals team a ready-to-use slide deck, styled with your chosen background.</li>
+            <li><strong>Export a backup .sbp before the service</strong> — Save your set list as a <code>.sbp</code> file in case you need to restore it quickly, especially at a venue with unreliable internet.</li>
+          </ul>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+  // ─── Sidebar collapsible sections ───────────────────────────────
+  document.querySelectorAll('.nav-section-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.target
+      const panel = document.getElementById(id)
+      const isOpen = panel.classList.toggle('open')
+      btn.classList.toggle('open', isOpen)
+    })
+  })
+
+  // ─── Mobile sidebar ──────────────────────────────────────────────
+  const sidebar  = document.getElementById('sidebar')
+  const overlay  = document.getElementById('overlay')
+  const hamburger = document.getElementById('hamburger')
+
+  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('open') }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open') }
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
+  })
+  overlay.addEventListener('click', closeSidebar)
+
+  // Close sidebar on nav item click (mobile)
+  document.querySelectorAll('.nav-item, .nav-direct').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth < 900) closeSidebar()
+    })
+  })
+
+  // ─── Active section tracking ─────────────────────────────────────
+  const allNavLinks = document.querySelectorAll('.nav-item, .nav-direct')
+
+  // Build a map: section anchor id → nav link(s)
+  // We track the following anchor ids
+  const anchorMap = {
+    'getting-started': ['getting-started'],
+    'song-library':    ['song-library'],
+    'search':          ['search'],
+    'view-modes':      ['view-modes'],
+    'collections':     ['collections'],
+    'importing-songs': ['importing-songs'],
+    'import-sbp':      ['import-sbp'],
+    'duplicates':      ['duplicates'],
+    'ug-search':       ['ug-search'],
+    'viewing-a-song':  ['viewing-a-song'],
+    'song-header':     ['song-header'],
+    'chord-strip':     ['chord-strip'],
+    'display-controls':['display-controls'],
+    'lyrics-only':     ['lyrics-only'],
+    'transpose-capo':  ['transpose-capo'],
+    'auto-scroll':     ['auto-scroll'],
+    'song-navigation': ['song-navigation'],
+    'performance-mode':['performance-mode'],
+    'editing-a-song':  ['editing-a-song'],
+    'editor-metadata': ['editor-metadata'],
+    'editor-content':  ['editor-content'],
+    'exporting-songs': ['exporting-songs'],
+    'export-sbp':      ['export-sbp'],
+    'export-share':    ['export-share'],
+    'export-pdf':      ['export-pdf'],
+    'share-import':    ['share-import'],
+    'settings':        ['settings'],
+    'shortcuts':       ['shortcuts'],
+  }
+
+  function setActive(id) {
+    allNavLinks.forEach(a => {
+      const href = a.getAttribute('href').replace('#', '')
+      a.classList.toggle('active', href === id)
+    })
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActive(entry.target.id)
+      }
+    })
+  }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 })
+
+  Object.keys(anchorMap).forEach(id => {
+    const el = document.getElementById(id)
+    if (el) observer.observe(el)
+  })
+
+  // Also observe subsections that are direct targets
+  const subsectionIds = ['search','view-modes','collections','import-sbp','duplicates',
+    'ug-search','song-header','chord-strip','display-controls','lyrics-only',
+    'editor-metadata','editor-content','export-sbp','export-share','export-pdf']
+
+  subsectionIds.forEach(id => {
+    const el = document.getElementById(id)
+    if (el) observer.observe(el)
+  })
+
+  // ─── Smooth scroll offset for fixed elements ─────────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1)
+      const target = document.getElementById(id)
+      if (target) {
+        e.preventDefault()
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
+  })
+</script>
+
+</body>
+</html>

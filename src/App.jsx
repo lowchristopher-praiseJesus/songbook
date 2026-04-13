@@ -89,13 +89,24 @@ export default function App() {
             </button>
             <span className="font-bold text-lg select-none">🎵 SongList</span>
           </div>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Settings"
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-xl"
-          >
-            ⚙️
-          </button>
+          <div className="flex items-center gap-1">
+            <a
+              href="/Documentation-songbook/user-guide.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="User guide"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-base font-semibold leading-none"
+            >
+              ?
+            </a>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Settings"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-xl"
+            >
+              ⚙️
+            </button>
+          </div>
         </header>
 
         {/* Body */}
