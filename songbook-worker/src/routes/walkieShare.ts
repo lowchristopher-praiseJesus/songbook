@@ -4,7 +4,7 @@ import type { Env } from '../types';
 const walkieShare = new Hono<{ Bindings: Env }>();
 
 walkieShare.post('/upload', async (c) => {
-  let body: { volunteers?: unknown };
+  let body: { volunteers?: unknown; walkies?: unknown; liftCards?: unknown; eventName?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -17,14 +17,19 @@ walkieShare.post('/upload', async (c) => {
 
   const uuid = crypto.randomUUID();
   const key = `walkie-shares/${uuid}`;
-  const json = JSON.stringify({ volunteers: body.volunteers });
+  const json = JSON.stringify({
+    volunteers: body.volunteers,
+    walkies: body.walkies ?? [],
+    liftCards: body.liftCards ?? [],
+    eventName: body.eventName ?? '',
+  });
 
   await c.env.R2_BUCKET.put(key, json, {
     customMetadata: { createdAt: new Date().toISOString() },
     httpMetadata: { contentType: 'application/json' },
   });
 
-  const shareUrl = `${c.env.WALKIE_ORIGIN ?? ''}?server=${uuid}`;
+  const shareUrl = `${c.env.WALKIE_ORIGIN ?? ''}?team=${uuid}`;
   return c.json({ uuid, shareUrl });
 });
 
