@@ -13,7 +13,7 @@ export function EmptyState({ onFileChange }) {
         Import File
         <input
           type="file"
-          accept=".sbp,.sbpbackup,.cho,.chordpro,.chopro,.pro"
+          accept=""
           multiple
           className="hidden"
           onChange={onFileChange}

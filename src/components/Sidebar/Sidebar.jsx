@@ -344,7 +344,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         <input
           ref={fileInputRef}
           type="file"
-          accept=".sbp,.sbpbackup,.cho,.chordpro,.chopro,.pro"
+          accept=""
           multiple
           className="hidden"
           onChange={handleFileInput}
