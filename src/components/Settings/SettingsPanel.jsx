@@ -134,6 +134,19 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <Button variant="danger" onClick={clearAll}>Clear All Data</Button>
         </div>
+
+        {/* About */}
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400 dark:text-gray-500">
+          Created by{' '}
+          <a
+            href="https://sherr.it/Lh3ngLLZwJgAsjg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            Christopher Low
+          </a>
+        </div>
       </div>
     </div>
   )
