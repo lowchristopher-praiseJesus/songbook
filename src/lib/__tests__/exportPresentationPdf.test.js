@@ -195,4 +195,54 @@ describe('exportPresentationPdf', () => {
       expect(mockDoc.save).toHaveBeenCalledOnce()
     })
   })
+
+  it('does not render text below the bottom margin for a song with an oversized chorus', () => {
+    // Intro(1 line) + Chorus(13 lines) + Outro(1 line).
+    // At desiredFont=20 the midpoint split puts [Intro+Chorus] in the left column.
+    // At fs=18 (the old desiredFont-2 floor) left column height ≈ 426 pt > contentH ≈ 388 pt,
+    // causing lyric lines to render past the bottom margin (y > 500).
+    const bigChorus = {
+      meta: { title: 'Big Chorus Song', artist: null },
+      sections: [
+        { label: 'Intro', lines: [{ type: 'lyric', content: 'Intro line' }] },
+        {
+          label: 'Chorus',
+          lines: Array.from({ length: 13 }, (_, i) => ({
+            type: 'lyric', content: `Chorus line ${i + 1}`,
+          })),
+        },
+        { label: 'Outro', lines: [{ type: 'lyric', content: 'Outro line' }] },
+      ],
+    }
+    exportPresentationPdf([bigChorus], mockBg, { desiredFont: 20, maxCols: 2 })
+    const yValues = mockDoc.text.mock.calls.map(c => c[2])
+    // PAGE_H(540) - MARGIN_BOTTOM(40) = 500
+    expect(Math.max(...yValues)).toBeLessThanOrEqual(500)
+  })
+
+  it('picks a height-valid column split rather than a midpoint split that overflows', () => {
+    // Three sections where midpoint lands after section B, but A+B overflows the column.
+    // A valid split (A alone in left, B+C in right) must be found instead.
+    // At fontSize=32: lineH=44.8, labelLineH=29.12
+    // Section with label + N lines ≈ 6 + 29.12 + 4 + N*44.8 + 17.92 = 57.04 + N*44.8
+    // contentH(32) ≈ 450 - (32*1.8*1.3 + 20) = 450 - 94.88 = 355.12
+    // A = 57.04 + 1*44.8 = 101.84  (fits in left)
+    // B = 57.04 + 5*44.8 = 281.04  (A+B = 382.88 > 355.12 — overflows!)
+    // C = 57.04 + 1*44.8 = 101.84  (B+C = 382.88 fits in right)
+    // Midpoint: total ≈ 484.72, half ≈ 242.36
+    //   after A (101.84) < 242.36 → continue; after A+B (382.88) >= 242.36 → left=[A,B] ← overflow
+    // Fix: pick left=[A], right=[B,C] since that is the only valid split
+    const song = {
+      meta: { title: 'Split Test Song', artist: null },
+      sections: [
+        { label: 'A', lines: [{ type: 'lyric', content: 'A line' }] },
+        { label: 'B', lines: Array.from({ length: 5 }, (_, i) => ({ type: 'lyric', content: `B${i}` })) },
+        { label: 'C', lines: [{ type: 'lyric', content: 'C line' }] },
+      ],
+    }
+    exportPresentationPdf([song], mockBg, { desiredFont: 32, maxCols: 2 })
+    const yValues = mockDoc.text.mock.calls.map(c => c[2])
+    // PAGE_H(540) - MARGIN_BOTTOM(40) = 500
+    expect(Math.max(...yValues)).toBeLessThanOrEqual(500)
+  })
 })

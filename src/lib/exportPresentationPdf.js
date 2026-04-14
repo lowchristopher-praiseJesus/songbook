@@ -60,9 +60,20 @@ function measureSections(doc, sections, fontSize, maxW = MAX_W) {
 
 /**
  * Split sections into left and right halves for two-column layout.
- * Finds the section boundary closest to the midpoint of total column content height.
+ *
+ * For multi-section songs: among all section-boundary splits where both
+ * columns fit within contentH, picks the most balanced one (min height
+ * difference). Falls back to the midpoint split if no valid boundary exists
+ * (handled upstream by font-size reduction in findBestFontConstrained).
+ *
+ * For single-section songs: splits lines at the height midpoint.
+ *
+ * @param {jsPDF} doc
+ * @param {Section[]} sections
+ * @param {number} fontSize
+ * @param {number} contentH  Available column height (USABLE_H minus header height)
  */
-function splitSections(doc, sections, fontSize) {
+function splitSections(doc, sections, fontSize, contentH) {
   const filtered = sections.filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
   if (filtered.length === 0) return { left: [], right: [] }
 
@@ -94,6 +105,32 @@ function splitSections(doc, sections, fontSize) {
     }
   }
 
+  // Multi-section: among all valid split points where both halves fit within
+  // contentH, pick the most balanced one (smallest height difference between
+  // columns). This avoids the midpoint heuristic placing a large section in a
+  // column that overflows.
+  let bestSplit = null
+  let bestBalance = Infinity
+
+  for (let i = 0; i < filtered.length - 1; i++) {
+    const leftH = measureSections(doc, filtered.slice(0, i + 1), fontSize, COL_W)
+    const rightH = measureSections(doc, filtered.slice(i + 1), fontSize, COL_W)
+    if (leftH <= contentH && rightH <= contentH) {
+      const balance = Math.abs(leftH - rightH)
+      if (balance < bestBalance) {
+        bestBalance = balance
+        bestSplit = i + 1
+      }
+    }
+  }
+
+  if (bestSplit !== null) {
+    return { left: filtered.slice(0, bestSplit), right: filtered.slice(bestSplit) }
+  }
+
+  // Fallback: midpoint split — no section boundary keeps both columns within
+  // contentH. findBestFontConstrained will have already tried smaller fonts, so
+  // this path is a last resort at MIN_FONT.
   const totalH = measureSections(doc, filtered, fontSize, COL_W)
   const half = totalH / 2
   let accumulated = 0
@@ -104,7 +141,6 @@ function splitSections(doc, sections, fontSize) {
       return { left: filtered.slice(0, i + 1), right: filtered.slice(i + 1) }
     }
   }
-  // fallback: put all but last section in left column
   return { left: filtered.slice(0, -1), right: filtered.slice(-1) }
 }
 
@@ -120,23 +156,22 @@ function splitSections(doc, sections, fontSize) {
  */
 function findBestFontConstrained(doc, song, desiredFont, maxCols) {
   const sections = song.sections ?? []
-  const low = Math.max(desiredFont - 2, MIN_FONT)
 
-  for (let fs = desiredFont; fs >= low; fs--) {
+  for (let fs = desiredFont; fs >= MIN_FONT; fs--) {
     const contentH = USABLE_H - measureHeader(doc, song, fs)
 
     if (maxCols === 1) {
       if (measureSections(doc, sections, fs) <= contentH) return { font: fs }
     } else {
       if (measureSections(doc, sections, fs) <= TWO_COL_THRESHOLD) return { font: fs }
-      const { left, right } = splitSections(doc, sections, fs)
+      const { left, right } = splitSections(doc, sections, fs, contentH)
       if (
         measureSections(doc, left, fs, COL_W) <= contentH &&
         measureSections(doc, right, fs, COL_W) <= contentH
       ) return { font: fs }
     }
   }
-  return { font: low }
+  return { font: MIN_FONT }
 }
 
 // ---------------------------------------------------------------------------
@@ -258,7 +293,8 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
 
     if (maxCols >= 2 && measureSections(doc, sections, globalFont) > TWO_COL_THRESHOLD) {
       // Two-column layout
-      const { left, right } = splitSections(doc, sections, globalFont)
+      const contentH = USABLE_H - (startY - MARGIN_TOP)
+      const { left, right } = splitSections(doc, sections, globalFont, contentH)
       renderSections(doc, left, globalFont, COL1_CX, COL_W, startY)
       renderSections(doc, right, globalFont, COL2_CX, COL_W, startY)
     } else {
