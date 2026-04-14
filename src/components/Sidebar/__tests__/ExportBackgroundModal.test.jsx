@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ExportBackgroundModal } from '../ExportBackgroundModal'
 import { exportPresentationPdf } from '../../../lib/exportPresentationPdf'
 
-vi.mock('../../../assets/Background.png', () => ({ default: 'mock-bg.png' }))
 vi.mock('../../../lib/exportPresentationPdf', () => ({ exportPresentationPdf: vi.fn() }))
 
 // Make Image fire onload synchronously so bgImage state is populated before assertions
@@ -32,9 +31,15 @@ describe('ExportBackgroundModal', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
   })
 
-  it('shows a background image preview', () => {
+  it('shows a large preview of the selected background', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
-    expect(screen.getByRole('img', { name: /background preview/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /selected background/i })).toBeInTheDocument()
+  })
+
+  it('shows template thumbnails for each discovered background image', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    // At least the Default template thumbnail must be present
+    expect(screen.getByRole('img', { name: /default/i })).toBeInTheDocument()
   })
 
   it('calls onClose when Cancel is clicked', () => {
