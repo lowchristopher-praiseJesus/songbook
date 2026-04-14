@@ -21,6 +21,8 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
   }, [index])
 
   const importFiles = useCallback(async (files) => {
+    let lastResult = { newSongIds: [], collectionId: null }
+
     for (const file of files) {
       const isSbp = /\.(sbp|sbpbackup)$/i.test(file.name)
       const isChordPro = /\.(cho|chordpro|chopro|pro)$/i.test(file.name)
@@ -62,7 +64,8 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
         if (accepted.length > 0) {
           try {
             const effectiveCollectionName = parsed.collectionName ?? (accepted.length > 1 ? fileBasedName : null)
-            addSongs(accepted, effectiveCollectionName)
+            const result = addSongs(accepted, effectiveCollectionName)
+            lastResult = result
           } catch (e) {
             if (e.name === 'QuotaExceededError') {
               onError('Storage is full. Please delete some songs before importing more.')
@@ -80,7 +83,7 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
         onError(`Could not read "${file.name}". It may be corrupted or use an unsupported format.`)
       }
     }
-    onSuccess?.()
+    onSuccess?.(lastResult)
   }, [addSongs, replaceSong, onError, onDuplicateCheck, onSuccess])
   // index removed from deps — always read via indexRef
 
