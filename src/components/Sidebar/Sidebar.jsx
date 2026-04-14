@@ -33,6 +33,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
   const createCollection = useLibraryStore(s => s.createCollection)
+  const selectSong = useLibraryStore(s => s.selectSong)
+  const setExpandedCollectionId = useLibraryStore(s => s.setExpandedCollectionId)
   const [creatingCollection, setCreatingCollection] = useState(false)
   const [collectionDraft, setCollectionDraft] = useState('')
   const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
@@ -66,7 +68,18 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const { importFiles } = useFileImport({
     onError: msg => onAddToast(msg, 'error'),
     onDuplicateCheck,
-    onSuccess: onImportSuccess,
+    onSuccess: ({ newSongIds, collectionId } = {}) => {
+      if (newSongIds?.length > 0) {
+        if (collectionId) {
+          setViewMode('collections')
+          setExpandedCollectionId(collectionId)
+        } else {
+          setViewMode('allSongs')
+        }
+        selectSong(newSongIds[0])
+      }
+      onImportSuccess?.()
+    },
   })
 
   const trimmedQuery = query.trim()

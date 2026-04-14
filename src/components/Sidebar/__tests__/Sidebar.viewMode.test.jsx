@@ -4,6 +4,8 @@ import { Sidebar } from '../Sidebar'
 
 // Minimal mocks — only what Sidebar needs to render the control
 const mockSetViewMode = vi.fn()
+const mockSelectSong = vi.fn()
+const mockSetExpandedCollectionId = vi.fn()
 let mockViewMode = 'collections'
 
 vi.mock('../../../store/libraryStore', () => ({
@@ -17,11 +19,18 @@ vi.mock('../../../store/libraryStore', () => ({
       viewMode: mockViewMode,
       setViewMode: mockSetViewMode,
       createCollection: vi.fn(),
+      selectSong: mockSelectSong,
+      setExpandedCollectionId: mockSetExpandedCollectionId,
+      expandedCollectionId: null,
     }),
 }))
 
+let capturedOnSuccess
 vi.mock('../../../hooks/useFileImport', () => ({
-  useFileImport: () => ({ importFiles: vi.fn() }),
+  useFileImport: (opts) => {
+    capturedOnSuccess = opts.onSuccess
+    return { importFiles: vi.fn() }
+  },
 }))
 
 vi.mock('../../UGImport/UGSearchModal', () => ({
@@ -56,6 +65,9 @@ describe('Sidebar view toggle', () => {
   beforeEach(() => {
     mockViewMode = 'collections'
     mockSetViewMode.mockReset()
+    mockSelectSong.mockReset()
+    mockSetExpandedCollectionId.mockReset()
+    defaultProps.onImportSuccess.mockReset()
   })
 
   it('renders Collections and All Songs buttons', () => {
@@ -84,5 +96,44 @@ describe('Sidebar view toggle', () => {
     fireEvent.change(input, { target: { value: 'grace' } })
     expect(screen.queryByRole('button', { name: 'Collections' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'All Songs' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Sidebar onSuccess navigation', () => {
+  beforeEach(() => {
+    mockViewMode = 'collections'
+    mockSetViewMode.mockReset()
+    mockSelectSong.mockReset()
+    mockSetExpandedCollectionId.mockReset()
+    defaultProps.onImportSuccess.mockReset()
+  })
+
+  it('switches to All Songs and selects the song when a single song is imported', () => {
+    render(<Sidebar {...defaultProps} />)
+    capturedOnSuccess({ newSongIds: ['song-1'], collectionId: null })
+    expect(mockSetViewMode).toHaveBeenCalledWith('allSongs')
+    expect(mockSelectSong).toHaveBeenCalledWith('song-1')
+    expect(mockSetExpandedCollectionId).not.toHaveBeenCalled()
+  })
+
+  it('switches to Collections, sets expanded id, and selects first song when a collection is imported', () => {
+    render(<Sidebar {...defaultProps} />)
+    capturedOnSuccess({ newSongIds: ['song-1', 'song-2'], collectionId: 'col-1' })
+    expect(mockSetViewMode).toHaveBeenCalledWith('collections')
+    expect(mockSetExpandedCollectionId).toHaveBeenCalledWith('col-1')
+    expect(mockSelectSong).toHaveBeenCalledWith('song-1')
+  })
+
+  it('does not navigate when no songs were added', () => {
+    render(<Sidebar {...defaultProps} />)
+    capturedOnSuccess({ newSongIds: [], collectionId: null })
+    expect(mockSetViewMode).not.toHaveBeenCalled()
+    expect(mockSelectSong).not.toHaveBeenCalled()
+  })
+
+  it('calls onImportSuccess after navigating', () => {
+    render(<Sidebar {...defaultProps} />)
+    capturedOnSuccess({ newSongIds: ['song-1'], collectionId: null })
+    expect(defaultProps.onImportSuccess).toHaveBeenCalled()
   })
 })
