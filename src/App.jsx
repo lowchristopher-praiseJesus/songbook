@@ -14,6 +14,9 @@ import { parseSbpFile } from './lib/parser/sbpParser'
 export default function App() {
   const init = useLibraryStore(s => s.init)
   const addSongs = useLibraryStore(state => state.addSongs)
+  const setViewMode = useLibraryStore(state => state.setViewMode)
+  const setExpandedCollectionId = useLibraryStore(state => state.setExpandedCollectionId)
+  const selectSong = useLibraryStore(state => state.selectSong)
   const { toasts, addToast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -54,11 +57,16 @@ export default function App() {
   function handleShareImport() {
     if (shareSongs) {
       const name = shareSongs.collectionName || 'Shared Songs'
-      addSongs(shareSongs.songs, name)
+      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name)
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
       setSidebarOpen(true)
+      if (newSongIds.length > 0) {
+        setViewMode('collections')
+        setExpandedCollectionId(collectionId)
+        selectSong(newSongIds[0])
+      }
     }
     setShareSongs(null)
     clearShareParam()
