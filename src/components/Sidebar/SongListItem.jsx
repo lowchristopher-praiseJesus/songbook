@@ -1,6 +1,15 @@
 import { useLibraryStore } from '../../store/libraryStore'
 
-export function SongListItem({ entry, onSelect, collectionId = null }) {
+export function SongListItem({
+  entry,
+  onSelect,
+  collectionId = null,
+  sortableRef = null,
+  sortableStyle = {},
+  dragHandleListeners = null,
+  dragHandleAttributes = {},
+  isDragging = false,
+}) {
   const selectSong = useLibraryStore(s => s.selectSong)
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const removeSongFromCollection = useLibraryStore(s => s.removeSongFromCollection)
@@ -36,7 +45,21 @@ export function SongListItem({ entry, onSelect, collectionId = null }) {
   }
 
   return (
-    <li className="flex items-center group">
+    <li
+      ref={sortableRef}
+      style={sortableStyle}
+      className={`flex items-center group${isDragging ? ' opacity-40' : ''}`}
+    >
+      {dragHandleListeners && (
+        <span
+          {...dragHandleListeners}
+          {...dragHandleAttributes}
+          aria-label="Drag to reorder"
+          className="ml-1 mr-0.5 text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing shrink-0 select-none touch-none"
+        >
+          ⠿
+        </span>
+      )}
       {isExportMode && (
         <input
           type="checkbox"
@@ -46,7 +69,6 @@ export function SongListItem({ entry, onSelect, collectionId = null }) {
           className="ml-2 mr-1 h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
         />
       )}
-      {/* Selection / navigation button */}
       <button
         type="button"
         onClick={handleRowClick}
@@ -65,7 +87,6 @@ export function SongListItem({ entry, onSelect, collectionId = null }) {
           </div>
         )}
       </button>
-      {/* Delete button hidden in export mode */}
       {!isExportMode && (
         <button
           type="button"
