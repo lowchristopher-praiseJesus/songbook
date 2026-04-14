@@ -122,7 +122,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       {isDragging && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 bg-white/80 dark:bg-gray-900/80 px-6 py-3 rounded-xl">
-            Drop .sbp files here
+            Drop .sbp or ChordPro files here
           </div>
         </div>
       )}

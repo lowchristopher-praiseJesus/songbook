@@ -731,7 +731,7 @@
           Importing Songs <span class="chevron">›</span>
         </button>
         <div class="nav-items open" id="nav-import">
-          <a class="nav-item" href="#import-sbp">Import .sbp Files</a>
+          <a class="nav-item" href="#import-sbp">Import Song Files</a>
           <a class="nav-item" href="#duplicates">Handling Duplicates</a>
           <a class="nav-item" href="#ug-search">Search Ultimate Guitar</a>
         </div>
@@ -805,7 +805,7 @@
         <div class="section-number">01 — Getting Started</div>
         <h2 class="section-title">Welcome to SongList</h2>
 
-        <p>SongList is a browser-based chord chart app built for <strong>worship leaders</strong>. It reads <strong>SongBook Pro</strong> <code>.sbp</code> files and displays them as interactive chord charts — complete with transposing, capo controls, a full-screen performance mode, and auto-scroll. When you're ready to lead, share your entire set list with your worship team via a single link so everyone walks in with the same songs.</p>
+        <p>SongList is a browser-based chord chart app built for <strong>worship leaders</strong>. It reads <strong>SongBook Pro</strong> <code>.sbp</code> files and <strong>ChordPro</strong> <code>.cho</code> / <code>.pro</code> files and displays them as interactive chord charts — complete with transposing, capo controls, a full-screen performance mode, and auto-scroll. When you're ready to lead, share your entire set list with your worship team via a single link so everyone walks in with the same songs.</p>
         <p>Everything lives in your browser; there is no account to create and no data is sent to any server.</p>
 
         <img src="images/SS-01.png" alt="Full app interface overview — top navigation bar, sidebar with a collection open and a song selected, Import/Export/Search UG buttons at the bottom" class="screenshot-img" />
@@ -815,7 +815,7 @@
           <ul class="feature-list">
             <li><strong>Top bar</strong> — App title on the left; the ⚙️ Settings button on the right. On mobile, a ☰ menu button opens the sidebar.</li>
             <li><strong>Sidebar (left)</strong> — Your song library: search, collections, and import/export controls.</li>
-            <li><strong>Main area (right)</strong> — The active song's chord chart. Drag and drop <code>.sbp</code> files here at any time.</li>
+            <li><strong>Main area (right)</strong> — The active song's chord chart. Drag and drop song files here at any time.</li>
           </ul>
         </div>
 
@@ -830,8 +830,8 @@
             </div>
             <div class="step">
               <div class="step-body">
-                <strong>Select one or more .sbp files</strong>
-                <span>You can import multiple files at once.</span>
+                <strong>Select one or more song files</strong>
+                <span>Supports SongBook Pro (.sbp) and ChordPro (.cho, .chordpro, .pro). You can import multiple files at once.</span>
               </div>
             </div>
             <div class="step">
@@ -845,7 +845,7 @@
             <span class="callout-icon">💡</span>
             <div class="callout-body">
               <strong>Drag & Drop</strong>
-              You can also drag <code>.sbp</code> files directly onto the main content area to import them — no need to use the sidebar button.
+              You can also drag <code>.sbp</code> or <code>.cho</code> / <code>.pro</code> files directly onto the main content area to import them — no need to use the sidebar button.
             </div>
           </div>
         </div>
@@ -902,13 +902,18 @@
         <h2 class="section-title">Importing Songs</h2>
 
         <div class="subsection" id="import-sbp">
-          <h3 class="subsection-title">Import .sbp Files</h3>
-          <p>SongList reads <strong>SongBook Pro</strong> <code>.sbp</code> files. There are two ways to import:</p>
+          <h3 class="subsection-title">Import Song Files</h3>
+          <p>SongList supports two file formats:</p>
+          <ul class="feature-list">
+            <li><strong>SongBook Pro</strong> — <code>.sbp</code> and <code>.sbpbackup</code> files. Can contain multiple songs in one file.</li>
+            <li><strong>ChordPro</strong> — <code>.cho</code>, <code>.chordpro</code>, <code>.chopro</code>, and <code>.pro</code> files. One song per file; title, key, capo, tempo, and section markers (<code>{start_of_verse}</code>, <code>{start_of_chorus}</code>, etc.) are all read automatically.</li>
+          </ul>
+          <p>There are two ways to import:</p>
           <ul class="feature-list">
             <li><strong>Import button</strong> — Click <span class="btn-replica">+ Import</span> at the bottom of the sidebar and choose one or more files in the file picker.</li>
-            <li><strong>Drag & Drop</strong> — Drag one or more <code>.sbp</code> files from your computer and drop them anywhere on the main content area. The area highlights in blue when a drag is detected.</li>
+            <li><strong>Drag & Drop</strong> — Drag files from your computer and drop them anywhere on the main content area. The area highlights in blue when a drag is detected.</li>
           </ul>
-          <img src="images/SS-04.png" alt="Empty state — 'No songs yet. Drag a .sbp file here to get started' with an Import File button" class="screenshot-img" />
+          <img src="images/SS-04.png" alt="Empty state — 'No songs yet. Drag a file here to get started' with an Import File button" class="screenshot-img" />
         </div>
 
         <div class="subsection" id="duplicates">

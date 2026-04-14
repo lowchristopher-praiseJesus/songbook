@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react'
 import { parseSbpFile } from '../lib/parser/sbpParser'
+import { parseChordPro } from '../lib/parser/chordProParser'
 import { useLibraryStore } from '../store/libraryStore'
 
 /**
@@ -21,14 +22,24 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
 
   const importFiles = useCallback(async (files) => {
     for (const file of files) {
-      if (!file.name.endsWith('.sbp') && !file.name.endsWith('.sbpbackup')) {
-        onError(`"${file.name}" is not a .sbp or .sbpbackup file`)
+      const isSbp = /\.(sbp|sbpbackup)$/i.test(file.name)
+      const isChordPro = /\.(cho|chordpro|chopro|pro)$/i.test(file.name)
+
+      if (!isSbp && !isChordPro) {
+        onError(`"${file.name}" is not a supported file (.sbp, .sbpbackup, .cho, .chordpro, .chopro, .pro)`)
         continue
       }
       try {
-        const buf = await file.arrayBuffer()
-        const parsed = await parseSbpFile(buf)
-        const fileBasedName = file.name.replace(/\.(sbp|sbpbackup)$/i, '')
+        let parsed
+        if (isSbp) {
+          const buf = await file.arrayBuffer()
+          parsed = await parseSbpFile(buf)
+        } else {
+          const text = await file.text()
+          const song = parseChordPro(text, file.name)
+          parsed = { songs: [song], collectionName: null, lyricsOnly: false }
+        }
+        const fileBasedName = file.name.replace(/\.(sbp|sbpbackup|cho|chordpro|chopro|pro)$/i, '')
         const accepted = []
 
         for (const song of parsed.songs) {
