@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -111,14 +111,13 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
     if (e.key === 'Escape') { setEditing(false) }
   }
 
-  function handleDragEnd(event) {
+  const handleDragEnd = useCallback((event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const songIds = group.entries.map(e => e.id)
-    const oldIndex = songIds.indexOf(active.id)
-    const newIndex = songIds.indexOf(over.id)
-    setCollectionSongs(group.id, arrayMove(songIds, oldIndex, newIndex))
-  }
+    const oldIndex = groupIds.indexOf(active.id)
+    const newIndex = groupIds.indexOf(over.id)
+    setCollectionSongs(group.id, arrayMove(groupIds, oldIndex, newIndex))
+  }, [groupIds, group.id, setCollectionSongs])
 
   const isSpecial = group.id === '__uncategorized__'
 
