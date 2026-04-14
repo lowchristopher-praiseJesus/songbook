@@ -65,7 +65,10 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
           try {
             const effectiveCollectionName = parsed.collectionName ?? (accepted.length > 1 ? fileBasedName : null)
             const result = addSongs(accepted, effectiveCollectionName)
-            lastResult = result
+            lastResult = {
+              newSongIds: [...lastResult.newSongIds, ...result.newSongIds],
+              collectionId: lastResult.collectionId ?? result.collectionId,
+            }
           } catch (e) {
             if (e.name === 'QuotaExceededError') {
               onError('Storage is full. Please delete some songs before importing more.')

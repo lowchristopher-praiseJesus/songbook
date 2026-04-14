@@ -58,4 +58,23 @@ describe('useFileImport onSuccess payload', () => {
     expect(onSuccess).toHaveBeenCalledWith({ newSongIds: [], collectionId: null })
     expect(onError).toHaveBeenCalled()
   })
+
+  it('accumulates newSongIds across multiple files', async () => {
+    // Each file call returns a different result
+    mockAddSongs
+      .mockReturnValueOnce({ newSongIds: ['id-1'], collectionId: null })
+      .mockReturnValueOnce({ newSongIds: ['id-2'], collectionId: null })
+
+    const { result } = renderHook(() =>
+      useFileImport({ onError, onDuplicateCheck, onSuccess })
+    )
+    const file1 = new File(['title: Song One'], 'song1.cho', { type: 'text/plain' })
+    const file2 = new File(['title: Song Two'], 'song2.cho', { type: 'text/plain' })
+    await result.current.importFiles([file1, file2])
+
+    expect(onSuccess).toHaveBeenCalledWith({
+      newSongIds: ['id-1', 'id-2'],
+      collectionId: null,
+    })
+  })
 })
