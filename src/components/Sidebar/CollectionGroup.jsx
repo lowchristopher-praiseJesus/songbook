@@ -13,6 +13,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
+  const expandedCollectionId = useLibraryStore(s => s.expandedCollectionId)
 
   useEffect(() => {
     if (editing) {
@@ -32,6 +33,10 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
       checkboxRef.current.indeterminate = someSelected
     }
   }, [someSelected])
+
+  useEffect(() => {
+    if (expandedCollectionId === group.id) setOpen(true)
+  }, [expandedCollectionId, group.id])
 
   function handleDelete(e) {
     e.stopPropagation()
