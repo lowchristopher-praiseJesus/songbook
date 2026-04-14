@@ -126,6 +126,67 @@ describe('replaceSong preserves collection membership', () => {
   })
 })
 
+describe('addSongs return value', () => {
+  it('returns newSongIds and null collectionId for a single song with no collection name', () => {
+    const song = { meta: { title: 'Amazing Grace', artist: '' }, rawText: '', sections: [] }
+    const result = useLibraryStore.getState().addSongs([song])
+    expect(result.newSongIds).toHaveLength(1)
+    expect(result.collectionId).toBeNull()
+    // The returned id should match what ended up in the index
+    const { index } = useLibraryStore.getState()
+    expect(index[0].id).toBe(result.newSongIds[0])
+  })
+
+  it('returns newSongIds and the new collectionId when a collection is created', () => {
+    const song = { meta: { title: 'Blessed Be', artist: '' }, rawText: '', sections: [] }
+    const result = useLibraryStore.getState().addSongs([song], 'Sunday Set')
+    expect(result.newSongIds).toHaveLength(1)
+    expect(result.collectionId).toBeTruthy()
+    const { collections } = useLibraryStore.getState()
+    const col = collections.find(c => c.id === result.collectionId)
+    expect(col).toBeDefined()
+    expect(col.name).toBe('Sunday Set')
+    expect(col.songIds).toEqual(result.newSongIds)
+  })
+
+  it('returns empty newSongIds when the song id already exists in the index', () => {
+    // Seed index with a song that has the same id we will pass to addSongs
+    const existingSong = {
+      id: 'pre-existing',
+      meta: { title: 'Old Song', artist: '' },
+      rawText: '',
+      sections: [],
+      importedAt: '2026-01-01T00:00:00Z',
+    }
+    saveSong(existingSong)
+    saveIndex([{ id: 'pre-existing', title: 'Old Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }])
+    useLibraryStore.setState({
+      index: [{ id: 'pre-existing', title: 'Old Song', artist: '', importedAt: '2026-01-01T00:00:00Z' }],
+    })
+
+    // addSongs with the same id — treated as an update, not a new song
+    const result = useLibraryStore.getState().addSongs([existingSong])
+    expect(result.newSongIds).toHaveLength(0)
+    expect(result.collectionId).toBeNull()
+  })
+
+  it('returns the existing collection id when a source-tagged collection already exists', () => {
+    const col = {
+      id: 'ug-col',
+      name: 'Ultimate Guitar',
+      createdAt: '2026-01-01T00:00:00Z',
+      songIds: [],
+      source: 'ug',
+    }
+    useLibraryStore.setState({ collections: [col] })
+
+    const song = { meta: { title: 'Song X', artist: '' }, rawText: '', sections: [] }
+    const result = useLibraryStore.getState().addSongs([song], 'Ultimate Guitar', 'ug')
+    expect(result.collectionId).toBe('ug-col')
+    expect(result.newSongIds).toHaveLength(1)
+  })
+})
+
 describe('init() migration', () => {
   it('strips collectionId from index entries on load', () => {
     saveSong({ id: 's1', meta: { title: 'Song 1', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })

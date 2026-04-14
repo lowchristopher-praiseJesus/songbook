@@ -72,6 +72,7 @@ export const useLibraryStore = create((set, get) => ({
     const currentIndex = [...get().index]
     const currentCollections = [...get().collections]
     const newSongIds = []
+    let resultCollectionId = null
 
     // Find an existing collection by source tag (e.g. 'ug') to avoid duplicates
     const sourceCollection = collectionSource
@@ -108,6 +109,7 @@ export const useLibraryStore = create((set, get) => ({
         const updated = { ...sourceCollection, songIds: [...sourceCollection.songIds, ...newSongIds] }
         const cIdx = currentCollections.findIndex(c => c.id === sourceCollection.id)
         currentCollections[cIdx] = updated
+        resultCollectionId = sourceCollection.id
       } else {
         // Create a new collection (optionally tagged with source)
         const newCollection = {
@@ -118,6 +120,7 @@ export const useLibraryStore = create((set, get) => ({
           ...(collectionSource ? { source: collectionSource } : {}),
         }
         currentCollections.push(newCollection)
+        resultCollectionId = newCollection.id
       }
       saveCollections(currentCollections)
     }
@@ -125,6 +128,8 @@ export const useLibraryStore = create((set, get) => ({
     currentIndex.sort((a, b) => a.title.localeCompare(b.title))
     saveIndex(currentIndex)
     set({ index: currentIndex, collections: currentCollections })
+
+    return { newSongIds, collectionId: resultCollectionId }
   },
 
   /**
