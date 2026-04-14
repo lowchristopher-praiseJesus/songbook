@@ -17,6 +17,7 @@ export const useLibraryStore = create((set, get) => ({
   isExportMode: false,
   selectedSongIds: new Set(), // Set<id> of songs checked for export
   viewMode: 'collections',   // 'collections' | 'allSongs'
+  expandedCollectionId: null, // string | null — drives CollectionGroup auto-expand
 
   /**
    * Initialize from localStorage on app start.
@@ -303,6 +304,11 @@ export const useLibraryStore = create((set, get) => ({
   setViewMode(mode) {
     saveViewMode(mode)
     set({ viewMode: mode })
+  },
+
+  /** Set which collection should auto-expand (e.g. after import). */
+  setExpandedCollectionId(id) {
+    set({ expandedCollectionId: id })
   },
 
   /** Create a new empty collection with the given name. No-op if name is blank. */

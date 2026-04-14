@@ -10,6 +10,7 @@ beforeEach(() => {
     activeSong: null,
     editingSongId: null,
     viewMode: 'collections',
+    expandedCollectionId: null,
   })
 })
 
@@ -37,5 +38,22 @@ describe('viewMode', () => {
   it('init() defaults to collections when localStorage is empty', () => {
     useLibraryStore.getState().init()
     expect(useLibraryStore.getState().viewMode).toBe('collections')
+  })
+})
+
+describe('expandedCollectionId', () => {
+  it('defaults to null', () => {
+    expect(useLibraryStore.getState().expandedCollectionId).toBeNull()
+  })
+
+  it('setExpandedCollectionId sets the value', () => {
+    useLibraryStore.getState().setExpandedCollectionId('col-1')
+    expect(useLibraryStore.getState().expandedCollectionId).toBe('col-1')
+  })
+
+  it('setExpandedCollectionId can be set back to null', () => {
+    useLibraryStore.getState().setExpandedCollectionId('col-1')
+    useLibraryStore.getState().setExpandedCollectionId(null)
+    expect(useLibraryStore.getState().expandedCollectionId).toBeNull()
   })
 })
