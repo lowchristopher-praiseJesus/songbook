@@ -207,7 +207,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
         )}
       </div>
       {open && (
-        isSpecial ? (
+        (isSpecial || isExportMode) ? (
           <ul className="ml-2 space-y-0.5">
             {group.entries.map(entry => (
               <SongListItem key={entry.id} entry={entry} onSelect={onSelect} collectionId={group.id} />
