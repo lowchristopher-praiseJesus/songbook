@@ -1,6 +1,50 @@
 import { useState, useRef, useEffect } from 'react'
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
 import { SongListItem } from './SongListItem'
+
+function SortableSongListItem({ entry, onSelect, collectionId }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <SongListItem
+      entry={entry}
+      onSelect={onSelect}
+      collectionId={collectionId}
+      sortableRef={setNodeRef}
+      sortableStyle={style}
+      dragHandleListeners={listeners}
+      dragHandleAttributes={attributes}
+      isDragging={isDragging}
+    />
+  )
+}
 
 export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGroupCheckboxChange = () => {} }) {
   const [open, setOpen] = useState(false)
@@ -10,10 +54,16 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
   const checkboxRef = useRef(null)
   const deleteCollection = useLibraryStore(s => s.deleteCollection)
   const renameCollection = useLibraryStore(s => s.renameCollection)
+  const setCollectionSongs = useLibraryStore(s => s.setCollectionSongs)
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
   const expandedCollectionId = useLibraryStore(s => s.expandedCollectionId)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   useEffect(() => {
     if (editing) {
@@ -22,7 +72,6 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
     }
   }, [editing, group.name])
 
-  // Tri-state checkbox logic
   const groupIds = group.entries.map(e => e.id)
   const selectedCount = groupIds.filter(id => selectedSongIds.has(id)).length
   const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
@@ -60,6 +109,15 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
   function handleKeyDown(e) {
     if (e.key === 'Enter') { e.preventDefault(); commitRename() }
     if (e.key === 'Escape') { setEditing(false) }
+  }
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const songIds = group.entries.map(e => e.id)
+    const oldIndex = songIds.indexOf(active.id)
+    const newIndex = songIds.indexOf(over.id)
+    setCollectionSongs(group.id, arrayMove(songIds, oldIndex, newIndex))
   }
 
   const isSpecial = group.id === '__uncategorized__'
@@ -150,11 +208,23 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
         )}
       </div>
       {open && (
-        <ul className="ml-2 space-y-0.5">
-          {group.entries.map(entry => (
-            <SongListItem key={entry.id} entry={entry} onSelect={onSelect} collectionId={group.id} />
-          ))}
-        </ul>
+        isSpecial ? (
+          <ul className="ml-2 space-y-0.5">
+            {group.entries.map(entry => (
+              <SongListItem key={entry.id} entry={entry} onSelect={onSelect} collectionId={group.id} />
+            ))}
+          </ul>
+        ) : (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext items={groupIds} strategy={verticalListSortingStrategy}>
+              <ul className="ml-2 space-y-0.5">
+                {group.entries.map(entry => (
+                  <SortableSongListItem key={entry.id} entry={entry} onSelect={onSelect} collectionId={group.id} />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        )
       )}
     </li>
   )
