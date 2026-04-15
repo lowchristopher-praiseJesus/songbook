@@ -186,6 +186,29 @@ describe('POST /session/:code/heartbeat/:songId', () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it('returns 410 when session is closed', async () => {
+    const { code, leaderToken } = await (await createSession({ name: 'T', songs: [{ id: 'h3', meta: { title: 'X', keyIndex: 0, usesFlats: false }, rawText: '' }] })).json() as { code: string; leaderToken: string };
+
+    // Acquire lock
+    await SELF.fetch(`http://localhost/session/${code}/lock/h3`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-z' }),
+    });
+
+    // Close the session
+    await SELF.fetch(`http://localhost/session/${code}/close`, {
+      method: 'POST',
+      headers: { 'Origin': ORIGIN, 'X-Leader-Token': leaderToken },
+    });
+
+    // Heartbeat on a closed session should 410
+    const res = await SELF.fetch(`http://localhost/session/${code}/heartbeat/h3`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-z' }),
+    });
+    expect(res.status).toBe(410);
+  });
 });
 
 describe('POST /session/:code/close', () => {

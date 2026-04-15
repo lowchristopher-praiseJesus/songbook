@@ -138,6 +138,7 @@ session.post('/:code/heartbeat/:songId', async (c) => {
 
   const sess = await getSession(c.env.SESSION_KV, code);
   if (!sess) return c.json({ error: 'not_found' }, 404);
+  if (isSessionDead(sess)) return c.json({ error: 'gone' }, 410);
 
   const lock = sess.editLocks[songId];
   const lockExpired = !lock || new Date(lock.expiresAt).getTime() <= Date.now();
