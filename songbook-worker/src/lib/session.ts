@@ -90,39 +90,49 @@ export interface Op {
   afterSongId?: string | null;
 }
 
-/** Apply an op to session state, returns updated session with version+1. */
+/** Apply an op to session state, returns updated session with version+1.
+ *  Returns session unchanged (no version bump) if the op has missing preconditions. */
 export function applyOp(session: SessionData, op: Op): SessionData {
   const songs = { ...session.songs };
   let setList = [...session.setList];
+  let changed = false;
 
   switch (op.type) {
     case 'add_song': {
       if (!op.song) break;
       songs[op.songId] = op.song;
       if (!setList.includes(op.songId)) setList.push(op.songId);
+      changed = true;
       break;
     }
     case 'remove_song': {
       delete songs[op.songId];
       setList = setList.filter(id => id !== op.songId);
+      changed = true;
       break;
     }
     case 'move_song': {
+      // Guard: only reorder songs that already exist in the set list
+      if (!setList.includes(op.songId)) break;
       setList = setList.filter(id => id !== op.songId);
       if (op.afterSongId == null) {
         setList.unshift(op.songId);
       } else {
         const idx = setList.indexOf(op.afterSongId);
+        // If afterSongId not found (stale reference), move to front
         setList.splice(idx + 1, 0, op.songId);
       }
+      changed = true;
       break;
     }
     case 'update_song': {
       if (!op.song || !songs[op.songId]) break;
       songs[op.songId] = op.song;
+      changed = true;
       break;
     }
   }
 
+  if (!changed) return session;
   return { ...session, songs, setList, version: session.version + 1 };
 }
