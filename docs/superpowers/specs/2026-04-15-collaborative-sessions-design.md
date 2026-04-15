@@ -321,6 +321,29 @@ No new environment variables needed. Session codes use the existing `APP_ORIGIN`
 
 ---
 
+## Session Songs & Local Library
+
+Session songs live in Cloudflare KV and are **not** automatically added to any member's local library. They are fully usable within `SessionView` — members can transpose, autoscroll, and view chord charts for any session song without it touching their library.
+
+Members can explicitly save songs to their local library via:
+- A **"Save to My Library"** button per song (in the song detail view within the session)
+- A **"Save all songs to My Library"** action in the session footer
+
+Tapping either triggers the existing duplicate-resolution flow if the song already exists locally. Songs saved this way become permanent entries in the member's local "All Songs" list and persist after the session ends.
+
+The `SessionView` footer layout:
+
+```
+│ + Add Song from Library             │
+│ 💾 Save all songs to My Library     │
+│ 🔗 Copy member link                 │
+│ ↓ Export set (existing share flow)  │
+```
+
+When a session ends (closed or expired), unsaved session songs are no longer accessible. Members who want to keep songs should save them before the session closes.
+
+---
+
 ## What Is Not In Scope
 
 - User identity / display names (no accounts, no names shown)
@@ -346,3 +369,5 @@ No new environment variables needed. Session codes use the existing `APP_ORIGIN`
 10. **Session close:** Leader clicks ✕ → `POST /close` → all members see "This session has ended" within 4s
 11. **Auto-expiry:** Set `expiresAt` to past in KV → next poll returns 410 → both leader and members see ended message
 12. **Export after session:** Leader uses existing share flow to send final set to congregation
+13. **Save to library:** Member taps "Save all songs to My Library" → songs appear in All Songs list; duplicate-resolution modal fires if any already exist locally
+14. **Session songs not auto-imported:** Join a session, then check All Songs — no new entries until member explicitly saves
