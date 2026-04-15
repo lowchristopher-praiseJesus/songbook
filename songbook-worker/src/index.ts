@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from './types';
 import share from './routes/share';
 import walkieShare from './routes/walkieShare';
+import session from './routes/session';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -18,8 +19,8 @@ app.use('*', async (c, next) => {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token',
         'Access-Control-Max-Age': '86400',
       },
     });
@@ -36,5 +37,6 @@ app.use('*', async (c, next) => {
 app.get('/health', (c) => c.json({ ok: true }));
 app.route('/share', share);
 app.route('/walkie-shares', walkieShare);
+app.route('/session', session);
 
 export default app;

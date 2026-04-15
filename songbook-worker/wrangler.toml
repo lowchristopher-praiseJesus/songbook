@@ -8,3 +8,8 @@ binding = "R2_BUCKET"
 bucket_name = "songbook-shares"
 
 # APP_ORIGIN is set as a secret: wrangler secret put APP_ORIGIN
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "placeholder-replace-with-real-id"
+preview_id = "placeholder-replace-with-preview-id"

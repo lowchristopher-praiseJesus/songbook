@@ -7,6 +7,7 @@ export default defineWorkersConfig({
         wrangler: { configPath: './wrangler.toml' },
         miniflare: {
           bindings: { APP_ORIGIN: 'http://localhost:5173' },
+          kvNamespaces: ['SESSION_KV'],
         },
       },
     },
