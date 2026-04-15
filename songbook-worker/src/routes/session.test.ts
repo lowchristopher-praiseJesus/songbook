@@ -150,6 +150,44 @@ describe('Edit lock endpoints', () => {
   });
 });
 
+describe('POST /session/:code/heartbeat/:songId', () => {
+  it('extends lock expiry for current lock holder', async () => {
+    const { code } = await (await createSession({ name: 'T', songs: [{ id: 'h1', meta: { title: 'X', keyIndex: 0, usesFlats: false }, rawText: '' }] })).json() as { code: string };
+
+    // Acquire lock first
+    await SELF.fetch(`http://localhost/session/${code}/lock/h1`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-x' }),
+    });
+
+    const res = await SELF.fetch(`http://localhost/session/${code}/heartbeat/h1`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-x' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { expiresAt: string };
+    expect(body.expiresAt).toBeDefined();
+    // expiresAt should be roughly 2 minutes from now
+    const expiry = new Date(body.expiresAt).getTime();
+    expect(expiry).toBeGreaterThan(Date.now() + 90_000);
+  });
+
+  it('returns 404 when clientId does not match lock holder', async () => {
+    const { code } = await (await createSession({ name: 'T', songs: [{ id: 'h2', meta: { title: 'X', keyIndex: 0, usesFlats: false }, rawText: '' }] })).json() as { code: string };
+
+    await SELF.fetch(`http://localhost/session/${code}/lock/h2`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-x' }),
+    });
+
+    const res = await SELF.fetch(`http://localhost/session/${code}/heartbeat/h2`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ clientId: 'client-y' }),
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('POST /session/:code/close', () => {
   it('closes session with valid leader token', async () => {
     const { code, leaderToken } = await (await createSession({ name: 'T' })).json() as { code: string; leaderToken: string };

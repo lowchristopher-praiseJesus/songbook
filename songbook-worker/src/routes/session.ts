@@ -74,18 +74,30 @@ session.post('/:code/op', async (c) => {
 
   const updated = applyOp(sess, op);
   await putSession(c.env.SESSION_KV, updated);
-  return c.json({ version: updated.version });
+  return c.json({ version: updated.version, applied: updated.version !== sess.version });
 });
 
 // POST /session/:code/lock/:songId
 session.post('/:code/lock/:songId', async (c) => {
   const code = c.req.param('code');
   const songId = c.req.param('songId');
-  const { clientId } = await c.req.json() as { clientId: string };
+
+  let clientId: string;
+  try {
+    const body = await c.req.json() as { clientId?: unknown };
+    if (typeof body.clientId !== 'string' || !body.clientId) {
+      return c.json({ error: 'missing_client_id' }, 400);
+    }
+    clientId = body.clientId;
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
 
   const sess = await getSession(c.env.SESSION_KV, code);
   if (!sess) return c.json({ error: 'not_found' }, 404);
   if (isSessionDead(sess)) return c.json({ error: 'gone' }, 410);
+
+  if (!sess.songs[songId]) return c.json({ error: 'not_found' }, 404);
 
   const existing = sess.editLocks[songId];
   const now = Date.now();
@@ -112,7 +124,17 @@ session.post('/:code/lock/:songId', async (c) => {
 session.post('/:code/heartbeat/:songId', async (c) => {
   const code = c.req.param('code');
   const songId = c.req.param('songId');
-  const { clientId } = await c.req.json() as { clientId: string };
+
+  let clientId: string;
+  try {
+    const body = await c.req.json() as { clientId?: unknown };
+    if (typeof body.clientId !== 'string' || !body.clientId) {
+      return c.json({ error: 'missing_client_id' }, 400);
+    }
+    clientId = body.clientId;
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
 
   const sess = await getSession(c.env.SESSION_KV, code);
   if (!sess) return c.json({ error: 'not_found' }, 404);
@@ -134,7 +156,17 @@ session.post('/:code/heartbeat/:songId', async (c) => {
 session.delete('/:code/lock/:songId', async (c) => {
   const code = c.req.param('code');
   const songId = c.req.param('songId');
-  const { clientId } = await c.req.json() as { clientId: string };
+
+  let clientId: string;
+  try {
+    const body = await c.req.json() as { clientId?: unknown };
+    if (typeof body.clientId !== 'string' || !body.clientId) {
+      return c.json({ error: 'missing_client_id' }, 400);
+    }
+    clientId = body.clientId;
+  } catch {
+    return c.json({ error: 'invalid_json' }, 400);
+  }
 
   const sess = await getSession(c.env.SESSION_KV, code);
   if (!sess) return new Response(null, { status: 204 });
