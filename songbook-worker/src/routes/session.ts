@@ -118,7 +118,8 @@ session.post('/:code/heartbeat/:songId', async (c) => {
   if (!sess) return c.json({ error: 'not_found' }, 404);
 
   const lock = sess.editLocks[songId];
-  if (!lock || lock.clientId !== clientId) return c.json({ error: 'not_found' }, 404);
+  const lockExpired = !lock || new Date(lock.expiresAt).getTime() <= Date.now();
+  if (lockExpired || lock.clientId !== clientId) return c.json({ error: 'not_found' }, 404);
 
   const expiresAt = new Date(Date.now() + 2 * 60 * 1000).toISOString();
   const updated: SessionData = {

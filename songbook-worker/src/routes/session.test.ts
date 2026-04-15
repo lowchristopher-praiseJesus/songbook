@@ -49,6 +49,15 @@ describe('GET /session/:code/state', () => {
     const res = await SELF.fetch('http://localhost/session/XXXXXX/state', { headers: { Origin: ORIGIN } });
     expect(res.status).toBe(404);
   });
+
+  it('does not expose leaderToken in state response', async () => {
+    const res = await createSession({ name: 'Secret' });
+    const { code } = await res.json() as { code: string };
+
+    const stateRes = await SELF.fetch(`http://localhost/session/${code}/state`, { headers: { Origin: ORIGIN } });
+    const state = await stateRes.json() as Record<string, unknown>;
+    expect(state.leaderToken).toBeUndefined();
+  });
 });
 
 describe('POST /session/:code/op', () => {
@@ -136,6 +145,8 @@ describe('Edit lock endpoints', () => {
       body: JSON.stringify({ clientId: 'client-b' }),
     });
     expect(res.status).toBe(423);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.lockedUntil).toBeDefined();
   });
 });
 
