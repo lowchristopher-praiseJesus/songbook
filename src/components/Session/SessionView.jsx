@@ -43,13 +43,13 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
       </div>
 
       {isLocked && !isMyLock ? (
-        <span title="Someone is editing this song" className="text-base">\uD83D\uDD12</span>
+        <span title="Someone is editing this song" className="text-base">🔒</span>
       ) : (
         <button
           onClick={() => onEdit(songId)}
           aria-label={`Edit ${song.meta.title}`}
           className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
-        >\u270F\uFE0F</button>
+        >✏️</button>
       )}
 
       <button
@@ -165,7 +165,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
   if (ended || closed) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-2xl">\uD83C\uDFB5</p>
+        <p className="text-2xl">🎵</p>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">This session has ended</h2>
         <Button variant="primary" onClick={onExit}>Back to library</Button>
       </div>
@@ -199,7 +199,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       <div className="flex-1 overflow-y-auto p-3">
         {setList.length === 0 ? (
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-12">
-            No songs yet \u2014 add some below
+            No songs yet — add some below
           </p>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -237,7 +237,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       {/* Footer */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
         <Button variant="secondary" className="w-full" onClick={saveAllToLibrary}>
-          \uD83D\uDCBE Save all songs to My Library
+          💾 Save all songs to My Library
         </Button>
         <Button variant="secondary" className="w-full" onClick={copyMemberLink}>
           {copied ? '\u2713 Link copied!' : '\uD83D\uDD17 Copy member link'}
