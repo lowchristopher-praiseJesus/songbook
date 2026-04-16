@@ -32,6 +32,14 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(zip.file('dataFile.hash')).not.toBeNull()
   })
 
+  it('uses DEFLATE compression matching SongBook Pro output', async () => {
+    const buf = await buildSbpZip([mockSong]).generateAsync({ type: 'uint8array', compression: 'DEFLATE' })
+    // ZIP local file header: bytes 8-9 are the compression method (little-endian).
+    // 0 = STORE, 8 = DEFLATE. First entry always starts at offset 0.
+    const compressionMethod = buf[8] | (buf[9] << 8)
+    expect(compressionMethod).toBe(8) // 8 = DEFLATE
+  })
+
   it('dataFile.hash is the MD5 of dataFile.txt (not a placeholder)', async () => {
     const buf = await buildSbpZip([mockSong]).generateAsync({ type: 'uint8array' })
     const zip = await JSZip.loadAsync(buf)

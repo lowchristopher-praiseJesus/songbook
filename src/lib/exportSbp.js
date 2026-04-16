@@ -116,5 +116,5 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
  *   dataFile.hash — MD5 of dataFile.txt bytes
  */
 export async function exportSongsAsSbp(songs, collectionName = null, lyricsOnly = false) {
-  return buildSbpZip(songs, collectionName, lyricsOnly).generateAsync({ type: 'blob' })
+  return buildSbpZip(songs, collectionName, lyricsOnly).generateAsync({ type: 'blob', compression: 'DEFLATE' })
 }
