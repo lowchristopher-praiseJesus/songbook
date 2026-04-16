@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { transposeSections } from '../lib/parser/chordUtils'
 import { getTransposeState, setTransposeState } from '../lib/storage'
 
-export function useTranspose(sections, usesFlats, songId) {
+export function useTranspose(sections, usesFlats, songId, defaultCapo = 0) {
   // Always-current ref so the save effect never captures a stale songId
   const songIdRef = useRef(songId)
   songIdRef.current = songId
@@ -15,7 +15,7 @@ export function useTranspose(sections, usesFlats, songId) {
     if (!songId) { setDelta(0); setCapo(0); return }
     const saved = getTransposeState(songId)
     setDelta(saved?.delta ?? 0)
-    setCapo(saved?.capo ?? 0)
+    setCapo(saved?.capo ?? defaultCapo)
   }, [songId])
 
   // Persist whenever delta or capo change due to user interaction.

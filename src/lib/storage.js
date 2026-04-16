@@ -111,3 +111,24 @@ export function getViewMode() {
 export function saveViewMode(mode) {
   localStorage.setItem(VIEW_MODE_KEY, mode)
 }
+
+const SESSION_HISTORY_KEY = 'songsheet_sessions'
+
+export function loadSessionHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_HISTORY_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+export function saveSessionHistory({ code, leaderToken, name }) {
+  const history = loadSessionHistory().filter(s => s.code !== code)
+  history.unshift({ code, leaderToken: leaderToken ?? null, name, joinedAt: new Date().toISOString() })
+  localStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history.slice(0, 10)))
+}
+
+export function removeSessionFromHistory(code) {
+  const history = loadSessionHistory().filter(s => s.code !== code)
+  localStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history))
+}

@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
-import { CreateSessionModal } from '../components/Session/CreateSessionModal'
+import { LiveSessionModal } from '../components/Session/LiveSessionModal'
 import { EditLockWarning } from '../components/Session/EditLockWarning'
 
 // Mock sessionApi to avoid network calls
 vi.mock('../lib/sessionApi', () => ({
   createSession: vi.fn(),
+  fetchSessionState: vi.fn(),
 }))
 
 describe('setup', () => {
@@ -13,22 +14,24 @@ describe('setup', () => {
 })
 
 describe('Session component smoke tests', () => {
-  it('renders CreateSessionModal without crashing', () => {
+  it('renders LiveSessionModal without crashing', () => {
     render(
-      <CreateSessionModal
+      <LiveSessionModal
         isOpen={false}
-        selectedSongIds={new Set()}
         onClose={() => {}}
+        onStartSession={() => {}}
+        onJoinSession={() => {}}
       />
     )
   })
 
-  it('renders CreateSessionModal in open state without crashing', () => {
+  it('renders LiveSessionModal in open state without crashing', () => {
     render(
-      <CreateSessionModal
+      <LiveSessionModal
         isOpen={true}
-        selectedSongIds={new Set(['song-1', 'song-2'])}
         onClose={() => {}}
+        onStartSession={() => {}}
+        onJoinSession={() => {}}
       />
     )
   })

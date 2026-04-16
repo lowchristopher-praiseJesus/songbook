@@ -10,9 +10,12 @@ app.use('*', async (c, next) => {
   const requestOrigin = c.req.header('Origin') ?? '';
   const appOrigin = c.env.APP_ORIGIN ?? '';
   const walkieOrigin = c.env.WALKIE_ORIGIN ?? '';
-  const allowed =
-    (appOrigin && requestOrigin === appOrigin) ||
-    (walkieOrigin && requestOrigin === walkieOrigin);
+  // APP_ORIGIN may be a comma-separated list (e.g. "https://app.example.com,http://localhost:5173")
+  const allowedOrigins = new Set([
+    ...appOrigin.split(',').map(o => o.trim()).filter(Boolean),
+    ...walkieOrigin.split(',').map(o => o.trim()).filter(Boolean),
+  ]);
+  const allowed = allowedOrigins.has(requestOrigin);
 
   if (c.req.method === 'OPTIONS') {
     return new Response(null, {
