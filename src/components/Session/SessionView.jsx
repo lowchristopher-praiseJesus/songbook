@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/shallow'
 import {
   DndContext, MouseSensor, TouchSensor, KeyboardSensor,
@@ -21,6 +21,9 @@ import { SongBody } from '../SongList/SongBody'
 import { TransposeControl } from '../SongList/TransposeControl'
 import { parseContent } from '../../lib/parser/contentParser'
 import { useTranspose } from '../../hooks/useTranspose'
+import { v4 as uuidv4 } from 'uuid'
+import { parseSbpFile } from '../../lib/parser/sbpParser'
+import { parseChordPro } from '../../lib/parser/chordProParser'
 
 const KEY_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 
@@ -154,6 +157,12 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
   const [ended, setEnded] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const fileInputRef = useRef(null)
+  const [importParsedSongs, setImportParsedSongs] = useState([])
+  const [importChecked, setImportChecked] = useState(new Set())
+  const [importParsing, setImportParsing] = useState(false)
+  const [importError, setImportError] = useState(null)
+
   const [memberLink] = useState(() => {
     const url = new URL(window.location.href)
     url.searchParams.set('session', code)
@@ -248,11 +257,19 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
     await releaseLock(code, songId, clientId)
   }
 
+  function closePickerModal() {
+    setAddSongPickerOpen(false)
+    setPickerSearch('')
+    setImportParsedSongs([])
+    setImportChecked(new Set())
+    setImportParsing(false)
+    setImportError(null)
+  }
+
   async function handleAddSongFromLibrary(songId) {
     const song = loadSong(songId)
     if (!song) return
-    setAddSongPickerOpen(false)
-    setPickerSearch('')
+    closePickerModal()
     try {
       await submitOp(code, { type: 'add_song', songId: song.id, song: { meta: song.meta, rawText: song.rawText ?? '' } })
     } catch {
@@ -269,9 +286,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       .map(id => loadSong(id))
       .filter(Boolean)
 
-    setAddSongPickerOpen(false)
-    setPickerSearch('')
-    setPickerTab('songs')
+    closePickerModal()
 
     if (toAdd.length === 0) {
       onAddToast?.('All songs from this collection are already in the session.', 'info')
@@ -295,6 +310,74 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
     } else {
       onAddToast?.('Could not add songs \u2014 please try again.', 'error')
     }
+  }
+
+  async function handleImportFileSelected(file) {
+    if (!file) return
+    setImportParsedSongs([])
+    setImportChecked(new Set())
+    setImportError(null)
+    setImportParsing(true)
+    const name = file.name.toLowerCase()
+    const isSbp = name.endsWith('.sbp') || name.endsWith('.sbpbackup')
+    const isChordPro = ['.cho', '.chordpro', '.chopro', '.pro'].some(ext => name.endsWith(ext))
+    try {
+      if (isSbp) {
+        const buf = await file.arrayBuffer()
+        const { songs } = await parseSbpFile(buf)
+        if (songs.length === 0) { setImportError('No songs found in this file.'); return }
+        const tagged = songs.map(s => ({ ...s, _importId: uuidv4() }))
+        if (tagged.length === 1) {
+          const s = tagged[0]
+          closePickerModal()
+          try {
+            await submitOp(code, { type: 'add_song', songId: uuidv4(), song: { meta: s.meta, rawText: s.rawText ?? '' } })
+            onAddToast?.(`"${s.meta.title}" added to session.`, 'success')
+          } catch {
+            onAddToast?.('Could not add song \u2014 please try again.', 'error')
+          }
+        } else {
+          setImportParsedSongs(tagged)
+          setImportChecked(new Set(tagged.map(s => s._importId)))
+        }
+      } else if (isChordPro) {
+        const text = await file.text()
+        const parsed = parseChordPro(text, file.name)
+        closePickerModal()
+        try {
+          await submitOp(code, { type: 'add_song', songId: uuidv4(), song: { meta: parsed.meta, rawText: parsed.rawText ?? '' } })
+          onAddToast?.(`"${parsed.meta.title}" added to session.`, 'success')
+        } catch {
+          onAddToast?.('Could not add song \u2014 please try again.', 'error')
+        }
+      } else {
+        setImportError('Unsupported file type.')
+      }
+    } catch {
+      setImportError('Could not parse this file. It may be corrupt or in an unexpected format.')
+    } finally {
+      setImportParsing(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleImportAddChecked() {
+    const toAdd = importParsedSongs.filter(s => importChecked.has(s._importId))
+    if (toAdd.length === 0) return
+    closePickerModal()
+    let added = 0
+    for (const s of toAdd) {
+      try {
+        await submitOp(code, { type: 'add_song', songId: uuidv4(), song: { meta: s.meta, rawText: s.rawText ?? '' } })
+        added++
+      } catch { /* continue */ }
+    }
+    onAddToast?.(
+      added > 0
+        ? `Added ${added} song${added !== 1 ? 's' : ''} to session.`
+        : 'Could not add songs \u2014 please try again.',
+      added > 0 ? 'success' : 'error'
+    )
   }
 
   function handleClose() {
@@ -600,7 +683,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
           c.name.toLowerCase().includes(pickerSearch.toLowerCase())
         )
         return (
-          <Modal isOpen title="Add from My Library" onClose={() => setAddSongPickerOpen(false)}>
+          <Modal isOpen title="Add from My Library" onClose={closePickerModal}>
             <div className="flex flex-col gap-3">
               {/* Tab bar */}
               <div className="flex border-b border-gray-200 dark:border-gray-700 -mt-1">
@@ -620,18 +703,28 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
                 >
                   Collections
                 </button>
+                <button
+                  onClick={() => { setPickerTab('import'); setPickerSearch(''); setImportParsedSongs([]); setImportChecked(new Set()); setImportError(null) }}
+                  className={`flex-1 py-1.5 text-xs font-medium ${pickerTab === 'import'
+                    ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400'}`}
+                >
+                  Import File
+                </button>
               </div>
 
-              <input
-                type="text"
-                value={pickerSearch}
-                onChange={e => setPickerSearch(e.target.value)}
-                placeholder={pickerTab === 'songs' ? 'Search songs…' : 'Search collections…'}
-                autoFocus
-                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+              {pickerTab !== 'import' && (
+                <input
+                  type="text"
+                  value={pickerSearch}
+                  onChange={e => setPickerSearch(e.target.value)}
+                  placeholder={pickerTab === 'songs' ? 'Search songs…' : 'Search collections…'}
+                  autoFocus
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              )}
 
               {/* Songs tab */}
               {pickerTab === 'songs' && (
@@ -690,8 +783,91 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
                 )
               )}
 
-              <div className="flex justify-end">
-                <Button variant="ghost" onClick={() => setAddSongPickerOpen(false)}>Cancel</Button>
+              {/* Import File tab */}
+              {pickerTab === 'import' && (
+                <div className="flex flex-col gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".sbp,.sbpbackup,.cho,.chordpro,.chopro,.pro"
+                    className="sr-only"
+                    onChange={e => handleImportFileSelected(e.target.files?.[0])}
+                  />
+
+                  {importParsedSongs.length === 0 && !importParsing && (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Click or drop a file to import"
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => { e.preventDefault(); handleImportFileSelected(e.dataTransfer.files?.[0]) }}
+                      className="flex flex-col items-center justify-center gap-2 border-2 border-dashed
+                        border-gray-300 dark:border-gray-600 rounded-xl py-10 px-4 cursor-pointer
+                        hover:border-indigo-400 dark:hover:border-indigo-500
+                        hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-center"
+                    >
+                      <span className="text-2xl">📂</span>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Click to browse or drop a file</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">.sbp · .sbpbackup · .cho · .chordpro · .chopro · .pro</p>
+                    </div>
+                  )}
+
+                  {importParsing && (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="animate-spin">⏳</span> Parsing…
+                    </div>
+                  )}
+
+                  {importError && (
+                    <div className="rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                      ⚠ {importError}
+                    </div>
+                  )}
+
+                  {importParsedSongs.length > 1 && (
+                    <>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {importParsedSongs.length} songs found — select which to add:
+                      </p>
+                      <ul className="max-h-60 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 -mx-1">
+                        {importParsedSongs.map(s => (
+                          <li key={s._importId} className="flex items-center gap-2 px-3 py-2">
+                            <input
+                              type="checkbox"
+                              id={`imp-${s._importId}`}
+                              checked={importChecked.has(s._importId)}
+                              onChange={e => setImportChecked(prev => {
+                                const next = new Set(prev)
+                                e.target.checked ? next.add(s._importId) : next.delete(s._importId)
+                                return next
+                              })}
+                              className="rounded border-gray-300 dark:border-gray-600 text-indigo-600"
+                            />
+                            <label htmlFor={`imp-${s._importId}`} className="flex-1 min-w-0 cursor-pointer">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.meta.title}</p>
+                              {s.meta.artist && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{s.meta.artist}</p>}
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex gap-3 text-xs text-indigo-600 dark:text-indigo-400">
+                        <button onClick={() => setImportChecked(new Set(importParsedSongs.map(s => s._importId)))}>Select all</button>
+                        <button onClick={() => setImportChecked(new Set())}>Select none</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                {pickerTab === 'import' && importParsedSongs.length > 1 && (
+                  <Button variant="primary" disabled={importChecked.size === 0} onClick={handleImportAddChecked}>
+                    Add {importChecked.size} song{importChecked.size !== 1 ? 's' : ''} to session
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={closePickerModal}>Cancel</Button>
               </div>
             </div>
           </Modal>
