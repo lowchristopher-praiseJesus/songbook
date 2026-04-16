@@ -164,7 +164,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       />
 
       <aside className={`
-        w-64 shrink-0 flex flex-col
+        w-[85vw] md:w-64 shrink-0 flex flex-col
         border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800
         absolute inset-y-0 left-0 z-40
         md:static md:z-auto

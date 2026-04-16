@@ -80,7 +80,7 @@ export function SongListItem({
               : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
           }`}
       >
-        <div className="text-sm font-medium truncate">{entry.title}</div>
+        <div className="text-sm font-medium line-clamp-2">{entry.title}</div>
         {entry.artist && (
           <div className={`text-xs truncate ${isActive ? 'text-indigo-200' : 'text-gray-500 dark:text-gray-400'}`}>
             {entry.artist}

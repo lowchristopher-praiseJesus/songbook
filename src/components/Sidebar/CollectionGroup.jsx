@@ -164,7 +164,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
               hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
           >
             <span className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`}>›</span>
-            <span className="flex-1 text-left truncate">{group.name}</span>
+            <span className="flex-1 text-left line-clamp-2">{group.name}</span>
             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs font-normal">
               {group.entries.length}
             </span>
