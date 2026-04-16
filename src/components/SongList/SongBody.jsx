@@ -67,7 +67,13 @@ function ChordedLine({ line, fontSize, fitMode }) {
                   <span
                     key={`c${part.key}`}
                     className="relative inline-block"
-                    style={{ paddingTop: '1.3em' }}
+                    style={{
+                      paddingTop: '1.3em',
+                      // When the chord sits above a space (not a letter), the container is
+                      // only 1 nbsp wide — too narrow for the absolute chord label.
+                      // Give it a minimum width so adjacent chord labels don't collide.
+                      ...(part.char === ' ' ? { minWidth: `${part.chord.length * 0.7 + 0.3}em` } : {}),
+                    }}
                   >
                     <span
                       className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
