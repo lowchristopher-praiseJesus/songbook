@@ -62,7 +62,7 @@ export function CreateSessionModal({ isOpen, selectedSongIds, onClose, onCreated
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleCreate() }}
+            onKeyDown={e => { if (e.key === 'Enter' && name.trim()) handleCreate() }}
             placeholder={`Session name (e.g. Sunday ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })})`}
             autoFocus
             className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
