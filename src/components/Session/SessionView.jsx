@@ -13,6 +13,7 @@ import { useSessionStore } from '../../store/sessionStore'
 import { useSessionSync } from '../../hooks/useSessionSync'
 import { submitOp, acquireLock, releaseLock, closeSession } from '../../lib/sessionApi'
 import { Button } from '../UI/Button'
+import { Modal } from '../UI/Modal'
 import { EditLockWarning } from './EditLockWarning'
 import { useLibraryStore } from '../../store/libraryStore'
 
@@ -75,6 +76,8 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
   const addSongs = useLibraryStore(s => s.addSongs)
 
   const [lockWarning, setLockWarning] = useState(null)
+  const [editingSongId, setEditingSongId] = useState(null)
+  const [localEditText, setLocalEditText] = useState('')
   const [ended, setEnded] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -126,6 +129,8 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       await acquireLock(code, songId, clientId)
       const localRawText = songs[songId]?.rawText ?? ''
       startHeartbeat(songId, clientId, localRawText)
+      setLocalEditText(localRawText)
+      setEditingSongId(songId)
     } catch (err) {
       if (err.code === 'locked') {
         onAddToast?.('Someone else is editing this song.', 'error')
@@ -133,6 +138,27 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
         onAddToast?.('Could not acquire edit lock.', 'error')
       }
     }
+  }
+
+  async function handleSaveSong() {
+    const songId = editingSongId
+    const updatedSong = { ...songs[songId], rawText: localEditText }
+    setEditingSongId(null)
+    try {
+      await submitOp(code, { type: 'update_song', songId, song: updatedSong })
+      await releaseLock(code, songId, clientId)
+    } catch {
+      onAddToast?.('Could not save song — please try again.', 'error')
+    } finally {
+      stopHeartbeat()
+    }
+  }
+
+  async function handleCancelEdit() {
+    const songId = editingSongId
+    setEditingSongId(null)
+    stopHeartbeat()
+    await releaseLock(code, songId, clientId)
   }
 
   async function handleClose() {
@@ -246,6 +272,30 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
           &darr; Exit session (go back to library)
         </Button>
       </div>
+
+      {/* Song editor modal */}
+      {editingSongId && songs[editingSongId] && (
+        <Modal isOpen title={songs[editingSongId].meta.title} onClose={handleCancelEdit}>
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {'{c: Section}'} for headers · [Chord] before a syllable
+            </p>
+            <textarea
+              className="w-full h-64 font-mono text-sm resize-none border border-gray-200 dark:border-gray-700
+                rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={localEditText}
+              onChange={e => setLocalEditText(e.target.value)}
+              spellCheck={false}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
+              <Button variant="primary" onClick={handleSaveSong}>Save</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Lock expiry warning dialog */}
       {lockWarning && (
