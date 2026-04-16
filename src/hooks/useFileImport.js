@@ -1,4 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react'
+import JSZip from 'jszip'
 import { parseSbpFile } from '../lib/parser/sbpParser'
 import { parseChordPro } from '../lib/parser/chordProParser'
 import { useLibraryStore } from '../store/libraryStore'
@@ -25,10 +26,10 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
 
     for (const file of files) {
       const isSbp = /\.(sbp|sbpbackup)$/i.test(file.name)
-      const isChordPro = /\.(cho|chordpro|chopro|pro)$/i.test(file.name)
+      const isChordPro = /\.(cho|chordpro|chopro|pro|zip)$/i.test(file.name)
 
       if (!isSbp && !isChordPro) {
-        onError(`"${file.name}" is not a supported file (.sbp, .sbpbackup, .cho, .chordpro, .chopro, .pro)`)
+        onError(`"${file.name}" is not a supported file (.sbp, .sbpbackup, .cho, .pro, .zip)`)
         continue
       }
       try {
@@ -37,9 +38,27 @@ export function useFileImport({ onError, onDuplicateCheck, onSuccess }) {
           const buf = await file.arrayBuffer()
           parsed = await parseSbpFile(buf)
         } else {
-          const text = await file.text()
-          const song = parseChordPro(text, file.name)
-          parsed = { songs: [song], collectionName: null, lyricsOnly: false }
+          const buf = await file.arrayBuffer()
+          const magic = new Uint8Array(buf, 0, 2)
+          const isZip = magic[0] === 0x50 && magic[1] === 0x4B  // PK
+
+          if (isZip) {
+            // ZIP of .cho files — e.g. exported by this app's ChordPro export
+            const zip = await JSZip.loadAsync(buf)
+            const songs = []
+            for (const [entryName, entry] of Object.entries(zip.files)) {
+              if (entry.dir) continue
+              if (!/\.(cho|chordpro|chopro|pro)$/i.test(entryName)) continue
+              const text = await entry.async('string')
+              songs.push(parseChordPro(text, entryName))
+            }
+            const collectionName = file.name.replace(/\.zip$/i, '') || null
+            parsed = { songs, collectionName, lyricsOnly: false }
+          } else {
+            const text = new TextDecoder().decode(buf)
+            const song = parseChordPro(text, file.name)
+            parsed = { songs: [song], collectionName: null, lyricsOnly: false }
+          }
         }
         const fileBasedName = file.name.replace(/\.(sbp|sbpbackup|cho|chordpro|chopro|pro)$/i, '')
         const accepted = []
