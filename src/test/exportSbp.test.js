@@ -46,7 +46,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(text.startsWith('1.0\n')).toBe(true)
   })
 
-  it('serializes song fields correctly', async () => {
+  it('serializes core song fields correctly', async () => {
     const { json } = await parseZip([mockSong])
     const s = json.songs[0]
     expect(s.name).toBe('El Shaddai')
@@ -56,6 +56,28 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(s.timeSig).toBe('4/4')
     expect(s.content).toBe(mockSong.rawText)
     expect(s.Deleted).toBe(false)
+  })
+
+  it('includes all SongBook Pro metadata fields required for import', async () => {
+    const { json } = await parseZip([mockSong])
+    const s = json.songs[0]
+    // Required metadata fields SBP Pro expects
+    expect(typeof s.Id).toBe('number')
+    expect(typeof s.hash).toBe('string')
+    expect(s.hash).toHaveLength(32)
+    expect(s.type).toBe(1)
+    expect(s.KeyShift).toBe(0)
+    expect(typeof s.ModifiedDateTime).toBe('string')
+    expect(s.subTitle).toBe('')
+    expect(s.SyncId).toBe('')
+    expect(s.ZoomFactor).toBe(1.0)
+    expect(s.Duration).toBe(0)
+    expect(s._displayParams).toBe('{}')
+    expect(s._tags).toBe('[]')
+    expect(s._folders).toBe('[]')
+    expect(s.importSource).toBe('editor')
+    expect(s.DeepSearch).toContain('el shaddai')
+    expect(s.DeepSearch).toContain('amy grant')
   })
 
   it('calculates sounding key as (keyIndex + capo) % 12', async () => {
