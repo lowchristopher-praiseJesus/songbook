@@ -777,6 +777,20 @@
 
       <a class="nav-direct" href="#share-import">Importing from a Link</a>
       <a class="nav-direct" href="#settings">Settings</a>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-session">
+          Live Session <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-session">
+          <a class="nav-item" href="#session-starting">Starting a Session</a>
+          <a class="nav-item" href="#session-view">The Session View</a>
+          <a class="nav-item" href="#session-editing">Editing Songs</a>
+          <a class="nav-item" href="#session-joining">Joining a Session</a>
+          <a class="nav-item" href="#session-ending">Ending a Session</a>
+        </div>
+      </div>
+
       <a class="nav-direct" href="#shortcuts">Tips & Shortcuts</a>
 
     </div>
@@ -1382,10 +1396,228 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 13. TIPS & SHORTCUTS                           -->
+      <!-- 13. LIVE SESSION                               -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="live-session">
+        <div class="section-number">13 — Live Session</div>
+        <h2 class="section-title">Live Session</h2>
+        <p>A <strong>Live Session</strong> is a real-time shared workspace where a worship leader and their team can view and edit the same set list simultaneously — each person on their own device, no account required. The leader controls the set list; everyone else sees changes the moment they're made.</p>
+        <p>Common uses: finalising a set list during rehearsal with your band, letting a team member transpose a song for their instrument, or having a vocalist follow the same chord chart as the leader during a service.</p>
+
+        <div class="screenshot tall">
+          <div class="screenshot-tag">Screenshot</div>
+          <div class="screenshot-icon">🎙</div>
+          <div class="screenshot-label">Session view — leader perspective</div>
+          <div class="screenshot-desc">Set list panel on the left, song viewer with chords and lyrics on the right, green "Live" badge in the header</div>
+        </div>
+
+        <div class="subsection" id="session-starting">
+          <h3 class="subsection-title">Starting a Session (Leader)</h3>
+          <p>Click the <span class="btn-replica">🎙 Live Session</span> button at the bottom of the sidebar to open the Live Session modal.</p>
+
+          <div class="screenshot short">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">📋</div>
+            <div class="screenshot-label">Live Session modal — starting a new session</div>
+            <div class="screenshot-desc">Session name field pre-filled with today's date, "Create & Enter →" button, and "Recent Sessions" list above</div>
+          </div>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Type a session name</strong>
+                <span>A default name like "Sunday April 20" is pre-filled. You can change it to anything — e.g. "Easter Rehearsal" or "Youth Night".</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click "Create &amp; Enter →"</strong>
+                <span>A new live session is created and you enter the Session View immediately as the leader.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Add songs to the set list</strong>
+                <span>Click <span class="btn-replica">➕ Add Song from My Library</span> to pick songs from your existing library. They appear in the shared set list instantly.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Share the member link with your team</strong>
+                <span>Click <span class="btn-replica">🔗 Copy member link</span> and paste the URL into a group chat. Anyone who opens it joins the session automatically — no code or account needed.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Import songs first</strong>
+              Songs must already be in your personal library to add them to a session. Import your <code>.sbp</code> files (or search Ultimate Guitar) before starting.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="session-view">
+          <h3 class="subsection-title">The Session View</h3>
+          <p>Once inside a session, the app switches to the Session View — a two-panel layout.</p>
+
+          <div class="option-grid">
+            <div class="option-card">
+              <div class="option-card-icon">📋</div>
+              <div class="option-card-title">Set List (left)</div>
+              <div class="option-card-desc">All songs in the shared set, in order. Tap any song to open it in the viewer. Drag the <strong>≡≡</strong> handle to reorder.</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🎵</div>
+              <div class="option-card-title">Song Viewer (right)</div>
+              <div class="option-card-desc">The chord chart for the selected song. Each person can transpose and set their own capo independently — it doesn't affect what others see.</div>
+            </div>
+          </div>
+
+          <div class="screenshot">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">📱</div>
+            <div class="screenshot-label">Session view — set list with a song selected</div>
+            <div class="screenshot-desc">Left panel: 3 songs listed, one highlighted in indigo. Right panel: chord chart for the selected song with key dropdown and capo controls visible in the sub-header</div>
+          </div>
+
+          <p>The header bar shows the session name and a pulsing green <strong>Live</strong> badge while connected. If the session is approaching expiry, a coloured countdown badge also appears.</p>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>On mobile</strong>
+              The set list fills the screen. Tap a song to open the viewer full-screen. Tap the ← back arrow to return to the set list.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="session-editing">
+          <h3 class="subsection-title">Editing Songs in a Session</h3>
+          <p>Any participant can edit a song's content directly within the session — useful for on-the-fly lyric corrections or chord adjustments during rehearsal.</p>
+
+          <div class="screenshot">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">✏️</div>
+            <div class="screenshot-label">Song editor modal inside a session</div>
+            <div class="screenshot-desc">Modal with Song name, Singer/Artist, Key dropdown, Capo field, and Lyrics &amp; chords textarea. Save and Cancel buttons at the bottom right</div>
+          </div>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Click the ✏️ button next to a song</strong>
+                <span>The song editor modal opens. The song is <strong>locked</strong> for you — no one else can edit it at the same time.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Make your changes</strong>
+                <span>Edit the title, artist, key, capo, or the full lyrics and chord content.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click Save</strong>
+                <span>Changes are pushed to everyone in the session immediately. The lock is released so others can edit next.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="screenshot short">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">🔒</div>
+            <div class="screenshot-label">Edit lock indicator</div>
+            <div class="screenshot-desc">A song in the set list showing the 🔒 lock icon and the warning "⚠ Someone is editing this song" beneath it</div>
+          </div>
+
+          <p>If someone else is already editing a song, its ✏️ button is replaced by a <strong>🔒</strong> icon and a warning appears beneath the row. The lock is released automatically when they save or cancel.</p>
+
+          <div class="callout warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <strong>Edits affect everyone</strong>
+              Changes saved inside a session update the shared copy that all participants see. They do <em>not</em> automatically update songs in your personal library — use the <strong>Save as collection</strong> button when you're done to bring everything back into your library.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="session-joining">
+          <h3 class="subsection-title">Joining a Session (Member)</h3>
+          <p>There are two ways to join a live session as a member:</p>
+
+          <div class="option-grid">
+            <div class="option-card">
+              <div class="option-card-icon">🔗</div>
+              <div class="option-card-title">Open the member link</div>
+              <div class="option-card-desc">The leader shares a URL. Open it in your browser and you're dropped straight into the session — no extra steps.</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🔢</div>
+              <div class="option-card-title">Enter a 6-character code</div>
+              <div class="option-card-desc">Click 🎙 Live Session in the sidebar, then "Join with a different code". Type the code the leader gives you and tap Join →.</div>
+            </div>
+          </div>
+
+          <div class="screenshot">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">🔢</div>
+            <div class="screenshot-label">Join by code — code entry expanded</div>
+            <div class="screenshot-desc">Live Session modal with "Join with a different code ▴" expanded, showing a monospaced 6-character input field and the "Join →" button</div>
+          </div>
+
+          <p>Once joined, you see the same set list and can view any song, transpose for your own instrument, and edit songs (subject to edit locking). As a member you cannot reorder the set list or end the session.</p>
+
+          <div class="subsection">
+            <h3 class="subsection-title">Rejoining Recent Sessions</h3>
+            <p>The Live Session modal tracks sessions you've previously joined or created. Each time you open the modal, it checks which of those sessions are still active and shows them under <strong>Recent Sessions</strong>. Tap any listed session to jump straight back in — as leader or member, depending on your original role.</p>
+
+            <div class="screenshot short">
+              <div class="screenshot-tag">Screenshot</div>
+              <div class="screenshot-icon">🕐</div>
+              <div class="screenshot-label">Recent Sessions list</div>
+              <div class="screenshot-desc">Two sessions listed — "Easter Sunday" (Leader · Today · Expires in 6d) and "Youth Night" (Member · Yesterday) — each with an "Enter →" button and a 🔗 copy link icon</div>
+            </div>
+
+            <p>Sessions that have already ended are removed from the list automatically. An amber or red <strong>Expires in Nd</strong> badge warns you when a session is approaching its expiry date (amber ≤ 7 days, red ≤ 3 days).</p>
+          </div>
+        </div>
+
+        <div class="subsection" id="session-ending">
+          <h3 class="subsection-title">Ending a Session (Leader only)</h3>
+          <p>When the session is over, click <strong>End</strong> in the top-right of the session header. If the set list contains songs that haven't been saved to your library yet, a confirmation modal appears with three choices:</p>
+
+          <div class="screenshot">
+            <div class="screenshot-tag">Screenshot</div>
+            <div class="screenshot-icon">💾</div>
+            <div class="screenshot-label">End session confirmation modal</div>
+            <div class="screenshot-desc">"End Live Session?" dialog showing the number of songs, the collection name pre-filled with the session name, and three buttons: "💾 Save as collection & End session", "End without saving", and "Cancel"</div>
+          </div>
+
+          <ul class="feature-list">
+            <li><strong>Save as collection &amp; End session</strong> — Adds all songs in the set list to your personal library as a new collection named after the session, then closes the session for everyone.</li>
+            <li><strong>End without saving</strong> — Closes the session immediately. Songs edited or reordered during the session are not saved to your library.</li>
+            <li><strong>Cancel</strong> — Returns you to the session without ending it.</li>
+          </ul>
+
+          <p>You can also save the set list <em>without</em> ending the session at any time by clicking <span class="btn-replica">💾 Save songs in session as a collection</span> in the session footer.</p>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Sessions expire automatically</strong>
+              Live sessions are stored in the cloud and expire after a set period. Once a session expires, it can no longer be joined or rejoined. Save important changes to your library before expiry.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 14. TIPS & SHORTCUTS                           -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="shortcuts">
-        <div class="section-number">13 — Tips & Shortcuts</div>
+        <div class="section-number">14 — Tips & Shortcuts</div>
         <h2 class="section-title">Tips & Keyboard Shortcuts</h2>
 
         <div class="subsection">
@@ -1532,6 +1764,12 @@
     'export-pdf':      ['export-pdf'],
     'share-import':    ['share-import'],
     'settings':        ['settings'],
+    'live-session':    ['live-session'],
+    'session-starting':['session-starting'],
+    'session-view':    ['session-view'],
+    'session-editing': ['session-editing'],
+    'session-joining': ['session-joining'],
+    'session-ending':  ['session-ending'],
     'shortcuts':       ['shortcuts'],
   }
 
@@ -1558,7 +1796,8 @@
   // Also observe subsections that are direct targets
   const subsectionIds = ['search','view-modes','collections','import-sbp','duplicates',
     'ug-search','song-header','chord-strip','display-controls','lyrics-only',
-    'editor-metadata','editor-content','export-sbp','export-share','export-pdf']
+    'editor-metadata','editor-content','export-sbp','export-share','export-pdf',
+    'session-starting','session-view','session-editing','session-joining','session-ending']
 
   subsectionIds.forEach(id => {
     const el = document.getElementById(id)
