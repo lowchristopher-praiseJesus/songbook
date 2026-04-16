@@ -60,7 +60,7 @@ function ChordedLine({ line, fontSize, fitMode }) {
         }
         return (
           <span key={`w${group.key}`} style={{ whiteSpace: 'nowrap' }}>
-            {group.parts.map((part) =>
+            {group.parts.map((part, pi) =>
               part.type === 'text'
                 ? <span key={`t${part.key}`}>{part.text}</span>
                 : (
@@ -69,10 +69,14 @@ function ChordedLine({ line, fontSize, fitMode }) {
                     className="relative inline-block"
                     style={{
                       paddingTop: '1.3em',
-                      // When the chord sits above a space (not a letter), the container is
-                      // only 1 nbsp wide — too narrow for the absolute chord label.
-                      // Give it a minimum width so adjacent chord labels don't collide.
-                      ...(part.char === ' ' ? { minWidth: `${part.chord.length * 0.7 + 0.3}em` } : {}),
+                      // The chord label is absolute-positioned and doesn't expand the container.
+                      // Apply minWidth when there's nothing to the right to act as a buffer:
+                      //   • char === ' ': container is only 1 nbsp wide (end-of-line or space anchor)
+                      //   • last part in the word group: no following lyric chars in the same word
+                      //     (e.g. [Dsus]e at end of "grace", [Asus]t at end of "first")
+                      ...((part.char === ' ' || pi === group.parts.length - 1)
+                        ? { minWidth: `${part.chord.length * 0.7 + 0.3}em` }
+                        : {}),
                     }}
                   >
                     <span
