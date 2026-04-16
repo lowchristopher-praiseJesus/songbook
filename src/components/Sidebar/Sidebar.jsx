@@ -7,7 +7,7 @@ import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
-import { exportSongsAsSbp } from '../../lib/exportSbp'
+import { exportSongsAsChordProZip } from '../../lib/exportChordPro'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
@@ -134,10 +134,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   async function handleExportConfirm() {
     const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
     let name = filenameInput.trim() || 'Songbook Export'
-    if (!name.endsWith('.sbp')) name += '.sbp'
+    if (!name.endsWith('.zip')) name += '.zip'
 
     try {
-      const blob = await exportSongsAsSbp(songs)
+      const blob = await exportSongsAsChordProZip(songs)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -380,7 +380,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       {/* Filename modal */}
       <Modal
         isOpen={filenameModalOpen}
-        title="Export as .sbp"
+        title="Export as ChordPro"
         onClose={() => setFilenameModalOpen(false)}
       >
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
@@ -410,7 +410,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       >
         <div className="flex flex-col gap-3">
           <Button variant="secondary" className="w-full" onClick={handleChooseDownload}>
-            Download .sbp
+            Download ChordPro
           </Button>
           <Button variant="secondary" className="w-full" onClick={handleChooseShare}>
             Share via link
