@@ -455,9 +455,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         isOpen={sessionModalOpen}
         selectedSongIds={selectedSongIds}
         onClose={() => { setSessionModalOpen(false); toggleExportMode() }}
-        onCreated={(data) => {
-          window.location.href = data.leaderUrl
-        }}
+        onCreated={() => {}}
       />
     </>
   )

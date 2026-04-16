@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   DndContext, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
@@ -211,7 +211,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
                   const locked = isLocked(songId)
                   const myLock = isMyLock(songId)
                   return (
-                    <div key={songId}>
+                    <React.Fragment key={songId}>
                       <SortableSessionSong
                         songId={songId}
                         song={song}
@@ -221,11 +221,11 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
                         onRemove={handleRemoveSong}
                       />
                       {locked && !myLock && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 px-8 pb-1">
-                          &lsquo;Someone is editing this song
-                        </p>
+                        <li className="text-xs text-amber-600 dark:text-amber-400 px-8 pb-1 list-none">
+                          ⚠ Someone is editing this song
+                        </li>
                       )}
-                    </div>
+                    </React.Fragment>
                   )
                 })}
               </ul>
@@ -256,6 +256,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
           onRelock={async () => {
             const { songId, myRawText } = lockWarning
             setLockWarning(null)
+            stopHeartbeat()
             try {
               await acquireLock(code, songId, clientId)
               const updatedSong = { ...songs[songId], rawText: myRawText }

@@ -44,6 +44,7 @@ export function CreateSessionModal({ isOpen, selectedSongIds, onClose, onCreated
     setName('')
     setResult(null)
     setError(null)
+    setCopied(null)
     onClose()
   }
 
@@ -71,7 +72,7 @@ export function CreateSessionModal({ isOpen, selectedSongIds, onClose, onCreated
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleCreate} disabled={loading}>
+            <Button variant="primary" onClick={handleCreate} disabled={loading || !name.trim()}>
               {loading ? 'Creating\u2026' : 'Create Session'}
             </Button>
           </div>
