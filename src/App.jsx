@@ -9,7 +9,11 @@ import { MainContent } from './components/SongList/MainContent'
 import { SettingsPanel } from './components/Settings/SettingsPanel'
 import { ImportConfirmModal } from './components/Share/ImportConfirmModal'
 import { fetchShare } from './lib/shareApi'
+import { fetchSessionState } from './lib/sessionApi'
 import { parseSbpFile } from './lib/parser/sbpParser'
+import { useSessionStore } from './store/sessionStore'
+import { SessionView } from './components/Session/SessionView'
+import { saveSessionHistory } from './lib/storage'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -18,6 +22,9 @@ export default function App() {
   const setExpandedCollectionId = useLibraryStore(state => state.setExpandedCollectionId)
   const selectSong = useLibraryStore(state => state.selectSong)
   const { toasts, addToast } = useToast()
+  const [activeSession, setActiveSession] = useState(null) // { code, leaderToken } | null
+  const initClient = useSessionStore(s => s.initClient)
+  const clearSession = useSessionStore(s => s.clearSession)
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
@@ -30,6 +37,23 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
+    const sessionCode = params.get('session')
+    if (sessionCode) {
+      const leaderToken = params.get('token') || null
+      initClient(sessionCode, leaderToken)
+      setActiveSession({ code: sessionCode, leaderToken })
+      const url = new URL(window.location.href)
+      url.searchParams.delete('session')
+      url.searchParams.delete('token')
+      window.history.replaceState({}, '', url.toString())
+      // Save to history once we have the session name from the server
+      fetchSessionState(sessionCode)
+        .then(data => saveSessionHistory({ code: sessionCode, leaderToken, name: data.name }))
+        .catch(() => {})
+      return
+    }
+
     const shareCode = params.get('share')
     if (!shareCode) return
 
@@ -47,6 +71,18 @@ export default function App() {
         clearShareParam()
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleStartSession({ code, leaderToken, name }) {
+    saveSessionHistory({ code, leaderToken, name })
+    initClient(code, leaderToken)
+    setActiveSession({ code, leaderToken })
+  }
+
+  function handleJoinSession({ code, name }) {
+    saveSessionHistory({ code, leaderToken: null, name })
+    initClient(code, null)
+    setActiveSession({ code, leaderToken: null })
+  }
 
   function clearShareParam() {
     const url = new URL(window.location.href)
@@ -119,14 +155,30 @@ export default function App() {
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden relative">
-          <Sidebar
-            isOpen={sidebarOpen}
-            onAddToast={addToast}
-            onClose={() => setSidebarOpen(false)}
-            onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
-            onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
-          />
-          <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
+          {activeSession ? (
+            <SessionView
+              code={activeSession.code}
+              leaderToken={activeSession.leaderToken}
+              onExit={() => {
+                clearSession()
+                setActiveSession(null)
+              }}
+              onAddToast={addToast}
+            />
+          ) : (
+            <>
+              <Sidebar
+                isOpen={sidebarOpen}
+                onAddToast={addToast}
+                onClose={() => setSidebarOpen(false)}
+                onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
+                onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
+                onStartSession={handleStartSession}
+                onJoinSession={handleJoinSession}
+              />
+              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
+            </>
+          )}
         </div>
       </div>
       <ToastContainer toasts={toasts} />

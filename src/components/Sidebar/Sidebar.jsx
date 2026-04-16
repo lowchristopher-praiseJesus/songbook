@@ -13,8 +13,9 @@ import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
 import { AllSongsList } from './AllSongsList'
 import { AddSongsModal } from './AddSongsModal'
+import { LiveSessionModal } from '../Session/LiveSessionModal'
 
-export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
@@ -23,6 +24,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [choiceModalOpen, setChoiceModalOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [backgroundModalOpen, setBackgroundModalOpen] = useState(false)
+  const [liveSessionModalOpen, setLiveSessionModalOpen] = useState(false)
   const [pendingSongs, setPendingSongs] = useState([])
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
@@ -339,6 +341,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             >
               Search UG
             </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setLiveSessionModalOpen(true)}
+            >
+              🎙 Live Session
+            </Button>
           </>
         )}
         <input
@@ -439,6 +448,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         collectionId={addSongsTarget?.id ?? null}
         collectionName={addSongsTarget?.name ?? ''}
         onClose={() => setAddSongsTarget(null)}
+      />
+
+      <LiveSessionModal
+        isOpen={liveSessionModalOpen}
+        onClose={() => setLiveSessionModalOpen(false)}
+        onStartSession={onStartSession}
+        onJoinSession={onJoinSession}
       />
     </>
   )
