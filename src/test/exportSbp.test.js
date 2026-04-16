@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import JSZip from 'jszip'
+import SparkMD5 from 'spark-md5'
 import { buildSbpZip } from '../lib/exportSbp'
 
 const mockSong = {
@@ -29,6 +30,15 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     const { zip } = await parseZip([mockSong])
     expect(zip.file('dataFile.txt')).not.toBeNull()
     expect(zip.file('dataFile.hash')).not.toBeNull()
+  })
+
+  it('dataFile.hash is the MD5 of dataFile.txt (not a placeholder)', async () => {
+    const buf = await buildSbpZip([mockSong]).generateAsync({ type: 'uint8array' })
+    const zip = await JSZip.loadAsync(buf)
+    const text = await zip.file('dataFile.txt').async('string')
+    const hash = await zip.file('dataFile.hash').async('string')
+    expect(hash).toBe(SparkMD5.hash(text))
+    expect(hash).not.toBe('00000000000000000000000000000000')
   })
 
   it('dataFile.txt starts with version line "1.0"', async () => {

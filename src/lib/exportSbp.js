@@ -1,4 +1,5 @@
 import JSZip from 'jszip'
+import SparkMD5 from 'spark-md5'
 
 /**
  * Convert one internal song object back to the SBP JSON shape.
@@ -35,10 +36,13 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
     folders: [],
   }
   const json = JSON.stringify(data)
+  const dataFileText = '1.0\n' + json
+  // SongBook Pro's dataFile.hash is the MD5 of the raw UTF-8 bytes of dataFile.txt.
+  const dataFileHash = SparkMD5.hash(dataFileText)
 
   const zip = new JSZip()
-  zip.file('dataFile.txt', '1.0\n' + json)
-  zip.file('dataFile.hash', '00000000000000000000000000000000')
+  zip.file('dataFile.txt', dataFileText)
+  zip.file('dataFile.hash', dataFileHash)
   return zip
 }
 
