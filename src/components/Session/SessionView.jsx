@@ -139,12 +139,14 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
   const isMyLock = useSessionStore(s => s.isMyLock)
   const addSongs = useLibraryStore(s => s.addSongs)
   const libraryIndex = useLibraryStore(s => s.index)
+  const collections = useLibraryStore(s => s.collections)
 
   const [selectedSongId, setSelectedSongId] = useState(null)
   const [savedSongIds, setSavedSongIds] = useState(null) // null = never saved; Set = saved snapshot
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [addSongPickerOpen, setAddSongPickerOpen] = useState(false)
   const [pickerSearch, setPickerSearch] = useState('')
+  const [pickerTab, setPickerTab] = useState('songs') // 'songs' | 'collections'
   const [lockWarning, setLockWarning] = useState(null)
   const [editingSongId, setEditingSongId] = useState(null)
   const [localEditText, setLocalEditText] = useState('')
@@ -258,6 +260,43 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
     }
   }
 
+  async function handleAddCollectionFromLibrary(collectionId) {
+    const collection = collections.find(c => c.id === collectionId)
+    if (!collection) return
+    const sessionSongIds = new Set(setList)
+    const toAdd = collection.songIds
+      .filter(id => !sessionSongIds.has(id))
+      .map(id => loadSong(id))
+      .filter(Boolean)
+
+    setAddSongPickerOpen(false)
+    setPickerSearch('')
+    setPickerTab('songs')
+
+    if (toAdd.length === 0) {
+      onAddToast?.('All songs from this collection are already in the session.', 'info')
+      return
+    }
+
+    let added = 0
+    for (const song of toAdd) {
+      try {
+        await submitOp(code, { type: 'add_song', songId: song.id, song: { meta: song.meta, rawText: song.rawText ?? '' } })
+        added++
+      } catch {
+        // continue adding remaining songs; report partial failure below
+      }
+    }
+
+    const skipped = collection.songIds.length - toAdd.length
+    const skippedNote = skipped > 0 ? ` (${skipped} already in session)` : ''
+    if (added > 0) {
+      onAddToast?.(`Added ${added} song${added !== 1 ? 's' : ''} from "${collection.name}"${skippedNote}.`, 'success')
+    } else {
+      onAddToast?.('Could not add songs \u2014 please try again.', 'error')
+    }
+  }
+
   function handleClose() {
     if (!leaderToken) return
     const allSaved = savedSongIds !== null && setList.every(id => savedSongIds.has(id))
@@ -274,7 +313,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       const songsToAdd = setList
         .map(id => songs[id])
         .filter(Boolean)
-        .map(s => ({ meta: s.meta, rawText: s.rawText, sections: [] }))
+        .map(s => ({ meta: s.meta, rawText: s.rawText ?? '', sections: parseContent(s.rawText ?? '') }))
       if (songsToAdd.length > 0) {
         addSongs(songsToAdd, name || 'Live Session')
         setSavedSongIds(new Set(setList))
@@ -300,7 +339,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
     const songsToAdd = setList
       .map(id => songs[id])
       .filter(Boolean)
-      .map(s => ({ meta: s.meta, rawText: s.rawText, sections: [] }))
+      .map(s => ({ meta: s.meta, rawText: s.rawText ?? '', sections: parseContent(s.rawText ?? '') }))
     if (songsToAdd.length === 0) return
     addSongs(songsToAdd, name || 'Live Session')
     setSavedSongIds(new Set(setList))
@@ -406,7 +445,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
 
           {/* Footer */}
           <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
-            <Button variant="secondary" className="w-full" onClick={() => { setPickerSearch(''); setAddSongPickerOpen(true) }}>
+            <Button variant="secondary" className="w-full" onClick={() => { setPickerSearch(''); setPickerTab('songs'); setAddSongPickerOpen(true) }}>
               ➕ Add Song from My Library
             </Button>
             <Button variant="secondary" className="w-full" onClick={saveAllToLibrary}>
@@ -556,38 +595,101 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
             entry.title.toLowerCase().includes(pickerSearch.toLowerCase()) ||
             (entry.artist ?? '').toLowerCase().includes(pickerSearch.toLowerCase()))
         )
+        const filteredCollections = collections.filter(c =>
+          pickerSearch === '' ||
+          c.name.toLowerCase().includes(pickerSearch.toLowerCase())
+        )
         return (
-          <Modal isOpen title="Add Song from My Library" onClose={() => setAddSongPickerOpen(false)}>
+          <Modal isOpen title="Add from My Library" onClose={() => setAddSongPickerOpen(false)}>
             <div className="flex flex-col gap-3">
+              {/* Tab bar */}
+              <div className="flex border-b border-gray-200 dark:border-gray-700 -mt-1">
+                <button
+                  onClick={() => { setPickerTab('songs'); setPickerSearch('') }}
+                  className={`flex-1 py-1.5 text-xs font-medium ${pickerTab === 'songs'
+                    ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400'}`}
+                >
+                  Songs
+                </button>
+                <button
+                  onClick={() => { setPickerTab('collections'); setPickerSearch('') }}
+                  className={`flex-1 py-1.5 text-xs font-medium ${pickerTab === 'collections'
+                    ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400'}`}
+                >
+                  Collections
+                </button>
+              </div>
+
               <input
                 type="text"
                 value={pickerSearch}
                 onChange={e => setPickerSearch(e.target.value)}
-                placeholder="Search songs…"
+                placeholder={pickerTab === 'songs' ? 'Search songs…' : 'Search collections…'}
                 autoFocus
                 className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
                   bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                   focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              {filtered.length === 0 ? (
-                <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-6">
-                  {libraryIndex.length === 0 ? 'Your library is empty.' : 'No songs match.'}
-                </p>
-              ) : (
-                <ul className="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 -mx-1">
-                  {filtered.map(entry => (
-                    <li key={entry.id}>
-                      <button
-                        onClick={() => handleAddSongFromLibrary(entry.id)}
-                        className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded"
-                      >
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{entry.title}</p>
-                        {entry.artist && <p className="text-xs text-gray-500 dark:text-gray-400">{entry.artist}</p>}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+
+              {/* Songs tab */}
+              {pickerTab === 'songs' && (
+                filtered.length === 0 ? (
+                  <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-6">
+                    {libraryIndex.length === 0 ? 'Your library is empty.' : 'No songs match.'}
+                  </p>
+                ) : (
+                  <ul className="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 -mx-1">
+                    {filtered.map(entry => (
+                      <li key={entry.id}>
+                        <button
+                          onClick={() => handleAddSongFromLibrary(entry.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded"
+                        >
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{entry.title}</p>
+                          {entry.artist && <p className="text-xs text-gray-500 dark:text-gray-400">{entry.artist}</p>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )
               )}
+
+              {/* Collections tab */}
+              {pickerTab === 'collections' && (
+                filteredCollections.length === 0 ? (
+                  <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-6">
+                    {collections.length === 0 ? 'No collections in your library.' : 'No collections match.'}
+                  </p>
+                ) : (
+                  <ul className="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 -mx-1">
+                    {filteredCollections.map(col => {
+                      const newCount = col.songIds.filter(id => !sessionSongIds.has(id)).length
+                      const alreadyAll = newCount === 0
+                      return (
+                        <li key={col.id}>
+                          <button
+                            disabled={alreadyAll}
+                            onClick={() => handleAddCollectionFromLibrary(col.id)}
+                            className={`w-full text-left px-3 py-2 rounded ${alreadyAll
+                              ? 'opacity-40 cursor-not-allowed'
+                              : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
+                          >
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{col.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {alreadyAll
+                                ? 'All songs already in session'
+                                : `${newCount} song${newCount !== 1 ? 's' : ''} to add${col.songIds.length !== newCount ? ` \u00b7 ${col.songIds.length - newCount} already in session` : ''}`}
+                            </p>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )
+              )}
+
               <div className="flex justify-end">
                 <Button variant="ghost" onClick={() => setAddSongPickerOpen(false)}>Cancel</Button>
               </div>
