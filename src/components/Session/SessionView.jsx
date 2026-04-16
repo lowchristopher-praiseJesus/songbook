@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import { useShallow } from 'zustand/shallow'
 import {
   DndContext, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
@@ -61,10 +62,12 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
 }
 
 export function SessionView({ code, leaderToken, onExit, onAddToast }) {
-  const { name, setList, songs, editLocks, closed } = useSessionStore(s => ({
-    name: s.name, setList: s.setList, songs: s.songs,
-    editLocks: s.editLocks, closed: s.closed,
-  }))
+  const { name, setList, songs, editLocks, closed } = useSessionStore(
+    useShallow(s => ({
+      name: s.name, setList: s.setList, songs: s.songs,
+      editLocks: s.editLocks, closed: s.closed,
+    }))
+  )
   const clientId = useSessionStore(s => s.clientId)
   const isLeader = useSessionStore(s => s.isLeader())
   const isLocked = useSessionStore(s => s.isLocked)
@@ -89,9 +92,6 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       setLockWarning({ songId, hadConflict, theirRawText, myRawText: localRawText })
     }, []),
   })
-
-  // Suppress unused warning — editLocks is used indirectly via isLocked/isMyLock from the store
-  void editLocks
 
   const sensors = useSensors(
     useSensor(MouseSensor),
