@@ -7,7 +7,7 @@ import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
-import { songToChordPro, safeFilename } from '../../lib/exportChordPro'
+import { songToChordPro, songsToChordPro, safeFilename } from '../../lib/exportChordPro'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
@@ -135,16 +135,19 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
 
     try {
-      for (const song of songs) {
-        const text = songToChordPro(song)
-        const blob = new Blob([text], { type: 'text/plain' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = safeFilename(song.meta?.title) + '.cho'
-        a.click()
-        URL.revokeObjectURL(url)
-      }
+      const isSingle = songs.length === 1
+      const text = isSingle ? songToChordPro(songs[0]) : songsToChordPro(songs)
+      const filename = isSingle
+        ? safeFilename(songs[0].meta?.title) + '.cho'
+        : safeFilename(filenameInput.trim() || 'Songbook Export') + '.cho'
+
+      const blob = new Blob([text], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
     } catch (err) {
       onAddToast('Export failed: ' + err.message, 'error')
     }
@@ -384,11 +387,28 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         title="Export as ChordPro"
         onClose={() => setFilenameModalOpen(false)}
       >
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          {selectedSongIds.size === 1
-            ? '1 song will be downloaded as a .cho file.'
-            : `${selectedSongIds.size} songs will be downloaded as individual .cho files.`}
-        </p>
+        {selectedSongIds.size === 1 ? (
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            1 song will be downloaded as a .cho file.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              {selectedSongIds.size} songs will be combined into a single .cho file using the ChordPro <code className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">&#123;new_song&#125;</code> directive.
+            </p>
+            <input
+              type="text"
+              value={filenameInput}
+              onChange={e => setFilenameInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleExportConfirm() }}
+              autoFocus
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+              placeholder="Filename (e.g. Easter Set)"
+            />
+          </>
+        )}
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={() => setFilenameModalOpen(false)}>Cancel</Button>
           <Button variant="primary" onClick={handleExportConfirm}>Download</Button>
