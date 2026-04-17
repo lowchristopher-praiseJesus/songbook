@@ -91,9 +91,43 @@ function songToSbpJson(song) {
  */
 export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
   const sbpSongs = songs.map(songToSbpJson)
+
+  let sets = []
+  if (collectionName && songs.length > 0) {
+    const setId = (parseInt(SparkMD5.hash(collectionName).slice(0, 8), 16) % 900000) + 1
+    const now = new Date().toISOString()
+    sets = [{
+      details: {
+        Id: setId,
+        name: collectionName,
+        date: now,
+        ModifiedDateTime: now,
+        Deleted: 0,
+        SyncId: crypto.randomUUID(),
+        pinned: 0,
+      },
+      contents: sbpSongs.map((sbpSong, i) => ({
+        Id: setId * 100 + i + 1,
+        Order: i,
+        Capo: songs[i].meta?.capo ?? 0,
+        SetId: setId,
+        SongId: sbpSong.Id,
+        keyOfset: 0,
+        ModifiedDateTime: now,
+        Deleted: 0,
+        SyncId: crypto.randomUUID(),
+        NotesText: null,
+        SectionOrder: '',
+        ItemType: 1,
+        Content: '',
+        drawingPathsBackup: null,
+      })),
+    }]
+  }
+
   const data = {
     songs: sbpSongs,
-    sets: [],
+    sets,
     folders: [],
   }
   const json = JSON.stringify(data)
