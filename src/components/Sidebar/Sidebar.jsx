@@ -8,7 +8,7 @@ import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { exportSongsAsSbp, safeFilename } from '../../lib/exportSbp'
-import { loadSong } from '../../lib/storage'
+import { loadSong, getTransposeState } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
 import { AllSongsList } from './AllSongsList'
@@ -131,8 +131,18 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     toggleExportMode()
   }
 
+  function loadSongsWithTranspose(ids) {
+    return [...ids].map(id => {
+      const song = loadSong(id)
+      if (!song) return null
+      const ts = getTransposeState(id)
+      if (!ts) return song
+      return { ...song, meta: { ...song.meta, capo: ts.capo ?? song.meta.capo ?? 0 } }
+    }).filter(Boolean)
+  }
+
   async function handleExportConfirm() {
-    const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
+    const songs = loadSongsWithTranspose(selectedSongIds)
 
     try {
       const isSingle = songs.length === 1
@@ -156,7 +166,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     toggleExportMode()
   }
 
-  const selectedSongs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
+  const selectedSongs = loadSongsWithTranspose(selectedSongIds)
 
   return (
     <>
