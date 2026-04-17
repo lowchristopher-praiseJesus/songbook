@@ -99,9 +99,11 @@ export async function parseSbpFile(arrayBuffer) {
     .filter(s => !s.Deleted)
     .map(s => songFromJson(s))
 
+  const collectionName = data.sets?.[0]?.details?.name ?? data.collectionName ?? null
+
   return {
     songs,
-    collectionName: data.collectionName ?? null,
+    collectionName,
     lyricsOnly: data.lyricsOnly ?? false,
   }
 }
