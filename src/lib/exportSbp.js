@@ -47,7 +47,7 @@ function songToSbpJson(song) {
   return {
     Id: id,
     author,
-    Capo: meta.capo ?? 0,
+    Capo: 0,
     content,
     hash: contentHash,
     key: soundingKey,
@@ -92,8 +92,6 @@ function songToSbpJson(song) {
 export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
   const sbpSongs = songs.map(songToSbpJson)
   const data = {
-    ...(collectionName ? { collectionName } : {}),
-    ...(lyricsOnly ? { lyricsOnly: true } : {}),
     songs: sbpSongs,
     sets: [],
     folders: [],
