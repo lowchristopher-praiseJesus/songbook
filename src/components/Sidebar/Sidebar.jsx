@@ -9,6 +9,7 @@ import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { exportSongsAsSbp, safeFilename } from '../../lib/exportSbp'
 import { loadSong, getTransposeState } from '../../lib/storage'
+import { transposeChord } from '../../lib/parser/chordUtils'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
 import { AllSongsList } from './AllSongsList'
@@ -136,8 +137,27 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       const song = loadSong(id)
       if (!song) return null
       const ts = getTransposeState(id)
-      if (!ts) return song
-      return { ...song, meta: { ...song.meta, capo: ts.capo ?? song.meta.capo ?? 0 } }
+      const delta = ts?.delta ?? 0
+      const capo = ts?.capo ?? song.meta.capo ?? 0
+      const usesFlats = song.meta.usesFlats ?? false
+
+      const newKeyIndex = (((song.meta.keyIndex ?? 0) + delta) % 12 + 12) % 12
+      const rawText = delta === 0
+        ? (song.rawText ?? '')
+        : (song.rawText ?? '').replace(/\[([^\]]+)\]/g, (_, chord) =>
+            '[' + transposeChord(chord, delta, usesFlats) + ']'
+          )
+
+      return {
+        ...song,
+        rawText,
+        meta: {
+          ...song.meta,
+          keyIndex: newKeyIndex,
+          key: ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'][newKeyIndex],
+          capo,
+        },
+      }
     }).filter(Boolean)
   }
 
