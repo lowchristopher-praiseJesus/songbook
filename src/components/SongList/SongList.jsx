@@ -18,7 +18,7 @@ export function SongList({
   isFit = false,
   containerRef,
 }) {
-  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
+  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
   const bodyRef = useRef(null)
   const { fitFontSize, fitColumns, shadowRef } = useFitToScreen({
     enabled: isFit,

@@ -10,9 +10,56 @@ const KEY_NAMES       = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', '
 // Keys that prefer flat notation (C=0): Db(1), Eb(3), F(5), Ab(8), Bb(10)
 const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
 
+// Semitone intervals of a major scale (used for diatonic-fit scoring)
+const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
+
+// Chord root → chromatic index (C=0)
+const NOTE_TO_IDX = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
+  E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
+  Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+}
+
+/**
+ * Detect the guitarist's written key from chord content and derive the capo.
+ * Tries capo 0–5 and scores diatonic chord fit against the sounding key.
+ * Trusts an explicit non-zero Capo from the SBP file directly.
+ */
 function detectGuitarKey(content, soundingKeyIdx, explicitCapo) {
-  const k = (soundingKeyIdx - explicitCapo + 12) % 12
-  return { keyIndex: k, capo: explicitCapo, usesFlats: FLAT_KEY_INDICES.has(k) }
+  const freq = new Array(12).fill(0)
+  const re = /\[([A-G][b#]?)/g
+  let m
+  while ((m = re.exec(content)) !== null) {
+    const idx = NOTE_TO_IDX[m[1]]
+    if (idx !== undefined) freq[idx]++
+  }
+
+  if (freq.every(f => f === 0)) {
+    return { keyIndex: soundingKeyIdx, capo: 0, usesFlats: FLAT_KEY_INDICES.has(soundingKeyIdx) }
+  }
+
+  if (explicitCapo > 0) {
+    const k = (soundingKeyIdx - explicitCapo + 12) % 12
+    return { keyIndex: k, capo: explicitCapo, usesFlats: FLAT_KEY_INDICES.has(k) }
+  }
+
+  let bestKey = soundingKeyIdx
+  let bestCapo = 0
+  let bestScore = -1
+
+  for (let capo = 0; capo <= 5; capo++) {
+    const k = (soundingKeyIdx - capo + 12) % 12
+    const diatonic = new Set(MAJOR_SCALE.map(d => (k + d) % 12))
+    const score = freq.reduce((s, f, i) => s + (diatonic.has(i) ? f : 0), 0)
+    const effectiveScore = score + freq[k] * 0.5
+    if (effectiveScore > bestScore) {
+      bestScore = effectiveScore
+      bestKey = k
+      bestCapo = capo
+    }
+  }
+
+  return { keyIndex: bestKey, capo: bestCapo, usesFlats: FLAT_KEY_INDICES.has(bestKey) }
 }
 
 /**
