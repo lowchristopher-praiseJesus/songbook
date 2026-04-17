@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
   function openFilenameModal() {
     const today = new Date().toISOString().slice(0, 10)
-    setFilenameInput(`Songbook Export ${today}`)
+    setFilenameInput(exportSourceName ?? `Songbook Export ${today}`)
     setFilenameModalOpen(true)
   }
 
