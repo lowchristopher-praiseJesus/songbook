@@ -7,7 +7,7 @@ import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
-import { songToChordPro, songsToChordPro, safeFilename } from '../../lib/exportChordPro'
+import { exportSongsAsSbp, safeFilename } from '../../lib/exportSbp'
 import { loadSong } from '../../lib/storage'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
@@ -136,12 +136,12 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
     try {
       const isSingle = songs.length === 1
-      const text = isSingle ? songToChordPro(songs[0]) : songsToChordPro(songs)
+      const collectionName = isSingle ? null : (filenameInput.trim() || 'Songbook Export')
       const filename = isSingle
-        ? safeFilename(songs[0].meta?.title) + '.cho'
-        : safeFilename(filenameInput.trim() || 'Songbook Export') + '.cho'
+        ? safeFilename(songs[0].meta?.title) + '.sbp'
+        : safeFilename(collectionName) + '.sbp'
 
-      const blob = new Blob([text], { type: 'text/plain' })
+      const blob = await exportSongsAsSbp(songs, collectionName, false)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -384,17 +384,17 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       {/* Filename modal */}
       <Modal
         isOpen={filenameModalOpen}
-        title="Export as ChordPro"
+        title="Export as SBP"
         onClose={() => setFilenameModalOpen(false)}
       >
         {selectedSongIds.size === 1 ? (
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            1 song will be downloaded as a .cho file.
+            1 song will be downloaded as a .sbp file.
           </p>
         ) : (
           <>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-              {selectedSongIds.size} songs will be combined into a single .cho file using the ChordPro <code className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">&#123;new_song&#125;</code> directive.
+              {selectedSongIds.size} songs will be downloaded as a single .sbp file.
             </p>
             <input
               type="text"
@@ -422,7 +422,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       >
         <div className="flex flex-col gap-3">
           <Button variant="secondary" className="w-full" onClick={handleChooseDownload}>
-            Download ChordPro
+            Download (.sbp)
           </Button>
           <Button variant="secondary" className="w-full" onClick={handleChooseShare}>
             Share via link

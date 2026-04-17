@@ -40,9 +40,9 @@ function songToSbpJson(song) {
   const idHash = SparkMD5.hash(name + content)
   const id = parseInt(idHash.slice(0, 8), 16) % 1000000 || 1
 
-  // Per-song content hash (best-effort MD5 of content — SBP Pro's exact
-  // algorithm is unknown but uses the same 32-char hex format).
-  const contentHash = SparkMD5.hash(content)
+  // Per-song content hash: MD5 of content with line endings normalised to CRLF.
+  const normalizedContent = content.replace(/\r\n|\r|\n/g, '\r\n')
+  const contentHash = SparkMD5.hash(normalizedContent)
 
   return {
     Id: id,
@@ -107,6 +107,13 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
   zip.file('dataFile.txt', dataFileText)
   zip.file('dataFile.hash', dataFileHash)
   return zip
+}
+
+/**
+ * Return a safe filename base (strips characters illegal on Windows/macOS/Linux).
+ */
+export function safeFilename(title) {
+  return (title ?? 'Untitled').replace(/[/\\?%*:|"<>]/g, '-').trim() || 'Untitled'
 }
 
 /**
