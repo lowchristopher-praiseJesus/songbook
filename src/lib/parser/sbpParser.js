@@ -111,12 +111,14 @@ function songFromJson(s, setEntry = null) {
   const setCapo = setEntry?.Capo ?? 0
   const explicitCapo = setCapo > 0 ? setCapo : (s.Capo ?? 0)
 
-  const { keyIndex: detectedKey, capo: detectedCapo, usesFlats: detectedFlats } = detectGuitarKey(content, soundingKeyIdx, explicitCapo)
+  const { keyIndex: detectedKey } = detectGuitarKey(content, soundingKeyIdx, explicitCapo)
 
   // keyOfset in the set entry shifts the displayed key (e.g. D shapes + keyOfset=5 → show G)
   const keyOfset = setEntry?.keyOfset ?? 0
   const keyIndex = keyOfset > 0 ? (detectedKey + keyOfset) % 12 : detectedKey
-  const capo = keyOfset > 0 ? keyOfset : detectedCapo
+
+  // SBP always stores capo=0 at song level; set-entry Capo/keyOfset only affect the key label
+  const capo = s.Capo ?? 0
   const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
 
   return {
