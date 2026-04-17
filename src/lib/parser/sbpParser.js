@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
 import { parseContent } from './contentParser'
+import { transposeChord } from './chordUtils'
 
 // SongBook Pro stores `key` as the *sounding* key index (C=0 through B=11,
 // or 12–23 for minor roots). The chords written in the content are in the
@@ -121,9 +122,15 @@ function songFromJson(s, setEntry = null) {
   const capo = s.Capo ?? 0
   const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
 
+  // When keyOfset > 0, SBP transposes the chord display by that many semitones.
+  // Apply the same transposition to rawText so the app shows the same chords.
+  const rawText = keyOfset > 0
+    ? content.replace(/\[([^\]]+)\]/g, (_, chord) => '[' + transposeChord(chord, keyOfset, usesFlats) + ']')
+    : content
+
   return {
     // id and importedAt assigned by the library store when persisting
-    rawText: content,
+    rawText,
     meta: {
       title: s.name ?? 'Untitled',
       artist: s.author || undefined,
@@ -138,6 +145,6 @@ function songFromJson(s, setEntry = null) {
       ccli: s.ccli ?? undefined,
       subTitle: s.subTitle || undefined,
     },
-    sections: parseContent(content),
+    sections: parseContent(rawText),
   }
 }
