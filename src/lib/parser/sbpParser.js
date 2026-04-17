@@ -80,9 +80,17 @@ export async function parseSbpFile(arrayBuffer) {
   const data = JSON.parse(jsonText)
   if (!data || !Array.isArray(data.songs)) return { songs: [], collectionName: null, lyricsOnly: false }
 
+  // Build a map of songId → set entry so key/capo overrides can be applied per-song
+  const setEntryBySongId = {}
+  for (const set of data.sets ?? []) {
+    for (const entry of set.contents ?? []) {
+      setEntryBySongId[entry.SongId] = entry
+    }
+  }
+
   const songs = data.songs
     .filter(s => !s.Deleted)
-    .map(s => songFromJson(s))
+    .map(s => songFromJson(s, setEntryBySongId[s.Id] ?? null))
 
   const collectionName = data.sets?.[0]?.details?.name ?? data.collectionName ?? null
 
@@ -93,15 +101,23 @@ export async function parseSbpFile(arrayBuffer) {
   }
 }
 
-function songFromJson(s) {
+function songFromJson(s, setEntry = null) {
   const rawKey = typeof s.key === 'number' ? s.key : 0  // default C
   // SBP stores minor keys as 12 + minor-root-index; normalise to 0–11
   const soundingKeyIdx = rawKey % 12
 
   const content = s.content ?? ''
-  const explicitCapo = s.Capo ?? 0
+  // Per-set capo (set entry Capo field) takes precedence over song-level Capo
+  const setCapo = setEntry?.Capo ?? 0
+  const explicitCapo = setCapo > 0 ? setCapo : (s.Capo ?? 0)
 
-  const { keyIndex, capo, usesFlats } = detectGuitarKey(content, soundingKeyIdx, explicitCapo)
+  const { keyIndex: detectedKey, capo: detectedCapo, usesFlats: detectedFlats } = detectGuitarKey(content, soundingKeyIdx, explicitCapo)
+
+  // keyOfset in the set entry shifts the displayed key (e.g. D shapes + keyOfset=5 → show G)
+  const keyOfset = setEntry?.keyOfset ?? 0
+  const keyIndex = keyOfset > 0 ? (detectedKey + keyOfset) % 12 : detectedKey
+  const capo = keyOfset > 0 ? keyOfset : detectedCapo
+  const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
 
   return {
     // id and importedAt assigned by the library store when persisting
