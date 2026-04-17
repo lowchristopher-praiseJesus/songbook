@@ -47,7 +47,7 @@ function songToSbpJson(song) {
   return {
     Id: id,
     author,
-    Capo: 0,
+    Capo: meta.capo ?? 0,
     content,
     hash: contentHash,
     key: soundingKey,
