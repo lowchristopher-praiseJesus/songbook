@@ -2,19 +2,10 @@ import JSZip from 'jszip'
 import { parseContent } from './contentParser'
 import { transposeChord } from './chordUtils'
 
-// SongBook Pro stores `key` as the *sounding* key index (C=0 through B=11,
-// or 12–23 for minor roots). The chords written in the content are in the
-// guitarist's fingering key; a capo bridges the two. We detect the guitar
-// key from the chord content and derive the capo automatically.
-
-const KEY_NAMES       = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
-// Keys that prefer flat notation (C=0): Db(1), Eb(3), F(5), Ab(8), Bb(10)
+const KEY_NAMES        = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
+const MAJOR_SCALE      = [0, 2, 4, 5, 7, 9, 11]
 
-// Semitone intervals of a major scale (used for diatonic-fit scoring)
-const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
-
-// Chord root → chromatic index (C=0)
 const NOTE_TO_IDX = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
   E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
@@ -22,45 +13,40 @@ const NOTE_TO_IDX = {
 }
 
 /**
- * Detect the guitarist's written key from chord content and derive the capo.
- * Tries capo 0–5 and scores diatonic chord fit against the sounding key.
- * Trusts an explicit non-zero Capo from the SBP file directly.
+ * Detect the best-fitting major key from chord content (capo=0 assumed).
+ * Scores all 12 keys by diatonic chord coverage, with tiebreakers on:
+ *   1. Root-note frequency (how often the key's tonic appears)
+ *   2. First chord in the song (songs typically start on or near the tonic)
+ * Called after any set-entry transposition, so content is in playing key.
  */
-function detectGuitarKey(content, soundingKeyIdx, explicitCapo) {
+function detectKey(content) {
   const freq = new Array(12).fill(0)
+  let firstRoot = -1
   const re = /\[([A-G][b#]?)/g
   let m
   while ((m = re.exec(content)) !== null) {
     const idx = NOTE_TO_IDX[m[1]]
-    if (idx !== undefined) freq[idx]++
-  }
-
-  if (freq.every(f => f === 0)) {
-    return { keyIndex: soundingKeyIdx, capo: 0, usesFlats: FLAT_KEY_INDICES.has(soundingKeyIdx) }
-  }
-
-  if (explicitCapo > 0) {
-    const k = (soundingKeyIdx - explicitCapo + 12) % 12
-    return { keyIndex: k, capo: explicitCapo, usesFlats: FLAT_KEY_INDICES.has(k) }
-  }
-
-  let bestKey = soundingKeyIdx
-  let bestCapo = 0
-  let bestScore = -1
-
-  for (let capo = 0; capo <= 5; capo++) {
-    const k = (soundingKeyIdx - capo + 12) % 12
-    const diatonic = new Set(MAJOR_SCALE.map(d => (k + d) % 12))
-    const score = freq.reduce((s, f, i) => s + (diatonic.has(i) ? f : 0), 0)
-    const effectiveScore = score + freq[k] * 0.5
-    if (effectiveScore > bestScore) {
-      bestScore = effectiveScore
-      bestKey = k
-      bestCapo = capo
+    if (idx !== undefined) {
+      freq[idx]++
+      if (firstRoot === -1) firstRoot = idx
     }
   }
 
-  return { keyIndex: bestKey, capo: bestCapo, usesFlats: FLAT_KEY_INDICES.has(bestKey) }
+  if (freq.every(f => f === 0)) return { keyIndex: 0, usesFlats: false }
+
+  let bestKey = 0, bestScore = -1
+  for (let k = 0; k < 12; k++) {
+    const diatonic = new Set(MAJOR_SCALE.map(d => (k + d) % 12))
+    const score = freq.reduce((s, f, i) => s + (diatonic.has(i) ? f : 0), 0)
+    // Tiebreaker: root frequency + small bonus when the first chord matches this key's tonic
+    const effectiveScore = score + freq[k] * 0.5 + (firstRoot === k ? 0.25 : 0)
+    if (effectiveScore > bestScore) {
+      bestScore = effectiveScore
+      bestKey = k
+    }
+  }
+
+  return { keyIndex: bestKey, usesFlats: FLAT_KEY_INDICES.has(bestKey) }
 }
 
 /**
@@ -81,7 +67,7 @@ export async function parseSbpFile(arrayBuffer) {
   const data = JSON.parse(jsonText)
   if (!data || !Array.isArray(data.songs)) return { songs: [], collectionName: null, lyricsOnly: false }
 
-  // Build a map of songId → set entry so key/capo overrides can be applied per-song
+  // Build songId → set entry map so per-song key/chord adjustments can be applied
   const setEntryBySongId = {}
   for (const set of data.sets ?? []) {
     for (const entry of set.contents ?? []) {
@@ -103,33 +89,33 @@ export async function parseSbpFile(arrayBuffer) {
 }
 
 function songFromJson(s, setEntry = null) {
-  const rawKey = typeof s.key === 'number' ? s.key : 0  // default C
-  // SBP stores minor keys as 12 + minor-root-index; normalise to 0–11
-  const soundingKeyIdx = rawKey % 12
-
   const content = s.content ?? ''
-  // Per-set capo (set entry Capo field) takes precedence over song-level Capo
-  const setCapo = setEntry?.Capo ?? 0
-  const explicitCapo = setCapo > 0 ? setCapo : (s.Capo ?? 0)
 
-  const { keyIndex: detectedKey } = detectGuitarKey(content, soundingKeyIdx, explicitCapo)
-
-  // keyOfset in the set entry shifts the displayed key (e.g. D shapes + keyOfset=5 → show G)
+  // SBP set entries carry two chord-display adjustments:
+  //   Capo    — subtract this many semitones (guitarist plays at this capo fret)
+  //   keyOfset — add this many semitones (song is pitched up N semitones in the set)
+  // The net delta is applied to chord notation so the app shows the same chords as SBP.
+  const setCapo  = setEntry?.Capo    ?? 0
   const keyOfset = setEntry?.keyOfset ?? 0
-  const keyIndex = keyOfset > 0 ? (detectedKey + keyOfset) % 12 : detectedKey
+  const netDelta = keyOfset - setCapo
 
-  // SBP always stores capo=0 at song level; set-entry Capo/keyOfset only affect the key label
-  const capo = s.Capo ?? 0
-  const usesFlats = FLAT_KEY_INDICES.has(keyIndex)
-
-  // When keyOfset > 0, SBP transposes the chord display by that many semitones.
-  // Apply the same transposition to rawText so the app shows the same chords.
-  const rawText = keyOfset > 0
-    ? content.replace(/\[([^\]]+)\]/g, (_, chord) => '[' + transposeChord(chord, keyOfset, usesFlats) + ']')
+  // Transpose chord notation by the net delta (first pass: sharps for detection)
+  const transposed = netDelta !== 0
+    ? content.replace(/\[([^\]]+)\]/g, (_, chord) => '[' + transposeChord(chord, netDelta, false) + ']')
     : content
 
+  // Detect the best-fitting major key from the (already transposed) chord content
+  const { keyIndex, usesFlats } = detectKey(transposed)
+
+  // Second pass with correct flat/sharp notation if the detected key uses flats
+  const rawText = (netDelta !== 0 && usesFlats)
+    ? content.replace(/\[([^\]]+)\]/g, (_, chord) => '[' + transposeChord(chord, netDelta, true) + ']')
+    : transposed
+
+  // SBP always stores capo=0 at song level; set-entry fields only reshape the display
+  const capo = s.Capo ?? 0
+
   return {
-    // id and importedAt assigned by the library store when persisting
     rawText,
     meta: {
       title: s.name ?? 'Untitled',
