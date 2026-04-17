@@ -97,7 +97,7 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
     folders: [],
   }
   const json = JSON.stringify(data)
-  const dataFileText = '1.0\n' + json
+  const dataFileText = '1.0\r\n' + json
   // SongBook Pro's dataFile.hash is the MD5 of the raw UTF-8 bytes of dataFile.txt.
   const dataFileHash = SparkMD5.hash(dataFileText)
 
