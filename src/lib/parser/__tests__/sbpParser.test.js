@@ -131,4 +131,59 @@ describe('parseSbpFile', () => {
     const result = await parseSbpFile(buf)
     expect(result.lyricsOnly).toBe(false)
   })
+
+  // KeyShift / Capo handling
+
+  it('KeyShift=2: bakes shift into rawText and sets keyIndex to sounding key', async () => {
+    // D (key=2) + KeyShift=2 → sounding E (index 4), no capo → guitar key = E
+    const buf = await makeMockSbp([{
+      Id: 1, name: 'Song', author: '', key: 2, Capo: 0, KeyShift: 2,
+      TempoInt: 0, timeSig: '', Copyright: '', content: '[D]hello [G]world',
+    }])
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.keyIndex).toBe(4)   // E
+    expect(songs[0].meta.key).toBe('E')
+    expect(songs[0].meta.capo).toBe(0)
+    // chords transposed up 2 semitones in rawText
+    expect(songs[0].rawText).toBe('[E]hello [A]world')
+  })
+
+  it('Capo=2: rawText unchanged, keyIndex is guitar key (sounding − capo)', async () => {
+    // D (key=2) + Capo=2 → guitar key C (index 0); rawText stays in D (capo applied by hook)
+    const buf = await makeMockSbp([{
+      Id: 1, name: 'Song', author: '', key: 2, Capo: 2, KeyShift: 0,
+      TempoInt: 0, timeSig: '', Copyright: '', content: '[D]hello [G]world',
+    }])
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.keyIndex).toBe(0)   // C (guitar key)
+    expect(songs[0].meta.key).toBe('C')
+    expect(songs[0].meta.capo).toBe(2)
+    // rawText keeps original D chords; capo shift applied at display time
+    expect(songs[0].rawText).toBe('[D]hello [G]world')
+  })
+
+  it('KeyShift=2 + Capo=1: bakes KeyShift, detects guitar key as adjusted sounding − capo', async () => {
+    // D (key=2) + KeyShift=2 → adjusted sounding E (4); E − capo 1 = Eb (3)
+    const buf = await makeMockSbp([{
+      Id: 1, name: 'Song', author: '', key: 2, Capo: 1, KeyShift: 2,
+      TempoInt: 0, timeSig: '', Copyright: '', content: '[D]hello',
+    }])
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.keyIndex).toBe(3)   // Eb
+    expect(songs[0].meta.key).toBe('Eb')
+    expect(songs[0].meta.capo).toBe(1)
+    expect(songs[0].rawText).toBe('[E]hello')
+  })
+
+  it('Capo on song with no chords falls back to guitar key (sounding − capo)', async () => {
+    // key=0 (C), Capo=3 → guitar key A (index 9); no chords so diatonic scoring is skipped
+    const buf = await makeMockSbp([{
+      Id: 1, name: 'Song', author: '', key: 0, Capo: 3, KeyShift: 0,
+      TempoInt: 0, timeSig: '', Copyright: '', content: '',
+    }])
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.keyIndex).toBe(9)   // A
+    expect(songs[0].meta.key).toBe('A')
+    expect(songs[0].meta.capo).toBe(3)
+  })
 })

@@ -26,7 +26,8 @@ function detectGuitarKey(content, soundingKeyIdx, explicitCapo) {
   }
 
   if (freq.every(f => f === 0)) {
-    return { keyIndex: soundingKeyIdx, usesFlats: FLAT_KEY_INDICES.has(soundingKeyIdx) }
+    const k = explicitCapo > 0 ? (soundingKeyIdx - explicitCapo + 12) % 12 : soundingKeyIdx
+    return { keyIndex: k, usesFlats: FLAT_KEY_INDICES.has(k) }
   }
 
   if (explicitCapo > 0) {
@@ -88,12 +89,26 @@ function songFromJson(s, setEntry = null) {
   const soundingKeyIdx = ((typeof s.key === 'number' ? s.key : 0) % 12 + 12) % 12
   const content = s.content ?? ''
 
-  // Set-entry fields that reshape key and chord display:
-  //   Capo    – guitarist places capo here; chords shift DOWN by this amount
-  //   keyOfset – song is pitched up N semitones in the set; chords shift UP
+  // Song-level fields:
+  //   KeyShift – non-destructive live transpose in SBP; chords in content are still
+  //              in the original key, so we bake this shift into rawText on import
+  //   Capo     – guitarist places capo here; shifts display DOWN; handled at render
+  //              time by useTranspose (not baked into rawText)
+  const songKeyShift = s.KeyShift ?? 0
+  const songCapo     = s.Capo    ?? 0
+
+  // Set-entry fields that further reshape key and chord display per-set:
+  //   Capo    – set-level capo; shifts display DOWN (baked into rawText)
+  //   keyOfset – song is pitched up N semitones in the set; chords shift UP (baked)
   const setCapo  = setEntry?.Capo    ?? 0
   const keyOfset = setEntry?.keyOfset ?? 0
-  const netDelta = keyOfset - setCapo
+
+  // Net chord delta baked into rawText:
+  //   +songKeyShift  – SBP live transpose (shifts sounding pitch up)
+  //   +keyOfset      – set-level pitch shift up
+  //   −setCapo       – set-level capo (shifts display shapes down)
+  //   songCapo is NOT included; useTranspose applies it at display time
+  const netDelta = songKeyShift + keyOfset - setCapo
 
   // Apply net chord transposition so the app shows the same chords as SBP.
   // Two-pass: detect key first (sharps), then re-render with correct accidentals.
@@ -103,24 +118,25 @@ function songFromJson(s, setEntry = null) {
 
   let keyIndex, usesFlats
 
-  if (setCapo > 0 && keyOfset === 0) {
-    // SBP displays the sounding key after removing the set capo (e.g. Db − 3 = Bb)
+  if (setCapo > 0 && songKeyShift === 0 && keyOfset === 0 && songCapo === 0) {
+    // Simple set-capo-only case: guitar key = sounding − setCapo
     keyIndex = (soundingKeyIdx - setCapo + 12) % 12
     usesFlats = FLAT_KEY_INDICES.has(keyIndex)
   } else {
-    // Detect the guitarist's playing key from the (already-transposed) chord content.
-    // Use the adjusted sounding key so the diatonic scorer can distinguish G major
-    // from C major (E♮ is in G major but not B♭ major, eliminating the ambiguity).
-    const adjustedSounding = (soundingKeyIdx + keyOfset) % 12
-    ;({ keyIndex, usesFlats } = detectGuitarKey(transposed1, adjustedSounding, 0))
+    // General case: detect the guitarist's playing key from the transposed chord content.
+    // adjustedSounding accounts for all pitch-shifting (songKeyShift + set keyOfset).
+    // songCapo is passed as explicitCapo so detectGuitarKey returns sounding − songCapo
+    // (the guitar/capo key) without needing diatonic scoring.
+    const adjustedSounding = (soundingKeyIdx + songKeyShift + keyOfset) % 12
+    ;({ keyIndex, usesFlats } = detectGuitarKey(transposed1, adjustedSounding, songCapo))
   }
 
   const rawText = (netDelta !== 0 && usesFlats)
     ? content.replace(/\[([^\]]+)\]/g, (_, c) => '[' + transposeChord(c, netDelta, true) + ']')
     : transposed1
 
-  // SBP always stores capo=0 at song level; set-entry fields only reshape the display
-  const capo = s.Capo ?? 0
+  // song-level Capo stored in meta; useTranspose initialises its capo widget from this
+  const capo = songCapo
 
   return {
     rawText,
