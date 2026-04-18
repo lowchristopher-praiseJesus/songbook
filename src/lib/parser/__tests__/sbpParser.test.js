@@ -192,6 +192,23 @@ describe('parseSbpFile', () => {
     expect(songs[0].meta.capo).toBe(3)
   })
 
+  it('keyOfset: content unchanged; KeyShift anchors sounding so scorer finds correct guitar key', async () => {
+    // Mirrors "We Fall Down" in CNY 2026: key=F(5), KeyShift=5 → sounding Bb(10).
+    // keyOfset=5 is pitch-shift metadata that does NOT change displayed chord shapes.
+    // Content has G-key chords ([D]/[G]); adjustedSounding=Bb so scorer finds G at capo=3.
+    const songId = 2
+    const buf = await makeMockSbp(
+      [{ Id: songId, name: 'Song', author: '', key: 5, Capo: 0, KeyShift: 5,
+         TempoInt: 0, timeSig: '', Copyright: '', content: '[D]hello [G]world' }],
+      { sets: [{ details: { Id: 5, name: 'Test Set' }, contents: [{ Id: 1, Order: 0, Capo: 0, keyOfset: 5, SetId: 5, SongId: songId }] }] }
+    )
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.keyIndex).toBe(7)   // G
+    expect(songs[0].meta.key).toBe('G')
+    expect(songs[0].meta.capo).toBe(0)
+    expect(songs[0].rawText).toBe('[D]hello [G]world')  // unchanged — keyOfset not baked in
+  })
+
   it('KeyShift + set Capo: real-world case where content is already in sounding key', async () => {
     // Mirrors "That's The Power" in CNY 2026: key=1 (Db), KeyShift=9 → sounding Bb (10).
     // Content already has Bb-key chords (Gm, Ebmaj7). Set entry Capo=3 shifts display
