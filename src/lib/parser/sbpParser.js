@@ -101,19 +101,16 @@ function songFromJson(s, setEntry = null) {
 
   // Set-entry fields that further reshape key and chord display per-set:
   //   Capo     – set-level capo; shifts display shapes DOWN (baked into rawText)
-  //   keyOfset – set-level pitch shift. When songKeyShift > 0, the content already
-  //              reflects that KS shift destructively and keyOfset is redundant metadata
-  //              (SBP sets it to match the KS). When songKeyShift === 0, keyOfset is a
-  //              genuine chord transposition that must be baked into rawText.
-  const setCapo         = setEntry?.Capo    ?? 0
-  const keyOfset        = setEntry?.keyOfset ?? 0
-  const effectiveKeyOfset = songKeyShift > 0 ? 0 : keyOfset
+  //   keyOfset – set-level pitch shift applied to displayed chords (always baked into rawText)
+  const setCapo  = setEntry?.Capo    ?? 0
+  const keyOfset = setEntry?.keyOfset ?? 0
 
   // Net chord delta baked into rawText:
-  //   +effectiveKeyOfset – real set-level pitch shift (0 when KS already covers it)
-  //   −setCapo           – set-level capo (shifts display shapes down)
+  //   +keyOfset – set-level pitch shift (SBP always applies this to displayed chords)
+  //   −setCapo  – set-level capo (shifts display shapes down)
+  //   songKeyShift intentionally excluded: content chords already reflect it
   //   songCapo is NOT included; useTranspose applies it at display time
-  const netDelta = effectiveKeyOfset - setCapo
+  const netDelta = keyOfset - setCapo
 
   // Apply net chord transposition so the app shows the same chords as SBP.
   // Two-pass: detect key first (sharps), then re-render with correct accidentals.
@@ -129,11 +126,13 @@ function songFromJson(s, setEntry = null) {
     usesFlats = FLAT_KEY_INDICES.has(keyIndex)
   } else {
     // General case: detect the guitarist's playing key from the (set-adjusted) chord content.
-    // adjustedSounding = sounding after KS (or effectiveKeyOfset when KS=0) so the diatonic
-    // scorer targets the correct pitch from which it subtracts the capo to find guitar key.
+    // adjustedSounding uses max(KS, keyOfset) because when both are non-zero they represent
+    // the same pitch shift (SBP sets keyOfset=KS to annotate the set pitch), so only the
+    // larger value is effective. This gives the correct sounding key from which the diatonic
+    // scorer finds the guitar key (e.g. Bb − setCapo 3 = G).
     // songCapo is passed as explicitCapo so detectGuitarKey returns sounding − songCapo
-    // directly without scoring.
-    const adjustedSounding = (soundingKeyIdx + songKeyShift + effectiveKeyOfset) % 12
+    // directly without needing to score.
+    const adjustedSounding = (soundingKeyIdx + Math.max(songKeyShift, keyOfset)) % 12
     ;({ keyIndex, usesFlats } = detectGuitarKey(transposed1, adjustedSounding, songCapo))
   }
 

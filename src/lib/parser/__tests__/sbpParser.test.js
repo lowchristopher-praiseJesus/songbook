@@ -192,9 +192,10 @@ describe('parseSbpFile', () => {
     expect(songs[0].meta.capo).toBe(3)
   })
 
-  it('KeyShift>0 + keyOfset: keyOfset is redundant (KS already baked in); content unchanged', async () => {
-    // Mirrors "We Fall Down" in CNY 2026: key=F(5), KeyShift=5 → content already G-key.
-    // keyOfset=5 matches KS and is NOT applied again. adjustedSounding=Bb(10) → scorer finds G.
+  it('KeyShift>0 + keyOfset: keyOfset always applied to chords; max(KS,kO) anchors sounding', async () => {
+    // Mirrors "We Fall Down" in CNY 2026: key=F(5), KeyShift=5, keyOfset=5.
+    // SBP always applies keyOfset to displayed chords (D→G, G→C).
+    // adjustedSounding=max(KS,kO)+soundingIdx=Bb(10); scorer finds G at capo=3.
     const songId = 2
     const buf = await makeMockSbp(
       [{ Id: songId, name: 'Song', author: '', key: 5, Capo: 0, KeyShift: 5,
@@ -205,7 +206,7 @@ describe('parseSbpFile', () => {
     expect(songs[0].meta.keyIndex).toBe(7)   // G
     expect(songs[0].meta.key).toBe('G')
     expect(songs[0].meta.capo).toBe(0)
-    expect(songs[0].rawText).toBe('[D]hello [G]world')  // unchanged — KS>0 so keyOfset excluded
+    expect(songs[0].rawText).toBe('[G]hello [C]world')  // D+5=G, G+5=C
   })
 
   it('KeyShift=0 + keyOfset: keyOfset is a real chord shift baked into rawText', async () => {
