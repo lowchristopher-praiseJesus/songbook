@@ -127,4 +127,86 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     const { json } = await parseZip([mockSong])  // uses existing helper, no lyricsOnly
     expect(json.lyricsOnly).toBeUndefined()
   })
+
+  describe('SBP round-trip (preserves original fields)', () => {
+    // Songs imported from .sbp carry sbpXxx meta fields; export must write
+    // the original key/KeyShift/Capo/content back verbatim so SBP interprets
+    // the re-imported file the same way as the original.
+    const sbpSong = {
+      meta: {
+        title: 'That\u2019s The Power',
+        artist: 'Hillsong',
+        keyIndex: 7, capo: 0,
+        sbpKey: 1, sbpKeyShift: 9, sbpSongCapo: 0,
+        sbpSetCapo: 3, sbpKeyOfset: 0,
+        sbpOriginalContent: '[Gm]hello [Ebmaj7]world',
+        sbpBaselineKeyIndex: 7,
+      },
+      rawText: '[Em]hello [Cmaj7]world',   // baked (Gm−3, Ebmaj7−3) for UI
+    }
+
+    it('writes sbpKey/sbpKeyShift/sbpSongCapo when user has not transposed', async () => {
+      const { json } = await parseZip([sbpSong])
+      const s = json.songs[0]
+      expect(s.key).toBe(1)          // original Db, NOT (keyIndex + capo)
+      expect(s.KeyShift).toBe(9)     // preserved live transpose
+      expect(s.Capo).toBe(0)         // song-level capo preserved
+      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')  // original content
+    })
+
+    it('writes set-entry sbpSetCapo and sbpKeyOfset into the set contents', async () => {
+      const buf = await buildSbpZip([sbpSong], 'CNY 2026').generateAsync({ type: 'uint8array' })
+      const zip = await JSZip.loadAsync(buf)
+      const text = await zip.file('dataFile.txt').async('string')
+      const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+      const entry = json.sets[0].contents[0]
+      expect(entry.Capo).toBe(3)     // set capo preserved
+      expect(entry.keyOfset).toBe(0)
+    })
+
+    it('folds user transpose delta into KeyShift (leaves original content untouched)', async () => {
+      // User transposed up 2: meta.keyIndex = 9 (baseline 7 + 2).
+      const transposed = {
+        ...sbpSong,
+        meta: { ...sbpSong.meta, keyIndex: 9 },
+      }
+      const { json } = await parseZip([transposed])
+      const s = json.songs[0]
+      expect(s.key).toBe(1)                  // original key never moves
+      expect(s.KeyShift).toBe(9 + 2)         // 11 = base KS + user delta
+      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')
+    })
+
+    it('preserves keyOfset for songs that originally had set-level pitch shift', async () => {
+      // Mirrors "We Fall Down": key=5(F), KS=5, setCapo=0, keyOfset=5, content=[D].
+      const wfd = {
+        meta: {
+          title: 'We Fall Down', artist: '',
+          keyIndex: 7, capo: 0,
+          sbpKey: 5, sbpKeyShift: 5, sbpSongCapo: 0,
+          sbpSetCapo: 0, sbpKeyOfset: 5,
+          sbpOriginalContent: '[D]hello [A]world',
+          sbpBaselineKeyIndex: 7,
+        },
+        rawText: '[G]hello [D]world',   // baked (D+5) for UI
+      }
+      const buf = await buildSbpZip([wfd], 'Set').generateAsync({ type: 'uint8array' })
+      const zip = await JSZip.loadAsync(buf)
+      const text = await zip.file('dataFile.txt').async('string')
+      const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+      const s = json.songs[0]
+      const entry = json.sets[0].contents[0]
+      expect(s.key).toBe(5)
+      expect(s.KeyShift).toBe(5)
+      expect(s.content).toBe('[D]hello [A]world')
+      expect(entry.keyOfset).toBe(5)
+    })
+
+    it('falls back to (keyIndex + capo) formula for songs without sbpXxx fields', async () => {
+      // Manually-created song (no import provenance) — existing behaviour.
+      const { json } = await parseZip([mockSong])
+      expect(json.songs[0].key).toBe(3)    // keyIndex 1 + capo 2 = 3 (Eb)
+      expect(json.songs[0].KeyShift).toBe(0)
+    })
+  })
 })

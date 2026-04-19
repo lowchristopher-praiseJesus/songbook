@@ -158,6 +158,17 @@ function songFromJson(s, setEntry = null) {
       copyright: s.Copyright || undefined,
       ccli: s.ccli ?? undefined,
       subTitle: s.subTitle || undefined,
+      // Original SBP fields preserved verbatim so exportSbp can reproduce
+      // the input byte-for-byte on an unmodified round-trip. The parser bakes
+      // keyOfset − setCapo into rawText for UI rendering; these fields let
+      // the exporter un-bake to reconstruct the original content + metadata.
+      sbpKey: typeof s.key === 'number' ? s.key : 0,
+      sbpKeyShift: songKeyShift,
+      sbpSongCapo: songCapo,
+      sbpSetCapo: setCapo,
+      sbpKeyOfset: keyOfset,
+      sbpOriginalContent: content,
+      sbpBaselineKeyIndex: keyIndex,
     },
     sections: parseContent(rawText),
   }

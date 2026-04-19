@@ -23,16 +23,39 @@ function buildDeepSearch(name, author, subTitle) {
  * Convert one internal song object back to the SBP JSON shape, including all
  * metadata fields SongBook Pro expects to find on import.
  *
- * The stored keyIndex is the guitar (fingering) key; the sounding key
- * that SBP expects is (keyIndex + capo) % 12.
+ * Two paths:
+ *   1. Song has sbpXxx meta fields (imported from .sbp) — write the original
+ *      SBP key/KeyShift/Capo/content verbatim, adjusting KeyShift by the
+ *      user's transpose delta so modifications round-trip as a live transpose.
+ *   2. No sbpXxx fields (song created in-app) — use (keyIndex + capo) as the
+ *      sounding key and write rawText as content.
  */
 function songToSbpJson(song) {
   const { meta, rawText } = song
-  const soundingKey = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
   const name = meta.title ?? 'Untitled'
   const author = meta.artist ?? ''
   const subTitle = meta.subTitle ?? ''
-  const content = rawText ?? ''
+
+  const hasSbpRoundTrip = typeof meta.sbpKey === 'number'
+
+  let keyField, keyShiftField, songCapoField, content
+  if (hasSbpRoundTrip) {
+    // User's transpose delta = how far keyIndex has moved from baseline.
+    // Fold it into KeyShift so SBP applies it as a live transpose while
+    // the original content stays untouched (no-op when delta=0).
+    const baseline = meta.sbpBaselineKeyIndex ?? 0
+    const delta = (((meta.keyIndex ?? baseline) - baseline) % 12 + 12) % 12
+    const adjustedDelta = delta > 6 ? delta - 12 : delta  // keep signed within ±6
+    keyField       = meta.sbpKey
+    keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
+    songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
+    content        = meta.sbpOriginalContent ?? rawText ?? ''
+  } else {
+    keyField       = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
+    keyShiftField  = 0
+    songCapoField  = meta.capo ?? 0
+    content        = rawText ?? ''
+  }
 
   // Generate a stable pseudo-Id from a hash of the song content so that
   // the same song exported twice gets the same Id. SBP Pro uses DB auto-
@@ -47,11 +70,11 @@ function songToSbpJson(song) {
   return {
     Id: id,
     author,
-    Capo: meta.capo ?? 0,
+    Capo: songCapoField,
     content,
     hash: contentHash,
-    key: soundingKey,
-    KeyShift: 0,
+    key: keyField,
+    KeyShift: keyShiftField,
     name,
     subTitle,
     type: 1,
@@ -109,10 +132,10 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
       contents: sbpSongs.map((sbpSong, i) => ({
         Id: setId * 100 + i + 1,
         Order: i,
-        Capo: songs[i].meta?.capo ?? 0,
+        Capo: songs[i].meta?.sbpSetCapo ?? 0,
         SetId: setId,
         SongId: sbpSong.Id,
-        keyOfset: 0,
+        keyOfset: songs[i].meta?.sbpKeyOfset ?? 0,
         ModifiedDateTime: now,
         Deleted: 0,
         SyncId: crypto.randomUUID(),
