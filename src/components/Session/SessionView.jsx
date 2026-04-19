@@ -123,7 +123,7 @@ function SessionSongViewer({ song, onClose }) {
 
       {/* Scrollable song body */}
       <div className="flex-1 overflow-y-auto p-4">
-        <SongBody sections={transpose.transposedSections} fontSize={15} />
+        <SongBody sections={transpose.transposedSections} fontSize={15} annotationsVisible={true} />
       </div>
     </div>
   )
