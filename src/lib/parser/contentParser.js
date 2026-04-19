@@ -1,50 +1,60 @@
 const SECTION_RE = /^\{c:\s*(.+?)\s*\}$/
+const NOTE_RE = /^\{note:\s*(.*?)\s*\}$/
 
-/**
- * Parse SongBook Pro inline-chord content string into structured sections.
- *
- * Format:
- *   {c: Section Name}   — starts a new section
- *   [Chord]             — inline chord token within a lyric line
- *   Pure chord lines    — lines containing only [Chord] tokens and whitespace
- */
 export function parseContent(content) {
   if (!content) return []
 
-  const lines = content.split('\n')
+  const rawLines = content.split('\n')
   const sections = []
   let current = null
+  let i = 0
 
-  for (const rawLine of lines) {
-    const sectionMatch = rawLine.match(SECTION_RE)
+  function peekNote() {
+    if (i + 1 < rawLines.length) {
+      const m = rawLines[i + 1].match(NOTE_RE)
+      if (m) { i++; return m[1] }
+    }
+    return null
+  }
 
-    if (sectionMatch) {
-      current = { label: sectionMatch[1], lines: [] }
-      sections.push(current)
+  while (i < rawLines.length) {
+    const rawLine = rawLines[i]
+
+    // Consume standalone {note:} lines not attached to any element
+    if (NOTE_RE.test(rawLine)) {
+      i++
       continue
     }
 
-    // Content before first section marker gets a default unnamed section
+    const sectionMatch = rawLine.match(SECTION_RE)
+    if (sectionMatch) {
+      const annotation = peekNote()
+      current = { label: sectionMatch[1], annotation, lines: [] }
+      sections.push(current)
+      i++
+      continue
+    }
+
     if (!current) {
-      current = { label: '', lines: [] }
+      current = { label: '', annotation: null, lines: [] }
       sections.push(current)
     }
 
     if (rawLine.trim() === '') {
-      current.lines.push({ type: 'blank', content: '', chords: [] })
+      current.lines.push({ type: 'blank', content: '', chords: [], annotation: null })
+      i++
       continue
     }
 
-    current.lines.push(parseLine(rawLine))
+    const annotation = peekNote()
+    const line = { ...parseLine(rawLine), annotation }
+    current.lines.push(line)
+    i++
   }
 
   return sections
 }
 
-/**
- * Parse a single content line, extracting inline [Chord] tokens.
- * Returns a SongLine with type, content (lyric text), and chords array.
- */
 function parseLine(rawLine) {
   const chords = []
   let lyric = ''
@@ -54,7 +64,6 @@ function parseLine(rawLine) {
     if (rawLine[i] === '[') {
       const close = rawLine.indexOf(']', i + 1)
       if (close === -1) {
-        // No closing bracket — treat as literal character
         lyric += rawLine[i++]
         continue
       }
@@ -63,7 +72,6 @@ function parseLine(rawLine) {
         chords.push({ chord: candidate, position: lyric.length })
         i = close + 1
       } else {
-        // Not a chord — copy literally including the brackets
         lyric += rawLine[i++]
       }
     } else {
@@ -71,7 +79,6 @@ function parseLine(rawLine) {
     }
   }
 
-  // A pure chord line has only whitespace left in the lyric text
   const isPureChordLine = lyric.trim() === '' && chords.length > 0
 
   return {
@@ -81,7 +88,6 @@ function parseLine(rawLine) {
   }
 }
 
-// Matches: G, Am, F#m, Bb, Cmaj7, G/B, A/C#, Fmaj7, E7, etc.
 const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add)?[0-9]{0,2}(?:\/[A-G][b#]?)?$/
 
 export function isChord(str) {

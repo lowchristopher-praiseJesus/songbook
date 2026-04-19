@@ -99,3 +99,48 @@ describe('parseContent', () => {
     expect(sections[0].lines[0].chords).toEqual([])
   })
 })
+
+describe('{note:} annotation tokens', () => {
+  it('attaches note after {c:} to section.annotation', () => {
+    const sections = parseContent('{c: Chorus}\n{note: sing twice}\nHello world')
+    expect(sections[0].annotation).toBe('sing twice')
+    expect(sections[0].lines[0].content).toBe('Hello world')
+  })
+
+  it('attaches note after a lyric line to line.annotation', () => {
+    const sections = parseContent('{c: Verse}\nAmazing grace\n{note: sing softly}')
+    expect(sections[0].lines[0].annotation).toBe('sing softly')
+  })
+
+  it('does not attach note after a blank line', () => {
+    const sections = parseContent('{c: Verse}\nHello\n\n{note: orphan}')
+    expect(sections[0].lines[0].annotation).toBeNull()
+    expect(sections[0].lines[1].type).toBe('blank')
+    expect(sections[0].lines[1].annotation).toBeNull()
+  })
+
+  it('ignores consecutive {note:} lines — only first consumed', () => {
+    const sections = parseContent('{c: Chorus}\n{note: first}\n{note: second}\nLyrics')
+    expect(sections[0].annotation).toBe('first')
+    expect(sections[0].lines[0].content).toBe('Lyrics')
+    expect(sections[0].lines[0].annotation).toBeNull()
+  })
+
+  it('returns annotation: null when no note follows', () => {
+    const sections = parseContent('{c: Verse}\nHello world')
+    expect(sections[0].annotation).toBeNull()
+    expect(sections[0].lines[0].annotation).toBeNull()
+  })
+
+  it('note text is trimmed', () => {
+    const sections = parseContent('{c: Verse}\n{note:   padded text   }')
+    expect(sections[0].annotation).toBe('padded text')
+  })
+
+  it('all existing lines still have annotation: null', () => {
+    const sections = parseContent('{c: Verse}\nHello [G]world\n\nNext line')
+    expect(sections[0].lines[0].annotation).toBeNull()
+    expect(sections[0].lines[1].annotation).toBeNull() // blank
+    expect(sections[0].lines[2].annotation).toBeNull()
+  })
+})
