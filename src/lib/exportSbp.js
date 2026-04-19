@@ -19,6 +19,13 @@ function buildDeepSearch(name, author, subTitle) {
   return out
 }
 
+function stripNoteTokens(content) {
+  return content
+    .replace(/^\{note:[^}]*\}\s*$/gm, '')
+    .replace(/\n{2,}/g, '\n\n')
+    .trim()
+}
+
 /**
  * Convert one internal song object back to the SBP JSON shape, including all
  * metadata fields SongBook Pro expects to find on import.
@@ -49,12 +56,12 @@ function songToSbpJson(song) {
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
     songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
-    content        = meta.sbpOriginalContent ?? rawText ?? ''
+    content        = stripNoteTokens(meta.sbpOriginalContent ?? rawText ?? '')
   } else {
     keyField       = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
     keyShiftField  = 0
     songCapoField  = meta.capo ?? 0
-    content        = rawText ?? ''
+    content        = stripNoteTokens(rawText ?? '')
   }
 
   // Generate a stable pseudo-Id from a hash of the song content so that
@@ -91,7 +98,7 @@ function songToSbpJson(song) {
     Url: '',
     DeepSearch: buildDeepSearch(name, author, subTitle),
     Copyright: meta.copyright ?? '',
-    NotesText: '',
+    NotesText: meta.annotation ?? '',
     Zoom: 1.0,
     SectionOrder: '',
     SongNumber: 0,

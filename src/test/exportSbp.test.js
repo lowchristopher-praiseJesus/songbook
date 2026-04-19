@@ -128,6 +128,31 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.lyricsOnly).toBeUndefined()
   })
 
+  it('strips {note:} lines from exported content', async () => {
+    const songWithNotes = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
+      rawText: '{c: Verse}\n{note: sing twice}\nHello world\n{note: softly}',
+    }
+    const { json } = await parseZip([songWithNotes])
+    expect(json.songs[0].content).not.toContain('{note:')
+    expect(json.songs[0].content).toContain('Hello world')
+    expect(json.songs[0].content).toContain('{c: Verse}')
+  })
+
+  it('maps meta.annotation to NotesText', async () => {
+    const songWithAnnotation = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0, annotation: 'sing joyfully' },
+      rawText: '{c: Verse}\nHello world',
+    }
+    const { json } = await parseZip([songWithAnnotation])
+    expect(json.songs[0].NotesText).toBe('sing joyfully')
+  })
+
+  it('writes empty string to NotesText when meta.annotation is absent', async () => {
+    const { json } = await parseZip([mockSong])
+    expect(json.songs[0].NotesText).toBe('')
+  })
+
   describe('SBP round-trip (preserves original fields)', () => {
     // Songs imported from .sbp carry sbpXxx meta fields; export must write
     // the original key/KeyShift/Capo/content back verbatim so SBP interprets
