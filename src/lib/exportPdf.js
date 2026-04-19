@@ -1,13 +1,6 @@
 import jsPDF from 'jspdf'
 
-/**
- * Export lyrics-only PDF for a song.
- * Skips chord-only lines; renders section labels, lyric lines, and blank gaps.
- *
- * @param {{ title: string, artist: string }} meta
- * @param {Array} sections  — parsed/transposed sections array
- */
-export function exportLyricsPdf(meta, sections) {
+export function exportLyricsPdf(meta, sections, annotationsVisible = true) {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
 
   const pageW = doc.internal.pageSize.getWidth()
@@ -17,14 +10,14 @@ export function exportLyricsPdf(meta, sections) {
 
   let y = 60
 
-  // ── Title ──────────────────────────────────────────────
+  // Title
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(22)
   const titleLines = doc.splitTextToSize(meta.title ?? 'Untitled', maxW)
   doc.text(titleLines, margin, y)
   y += titleLines.length * 26
 
-  // ── Artist ─────────────────────────────────────────────
+  // Artist
   if (meta.artist) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(13)
@@ -34,14 +27,22 @@ export function exportLyricsPdf(meta, sections) {
     y += 18
   }
 
-  // ── Divider gap ────────────────────────────────────────
+  // Song-level annotation
+  if (annotationsVisible && meta.annotation) {
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(11)
+    doc.setTextColor(140, 140, 140)
+    const annotLines = doc.splitTextToSize(meta.annotation, maxW)
+    doc.text(annotLines, margin, y)
+    doc.setTextColor(0, 0, 0)
+    doc.setFont('helvetica', 'normal')
+    y += annotLines.length * 14
+  }
+
   y += 14
 
-  // ── Sections ───────────────────────────────────────────
   for (const section of sections ?? []) {
-    // Section label
     if (section.label) {
-      // Add a little breathing room before each labeled section
       if (y > 90) y += 6
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(9)
@@ -49,13 +50,22 @@ export function exportLyricsPdf(meta, sections) {
       doc.text(section.label.toUpperCase(), margin, y)
       doc.setTextColor(0, 0, 0)
       y += 14
+
+      // Section-level annotation
+      if (annotationsVisible && section.annotation) {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.setTextColor(140, 140, 140)
+        doc.text('— ' + section.annotation, margin + 4, y)
+        doc.setTextColor(0, 0, 0)
+        doc.setFont('helvetica', 'normal')
+        y += 12
+      }
     }
 
     for (const line of section.lines ?? []) {
-      // Skip pure-chord lines
       if (line.type === 'chord') continue
 
-      // Blank lines → small vertical gap
       if (line.type === 'blank') {
         y += 8
         continue
@@ -73,9 +83,19 @@ export function exportLyricsPdf(meta, sections) {
         doc.text(textLine, margin, y)
         y += 16
       })
+
+      // Line-level annotation
+      if (annotationsVisible && line.annotation) {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.setTextColor(140, 140, 140)
+        doc.text('— ' + line.annotation, margin + 4, y)
+        doc.setTextColor(0, 0, 0)
+        doc.setFont('helvetica', 'normal')
+        y += 12
+      }
     }
 
-    // Gap between sections
     y += 6
   }
 
