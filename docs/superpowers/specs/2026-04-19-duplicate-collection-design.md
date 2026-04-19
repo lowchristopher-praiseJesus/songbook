@@ -20,7 +20,7 @@ No changes to the existing model. A duplicate is a new `{ id, name, createdAt, s
 
 - Finds the source collection by ID; no-op if not found
 - Creates `{ id: uuidv4(), name: name.trim(), createdAt: new Date().toISOString(), songIds: [...source.songIds] }`
-- Appends to `collections`, saves to localStorage
+- Inserts the new collection **immediately after** the source collection in the `collections` array (splice at `sourceIndex + 1`), saves to localStorage
 - No-op if `name.trim()` is empty
 
 ---
@@ -80,7 +80,7 @@ Pass `onDuplicate` to each `CollectionGroup` rendered in the sidebar.
 ### Store (`src/store/__tests__/libraryStore.test.js`)
 
 - `duplicateCollection`: copies `songIds` from source into new collection
-- `duplicateCollection`: appends new collection to `collections` and persists to localStorage
+- `duplicateCollection`: inserts new collection immediately after source in `collections` array and persists to localStorage
 - `duplicateCollection`: no-op when `sourceId` does not exist
 - `duplicateCollection`: no-op when `name` is blank or whitespace-only
 
