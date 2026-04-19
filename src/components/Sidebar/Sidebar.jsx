@@ -73,6 +73,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   }
 
   function confirmDuplicate() {
+    if (!duplicatingCollectionId) return
     if (duplicateDraft.trim()) {
       duplicateCollection(duplicatingCollectionId, duplicateDraft.trim())
     }
@@ -316,7 +317,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               ) : (
                 <button
                   type="button"
-                  onClick={() => setCreatingCollection(true)}
+                  onClick={() => {
+                    setDuplicatingCollectionId(null)
+                    setCreatingCollection(true)
+                  }}
                   className="w-full flex items-center gap-1 px-2 py-1 text-xs
                     text-indigo-500 dark:text-indigo-400
                     border border-dashed border-gray-300 dark:border-gray-600 rounded
@@ -334,6 +338,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                   onSelect={onSongSelect}
                   onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
                   onDuplicate={id => {
+                    setCreatingCollection(false)
                     setDuplicatingCollectionId(id)
                     setDuplicateDraft('Copy of ' + group.name)
                   }}
