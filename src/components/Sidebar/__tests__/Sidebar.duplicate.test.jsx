@@ -97,4 +97,23 @@ describe('Sidebar duplicate collection flow', () => {
     expect(mockDuplicateCollection).not.toHaveBeenCalled()
     expect(screen.queryByPlaceholderText('Collection name…')).not.toBeInTheDocument()
   })
+
+  it('calls duplicateCollection on blur with non-empty value', () => {
+    render(<Sidebar {...defaultProps} />)
+    act(() => capturedOnDuplicate('col-1'))
+    const input = screen.getByPlaceholderText('Collection name…')
+    fireEvent.change(input, { target: { value: 'Blur Copy' } })
+    fireEvent.blur(input)
+    expect(mockDuplicateCollection).toHaveBeenCalledWith('col-1', 'Blur Copy')
+    expect(screen.queryByPlaceholderText('Collection name…')).not.toBeInTheDocument()
+  })
+
+  it('does not call duplicateCollection on blur with empty value', () => {
+    render(<Sidebar {...defaultProps} />)
+    act(() => capturedOnDuplicate('col-1'))
+    const input = screen.getByPlaceholderText('Collection name…')
+    fireEvent.change(input, { target: { value: '   ' } })
+    fireEvent.blur(input)
+    expect(mockDuplicateCollection).not.toHaveBeenCalled()
+  })
 })
