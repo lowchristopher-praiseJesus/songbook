@@ -100,7 +100,7 @@ function ChordedLine({ line, fontSize, fitMode }) {
   )
 }
 
-function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode }) {
+function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, annotationsVisible = true }) {
   const lines = section.lines
 
   // Pre-compute which chord-only lines will be absorbed into a following lyric line
@@ -122,6 +122,11 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode }
         <h3 className={`font-semibold uppercase tracking-widest mb-3 text-indigo-500 dark:text-indigo-400
           ${performanceMode ? 'text-sm' : 'text-xs'}`}>
           {section.label}
+          {annotationsVisible && section.annotation && (
+            <span className="ml-2 font-normal normal-case tracking-normal text-gray-400 dark:text-gray-500 italic text-xs">
+              — {section.annotation}
+            </span>
+          )}
         </h3>
       )}
       <div className="space-y-0">
@@ -176,6 +181,11 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode }
               style={fitMode ? { fontSize: 'var(--fit-fs, 16px)' } : { fontSize }}
             >
               <ChordedLine line={effectiveLine} fontSize={fontSize} fitMode={fitMode} />
+              {annotationsVisible && line.annotation && (
+                <span className="ml-2 text-xs italic text-gray-400 dark:text-gray-500">
+                  — {line.annotation}
+                </span>
+              )}
             </div>
           )
         })}
@@ -184,7 +194,7 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode }
   )
 }
 
-export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns }) {
+export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns, annotationsVisible = true }) {
   if (!sections?.length) return null
   return (
     <div
@@ -199,6 +209,7 @@ export function SongBody({ sections, fontSize = 16, performanceMode = false, lyr
           performanceMode={performanceMode}
           lyricsOnly={lyricsOnly}
           fitMode={fitMode}
+          annotationsVisible={annotationsVisible}
         />
       ))}
     </div>
