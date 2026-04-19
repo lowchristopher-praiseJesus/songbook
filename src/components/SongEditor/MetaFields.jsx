@@ -77,6 +77,18 @@ export function MetaFields({ meta, onChange }) {
           placeholder="4/4"
         />
       </label>
+
+      <label className="flex flex-col gap-0.5 w-full">
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Song Note</span>
+        <input
+          type="text"
+          value={meta.annotation ?? ''}
+          onChange={e => onChange('annotation', e.target.value || undefined)}
+          className={`w-full ${inputClass}`}
+          aria-label="Song Note"
+          placeholder="e.g. sing in a happy mood"
+        />
+      </label>
     </div>
   )
 }
