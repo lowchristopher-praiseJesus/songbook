@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
 
-export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit, headerRef }) {
+export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit, headerRef, annotationsVisible = true, onAnnotationsToggle }) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
@@ -11,6 +11,9 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
       <h1 className="text-2xl font-bold leading-tight">{meta.title}</h1>
       {meta.artist && (
         <p className="text-gray-500 dark:text-gray-400 mt-0.5">{meta.artist}</p>
+      )}
+      {annotationsVisible && meta.annotation && (
+        <p className="text-sm italic text-gray-400 dark:text-gray-500 mt-0.5">{meta.annotation}</p>
       )}
 
       <div className="flex flex-wrap items-center gap-3 mt-3">
@@ -72,6 +75,21 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
         >
           Edit
         </button>
+        {onAnnotationsToggle && (
+          <button
+            type="button"
+            onClick={onAnnotationsToggle}
+            className={`text-sm px-2 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+              annotationsVisible
+                ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            }`}
+            aria-label={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
+            title={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
+          >
+            💬
+          </button>
+        )}
         <button
           type="button"
           onClick={onPerformanceMode}
