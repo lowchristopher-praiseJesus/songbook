@@ -357,4 +357,30 @@ export const useLibraryStore = create((set, get) => ({
       get().selectSong(id)
     }
   },
+
+  /**
+   * Duplicate a collection by inserting a new collection with the same songIds
+   * immediately after the source collection in the list.
+   */
+  duplicateCollection(sourceId, name) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const collections = get().collections
+    const sourceIndex = collections.findIndex(c => c.id === sourceId)
+    if (sourceIndex === -1) return
+    const source = collections[sourceIndex]
+    const newCollection = {
+      id: uuidv4(),
+      name: trimmed,
+      createdAt: new Date().toISOString(),
+      songIds: [...source.songIds],
+    }
+    const next = [
+      ...collections.slice(0, sourceIndex + 1),
+      newCollection,
+      ...collections.slice(sourceIndex + 1),
+    ]
+    saveCollections(next)
+    set({ collections: next })
+  },
 }))

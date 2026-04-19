@@ -206,3 +206,48 @@ describe('init() migration', () => {
     expect(collections[0].name).toBe('Empty Set')
   })
 })
+
+describe('duplicateCollection', () => {
+  beforeEach(() => {
+    const seed = [
+      { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['a', 'b'] },
+      { id: 'c2', name: 'Worship', createdAt: '2026-01-01T00:00:00Z', songIds: ['c'] },
+    ]
+    useLibraryStore.setState({ collections: seed })
+    saveCollections(seed)
+  })
+
+  it('creates a new collection with the same songIds', () => {
+    useLibraryStore.getState().duplicateCollection('c1', 'Copy of Sunday Set')
+    const { collections } = useLibraryStore.getState()
+    const dupe = collections.find(c => c.name === 'Copy of Sunday Set')
+    expect(dupe).toBeTruthy()
+    expect(dupe.songIds).toEqual(['a', 'b'])
+    expect(dupe.id).not.toBe('c1')
+  })
+
+  it('inserts the duplicate immediately after the source', () => {
+    useLibraryStore.getState().duplicateCollection('c1', 'Copy of Sunday Set')
+    const { collections } = useLibraryStore.getState()
+    expect(collections[0].id).toBe('c1')
+    expect(collections[1].name).toBe('Copy of Sunday Set')
+    expect(collections[2].id).toBe('c2')
+  })
+
+  it('persists to localStorage', () => {
+    useLibraryStore.getState().duplicateCollection('c1', 'Copy of Sunday Set')
+    const saved = loadCollections()
+    expect(saved.some(c => c.name === 'Copy of Sunday Set')).toBe(true)
+  })
+
+  it('is a no-op when sourceId does not exist', () => {
+    useLibraryStore.getState().duplicateCollection('nonexistent', 'Copy')
+    expect(useLibraryStore.getState().collections).toHaveLength(2)
+  })
+
+  it('is a no-op for blank name', () => {
+    useLibraryStore.getState().duplicateCollection('c1', '')
+    useLibraryStore.getState().duplicateCollection('c1', '   ')
+    expect(useLibraryStore.getState().collections).toHaveLength(2)
+  })
+})
