@@ -47,7 +47,7 @@ function SortableSongListItem({ entry, onSelect, collectionId }) {
   )
 }
 
-export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGroupCheckboxChange = () => {} }) {
+export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDuplicate = () => {}, onGroupCheckboxChange = () => {} }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
@@ -184,6 +184,20 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onGrou
                   hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
               >
                 +
+              </button>
+            )}
+            {!isSpecial && (
+              <button
+                type="button"
+                title={`Duplicate ${group.name}`}
+                onClick={e => { e.stopPropagation(); onDuplicate(group.id) }}
+                aria-label={`Duplicate collection ${group.name}`}
+                className="ml-1 p-1 rounded shrink-0 text-xs
+                  [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
+                  focus:opacity-100 transition-opacity
+                  hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
+              >
+                ⧉
               </button>
             )}
             <button
