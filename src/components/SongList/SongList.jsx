@@ -5,6 +5,7 @@ import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
 import { exportLyricsPdf } from '../../lib/exportPdf'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
 
 export function SongList({
   song,
@@ -20,6 +21,7 @@ export function SongList({
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
   const bodyRef = useRef(null)
+  const [annotationsVisible, setAnnotationsVisible] = useLocalStorage('songsheet_annotations_visible', true)
   const { fitFontSize, fitColumns, shadowRef } = useFitToScreen({
     enabled: isFit,
     containerRef,
@@ -37,8 +39,10 @@ export function SongList({
         transpose={transpose}
         lyricsOnly={lyricsOnly}
         onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
-        onExportPdf={() => exportLyricsPdf(song.meta, song.sections)}
+        onExportPdf={() => exportLyricsPdf(song.meta, song.sections, annotationsVisible)}
         onEdit={onEdit}
+        annotationsVisible={annotationsVisible}
+        onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
       />
       {!lyricsOnly && (
         <ChordStrip
@@ -54,6 +58,7 @@ export function SongList({
           lyricsOnly={lyricsOnly}
           fitMode={isFit && fitFontSize !== null}
           fitColumns={fitColumns}
+          annotationsVisible={annotationsVisible}
         />
       </div>
       {isFit && (
@@ -73,6 +78,7 @@ export function SongList({
             fontSize={fontSize}
             lyricsOnly={lyricsOnly}
             fitMode
+            annotationsVisible={annotationsVisible}
           />
         </div>
       )}
