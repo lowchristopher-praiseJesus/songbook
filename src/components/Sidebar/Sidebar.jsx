@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
@@ -36,6 +36,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
   const createCollection = useLibraryStore(s => s.createCollection)
+  const duplicateCollection = useLibraryStore(s => s.duplicateCollection)
   const selectSong = useLibraryStore(s => s.selectSong)
   const setExpandedCollectionId = useLibraryStore(s => s.setExpandedCollectionId)
   const [creatingCollection, setCreatingCollection] = useState(false)
@@ -43,6 +44,9 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
   const [exportSourceName, setExportSourceName] = useState(null)
   const creatingEscapeRef = useRef(false)
+  const [duplicatingCollectionId, setDuplicatingCollectionId] = useState(null)
+  const [duplicateDraft, setDuplicateDraft] = useState('')
+  const duplicatingEscapeRef = useRef(false)
 
   // Clear tracked collection name when export mode is turned off
   useEffect(() => {
@@ -66,6 +70,14 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     }
     setCreatingCollection(false)
     setCollectionDraft('')
+  }
+
+  function confirmDuplicate() {
+    if (duplicateDraft.trim()) {
+      duplicateCollection(duplicatingCollectionId, duplicateDraft.trim())
+    }
+    setDuplicatingCollectionId(null)
+    setDuplicateDraft('')
   }
 
   const { importFiles } = useFileImport({
@@ -316,13 +328,49 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               )}
             </li>
             {groups.map(group => (
-              <CollectionGroup
-                key={group.id}
-                group={group}
-                onSelect={onSongSelect}
-                onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
-                onGroupCheckboxChange={setExportSourceName}
-              />
+              <Fragment key={group.id}>
+                <CollectionGroup
+                  group={group}
+                  onSelect={onSongSelect}
+                  onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
+                  onDuplicate={id => {
+                    setDuplicatingCollectionId(id)
+                    setDuplicateDraft('Copy of ' + group.name)
+                  }}
+                  onGroupCheckboxChange={setExportSourceName}
+                />
+                {duplicatingCollectionId === group.id && (
+                  <li>
+                    <div className="px-1 py-1">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={duplicateDraft}
+                        onChange={e => setDuplicateDraft(e.target.value)}
+                        placeholder="Collection name…"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') { e.preventDefault(); confirmDuplicate() }
+                          if (e.key === 'Escape') {
+                            duplicatingEscapeRef.current = true
+                            setDuplicatingCollectionId(null)
+                            setDuplicateDraft('')
+                          }
+                        }}
+                        onBlur={() => {
+                          if (duplicatingEscapeRef.current) { duplicatingEscapeRef.current = false; return }
+                          confirmDuplicate()
+                        }}
+                        className="w-full px-2 py-1 text-[16px] rounded border border-indigo-400
+                          bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                          outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 px-1">
+                        Enter to confirm · Esc to cancel
+                      </p>
+                    </div>
+                  </li>
+                )}
+              </Fragment>
             ))}
             {groups.length === 0 && !creatingCollection && (
               <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
