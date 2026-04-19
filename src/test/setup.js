@@ -1,10 +1,9 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
 
 // jsdom localStorage mock
 const store = {}
 const localStorageMock = {
-  getItem: (key) => store[key] || null,
+  getItem: (key) => (key in store ? store[key] : null),
   setItem: (key, value) => { store[key] = String(value) },
   removeItem: (key) => { delete store[key] },
   clear: () => { for (const key in store) delete store[key] },
