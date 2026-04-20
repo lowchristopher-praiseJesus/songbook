@@ -20,10 +20,9 @@ function buildDeepSearch(name, author, subTitle) {
 }
 
 function stripNoteTokens(content) {
-  return content
-    .replace(/^\{note:[^}]*\}\s*$/gm, '')
-    .replace(/\n{2,}/g, '\n\n')
-    .trim()
+  // Remove each {note:} line including its trailing newline so no blank line
+  // is left in its place, preserving the original spacing between other lines.
+  return content.replace(/\{note:[^}]*\}[^\n]*\n?/g, '')
 }
 
 /**
