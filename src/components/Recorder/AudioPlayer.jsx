@@ -21,9 +21,10 @@ export function AudioPlayer({ src, mimeType, durationMs }) {
   const [playError, setPlayError] = useState(null)
 
   useEffect(() => {
-    if (src && audioRef.current) {
-      audioRef.current.play().catch(err => setPlayError(err.message))
-    }
+    const audio = audioRef.current
+    if (!src || !audio) return
+    audio.load()
+    audio.play().catch(err => setPlayError(err.message))
   }, [src])
 
   function togglePlay() {
@@ -61,11 +62,17 @@ export function AudioPlayer({ src, mimeType, durationMs }) {
           if (d && isFinite(d)) setDuration(d)
         }}
         onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
-        onError={(e) => setPlayError(e.target.error?.message ?? 'Audio failed to load')}
-        preload="metadata"
-      >
-        <source src={src} type={mimeType || 'audio/webm'} />
-      </audio>
+        onError={(e) => {
+          setIsPlaying(false)
+          const code = e.target.error?.code
+          const msg = code === 3 ? 'Audio decode error — recording may be corrupt'
+            : code === 4 ? 'Format not supported in this browser'
+            : `Audio failed to load (code ${code ?? '?'})`
+          setPlayError(msg)
+        }}
+        preload="auto"
+        src={src}
+      />
       {playError && (
         <p className="text-xs text-red-500 dark:text-red-400">{playError}</p>
       )}
