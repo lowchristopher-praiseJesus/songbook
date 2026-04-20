@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --lyrics-color-active: var(--lyrics-color, #374151);
+  --chord-color-active: var(--chord-color, #6366f1);
+  --section-color-active: var(--section-color, #6366f1);
+  --annotation-color-active: var(--annotation-color, #9ca3af);
+}
+.dark {
+  --lyrics-color-active: var(--lyrics-color-dark, #d1d5db);
+  --chord-color-active: var(--chord-color-dark, #818cf8);
+  --section-color-active: var(--section-color-dark, #818cf8);
+  --annotation-color-active: var(--annotation-color-dark, #6b7280);
+}

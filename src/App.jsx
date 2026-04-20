@@ -4,6 +4,7 @@ import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useDisplaySettings } from './hooks/useDisplaySettings'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { MainContent } from './components/SongList/MainContent'
 import { SettingsPanel } from './components/Settings/SettingsPanel'
@@ -31,6 +32,7 @@ export default function App() {
   const [sessionLyricsOnly, setSessionLyricsOnly] = useState(false)
   const effectiveLyricsOnly = lyricsOnly || sessionLyricsOnly
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
+  const displaySettings = useDisplaySettings()
   const [shareSongs, setShareSongs] = useState(null)
 
   useEffect(() => { init() }, [init])
@@ -187,6 +189,9 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
           lyricsOnly={effectiveLyricsOnly}
           onToggleLyricsOnly={handleToggleLyricsOnly}
+          displaySettings={displaySettings}
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
         />
       )}
       <ImportConfirmModal

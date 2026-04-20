@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
 import { useFitToScreen } from '../../hooks/useFitToScreen'
 import { SongHeader } from './SongHeader'
@@ -20,6 +20,10 @@ export function SongList({
   containerRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
+  }, [fontSize])
   const bodyRef = useRef(null)
   const [annotationsVisible, setAnnotationsVisible] = useLocalStorage('songsheet_annotations_visible', true)
   const { fitFontSize, fitColumns, shadowRef } = useFitToScreen({

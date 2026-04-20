@@ -4,8 +4,10 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useLibraryStore } from '../../store/libraryStore'
 import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/storage'
 import { Button } from '../UI/Button'
+import { DisplayTab } from './DisplayTab'
 
-export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
+export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, displaySettings, fontSize, onFontSizeChange }) {
+  const [tab, setTab] = useState('general')
   const { theme, setTheme } = useTheme()
   const index = useLibraryStore(s => s.index)
   const deleteSong = useLibraryStore(s => s.deleteSong)
@@ -35,10 +37,41 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 id="settings-title" className="text-xl font-semibold dark:text-white">Settings</h2>
           <button type="button" aria-label="Close settings" onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
+
+        {/* Tab switcher */}
+        <div className="flex gap-0 mb-5">
+          {['general', 'display'].map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`flex-1 py-1.5 text-sm font-medium border transition-colors
+                ${t === 'general' ? 'rounded-l-lg' : 'rounded-r-lg'}
+                ${tab === t
+                  ? 'bg-indigo-600 border-indigo-600 text-white'
+                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                }`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'display' && displaySettings && (
+          <DisplayTab
+            settings={displaySettings.settings}
+            updateElement={displaySettings.updateElement}
+            resetAll={displaySettings.resetAll}
+            fontSize={fontSize}
+            onFontSizeChange={onFontSizeChange}
+          />
+        )}
+
+        {tab === 'general' && (<>
 
         {/* Theme */}
         <div className="mb-6">
@@ -147,6 +180,8 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly }) {
             Christopher Low
           </a>
         </div>
+
+        </>)}
       </div>
     </div>
   )

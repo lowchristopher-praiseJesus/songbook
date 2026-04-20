@@ -80,10 +80,10 @@ function ChordedLine({ line, fontSize, fitMode }) {
                     }}
                   >
                     <span
-                      className="absolute top-0 left-0 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap select-none"
+                      className="absolute top-0 left-0 font-bold whitespace-nowrap select-none"
                       style={fitMode
-                        ? { fontSize: 'max(11px, calc(var(--fit-fs, 16px) - 3px))', lineHeight: 1.2 }
-                        : { fontSize: chordFontSize, lineHeight: 1.2 }
+                        ? { fontSize: 'max(11px, calc(var(--fit-fs, 16px) + var(--chord-size-offset, -3px)))', lineHeight: 1.2, fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
+                        : { fontSize: 'max(11px, calc(var(--lyrics-size, 16px) + var(--chord-size-offset, -3px)))', lineHeight: 1.2, fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
                       }
                       aria-hidden="true"
                     >
@@ -119,11 +119,16 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
   return (
     <div className="mb-8" data-section>
       {section.label && (
-        <h3 className={`font-semibold uppercase tracking-widest mb-3 text-indigo-500 dark:text-indigo-400
-          ${performanceMode ? 'text-sm' : 'text-xs'}`}>
+        <h3
+          className="font-semibold uppercase tracking-widest mb-3"
+          style={{ fontFamily: 'var(--section-font)', fontSize: 'var(--section-size)', color: 'var(--section-color-active)' }}
+        >
           {section.label}
           {annotationsVisible && section.annotation && (
-            <span className="ml-2 font-normal normal-case tracking-normal text-gray-400 dark:text-gray-500 italic text-xs">
+            <span
+              className="ml-2 font-normal normal-case tracking-normal italic"
+              style={{ fontFamily: 'var(--annotation-font)', fontSize: 'var(--annotation-size)', color: 'var(--annotation-color-active)' }}
+            >
               — {section.annotation}
             </span>
           )}
@@ -151,10 +156,10 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
             return (
               <div
                 key={i}
-                className="font-mono font-bold text-indigo-600 dark:text-indigo-400 leading-none mb-1 whitespace-pre"
+                className="font-bold leading-none mb-1 whitespace-pre"
                 style={fitMode
-                  ? { fontSize: 'max(12px, calc(var(--fit-fs, 16px) - 2px))' }
-                  : { fontSize: Math.max(12, (fontSize ?? 16) - 2) }
+                  ? { fontSize: 'max(12px, calc(var(--fit-fs, 16px) + var(--chord-size-offset, -3px)))', fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
+                  : { fontSize: 'max(12px, calc(var(--lyrics-size, 16px) + var(--chord-size-offset, -3px)))', fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
                 }
                 aria-hidden="true"
               >
@@ -178,11 +183,17 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
             <div
               key={i}
               className="leading-relaxed"
-              style={fitMode ? { fontSize: 'var(--fit-fs, 16px)' } : { fontSize }}
+              style={fitMode
+                ? { fontSize: 'var(--fit-fs, 16px)', fontFamily: 'var(--lyrics-font)', color: 'var(--lyrics-color-active)' }
+                : { fontSize, fontFamily: 'var(--lyrics-font)', color: 'var(--lyrics-color-active)' }
+              }
             >
               <ChordedLine line={effectiveLine} fontSize={fontSize} fitMode={fitMode} />
               {annotationsVisible && line.annotation && (
-                <span className="ml-2 text-xs italic text-gray-400 dark:text-gray-500">
+                <span
+                  className="ml-2 italic"
+                  style={{ fontFamily: 'var(--annotation-font)', fontSize: 'var(--annotation-size)', color: 'var(--annotation-color-active)' }}
+                >
                   — {line.annotation}
                 </span>
               )}
