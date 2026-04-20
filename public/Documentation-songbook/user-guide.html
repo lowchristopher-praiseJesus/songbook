@@ -636,6 +636,7 @@
     .syntax-section { color: #f59e0b; }
     .syntax-chord { color: #818cf8; }
     .syntax-lyric { color: #e2e8f0; }
+    .syntax-annotation { color: #f97316; }
 
     /* ─── Inline icon button replica ────────────────────────────── */
     .btn-replica {
@@ -761,6 +762,7 @@
         <div class="nav-items open" id="nav-editing">
           <a class="nav-item" href="#editor-metadata">Metadata Fields</a>
           <a class="nav-item" href="#editor-content">Content Syntax</a>
+          <a class="nav-item" href="#annotations">Annotations</a>
         </div>
       </div>
 
@@ -776,7 +778,15 @@
       </div>
 
       <a class="nav-direct" href="#share-import">Importing from a Link</a>
-      <a class="nav-direct" href="#settings">Settings</a>
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-settings">
+          Settings <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-settings">
+          <a class="nav-item" href="#settings">General</a>
+          <a class="nav-item" href="#settings-display">Display Tab</a>
+        </div>
+      </div>
 
       <div class="nav-section">
         <button class="nav-section-toggle open" data-target="nav-session">
@@ -791,6 +801,7 @@
         </div>
       </div>
 
+      <a class="nav-direct" href="#recording">Recording</a>
       <a class="nav-direct" href="#shortcuts">Tips & Shortcuts</a>
 
     </div>
@@ -907,6 +918,7 @@
             <li><strong>Add songs to a collection</strong> — Hover over a collection header and click the <strong>Add Songs</strong> button that appears. A modal will let you select songs from your library.</li>
             <li><strong>Expand / collapse</strong> — Click a collection header to toggle its song list open or closed.</li>
             <li><strong>Reorder songs</strong> — Expand a collection, then drag the <strong>⠿</strong> handle next to any song up or down to change its position. On mobile, press and hold the handle for a moment before dragging.</li>
+            <li><strong>Duplicate a collection</strong> — Hover over a collection header and click the <strong>⧉</strong> button. An inline name field appears, pre-filled with <em>Copy of {collection name}</em>. Edit the name if you like, then press <span class="key">Enter</span> to confirm or <span class="key">Esc</span> to cancel. The new collection contains the same songs and is inserted directly below the original. You can then add, remove, or reorder songs in the copy without affecting the original.</li>
           </ul>
           <img src="images/SS-03.png" alt="Collections view — two collections: JUDAH 25F collapsed (12 songs) and JUDAH LG 1 expanded showing its songs, with the New Collection button at the top" class="screenshot-img" />
         </div>
@@ -1217,12 +1229,13 @@
             <li><strong>Capo</strong> — default capo fret</li>
             <li><strong>Tempo (BPM)</strong> and <strong>Time Signature</strong></li>
             <li><strong>CCLI number</strong> and <strong>Copyright</strong></li>
+            <li><strong>Song Note</strong> — a free-text annotation shown below the title/artist (e.g. "sing in a happy mood" or "xx and yy to sing this"). See <a href="#annotations" style="color:var(--accent)">Annotations</a> for more detail.</li>
           </ul>
         </div>
 
         <div class="subsection" id="editor-content">
           <h3 class="subsection-title">Content Syntax</h3>
-          <p>Song content is plain text with two special markers:</p>
+          <p>Song content is plain text with three special markers:</p>
 
           <div class="syntax-box">
             <span class="syntax-comment"># Section header</span><br>
@@ -1230,13 +1243,20 @@
             <span class="syntax-comment"># Chord before a syllable (no space between chord and word)</span><br>
             <span class="syntax-lyric">El Shad</span><span class="syntax-chord">[Am]</span><span class="syntax-lyric">dai, El Shad</span><span class="syntax-chord">[F]</span><span class="syntax-lyric">dai</span><br><br>
             <span class="syntax-comment"># Chord-only line (instrumental)</span><br>
-            <span class="syntax-chord">[Dm]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[G]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[C]</span>
+            <span class="syntax-chord">[Dm]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[G]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[C]</span><br><br>
+            <span class="syntax-comment"># Section-level annotation (on its own line after a section header)</span><br>
+            <span class="syntax-section">{c: Chorus}</span><br>
+            <span class="syntax-annotation" style="color:#f97316;">{note: xx and yy to sing this}</span><br><br>
+            <span class="syntax-comment"># Line-level annotation (on its own line after a lyric line)</span><br>
+            <span class="syntax-lyric">Amazing grace how sweet the sound</span><br>
+            <span class="syntax-annotation" style="color:#f97316;">{note: sing softly here}</span>
           </div>
 
           <ul class="feature-list">
             <li><code>{c: Section Name}</code> — Creates a bold section header (e.g. Verse, Chorus, Bridge).</li>
             <li><code>[Chord]</code> — Places a chord directly above the following syllable. Put it immediately before the syllable with no space.</li>
             <li>A line containing <em>only</em> chord tokens separated by spaces is rendered as a purely instrumental chord line.</li>
+            <li><code>{note: text}</code> — Attaches an annotation to the element (section header or lyric line) immediately <em>above</em> it. Must be on its own line. See <a href="#annotations" style="color:var(--accent)">Annotations</a> for full details.</li>
           </ul>
         </div>
 
@@ -1245,6 +1265,86 @@
           <ul class="feature-list">
             <li><span class="btn-replica">Save</span> — Commits your changes and returns to the song view.</li>
             <li><span class="btn-replica">Cancel</span> — Discards changes. If you've made edits, a confirmation prompt will appear before discarding.</li>
+          </ul>
+        </div>
+
+        <div class="subsection" id="annotations">
+          <h3 class="subsection-title">Annotations</h3>
+          <p>Annotations are contextual performance notes you attach to a song — who sings a part, how a section should feel, or any reminder you need while leading. They appear inline in the chord chart and can be toggled on or off.</p>
+
+          <p>There are three levels of annotation:</p>
+
+          <div class="option-grid">
+            <div class="option-card">
+              <div class="option-card-icon">📝</div>
+              <div class="option-card-title">Song-level</div>
+              <div class="option-card-desc">A general note for the whole song, entered via the <strong>Song Note</strong> field in the metadata editor. Renders below the title and artist.</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🏷️</div>
+              <div class="option-card-title">Section-level</div>
+              <div class="option-card-desc">A note attached to a section header. Type <code>{note: text}</code> on the line immediately after a <code>{c:}</code> header.</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🎵</div>
+              <div class="option-card-title">Line-level</div>
+              <div class="option-card-desc">A note attached to a single lyric line. Type <code>{note: text}</code> on the line immediately after the lyric.</div>
+            </div>
+          </div>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Placement rule</strong>
+              A <code>{note:}</code> line always annotates the element immediately <em>above</em> it. Only the first <code>{note:}</code> after an element is consumed — any consecutive <code>{note:}</code> lines are ignored.
+            </div>
+          </div>
+
+          <p style="margin-top:18px"><strong>Example in the editor:</strong></p>
+
+          <div class="syntax-box">
+            <span class="syntax-lyric">sing in a happy mood</span><br><br>
+            <span class="syntax-section">{c: Chorus}</span><br>
+            <span class="syntax-annotation" style="color:#f97316;">{note: xx and yy to sing this}</span><br>
+            <span class="syntax-lyric">El Shad</span><span class="syntax-chord">[Am]</span><span class="syntax-lyric">dai, El Shad</span><span class="syntax-chord">[F]</span><span class="syntax-lyric">dai</span><br>
+            <span class="syntax-annotation" style="color:#f97316;">{note: sing softly here}</span>
+          </div>
+
+          <img src="images/SS-28.png" alt="Annotations visible in the song view — a song-level note below the title, a section-level note after the CHORUS header, and a line-level note after a lyric line, all rendered in grey italic" class="screenshot-img" />
+
+          <p style="margin-top:18px"><strong>Showing and hiding annotations:</strong></p>
+          <ul class="feature-list">
+            <li>Click the <strong>💬</strong> speech-bubble button in the song header to toggle all annotations on or off.</li>
+            <li>When annotations are visible, the button is highlighted in indigo. When hidden, it returns to grey.</li>
+            <li>The toggle state is saved across sessions — it remembers your preference.</li>
+          </ul>
+
+          <img src="images/SS-29.png" alt="The annotation toggle button (💬) in the song header bar, highlighted in indigo to show annotations are visible" class="screenshot-img" />
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Live Session</strong>
+              Annotations are always visible during a Live Session, regardless of your toggle setting. This ensures every team member can see the performance notes.
+            </div>
+          </div>
+
+          <p style="margin-top:18px"><strong>Customising annotation appearance:</strong></p>
+          <p>Under <strong>Settings → Display</strong>, Annotations appear as a first-class display element alongside Lyrics, Chords, and Sections. You can customise:</p>
+          <ul class="feature-list">
+            <li><strong>Font</strong> — choose from the same font list used by other display elements.</li>
+            <li><strong>Size</strong> — set an absolute size in pixels (default: 12 px).</li>
+            <li><strong>Colour</strong> — pick from a palette or enter a custom colour (default: grey).</li>
+          </ul>
+
+          <img src="images/SS-30.png" alt="The Annotations row in Settings → Display, showing font, size, and colour customisation controls" class="screenshot-img" />
+
+          <p style="margin-top:18px"><strong>Export behaviour:</strong></p>
+          <ul class="feature-list">
+            <li><strong>PDF download</strong> — Annotations are rendered (song-level in 11 pt italic grey; section/line-level in 9 pt italic grey with an em-dash prefix). Suppressed when annotations are toggled off.</li>
+            <li><strong>Presentation PDF</strong> — Annotations are rendered and factored into the auto-fit layout so font sizes adjust correctly. Shown in warm brown-tinted grey for readability on projected backgrounds.</li>
+            <li><strong>Download .sbp</strong> — <code>{note:}</code> tokens are stripped from the content field (SongBook Pro doesn't support them), but the song-level note is mapped to the <code>NotesText</code> field so it's preserved in SongBook Pro.</li>
+            <li><strong>Share via Link</strong> — <code>{note:}</code> tokens are preserved in the shared song text, so recipients see annotations after importing.</li>
           </ul>
         </div>
       </section>
@@ -1357,9 +1457,30 @@
       <section class="section" id="settings">
         <div class="section-number">12 — Settings</div>
         <h2 class="section-title">Settings</h2>
-        <p>Open Settings by clicking the <strong>⚙️</strong> button in the top-right corner of the app. Press <span class="key">Esc</span> to close.</p>
+        <p>Open Settings by clicking the <strong>⚙️</strong> button in the top-right corner of the app. Press <span class="key">Esc</span> to close. Settings has two tabs: <strong>General</strong> and <strong>Display</strong>.</p>
 
-        <img src="images/SS-19.png" alt="Settings panel — Light theme selected, Lyrics only toggle off, Firecrawl API key field with masked key, Library showing 32 songs with storage bar, and Clear All Data button" class="screenshot-img" />
+        <img src="images/SS-19.png" alt="Settings panel — General tab showing Light theme selected, Lyrics only toggle off, Firecrawl API key field with masked key, Library showing 32 songs with storage bar, and Clear All Data button" class="screenshot-img" />
+
+        <div class="subsection" id="settings-display">
+          <h3 class="subsection-title">Display Tab</h3>
+          <p>Switch to the <strong>Display</strong> tab to customise how song content is rendered. Each display element — <strong>Lyrics</strong>, <strong>Chords</strong>, <strong>Sections</strong>, and <strong>Annotations</strong> — has its own collapsible row where you can adjust font, size, and colour independently.</p>
+
+          <img src="images/SS-31.png" alt="Settings Display tab — four collapsible rows for Lyrics, Chords, Sections, and Annotations, each showing font, size, and colour controls" class="screenshot-img" />
+
+          <ul class="feature-list">
+            <li><strong>Font</strong> — Choose from System Default, Georgia, Times New Roman, Helvetica Neue, Arial, Courier New, Menlo, or Monaco. Each element can use a different font.</li>
+            <li><strong>Size</strong> — Lyrics and Chords share a base font size (the same +/- control in the song viewer). Chords use a <em>size offset</em> relative to that base (e.g. −3 means three pixels smaller). Sections and Annotations have their own absolute size in pixels (8–32 px).</li>
+            <li><strong>Colour</strong> — Pick from six preset colours or click the rainbow swatch to open your system's colour picker and choose any custom colour. The selected colour is applied in both light and dark modes (automatically lightened for dark mode readability).</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Reset to defaults</strong>
+              A <em>Reset to defaults</em> link at the bottom of the Display tab restores all four elements to their original font, size, and colour settings.
+            </div>
+          </div>
+        </div>
 
         <div class="subsection">
           <h3 class="subsection-title">Theme</h3>
@@ -1574,10 +1695,105 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 14. TIPS & SHORTCUTS                           -->
+      <!-- 14. RECORDING                                  -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="recording">
+        <div class="section-number">14 — Recording</div>
+        <h2 class="section-title">Recording</h2>
+        <p>SongList can record your singing or playing directly in the browser using your device's microphone. Recordings are saved per song and stored locally on your device — nothing is uploaded to any server.</p>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Browser requirements</strong>
+            Recording requires a <strong>secure context</strong> (HTTPS or localhost) and a browser that supports the MediaRecorder API, Origin Private File System, and Web Workers. If your browser doesn't meet these requirements, the record controls will not appear.
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Recording a Song</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Open a song</strong>
+                <span>Any song in your library. The record button appears in the song header toolbar.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click 🎙 Rec</strong>
+                <span>The button is in the song header, next to the transpose and capo controls. Your browser may ask for microphone permission the first time.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Sing or play</strong>
+                <span>A red pulsing dot and an elapsed timer appear while recording is active. Audio is captured from your microphone.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Click ⏹ Stop</strong>
+                <span>The recording stops and the mic is released. A naming dialog appears with a default name like <em>"Song Title — Apr 20, 2026"</em>.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Name and save</strong>
+                <span>Edit the name if you like, then click <span class="btn-replica">Save</span>. Click <span class="btn-replica">Cancel</span> to discard the recording.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <img src="images/SS-32.png" alt="Recording in progress — red pulsing dot, elapsed timer showing 0:42, Pause and Stop buttons visible in the song header toolbar" class="screenshot-img" />
+
+        <div class="subsection">
+          <h3 class="subsection-title">Pause & Resume</h3>
+          <p>While recording, click <strong>⏸ Pause</strong> to freeze the recording and timer. A yellow <strong>▶ Resume</strong> button appears — click it to continue recording from where you left off. The timer picks back up and the single recording file will contain the full session including the paused segment.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Managing Recordings</h3>
+          <p>Click the <strong>🎵 Recordings</strong> button in the song header to open the recordings panel. It lists every recording for the current song, sorted newest first. Each entry shows the name, date, and file size.</p>
+
+          <ul class="feature-list">
+            <li><strong>Play</strong> — Click ▶ Play to listen back. A built-in audio player appears with play/pause, a seek slider, current time / total duration, and a playback speed selector (0.5× – 2×).</li>
+            <li><strong>Download</strong> — Click ↓ Download to save the recording to your device. SongList converts it to a <strong>.wav</strong> file (PCM 16-bit) for maximum compatibility. If conversion isn't supported by your browser, the raw WebM file is downloaded instead.</li>
+            <li><strong>Rename</strong> — Click the ✏️ pencil icon next to a recording to edit its name in place.</li>
+            <li><strong>Delete</strong> — Click Delete, then confirm the prompt. The recording is permanently removed.</li>
+          </ul>
+
+          <img src="images/SS-33.png" alt="Recordings panel — modal listing recordings for a song with play, download, rename, and delete controls, storage indicator at the top" class="screenshot-img" />
+
+          <p>A storage indicator at the top of the panel shows how much space your recordings are using.</p>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Audio Playback Controls</h3>
+          <p>The built-in audio player lets you review a recording without leaving the app:</p>
+          <ul class="feature-list">
+            <li><strong>Play / Pause</strong> — Round indigo button to toggle playback.</li>
+            <li><strong>Seek</strong> — Drag the slider to jump to any point in the recording.</li>
+            <li><strong>Playback speed</strong> — Choose from 0.5×, 0.75×, 1×, 1.25×, 1.5×, or 2×. Useful for practising a difficult passage at half speed.</li>
+            <li><strong>Time display</strong> — Shows current position and total duration.</li>
+          </ul>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Recordings are per-song</strong>
+            Each recording is tied to the song you had open when you recorded it. Switching songs does not stop an active recording — you'll need to stop it manually first.
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 15. TIPS & SHORTCUTS                           -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="shortcuts">
-        <div class="section-number">14 — Tips & Shortcuts</div>
+        <div class="section-number">15 — Tips & Shortcuts</div>
         <h2 class="section-title">Tips & Keyboard Shortcuts</h2>
 
         <div class="subsection">
@@ -1718,12 +1934,14 @@
     'editing-a-song':  ['editing-a-song'],
     'editor-metadata': ['editor-metadata'],
     'editor-content':  ['editor-content'],
+    'annotations':     ['annotations'],
     'exporting-songs': ['exporting-songs'],
     'export-sbp':      ['export-sbp'],
     'export-share':    ['export-share'],
     'export-pdf':      ['export-pdf'],
     'share-import':    ['share-import'],
     'settings':        ['settings'],
+    'settings-display':['settings-display'],
     'live-session':    ['live-session'],
     'session-starting':['session-starting'],
     'session-view':    ['session-view'],
@@ -1731,6 +1949,7 @@
     'session-joining': ['session-joining'],
     'session-ending':  ['session-ending'],
     'shortcuts':       ['shortcuts'],
+    'recording':       ['recording'],
   }
 
   function setActive(id) {
@@ -1756,8 +1975,8 @@
   // Also observe subsections that are direct targets
   const subsectionIds = ['search','view-modes','collections','import-sbp','duplicates',
     'ug-search','song-header','chord-strip','display-controls','lyrics-only',
-    'editor-metadata','editor-content','export-sbp','export-share','export-pdf',
-    'session-starting','session-view','session-editing','session-joining','session-ending']
+    'editor-metadata','editor-content','annotations','export-sbp','export-share','export-pdf',
+    'session-starting','session-view','session-editing','session-joining','session-ending','settings-display']
 
   subsectionIds.forEach(id => {
     const el = document.getElementById(id)
