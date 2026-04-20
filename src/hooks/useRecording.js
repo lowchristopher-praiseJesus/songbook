@@ -1,0 +1,134 @@
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { AudioRecorder } from '../lib/audioRecorder'
+import { OPFSClient } from '../lib/opfsClient'
+
+const TIMER_INTERVAL_MS = 200
+
+function defaultName(songTitle) {
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return `${songTitle} — ${date}`
+}
+
+export function useRecording({ songId, songTitle }) {
+  const [status, setStatus] = useState('idle')
+  const [elapsedMs, setElapsedMs] = useState(0)
+  const [pendingName, setPendingName] = useState('')
+  const [error, setError] = useState(null)
+
+  const recorderRef = useRef(null)
+  const clientRef = useRef(null)
+  const recordingIdRef = useRef(null)
+  const mimeTypeRef = useRef(null)
+  const timerRef = useRef(null)
+  const startTimeRef = useRef(null)
+  const pausedElapsedRef = useRef(0)
+
+  useEffect(() => {
+    const client = OPFSClient.create()
+    clientRef.current = client
+    return () => {
+      client.terminate()
+      clientRef.current = null
+    }
+  }, [])
+
+  function startTimer() {
+    startTimeRef.current = Date.now()
+    timerRef.current = setInterval(() => {
+      setElapsedMs(pausedElapsedRef.current + (Date.now() - startTimeRef.current))
+    }, TIMER_INTERVAL_MS)
+  }
+
+  function pauseTimer() {
+    clearInterval(timerRef.current)
+    pausedElapsedRef.current += Date.now() - (startTimeRef.current ?? Date.now())
+  }
+
+  function resetTimer() {
+    clearInterval(timerRef.current)
+    pausedElapsedRef.current = 0
+    startTimeRef.current = null
+  }
+
+  const startRecording = useCallback(async () => {
+    setStatus('requesting')
+    setError(null)
+    setElapsedMs(0)
+    recordingIdRef.current = crypto.randomUUID()
+
+    const recorder = new AudioRecorder({
+      onChunk: async (blob) => {
+        const buffer = await blob.arrayBuffer()
+        await clientRef.current?.sendTransfer('write-chunk', {
+          songId,
+          recordingId: recordingIdRef.current,
+          buffer,
+        }, [buffer])
+      },
+    })
+    recorderRef.current = recorder
+
+    try {
+      await recorder.start()
+      mimeTypeRef.current = recorder.mimeType
+      setStatus('recording')
+      startTimer()
+    } catch (err) {
+      setStatus('error')
+      setError(err.message ?? String(err))
+    }
+  }, [songId])
+
+  const pauseRecording = useCallback(() => {
+    recorderRef.current?.pause()
+    pauseTimer()
+    setStatus('paused')
+  }, [])
+
+  const resumeRecording = useCallback(() => {
+    recorderRef.current?.resume()
+    startTimer()
+    setStatus('recording')
+  }, [])
+
+  const stopRecording = useCallback(async () => {
+    pauseTimer()
+    await recorderRef.current?.stop()
+    await clientRef.current?.send('finalize-recording', {
+      songId,
+      recordingId: recordingIdRef.current,
+    })
+    setPendingName(defaultName(songTitle))
+    setStatus('naming')
+  }, [songId, songTitle])
+
+  const saveRecording = useCallback(async (name) => {
+    const meta = {
+      name: name.trim() || defaultName(songTitle),
+      date: new Date().toISOString(),
+      duration: elapsedMs,
+      size: 0,
+      mimeType: mimeTypeRef.current,
+    }
+    await clientRef.current?.send('write-meta', {
+      songId,
+      recordingId: recordingIdRef.current,
+      meta,
+    })
+    resetTimer()
+    setElapsedMs(0)
+    setPendingName('')
+    recorderRef.current = null
+    setStatus('idle')
+  }, [songId, songTitle, elapsedMs])
+
+  const cancelNaming = useCallback(() => {
+    resetTimer()
+    setElapsedMs(0)
+    setPendingName('')
+    recorderRef.current = null
+    setStatus('idle')
+  }, [])
+
+  return { status, elapsedMs, pendingName, error, startRecording, pauseRecording, resumeRecording, stopRecording, saveRecording, cancelNaming }
+}
