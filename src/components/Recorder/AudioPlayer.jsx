@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
@@ -18,11 +18,23 @@ export function AudioPlayer({ src, mimeType, durationMs }) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(durationMs / 1000)
   const [rate, setRate] = useState(1)
+  const [playError, setPlayError] = useState(null)
+
+  useEffect(() => {
+    if (src && audioRef.current) {
+      audioRef.current.play().catch(err => setPlayError(err.message))
+    }
+  }, [src])
 
   function togglePlay() {
     const audio = audioRef.current
     if (!audio) return
-    isPlaying ? audio.pause() : audio.play()
+    if (isPlaying) {
+      audio.pause()
+    } else {
+      setPlayError(null)
+      audio.play().catch(err => setPlayError(err.message))
+    }
   }
 
   function handleRateChange(e) {
@@ -41,8 +53,7 @@ export function AudioPlayer({ src, mimeType, durationMs }) {
     <div className="flex flex-col gap-2">
       <audio
         ref={audioRef}
-        src={src}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => { setIsPlaying(true); setPlayError(null) }}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
         onLoadedMetadata={() => {
@@ -50,10 +61,14 @@ export function AudioPlayer({ src, mimeType, durationMs }) {
           if (d && isFinite(d)) setDuration(d)
         }}
         onEnded={() => { setIsPlaying(false); setCurrentTime(0) }}
+        onError={(e) => setPlayError(e.target.error?.message ?? 'Audio failed to load')}
         preload="metadata"
       >
-        {mimeType && <source src={src} type={mimeType} />}
+        <source src={src} type={mimeType || 'audio/webm'} />
       </audio>
+      {playError && (
+        <p className="text-xs text-red-500 dark:text-red-400">{playError}</p>
+      )}
 
       <input
         type="range"
