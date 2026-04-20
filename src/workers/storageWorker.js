@@ -36,6 +36,17 @@ self.onmessage = async (e) => {
     const root = await navigator.storage.getDirectory()
 
     switch (type) {
+      case 'write-audio': {
+        const { songId, recordingId, buffer } = payload
+        const dir = await getRecordingDir(root, songId, recordingId)
+        const fileHandle = await dir.getFileHandle('audio.webm', { create: true })
+        const writable = await fileHandle.createWritable()
+        await writable.write(new Uint8Array(buffer))
+        await writable.close()
+        reply(requestId, { ok: true })
+        break
+      }
+
       case 'write-chunk': {
         const { songId, recordingId, buffer } = payload
         const key = `${songId}/${recordingId}`

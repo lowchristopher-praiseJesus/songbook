@@ -56,16 +56,7 @@ export function useRecording({ songId, songTitle }) {
     setElapsedMs(0)
     recordingIdRef.current = crypto.randomUUID()
 
-    const recorder = new AudioRecorder({
-      onChunk: async (blob) => {
-        const buffer = await blob.arrayBuffer()
-        await clientRef.current?.sendTransfer('write-chunk', {
-          songId,
-          recordingId: recordingIdRef.current,
-          buffer,
-        }, [buffer])
-      },
-    })
+    const recorder = new AudioRecorder()
     recorderRef.current = recorder
 
     try {
@@ -93,11 +84,19 @@ export function useRecording({ songId, songTitle }) {
 
   const stopRecording = useCallback(async () => {
     pauseTimer()
-    await recorderRef.current?.stop()
-    await clientRef.current?.send('finalize-recording', {
-      songId,
-      recordingId: recordingIdRef.current,
-    })
+    const chunks = await recorderRef.current?.stop() ?? []
+    if (chunks.length > 0) {
+      const buffers = await Promise.all(chunks.map(c => c.arrayBuffer()))
+      const totalBytes = buffers.reduce((sum, b) => sum + b.byteLength, 0)
+      const combined = new Uint8Array(totalBytes)
+      let offset = 0
+      for (const buf of buffers) { combined.set(new Uint8Array(buf), offset); offset += buf.byteLength }
+      await clientRef.current?.sendTransfer('write-audio', {
+        songId,
+        recordingId: recordingIdRef.current,
+        buffer: combined.buffer,
+      }, [combined.buffer])
+    }
     setPendingName(defaultName(songTitle))
     setStatus('naming')
   }, [songId, songTitle])

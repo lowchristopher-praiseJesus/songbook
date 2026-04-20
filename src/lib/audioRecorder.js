@@ -43,6 +43,7 @@ export class AudioRecorder {
 
     const mr = new MediaRecorder(stream, options)
     this._mediaRecorder = mr
+    this.mimeType = mr.mimeType || mimeType
 
     mr.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) {

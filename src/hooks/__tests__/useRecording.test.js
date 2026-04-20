@@ -7,7 +7,7 @@ vi.mock('../../lib/audioRecorder', () => ({
     start: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
     resume: vi.fn(),
-    stop: vi.fn().mockResolvedValue([new Blob(['audio'], { type: 'audio/webm' })]),
+    stop: vi.fn().mockResolvedValue([{ size: 5, arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(5)) }]),
     mimeType: 'audio/webm',
     state: 'inactive',
   })),
