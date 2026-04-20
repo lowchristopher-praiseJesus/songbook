@@ -47,6 +47,7 @@ export function SongList({
         onEdit={onEdit}
         annotationsVisible={annotationsVisible}
         onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
+        songId={song.id}
       />
       {!lyricsOnly && (
         <ChordStrip

@@ -27,6 +27,29 @@ vi.mock('../../../hooks/useFitToScreen', () => ({
 
 vi.mock('../../../lib/exportPdf', () => ({ exportLyricsPdf: vi.fn() }))
 
+vi.mock('../../../hooks/useRecording', () => ({
+  useRecording: vi.fn(() => ({
+    status: 'idle',
+    elapsedMs: 0,
+    pendingName: '',
+    error: null,
+    startRecording: vi.fn(),
+    pauseRecording: vi.fn(),
+    resumeRecording: vi.fn(),
+    stopRecording: vi.fn(),
+    saveRecording: vi.fn(),
+    cancelNaming: vi.fn(),
+  })),
+}))
+
+vi.mock('../../../lib/recorderFeatureDetect', () => ({
+  checkRecorderSupport: vi.fn(() => ({ supported: false })),
+}))
+
+vi.mock('../../Recorder/RecordingsPanel', () => ({
+  RecordingsPanel: vi.fn(() => null),
+}))
+
 const song = {
   id: 'song-1',
   meta: { title: 'Test', keyIndex: 0 },

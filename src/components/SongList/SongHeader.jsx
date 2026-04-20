@@ -1,10 +1,35 @@
 import { useState } from 'react'
 import { TransposeControl } from './TransposeControl'
+import { RecorderButton } from '../Recorder/RecorderButton'
+import { RecordingTimer } from '../Recorder/RecordingTimer'
+import { NamingDialog } from '../Recorder/NamingDialog'
+import { RecordingsPanel } from '../Recorder/RecordingsPanel'
+import { useRecording } from '../../hooks/useRecording'
+import { checkRecorderSupport } from '../../lib/recorderFeatureDetect'
 
-export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onExportPdf, onEdit, headerRef, annotationsVisible = true, onAnnotationsToggle }) {
+const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
+
+export function SongHeader({
+  meta,
+  transpose,
+  lyricsOnly,
+  onPerformanceMode,
+  onExportPdf,
+  onEdit,
+  headerRef,
+  annotationsVisible = true,
+  onAnnotationsToggle,
+  songId,
+}) {
   const [infoOpen, setInfoOpen] = useState(false)
+  const [panelOpen, setPanelOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
+
+  const recording = useRecording({
+    songId: songId ?? '',
+    songTitle: meta.title ?? '',
+  })
 
   return (
     <div ref={headerRef} className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
@@ -25,7 +50,6 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
               originalKeyIndex={meta.keyIndex}
               isMinor={meta.isMinor}
             />
-
             <div className="flex items-center gap-1" aria-label="Capo controls">
               <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Capo</span>
               <button
@@ -75,6 +99,7 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
         >
           Edit
         </button>
+
         {onAnnotationsToggle && (
           <button
             type="button"
@@ -90,6 +115,29 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
             💬
           </button>
         )}
+
+        {songId && RECORDER_SUPPORTED && (
+          <>
+            <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
+            <RecorderButton
+              status={recording.status}
+              onStart={recording.startRecording}
+              onStop={recording.stopRecording}
+              onPause={recording.pauseRecording}
+              onResume={recording.resumeRecording}
+            />
+            <button
+              type="button"
+              onClick={() => setPanelOpen(true)}
+              aria-label="Recordings"
+              title="View recordings"
+              className="text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              🎵 Recordings
+            </button>
+          </>
+        )}
+
         <button
           type="button"
           onClick={onPerformanceMode}
@@ -101,28 +149,27 @@ export function SongHeader({ meta, transpose, lyricsOnly, onPerformanceMode, onE
 
       {infoOpen && (
         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-600 dark:text-gray-400">
-          {meta.key && (
-            <div><span className="font-medium text-gray-700 dark:text-gray-300">Key:</span> {meta.key}</div>
-          )}
-          {meta.capo > 0 && (
-            <div><span className="font-medium text-gray-700 dark:text-gray-300">Capo:</span> {meta.capo}</div>
-          )}
-          {meta.tempo && (
-            <div><span className="font-medium text-gray-700 dark:text-gray-300">BPM:</span> {meta.tempo}</div>
-          )}
-          {meta.timeSignature && (
-            <div><span className="font-medium text-gray-700 dark:text-gray-300">Time:</span> {meta.timeSignature}</div>
-          )}
-          {meta.ccli && (
-            <div><span className="font-medium text-gray-700 dark:text-gray-300">CCLI:</span> {meta.ccli}</div>
-          )}
-          {meta.copyright && (
-            <div className="col-span-2 text-xs">
-              <span className="font-medium text-gray-700 dark:text-gray-300">©</span> {meta.copyright}
-            </div>
-          )}
+          {meta.key && <div><span className="font-medium text-gray-700 dark:text-gray-300">Key:</span> {meta.key}</div>}
+          {meta.capo > 0 && <div><span className="font-medium text-gray-700 dark:text-gray-300">Capo:</span> {meta.capo}</div>}
+          {meta.tempo && <div><span className="font-medium text-gray-700 dark:text-gray-300">BPM:</span> {meta.tempo}</div>}
+          {meta.timeSignature && <div><span className="font-medium text-gray-700 dark:text-gray-300">Time:</span> {meta.timeSignature}</div>}
+          {meta.ccli && <div><span className="font-medium text-gray-700 dark:text-gray-300">CCLI:</span> {meta.ccli}</div>}
+          {meta.copyright && <div className="col-span-2 text-xs"><span className="font-medium text-gray-700 dark:text-gray-300">©</span> {meta.copyright}</div>}
         </div>
       )}
+
+      <NamingDialog
+        isOpen={recording.status === 'naming'}
+        defaultName={recording.pendingName}
+        onSave={recording.saveRecording}
+        onCancel={recording.cancelNaming}
+      />
+
+      <RecordingsPanel
+        isOpen={panelOpen}
+        songId={songId}
+        onClose={() => setPanelOpen(false)}
+      />
     </div>
   )
 }

@@ -3,6 +3,29 @@ import { render } from '@testing-library/react'
 import { createRef } from 'react'
 import { SongHeader } from '../SongHeader'
 
+vi.mock('../../../hooks/useRecording', () => ({
+  useRecording: vi.fn(() => ({
+    status: 'idle',
+    elapsedMs: 0,
+    pendingName: '',
+    error: null,
+    startRecording: vi.fn(),
+    pauseRecording: vi.fn(),
+    resumeRecording: vi.fn(),
+    stopRecording: vi.fn(),
+    saveRecording: vi.fn(),
+    cancelNaming: vi.fn(),
+  })),
+}))
+
+vi.mock('../../../lib/recorderFeatureDetect', () => ({
+  checkRecorderSupport: vi.fn(() => ({ supported: false })),
+}))
+
+vi.mock('../../Recorder/RecordingsPanel', () => ({
+  RecordingsPanel: vi.fn(() => null),
+}))
+
 const meta = { title: 'Test Song', keyIndex: 0 }
 const transpose = {
   delta: 0,
