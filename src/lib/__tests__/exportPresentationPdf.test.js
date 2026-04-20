@@ -220,6 +220,35 @@ describe('exportPresentationPdf', () => {
     expect(Math.max(...yValues)).toBeLessThanOrEqual(500)
   })
 
+  describe('annotationsVisible option', () => {
+    const annotatedSong = {
+      meta: { title: 'Annotated', artist: null, annotation: 'song note' },
+      sections: [{
+        label: 'Verse',
+        annotation: 'section note',
+        lines: [
+          { type: 'lyric', content: 'Hello', annotation: 'line note' },
+        ],
+      }],
+    }
+
+    it('renders annotation text when annotationsVisible is true (default)', () => {
+      exportPresentationPdf([annotatedSong], mockBg)
+      const textArgs = mockDoc.text.mock.calls.map(c => (Array.isArray(c[0]) ? c[0].join(' ') : c[0]))
+      expect(textArgs.some(t => t.includes('song note'))).toBe(true)
+      expect(textArgs.some(t => t.includes('section note'))).toBe(true)
+      expect(textArgs.some(t => t.includes('line note'))).toBe(true)
+    })
+
+    it('suppresses all annotation text when annotationsVisible is false', () => {
+      exportPresentationPdf([annotatedSong], mockBg, { annotationsVisible: false })
+      const textArgs = mockDoc.text.mock.calls.map(c => (Array.isArray(c[0]) ? c[0].join(' ') : c[0]))
+      expect(textArgs.some(t => t.includes('song note'))).toBe(false)
+      expect(textArgs.some(t => t.includes('section note'))).toBe(false)
+      expect(textArgs.some(t => t.includes('line note'))).toBe(false)
+    })
+  })
+
   it('picks a height-valid column split rather than a midpoint split that overflows', () => {
     // Three sections where midpoint lands after section B, but A+B overflows the column.
     // A valid split (A alone in left, B+C in right) must be found instead.

@@ -67,7 +67,12 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
   function handleExport() {
     try {
       const desiredFont = Math.min(32, Math.max(8, Number(fontSizeStr) || 20))
-      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols })
+      let annotationsVisible = true
+      try {
+        const raw = localStorage.getItem('songsheet_annotations_visible')
+        if (raw !== null) annotationsVisible = JSON.parse(raw)
+      } catch { /* keep default true */ }
+      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols, annotationsVisible })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')

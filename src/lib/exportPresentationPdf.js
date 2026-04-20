@@ -20,16 +20,19 @@ const TWO_COL_THRESHOLD = PAGE_H * 0.75        // 405 pt — use two columns whe
 // ---------------------------------------------------------------------------
 
 /** Height used by the title + artist header (including the 20 pt gap below). */
-function measureHeader(doc, song, fontSize) {
+function measureHeader(doc, song, fontSize, annotationsVisible = true) {
   const titleSize = fontSize * 1.8
   const artistSize = fontSize * 0.9
+  const annotSize = fontSize * 0.75
   const titleLineH = titleSize * 1.3
   const artistLineH = artistSize * 1.3
+  const annotLineH = annotSize * 1.3
   let h = 0
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(titleSize)
   h += doc.splitTextToSize(song.meta.title ?? 'Untitled', MAX_W).length * titleLineH
   if (song.meta.artist) h += artistLineH + 4
+  if (annotationsVisible && song.meta.annotation) h += annotLineH + 2
   h += 20
   return h
 }
@@ -38,20 +41,26 @@ function measureHeader(doc, song, fontSize) {
  * Height of a list of sections (chord lines skipped).
  * maxW controls line-wrap width — use MAX_W for single-col, COL_W for two-col.
  */
-function measureSections(doc, sections, fontSize, maxW = MAX_W) {
+function measureSections(doc, sections, fontSize, maxW = MAX_W, annotationsVisible = true) {
   const labelSize = fontSize * 0.65
+  const annotSize = fontSize * 0.6
   const lineH = fontSize * 1.4
   const labelLineH = labelSize * 1.4
+  const annotLineH = annotSize * 1.3
   let h = 0
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(fontSize)
   for (const section of sections) {
     if (!(section.lines ?? []).some(l => l.type === 'lyric')) continue
-    if (section.label) h += 6 + labelLineH + 4
+    if (section.label) {
+      h += 6 + labelLineH + 4
+      if (annotationsVisible && section.annotation) h += annotLineH + 2
+    }
     for (const line of section.lines ?? []) {
       if (line.type === 'chord') continue
       if (line.type === 'blank') { h += lineH * 0.5; continue }
       h += doc.splitTextToSize(line.content ?? '', maxW).length * lineH
+      if (annotationsVisible && line.annotation) h += annotLineH + 2
     }
     h += lineH * 0.4
   }
@@ -154,20 +163,20 @@ function splitSections(doc, sections, fontSize, contentH) {
  * @param {number} maxCols      1 = force single-column; 2 = allow two-column
  * @returns {{ font: number }}
  */
-function findBestFontConstrained(doc, song, desiredFont, maxCols) {
+function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible) {
   const sections = song.sections ?? []
 
   for (let fs = desiredFont; fs >= MIN_FONT; fs--) {
-    const contentH = USABLE_H - measureHeader(doc, song, fs)
+    const contentH = USABLE_H - measureHeader(doc, song, fs, annotationsVisible)
 
     if (maxCols === 1) {
-      if (measureSections(doc, sections, fs) <= contentH) return { font: fs }
+      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= contentH) return { font: fs }
     } else {
-      if (measureSections(doc, sections, fs) <= TWO_COL_THRESHOLD) return { font: fs }
+      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= TWO_COL_THRESHOLD) return { font: fs }
       const { left, right } = splitSections(doc, sections, fs, contentH)
       if (
-        measureSections(doc, left, fs, COL_W) <= contentH &&
-        measureSections(doc, right, fs, COL_W) <= contentH
+        measureSections(doc, left, fs, COL_W, annotationsVisible) <= contentH &&
+        measureSections(doc, right, fs, COL_W, annotationsVisible) <= contentH
       ) return { font: fs }
     }
   }
@@ -182,11 +191,13 @@ function findBestFontConstrained(doc, song, desiredFont, maxCols) {
  * Render the title + artist header, centred across the full page width.
  * Returns the y position after the header (where content starts).
  */
-function renderHeader(doc, song, fontSize) {
+function renderHeader(doc, song, fontSize, annotationsVisible = true) {
   const titleSize = fontSize * 1.8
   const artistSize = fontSize * 0.9
+  const annotSize = fontSize * 0.75
   const titleLineH = titleSize * 1.3
   const artistLineH = artistSize * 1.3
+  const annotLineH = annotSize * 1.3
   let y = MARGIN_TOP
 
   doc.setFont('helvetica', 'bold')
@@ -205,6 +216,17 @@ function renderHeader(doc, song, fontSize) {
     y += artistLineH + 4
   }
 
+  if (annotationsVisible && song.meta.annotation) {
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(annotSize)
+    doc.setTextColor(140, 110, 90)
+    const annotLines = doc.splitTextToSize(song.meta.annotation, MAX_W)
+    doc.text(annotLines, PAGE_W / 2, y, { align: 'center' })
+    doc.setTextColor(35, 18, 6)
+    doc.setFont('helvetica', 'normal')
+    y += annotLines.length * annotLineH + 2
+  }
+
   y += 20
   return y
 }
@@ -214,10 +236,12 @@ function renderHeader(doc, song, fontSize) {
  * cx   — horizontal centre of the column
  * maxW — wrap width for splitTextToSize
  */
-function renderSections(doc, sections, fontSize, cx, maxW, startY) {
+function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVisible = true) {
   const labelSize = fontSize * 0.65
+  const annotSize = fontSize * 0.6
   const lineH = fontSize * 1.4
   const labelLineH = labelSize * 1.4
+  const annotLineH = annotSize * 1.3
   let y = startY
 
   for (const section of sections) {
@@ -231,6 +255,16 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
       doc.text(section.label.toUpperCase(), cx, y, { align: 'center' })
       doc.setTextColor(35, 18, 6)
       y += labelLineH + 4
+
+      if (annotationsVisible && section.annotation) {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(annotSize)
+        doc.setTextColor(140, 110, 90)
+        doc.text('— ' + section.annotation, cx, y, { align: 'center' })
+        doc.setTextColor(35, 18, 6)
+        doc.setFont('helvetica', 'normal')
+        y += annotLineH + 2
+      }
     }
 
     for (const line of section.lines ?? []) {
@@ -241,6 +275,16 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
       const wrapped = doc.splitTextToSize(line.content ?? '', maxW)
       doc.text(wrapped, cx, y, { align: 'center' })
       y += wrapped.length * lineH
+
+      if (annotationsVisible && line.annotation) {
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(annotSize)
+        doc.setTextColor(140, 110, 90)
+        doc.text('— ' + line.annotation, cx, y, { align: 'center' })
+        doc.setTextColor(35, 18, 6)
+        doc.setFont('helvetica', 'normal')
+        y += annotLineH + 2
+      }
     }
 
     y += lineH * 0.4
@@ -271,14 +315,14 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY) {
  *   desiredFont — target font size (8–32); may decrease up to 2pt to fit. Default 20.
  *   maxCols     — maximum columns per page (1 or 2). Default 2.
  */
-export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2 } = {}) {
+export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true } = {}) {
   if (!songs.length) return
 
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
 
   // Pass 1: find the largest font at which every song fits (1 or 2 cols)
   const globalFont = songs.reduce((min, song) => {
-    const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols)
+    const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
     return Math.min(min, font)
   }, desiredFont)
 
@@ -289,17 +333,17 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
     doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
 
     const sections = song.sections ?? []
-    const startY = renderHeader(doc, song, globalFont)
+    const startY = renderHeader(doc, song, globalFont, annotationsVisible)
 
-    if (maxCols >= 2 && measureSections(doc, sections, globalFont) > TWO_COL_THRESHOLD) {
+    if (maxCols >= 2 && measureSections(doc, sections, globalFont, MAX_W, annotationsVisible) > TWO_COL_THRESHOLD) {
       // Two-column layout
       const contentH = USABLE_H - (startY - MARGIN_TOP)
       const { left, right } = splitSections(doc, sections, globalFont, contentH)
-      renderSections(doc, left, globalFont, COL1_CX, COL_W, startY)
-      renderSections(doc, right, globalFont, COL2_CX, COL_W, startY)
+      renderSections(doc, left, globalFont, COL1_CX, COL_W, startY, annotationsVisible)
+      renderSections(doc, right, globalFont, COL2_CX, COL_W, startY, annotationsVisible)
     } else {
       // Single-column layout
-      renderSections(doc, sections, globalFont, PAGE_W / 2, MAX_W, startY)
+      renderSections(doc, sections, globalFont, PAGE_W / 2, MAX_W, startY, annotationsVisible)
     }
   })
 

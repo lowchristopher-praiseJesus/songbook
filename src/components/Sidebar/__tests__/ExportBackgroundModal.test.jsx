@@ -54,7 +54,7 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: /export/i }))
     expect(exportPresentationPdf).toHaveBeenCalledOnce()
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 2 })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 2, annotationsVisible: true })
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -90,13 +90,22 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
     fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '14' } })
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 14, maxCols: 2 })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 14, maxCols: 2, annotationsVisible: true })
   })
 
   it('passes maxCols=1 when column 1 button is clicked', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: '1' }))
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 1 })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 1, annotationsVisible: true })
+  })
+
+  it('reads annotationsVisible fresh from localStorage at export time', () => {
+    render(<ExportBackgroundModal {...defaultProps} />)
+    // Simulate the user toggling annotations off after the modal mounted
+    localStorage.setItem('songsheet_annotations_visible', 'false')
+    fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), expect.objectContaining({ annotationsVisible: false }))
+    localStorage.removeItem('songsheet_annotations_visible')
   })
 })
