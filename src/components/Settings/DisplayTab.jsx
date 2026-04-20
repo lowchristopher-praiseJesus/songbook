@@ -37,8 +37,7 @@ function SummaryDot({ color }) {
   )
 }
 
-function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, fontSize, onFontSizeChange, updateElement }) {
-  const [open, setOpen] = useState(false)
+function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, fontSize, onFontSizeChange, updateElement, open, onToggle }) {
   const colorInputRef = useRef(null)
 
   const currentColor = elSettings.color
@@ -84,7 +83,7 @@ function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, 
     <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden mb-2">
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700 text-left"
       >
         <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{label}</span>
@@ -176,6 +175,8 @@ function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, 
 }
 
 export function DisplayTab({ settings, updateElement, resetAll, fontSize, onFontSizeChange }) {
+  const [openKey, setOpenKey] = useState(null)
+
   return (
     <div>
       {ELEMENTS.map(({ key, label, isOffset, hasAbsoluteSize }) => (
@@ -189,6 +190,8 @@ export function DisplayTab({ settings, updateElement, resetAll, fontSize, onFont
           fontSize={fontSize}
           onFontSizeChange={onFontSizeChange}
           updateElement={updateElement}
+          open={openKey === key}
+          onToggle={() => setOpenKey(prev => prev === key ? null : key)}
         />
       ))}
       <div className="flex justify-end mt-1">
