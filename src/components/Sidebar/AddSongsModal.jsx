@@ -79,11 +79,11 @@ export function AddSongsModal({ isOpen, collectionId, collectionName, onClose })
                 onChange={() => toggle(entry.id)}
                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
-              <span className="flex-1 text-sm text-gray-900 dark:text-gray-100 truncate">
+              <span className="flex-1 min-w-0 text-sm text-gray-900 dark:text-gray-100 truncate">
                 {entry.title}
               </span>
               {entry.artist && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                <span className="text-xs text-gray-400 dark:text-gray-500 max-w-28 truncate">
                   {entry.artist}
                 </span>
               )}

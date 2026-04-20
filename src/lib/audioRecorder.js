@@ -26,9 +26,7 @@ export class AudioRecorder {
     const mimeType = AudioRecorder.detectMimeType()
     let stream
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      })
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch (err) {
       this.state = 'inactive'
       throw err

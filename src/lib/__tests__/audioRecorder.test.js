@@ -34,9 +34,7 @@ describe('AudioRecorder instance', () => {
 
   it('start() calls getUserMedia with correct constraints', async () => {
     await recorder.start()
-    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-    })
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true })
   })
 
   it('start() sets state to recording', async () => {
