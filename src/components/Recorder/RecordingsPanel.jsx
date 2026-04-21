@@ -84,6 +84,7 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
     return () => {
       objectUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
       objectUrlsRef.current = []
+      setPlayingSrc(null)
       client.terminate()
       clientRef.current = null
     }
