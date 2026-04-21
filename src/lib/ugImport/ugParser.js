@@ -188,6 +188,26 @@ function makeSong(contentString, meta) {
 }
 
 // ---------------------------------------------------------------------------
+// Key parsing helpers
+// ---------------------------------------------------------------------------
+
+const KEY_TO_INDEX = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
+  E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
+  Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+}
+const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
+
+function parseTonality(tonalityName) {
+  if (!tonalityName) return { key: 'C', keyIndex: 0, isMinor: false, usesFlats: false }
+  const isMinor = tonalityName.endsWith('m')
+  const key = isMinor ? tonalityName.slice(0, -1) : tonalityName
+  const keyIndex = KEY_TO_INDEX[key] ?? 0
+  const usesFlats = FLAT_KEY_NAMES.has(key)
+  return { key, keyIndex, isMinor, usesFlats }
+}
+
+// ---------------------------------------------------------------------------
 // JSON extraction from store.page_data
 // ---------------------------------------------------------------------------
 
@@ -244,6 +264,7 @@ function parseFromStoreData(data, url) {
     || 'Unknown'
   const artist = (tab.artist_name ?? '').trim()
   const capo = parseInt(tab.capo ?? 0, 10) || 0
+  const { key, keyIndex, isMinor, usesFlats } = parseTonality(tab.tonality_name)
 
   // Strip UG's [ch]Chord[/ch] notation → bare chord tokens for chord-above-lyrics detection
   // Strip [tab]...[/tab] tablature blocks
@@ -257,7 +278,7 @@ function parseFromStoreData(data, url) {
   console.log('[ugParser] raw wiki_tab.content (first 800 chars):\n' + content.slice(0, 800))
   const contentString = processContentLines(content)
   return makeSong(contentString, {
-    title, artist, key: 'C', keyIndex: 0, isMinor: false, usesFlats: false, capo,
+    title, artist, key, keyIndex, isMinor, usesFlats, capo,
   })
 }
 

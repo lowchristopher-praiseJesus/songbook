@@ -204,6 +204,44 @@ describe('parseUGPage — store.page_data JSON extraction', () => {
     expect(song.meta.capo).toBe(5)
   })
 
+  it('reads tonality_name for a major key (G)', () => {
+    const data = { ...basePageData, tab: { ...basePageData.tab, tonality_name: 'G' } }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    expect(song.meta.key).toBe('G')
+    expect(song.meta.keyIndex).toBe(7)
+    expect(song.meta.isMinor).toBe(false)
+  })
+
+  it('reads tonality_name for a minor key (Am → key A, isMinor true)', () => {
+    const data = { ...basePageData, tab: { ...basePageData.tab, tonality_name: 'Am' } }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    expect(song.meta.key).toBe('A')
+    expect(song.meta.keyIndex).toBe(9)
+    expect(song.meta.isMinor).toBe(true)
+  })
+
+  it('reads tonality_name for a flat key (Bb)', () => {
+    const data = { ...basePageData, tab: { ...basePageData.tab, tonality_name: 'Bb' } }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    expect(song.meta.key).toBe('Bb')
+    expect(song.meta.keyIndex).toBe(10)
+    expect(song.meta.usesFlats).toBe(true)
+  })
+
+  it('reads tonality_name for a sharp key (F#)', () => {
+    const data = { ...basePageData, tab: { ...basePageData.tab, tonality_name: 'F#' } }
+    const song = parseUGPage({ rawHtml: makeHtml(data) })
+    expect(song.meta.key).toBe('F#')
+    expect(song.meta.keyIndex).toBe(6)
+    expect(song.meta.usesFlats).toBe(false)
+  })
+
+  it('falls back to key C when tonality_name is absent', () => {
+    const song = parseUGPage({ rawHtml: makeHtml(basePageData) })
+    expect(song.meta.key).toBe('C')
+    expect(song.meta.keyIndex).toBe(0)
+  })
+
   it('strips [ch]/[/ch] tags and converts chord-above-lyrics', () => {
     const song = parseUGPage({ rawHtml: makeHtml(basePageData) })
     // Should have section with chords
