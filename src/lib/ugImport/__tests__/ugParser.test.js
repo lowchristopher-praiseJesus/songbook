@@ -28,13 +28,31 @@ describe('parseUGMarkdown — metadata', () => {
     expect(song.meta.capo).toBe(0)
   })
 
-  it('defaults key to C / keyIndex 0', () => {
-    const md = '# Song Chords by Artist\n\n[Verse 1]\nG  D\nHello'
+  it('defaults key to C when no Key: line and no chords are present', () => {
+    const md = '# Song Chords by Artist\n\nJust lyrics here no chords at all'
     const song = parseUGMarkdown(md)
     expect(song.meta.key).toBe('C')
     expect(song.meta.keyIndex).toBe(0)
     expect(song.meta.isMinor).toBe(false)
     expect(song.meta.usesFlats).toBe(false)
+  })
+
+  it('detects key from chords when Key: line is absent', () => {
+    const md = [
+      '# Jesus Loves Me Chords',
+      'Tuning: E A D G B ECapo: No capo',
+      '',
+      '[Verse 1]',
+      'G       D',
+      'Jesus loves me this I know',
+      'C       G',
+      'For the Bible tells me so',
+      'G    D    G',
+      'Little ones to him belong',
+    ].join('\n')
+    const song = parseUGMarkdown(md)
+    expect(song.meta.key).toBe('G')
+    expect(song.meta.keyIndex).toBe(7)
   })
 
   it('extracts major key from "Key: F" metadata line', () => {

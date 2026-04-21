@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transposeChord, transposeSections } from '../chordUtils'
+import { transposeChord, transposeSections, detectKeyFromContent } from '../chordUtils'
 
 describe('transposeChord', () => {
   it('transposes G up 2 semitones to A', () => {
@@ -103,5 +103,37 @@ describe('transposeSections', () => {
     const result = transposeSections(sections, 7, false)
     expect(result[0].lines[0].chords[0].chord).toBe('G')
     expect(result[1].lines[0].chords[0].chord).toBe('C')
+  })
+})
+
+describe('detectKeyFromContent', () => {
+  it('detects G major from G, D, C, Em chords (Jesus Loves Me style)', () => {
+    const content = '[G]Jesus loves me [D]this I know\n[C]For the [G]Bible [D]tells me [G]so\n[Em]Little ones to [G]him belong'
+    const result = detectKeyFromContent(content)
+    expect(result.key).toBe('G')
+    expect(result.keyIndex).toBe(7)
+    expect(result.isMinor).toBe(false)
+  })
+
+  it('detects F major from F, Bb, C, Dm chords (Celebrate Jesus style)', () => {
+    const content = '[F]Celebrate [Bb]Jesus [C]celebrate\n[F]He is [Bb]risen [C]forevermore\n[Dm]He is risen'
+    const result = detectKeyFromContent(content)
+    expect(result.key).toBe('F')
+    expect(result.keyIndex).toBe(5)
+    expect(result.usesFlats).toBe(true)
+  })
+
+  it('detects Bb major from Bb, Eb, F chords', () => {
+    const content = '[Bb]Praise the [Eb]Lord\n[F]Sing to [Bb]him\n[Eb]Glory [F]forever [Bb]amen'
+    const result = detectKeyFromContent(content)
+    expect(result.key).toBe('Bb')
+    expect(result.keyIndex).toBe(10)
+    expect(result.usesFlats).toBe(true)
+  })
+
+  it('returns C when content has no chords', () => {
+    const result = detectKeyFromContent('No chords here just words')
+    expect(result.key).toBe('C')
+    expect(result.keyIndex).toBe(0)
   })
 })

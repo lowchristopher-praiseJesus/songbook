@@ -1,4 +1,5 @@
 import { isChord, parseContent } from '../parser/contentParser'
+import { detectKeyFromContent } from '../parser/chordUtils'
 
 // Matches [Verse 1], [Chorus], [Bridge], etc. AND ## Verse, ## Chorus etc.
 const SECTION_HEADER_RE = /^\[([^\]]+)\]$|^##\s+(.+)$/
@@ -326,9 +327,11 @@ export function parseUGMarkdown(markdown = '', url = '') {
   const capo = capoMatch ? parseInt(capoMatch[1], 10) : 0
 
   const keyMatch = markdown.match(/Key:\s*([A-G][#b]?m?)/)
-  const { key, keyIndex, isMinor, usesFlats } = parseTonality(keyMatch?.[1])
-
   const contentString = processContentLines(markdown)
+  const { key, keyIndex, isMinor, usesFlats } = keyMatch
+    ? parseTonality(keyMatch[1])
+    : detectKeyFromContent(contentString)
+
   return makeSong(contentString, {
     title, artist, key, keyIndex, isMinor, usesFlats, capo,
   })

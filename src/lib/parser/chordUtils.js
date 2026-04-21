@@ -1,5 +1,8 @@
 const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+const FLAT_KEY_NAMES  = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
+const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
+const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
 
 // Build a lookup from note name → chromatic index (handles both sharp and flat names)
 const NOTE_TO_INDEX = {}
@@ -40,6 +43,33 @@ function transposeNote(note, delta, scale) {
   const idx = NOTE_TO_INDEX[note]
   if (idx === undefined) return note
   return scale[((idx + delta) % 12 + 12) % 12]
+}
+
+/**
+ * Detect the most likely major key from inline [Chord] markers in rawText.
+ * Scores all 12 keys by diatonic fit; tonic presence gets a 50% bonus.
+ */
+export function detectKeyFromContent(rawText) {
+  const freq = new Array(12).fill(0)
+  const re = /\[([A-G][b#]?)/g
+  let m
+  while ((m = re.exec(rawText)) !== null) {
+    const idx = NOTE_TO_INDEX[m[1]]
+    if (idx !== undefined) freq[idx]++
+  }
+
+  if (freq.every(f => f === 0)) return { key: 'C', keyIndex: 0, isMinor: false, usesFlats: false }
+
+  let bestKey = 0, bestScore = -1
+  for (let k = 0; k < 12; k++) {
+    const diatonic = new Set(MAJOR_SCALE.map(d => (k + d) % 12))
+    const score = freq.reduce((s, f, i) => s + (diatonic.has(i) ? f : 0), 0) + freq[k] * 0.5
+    if (score > bestScore) { bestScore = score; bestKey = k }
+  }
+
+  const usesFlats = FLAT_KEY_INDICES.has(bestKey)
+  const key = usesFlats ? FLATS[bestKey] : SHARPS[bestKey]
+  return { key, keyIndex: bestKey, isMinor: false, usesFlats }
 }
 
 /**
