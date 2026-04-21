@@ -325,8 +325,11 @@ export function parseUGMarkdown(markdown = '', url = '') {
   const capoMatch = markdown.match(/capo[:\s]+(\d+)/i)
   const capo = capoMatch ? parseInt(capoMatch[1], 10) : 0
 
+  const keyMatch = markdown.match(/Key:\s*([A-G][#b]?m?)/)
+  const { key, keyIndex, isMinor, usesFlats } = parseTonality(keyMatch?.[1])
+
   const contentString = processContentLines(markdown)
   return makeSong(contentString, {
-    title, artist, key: 'C', keyIndex: 0, isMinor: false, usesFlats: false, capo,
+    title, artist, key, keyIndex, isMinor, usesFlats, capo,
   })
 }

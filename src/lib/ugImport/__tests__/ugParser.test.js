@@ -36,6 +36,30 @@ describe('parseUGMarkdown — metadata', () => {
     expect(song.meta.isMinor).toBe(false)
     expect(song.meta.usesFlats).toBe(false)
   })
+
+  it('extracts major key from "Key: F" metadata line', () => {
+    const md = 'Tuning: E A D G B EKey: FCapo: No capo\n\n[Verse]\nF  Bb\nCelebrate Jesus'
+    const song = parseUGMarkdown(md)
+    expect(song.meta.key).toBe('F')
+    expect(song.meta.keyIndex).toBe(5)
+    expect(song.meta.isMinor).toBe(false)
+    expect(song.meta.usesFlats).toBe(true)
+  })
+
+  it('extracts minor key from "Key: Am" metadata line', () => {
+    const md = 'Key: Am\n\n[Verse]\nAm  G\nHello world'
+    const song = parseUGMarkdown(md)
+    expect(song.meta.key).toBe('A')
+    expect(song.meta.keyIndex).toBe(9)
+    expect(song.meta.isMinor).toBe(true)
+  })
+
+  it('extracts sharp key from "Key: F#" metadata line', () => {
+    const md = 'Key: F#\n\n[Verse]\nF#  B\nHello world'
+    const song = parseUGMarkdown(md)
+    expect(song.meta.key).toBe('F#')
+    expect(song.meta.keyIndex).toBe(6)
+  })
 })
 
 describe('parseUGMarkdown — section headers', () => {
