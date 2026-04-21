@@ -158,6 +158,7 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false) {
     songs: sbpSongs,
     sets,
     folders: [],
+    ...(lyricsOnly && { lyricsOnly: true }),
   }
   const json = JSON.stringify(data)
   const dataFileText = '1.0\r\n' + json

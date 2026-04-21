@@ -51,7 +51,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
 
   it('dataFile.txt starts with version line "1.0"', async () => {
     const { text } = await parseZip([mockSong])
-    expect(text.startsWith('1.0\n')).toBe(true)
+    expect(text.startsWith('1.0\r\n')).toBe(true)
   })
 
   it('serializes core song fields correctly', async () => {
