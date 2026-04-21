@@ -10,7 +10,8 @@ vi.mock('@dnd-kit/core', () => ({
     capturedOnDragEnd = onDragEnd
     return <>{children}</>
   },
-  PointerSensor: class {},
+  MouseSensor: class {},
+  TouchSensor: class {},
   KeyboardSensor: class {},
   useSensor: vi.fn(() => ({})),
   useSensors: vi.fn(() => []),
