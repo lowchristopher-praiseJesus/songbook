@@ -3,14 +3,14 @@ import { renderHook, act } from '@testing-library/react'
 import { useFitToScreen } from '../useFitToScreen'
 
 function makeContainerRef(clientHeight = 400) {
-  return { current: { clientHeight } }
+  return { current: { clientHeight, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) } }
 }
 
-function makeHeaderRef(offsetHeight = 80) {
-  return { current: { offsetHeight } }
+function makeBodyRef(offsetTop = 80) {
+  return { current: { getBoundingClientRect: () => ({ top: offsetTop }) } }
 }
 
-// Creates a mock shadow element whose scrollHeight reports fitting or not
+// Creates a mock shadow element whose getBoundingClientRect height reports fitting or not
 function makeShadowEl({ fits = true } = {}) {
   const el = {
     style: {
@@ -18,10 +18,8 @@ function makeShadowEl({ fits = true } = {}) {
       height: '',
       setProperty: vi.fn(),
     },
-    offsetHeight: 0,
+    getBoundingClientRect: () => ({ height: fits ? 0 : 9999 }),
   }
-  Object.defineProperty(el, 'scrollHeight', { get: () => (fits ? 0 : 9999), configurable: true })
-  Object.defineProperty(el, 'clientHeight', { get: () => 320, configurable: true })
   return el
 }
 
@@ -40,7 +38,7 @@ describe('useFitToScreen', () => {
       useFitToScreen({
         enabled: false,
         containerRef: makeContainerRef(),
-        headerRef: makeHeaderRef(),
+        bodyRef: makeBodyRef(),
         lyricsOnly: false,
       })
     )
@@ -53,7 +51,7 @@ describe('useFitToScreen', () => {
       useFitToScreen({
         enabled: false,
         containerRef: makeContainerRef(),
-        headerRef: makeHeaderRef(),
+        bodyRef: makeBodyRef(),
         lyricsOnly: false,
       })
     )
@@ -62,11 +60,11 @@ describe('useFitToScreen', () => {
 
   it('returns fitFontSize and fitColumns when enabled and shadow fits at 1 column', () => {
     const containerRef = makeContainerRef()
-    const headerRef = makeHeaderRef()
+    const bodyRef = makeBodyRef()
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
       { initialProps: { enabled: false } }
     )
 
@@ -81,11 +79,11 @@ describe('useFitToScreen', () => {
 
   it('resets to null when disabled after being enabled', () => {
     const containerRef = makeContainerRef()
-    const headerRef = makeHeaderRef()
+    const bodyRef = makeBodyRef()
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
       { initialProps: { enabled: false } }
     )
 
@@ -99,11 +97,11 @@ describe('useFitToScreen', () => {
 
   it('falls back to 4 columns at min font (10) when nothing fits', () => {
     const containerRef = makeContainerRef()
-    const headerRef = makeHeaderRef()
+    const bodyRef = makeBodyRef()
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, headerRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
       { initialProps: { enabled: false } }
     )
 
@@ -116,12 +114,12 @@ describe('useFitToScreen', () => {
 
   it('sets up a ResizeObserver on the container when enabled', () => {
     const containerRef = makeContainerRef()
-    const headerRef = makeHeaderRef()
+    const bodyRef = makeBodyRef()
     const observeSpy = vi.fn()
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: observeSpy, disconnect: vi.fn() })))
 
     renderHook(() =>
-      useFitToScreen({ enabled: true, containerRef, headerRef, lyricsOnly: false })
+      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false })
     )
 
     expect(observeSpy).toHaveBeenCalledWith(containerRef.current)
@@ -129,12 +127,12 @@ describe('useFitToScreen', () => {
 
   it('disconnects ResizeObserver on cleanup', () => {
     const containerRef = makeContainerRef()
-    const headerRef = makeHeaderRef()
+    const bodyRef = makeBodyRef()
     const disconnectSpy = vi.fn()
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: disconnectSpy })))
 
     const { unmount } = renderHook(() =>
-      useFitToScreen({ enabled: true, containerRef, headerRef, lyricsOnly: false })
+      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false })
     )
 
     unmount()
