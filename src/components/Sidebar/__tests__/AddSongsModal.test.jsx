@@ -76,6 +76,39 @@ describe('AddSongsModal', () => {
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
+  it('Select All checks all visible songs', () => {
+    render(<AddSongsModal {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
+    expect(screen.getByLabelText(/Amazing Grace/i)).toBeChecked()
+    expect(screen.getByLabelText(/El Shaddai/i)).toBeChecked()
+    expect(screen.getByLabelText(/Oceans/i)).toBeChecked()
+  })
+
+  it('Select All becomes Deselect All when all visible songs are checked', () => {
+    render(<AddSongsModal {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
+    expect(screen.getByRole('button', { name: /deselect all/i })).toBeInTheDocument()
+  })
+
+  it('Deselect All unchecks all visible songs', () => {
+    render(<AddSongsModal {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
+    fireEvent.click(screen.getByRole('button', { name: /deselect all/i }))
+    expect(screen.getByLabelText(/Amazing Grace/i)).not.toBeChecked()
+    expect(screen.getByLabelText(/El Shaddai/i)).not.toBeChecked()
+    expect(screen.getByLabelText(/Oceans/i)).not.toBeChecked()
+  })
+
+  it('Select All on filtered list only selects visible songs', () => {
+    render(<AddSongsModal {...defaultProps} />)
+    fireEvent.change(screen.getByPlaceholderText(/filter/i), { target: { value: 'Hillsong' } })
+    fireEvent.click(screen.getByRole('button', { name: /select all/i }))
+    // Revert filter to check all songs
+    fireEvent.change(screen.getByPlaceholderText(/filter/i), { target: { value: '' } })
+    expect(screen.getByLabelText(/Oceans/i)).toBeChecked()
+    expect(screen.getByLabelText(/El Shaddai/i)).not.toBeChecked()
+  })
+
   it('filter input hides non-matching songs', () => {
     render(<AddSongsModal {...defaultProps} />)
     fireEvent.change(screen.getByPlaceholderText(/filter/i), { target: { value: 'grace' } })

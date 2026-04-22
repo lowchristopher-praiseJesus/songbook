@@ -39,6 +39,20 @@ export function AddSongsModal({ isOpen, collectionId, collectionName, onClose })
     }
   }
 
+  const allVisibleChecked = visible.length > 0 && visible.every(e => checkedIds.has(e.id))
+
+  function toggleAll() {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      if (allVisibleChecked) {
+        visible.forEach(e => next.delete(e.id))
+      } else {
+        visible.forEach(e => next.add(e.id))
+      }
+      return next
+    })
+  }
+
   function toggle(id) {
     setCheckedIds(prev => {
       const next = new Set(prev)
@@ -65,6 +79,16 @@ export function AddSongsModal({ isOpen, collectionId, collectionName, onClose })
           bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
           focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
       />
+      <div className="flex justify-end mb-2">
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40"
+          disabled={visible.length === 0}
+        >
+          {allVisibleChecked ? 'Deselect All' : 'Select All'}
+        </button>
+      </div>
       <ul className="max-h-64 overflow-y-auto space-y-0.5 mb-4">
         {visible.map(entry => (
           <li key={entry.id}>
