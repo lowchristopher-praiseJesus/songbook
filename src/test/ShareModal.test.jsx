@@ -4,6 +4,7 @@ import { ShareModal } from '../components/Share/ShareModal';
 
 vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn() }));
+vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));
 
 import { uploadShare } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';

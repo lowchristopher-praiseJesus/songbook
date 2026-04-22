@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare } from '../../lib/shareApi';
@@ -18,6 +19,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [shareUrl, setShareUrl] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
+  const qrCanvasRef = useRef(null);
 
   async function handleCreateLink() {
     setStep('uploading');
@@ -27,6 +29,12 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
       setShareUrl(result.shareUrl);
       setExpiresAt(result.expiresAt);
       setStep('done');
+      // Render QR code into canvas after React paints the done step
+      setTimeout(() => {
+        if (qrCanvasRef.current) {
+          QRCode.toCanvas(qrCanvasRef.current, result.shareUrl, { width: 220, margin: 2 })
+        }
+      }, 0);
     } catch {
       setStep('error');
     }
@@ -40,6 +48,15 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     } catch {
       // clipboard unavailable — user can manually copy the URL
     }
+  }
+
+  function handleDownloadQr() {
+    const canvas = qrCanvasRef.current
+    if (!canvas) return
+    const a = document.createElement('a')
+    a.href = canvas.toDataURL('image/png')
+    a.download = 'share-qr.png'
+    a.click()
   }
 
   function handleClose() {
@@ -132,6 +149,15 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
             />
             <Button variant="secondary" onClick={handleCopy}>
               {copied ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <canvas
+              ref={qrCanvasRef}
+              className="rounded-lg border border-gray-200 dark:border-gray-700"
+            />
+            <Button variant="secondary" onClick={handleDownloadQr}>
+              Save QR Code
             </Button>
           </div>
           <div className="flex justify-end">
