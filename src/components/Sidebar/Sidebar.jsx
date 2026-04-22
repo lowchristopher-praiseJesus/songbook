@@ -33,6 +33,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleExportMode = useLibraryStore(s => s.toggleExportMode)
+  const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
   const createCollection = useLibraryStore(s => s.createCollection)
@@ -390,9 +391,18 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
         {isExportMode ? (
           <div className="flex items-center gap-2">
-            <span className="flex-1 text-sm text-gray-600 dark:text-gray-300">
-              {selectedSongIds.size} selected
-            </span>
+            <div className="flex-1 flex flex-col">
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                {selectedSongIds.size} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => toggleGroupSelection(index.map(e => e.id))}
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline text-left"
+              >
+                {index.length > 0 && index.every(e => selectedSongIds.has(e.id)) ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
             <Button
               variant="primary"
               disabled={selectedSongIds.size === 0}
