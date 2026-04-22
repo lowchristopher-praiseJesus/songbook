@@ -52,10 +52,35 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   }
 
   function handleDownloadQr() {
-    const canvas = qrCanvasRef.current
-    if (!canvas) return
+    const qr = qrCanvasRef.current
+    if (!qr) return
+
+    const name = nameValue.trim()
+    const expiry = `Expires ${new Date(expiresAt).toLocaleDateString()}`
+    const padding = 16
+    const lineHeight = 20
+    const textLines = name ? [name, expiry] : [expiry]
+
+    const offscreen = document.createElement('canvas')
+    offscreen.width = qr.width + padding * 2
+    offscreen.height = qr.height + padding * 2 + textLines.length * lineHeight + padding
+
+    const ctx = offscreen.getContext('2d')
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, offscreen.width, offscreen.height)
+    ctx.drawImage(qr, padding, padding)
+
+    let y = qr.height + padding * 2 + lineHeight / 2
+    textLines.forEach((line, i) => {
+      ctx.font = i === 0 && name ? 'bold 14px sans-serif' : '12px sans-serif'
+      ctx.fillStyle = i === 0 && name ? '#1f2937' : '#6b7280'
+      ctx.textAlign = 'center'
+      ctx.fillText(line, offscreen.width / 2, y)
+      y += lineHeight
+    })
+
     const a = document.createElement('a')
-    a.href = canvas.toDataURL('image/png')
+    a.href = offscreen.toDataURL('image/png')
     a.download = 'share-qr.png'
     a.click()
   }
