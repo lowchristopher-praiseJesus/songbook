@@ -157,6 +157,14 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
               ref={qrCanvasRef}
               className="rounded-lg border border-gray-200 dark:border-gray-700"
             />
+            {nameValue.trim() && (
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                {nameValue.trim()}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Expires {new Date(expiresAt).toLocaleDateString()}
+            </p>
             <Button variant="secondary" onClick={handleDownloadQr}>
               Save QR Code
             </Button>
