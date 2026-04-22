@@ -21,6 +21,13 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [copied, setCopied] = useState(false);
   const qrCanvasRef = useRef(null);
 
+  // Render QR code once the done step is visible and canvas is in the DOM
+  useEffect(() => {
+    if (step === 'done' && shareUrl && qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, shareUrl, { width: 220, margin: 2 })
+    }
+  }, [step, shareUrl]);
+
   async function handleCreateLink() {
     setStep('uploading');
     try {
@@ -29,12 +36,6 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
       setShareUrl(result.shareUrl);
       setExpiresAt(result.expiresAt);
       setStep('done');
-      // Render QR code into canvas after React paints the done step
-      setTimeout(() => {
-        if (qrCanvasRef.current) {
-          QRCode.toCanvas(qrCanvasRef.current, result.shareUrl, { width: 220, margin: 2 })
-        }
-      }, 0);
     } catch {
       setStep('error');
     }
