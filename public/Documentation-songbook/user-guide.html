@@ -775,6 +775,7 @@
           <a class="nav-item" href="#export-sbp">Download .sbp</a>
           <a class="nav-item" href="#export-share">Share via Link</a>
           <a class="nav-item" href="#export-pdf">Presentation PDF</a>
+          <a class="nav-item" href="#export-print-pdf">Print PDF</a>
         </div>
       </div>
 
@@ -1408,7 +1409,7 @@
           <div class="step">
             <div class="step-body">
               <strong>Click "Export" (with a count)</strong>
-              <span>A choice modal appears with three export options.</span>
+              <span>A choice modal appears with four export options.</span>
             </div>
           </div>
         </div>
@@ -1447,6 +1448,37 @@
             <div class="callout-body">
               <strong>Single-song PDF</strong>
               To export just one song as a simple lyrics PDF, use the <strong>↓ PDF</strong> button in the song header while Lyrics Only mode is active. See <a href="#lyrics-only" style="color:var(--accent)">Lyrics Only & PDF</a>.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="export-print-pdf">
+          <h3 class="subsection-title">Print PDF</h3>
+          <p>Generates a compact, multi-column chord-chart PDF of the selected songs — designed for printing and handing out to your worship team or band. Unlike the Presentation PDF, Print PDF renders full chord charts (chords above lyrics, section headers, annotations) in a newspaper-style column layout optimised for reading on paper.</p>
+
+          <p style="margin-top:12px"><strong>Layout options:</strong></p>
+          <ul class="feature-list">
+            <li><strong>PDF Title</strong> — Optional title printed at the top of the page (e.g. "Sunday Service — April 2026"). Leave blank to omit it.</li>
+            <li><strong>Columns</strong> — Choose 2, 3, or 4 columns. Songs flow newspaper-style: column 1 fills from top to bottom, then column 2, and so on. A new song begins immediately after the previous one ends — no forced page breaks between songs.</li>
+            <li><strong>Page Size</strong> — A4 or Letter.</li>
+          </ul>
+
+          <p style="margin-top:12px"><strong>Typography &amp; Colours:</strong></p>
+          <p>Each element of the chart can be independently styled. For each of the five elements below, you can set the font family, size, and colour:</p>
+          <ul class="feature-list">
+            <li><strong>Song Title</strong> — Default: Sans, 12 pt, black. Size range 8–32 pt.</li>
+            <li><strong>Lyrics</strong> — Default: Sans, 10 pt, near-black. Size range 6–24 pt.</li>
+            <li><strong>Chords</strong> — Default: Mono, 9 pt, blue. Size range 6–24 pt.</li>
+            <li><strong>Section Labels</strong> — Default: Sans, 8 pt, grey. Size range 6–18 pt.</li>
+            <li><strong>Annotations</strong> — Default: Sans, 8 pt, light grey. Size range 6–18 pt.</li>
+          </ul>
+          <p>Font choices are <strong>Sans</strong> (Helvetica), <strong>Serif</strong> (Times), and <strong>Mono</strong> (Courier). Click any colour swatch to open a colour picker.</p>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Strum patterns</strong>
+              Any <code>[Chord]{strum: pattern}</code> annotations in the song content are rendered inline with the chord label in the printed output (e.g. <code>E///</code>). See <a href="#strum-patterns" style="color:var(--accent)">Strum Patterns</a>.
             </div>
           </div>
         </div>
