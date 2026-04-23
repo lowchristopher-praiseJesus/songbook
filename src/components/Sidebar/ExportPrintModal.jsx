@@ -28,6 +28,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
   const [numCols,     setNumCols]     = useState(2)
   const [pageSize,    setPageSize]    = useState('a4')
   const [components,  setComponents]  = useState(initComponents)
+  const [exporting,   setExporting]   = useState(false)
 
   function setCompField(key, field, value) {
     setComponents(prev => ({
@@ -36,12 +37,15 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
     }))
   }
 
-  function handleExport() {
+  async function handleExport() {
+    setExporting(true)
     try {
-      exportPrintPdf(songs, { numCols, pageSize, components, pdfTitle: pdfTitle.trim() })
+      await exportPrintPdf(songs, { numCols, pageSize, components, pdfTitle: pdfTitle.trim() })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -180,8 +184,10 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
         </div>
 
         <div className="flex gap-2 justify-end pt-1">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleExport}>Export</Button>
+          <Button variant="ghost" onClick={onClose} disabled={exporting}>Cancel</Button>
+          <Button variant="primary" onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Exporting…' : 'Export'}
+          </Button>
         </div>
       </div>
     </Modal>

@@ -1,6 +1,50 @@
 import jsPDF from 'jspdf'
 
 // ---------------------------------------------------------------------------
+// CJK (Chinese / Japanese / Korean) helpers
+// ---------------------------------------------------------------------------
+
+// Unicode ranges for common CJK scripts
+const CJK_RE = /[一-鿿㐀-䶿豈-﫿぀-ゟ゠-ヿ가-힯]/
+
+export function containsCJK(text) {
+  return CJK_RE.test(text ?? '')
+}
+
+export function songsHaveCJK(songs) {
+  for (const song of songs) {
+    if (containsCJK(song.meta?.title)) return true
+    for (const section of song.sections ?? []) {
+      if (containsCJK(section.label)) return true
+      for (const line of section.lines ?? []) {
+        if (containsCJK(line.content)) return true
+      }
+    }
+  }
+  return false
+}
+
+async function loadCJKFont(doc) {
+  const resp = await fetch('/fonts/NotoSansSC-Regular.ttf')
+  if (!resp.ok) return null
+  const buf = await resp.arrayBuffer()
+  const u8 = new Uint8Array(buf)
+  let binary = ''
+  const chunk = 8192
+  for (let i = 0; i < u8.length; i += chunk) {
+    binary += String.fromCharCode(...u8.subarray(i, i + chunk))
+  }
+  const b64 = btoa(binary)
+  const fname = 'NotoSansSC-Regular.ttf'
+  doc.addFileToVFS(fname, b64)
+  // Register once for every style variant the renderer may request
+  for (const style of ['normal', 'bold', 'italic', 'bolditalic']) {
+    doc.addFont(fname, 'NotoSansSC', style)
+  }
+  return 'NotoSansSC'
+}
+
+// ---------------------------------------------------------------------------
 // Page geometry
 // ---------------------------------------------------------------------------
 
@@ -66,7 +110,7 @@ function setColor(doc, hex) {
  *   }
  * }} [options]
  */
-export function exportPrintPdf(songs, {
+export async function exportPrintPdf(songs, {
   numCols    = 2,
   pageSize   = 'a4',
   components = {},
@@ -85,6 +129,22 @@ export function exportPrintPdf(songs, {
   const pageBottom = pageH - MARGIN
 
   const doc = new jsPDF({ unit: 'pt', format: [pageW, pageH], orientation: 'landscape' })
+
+  // Load a CJK-capable font when the song content requires it, then override
+  // the font family for all text components so Chinese/Japanese/Korean
+  // characters render correctly (built-in helvetica/courier only cover Latin-1).
+  if (songsHaveCJK(songs)) {
+    try {
+      const cjkFont = await loadCJKFont(doc)
+      if (cjkFont) {
+        for (const key of ['title', 'lyrics', 'sectionLabel', 'annotation']) {
+          comp[key].fontFamily = cjkFont
+        }
+      }
+    } catch {
+      // Silently degrade — text will render but CJK chars may be garbled
+    }
+  }
 
   // Mutable layout state
   let col = 0
