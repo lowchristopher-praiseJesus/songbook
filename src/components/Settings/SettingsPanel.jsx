@@ -170,6 +170,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
 
         {/* About */}
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-400 dark:text-gray-500">
+          <div className="mb-1">Version 1.0</div>
           Created by{' '}
           <a
             href="https://sherr.it/Lh3ngLLZwJgAsjg"
