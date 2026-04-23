@@ -133,7 +133,7 @@ export default function App() {
             >
               ☰
             </button>
-            <span className="font-bold text-lg select-none">🎵 SongList</span>
+            <span className="font-bold text-lg select-none">🎵 SongSheet</span>
           </div>
           <div className="flex items-center gap-1">
             <a
