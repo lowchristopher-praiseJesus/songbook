@@ -12,6 +12,7 @@ import { loadSong, getTransposeState } from '../../lib/storage'
 import { transposeChord } from '../../lib/parser/chordUtils'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
+import { ExportPrintModal } from './ExportPrintModal'
 import { AllSongsList } from './AllSongsList'
 import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
@@ -25,6 +26,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [choiceModalOpen, setChoiceModalOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [backgroundModalOpen, setBackgroundModalOpen] = useState(false)
+  const [printModalOpen, setPrintModalOpen] = useState(false)
   const [liveSessionModalOpen, setLiveSessionModalOpen] = useState(false)
   const [pendingSongs, setPendingSongs] = useState([])
   const fileInputRef = useRef()
@@ -144,6 +146,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   function handleBackgroundModalClose() {
     setBackgroundModalOpen(false)
     toggleExportMode()
+  }
+
+  function handleChoosePrintPdf() {
+    setChoiceModalOpen(false)
+    const songs = loadSongsWithTranspose(selectedSongIds)
+    setPendingSongs(songs)
+    setPrintModalOpen(true)
   }
 
   function loadSongsWithTranspose(ids) {
@@ -523,6 +532,9 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           <Button variant="secondary" className="w-full" onClick={handleChoosePresentationPdf}>
             Presentation PDF
           </Button>
+          <Button variant="secondary" className="w-full" onClick={handleChoosePrintPdf}>
+            Print PDF
+          </Button>
         </div>
       </Modal>
 
@@ -537,6 +549,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         isOpen={backgroundModalOpen}
         songs={pendingSongs}
         onClose={handleBackgroundModalClose}
+        onAddToast={onAddToast}
+      />
+
+      <ExportPrintModal
+        isOpen={printModalOpen}
+        songs={pendingSongs}
+        onClose={() => { setPrintModalOpen(false); toggleExportMode() }}
         onAddToast={onAddToast}
       />
 

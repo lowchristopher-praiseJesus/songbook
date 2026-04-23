@@ -69,8 +69,15 @@ function parseLine(rawLine) {
       }
       const candidate = rawLine.slice(i + 1, close)
       if (isChord(candidate)) {
-        chords.push({ chord: candidate, position: lyric.length })
-        i = close + 1
+        let strum = null
+        let nextPos = close + 1
+        const strumMatch = rawLine.slice(nextPos).match(/^\{strum:\s*(.*?)\s*\}/)
+        if (strumMatch) {
+          strum = strumMatch[1] || null
+          nextPos += strumMatch[0].length
+        }
+        chords.push({ chord: candidate, position: lyric.length, strum })
+        i = nextPos
       } else {
         lyric += rawLine[i++]
       }

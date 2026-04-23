@@ -7,8 +7,8 @@ function ChordedLine({ line, fontSize, fitMode }) {
     return <span>{text}</span>
   }
 
-  // Build a position → chord lookup.
-  const chordAt = new Map(chords.map(({ chord, position }) => [position, chord]))
+  // Build a position → chord object lookup (includes strum).
+  const chordAt = new Map(chords.map((c) => [c.position, c]))
 
   // Segment the text into word-groups (non-space runs) and spaces.
   // Each word-group is wrapped in white-space:nowrap so that inline-block
@@ -19,8 +19,8 @@ function ChordedLine({ line, fontSize, fitMode }) {
   while (i < text.length) {
     if (text[i] === ' ') {
       if (chordAt.has(i)) {
-        // Chord aligned above a space — render as a single-space word with chord above
-        groups.push({ type: 'word', parts: [{ type: 'chord', chord: chordAt.get(i), char: ' ', key: i }], key: i })
+        const c = chordAt.get(i)
+        groups.push({ type: 'word', parts: [{ type: 'chord', chord: c.chord, strum: c.strum, char: ' ', key: i }], key: i })
       } else {
         groups.push({ type: 'space', key: i })
       }
@@ -33,7 +33,8 @@ function ChordedLine({ line, fontSize, fitMode }) {
       while (i < text.length && text[i] !== ' ') {
         if (chordAt.has(i)) {
           if (buf) { parts.push({ type: 'text', text: buf, key: bufStart }); buf = '' }
-          parts.push({ type: 'chord', chord: chordAt.get(i), char: text[i], key: i })
+          const c = chordAt.get(i)
+          parts.push({ type: 'chord', chord: c.chord, strum: c.strum, char: text[i], key: i })
           bufStart = i + 1
         } else {
           buf += text[i]
@@ -46,9 +47,9 @@ function ChordedLine({ line, fontSize, fitMode }) {
   }
 
   // Chords positioned at or past end of text (e.g. chord aligned beyond last lyric char)
-  for (const { chord, position } of chords) {
+  for (const { chord, strum, position } of chords) {
     if (position >= text.length) {
-      groups.push({ type: 'word', parts: [{ type: 'chord', chord, char: ' ', key: position }], key: position })
+      groups.push({ type: 'word', parts: [{ type: 'chord', chord, strum, char: ' ', key: position }], key: position })
     }
   }
 
@@ -73,9 +74,8 @@ function ChordedLine({ line, fontSize, fitMode }) {
                       // Apply minWidth when there's nothing to the right to act as a buffer:
                       //   • char === ' ': container is only 1 nbsp wide (end-of-line or space anchor)
                       //   • last part in the word group: no following lyric chars in the same word
-                      //     (e.g. [Dsus]e at end of "grace", [Asus]t at end of "first")
                       ...((part.char === ' ' || pi === group.parts.length - 1)
-                        ? { minWidth: `${part.chord.length * 0.7 + 0.3}em` }
+                        ? { minWidth: `${(part.chord + (part.strum || '')).length * 0.7 + 0.3}em` }
                         : {}),
                     }}
                   >
@@ -87,9 +87,9 @@ function ChordedLine({ line, fontSize, fitMode }) {
                       }
                       aria-hidden="true"
                     >
-                      {part.chord}
+                      {part.chord}{part.strum || ''}
                     </span>
-                    {part.char === ' ' ? '\u00A0' : part.char}
+                    {part.char === ' ' ? ' ' : part.char}
                   </span>
                 )
             )}
@@ -148,9 +148,9 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
             // Standalone chord line (e.g. instrumental break with no lyric below)
             const chords = line.chords ?? []
             let lineStr = ''
-            for (const { chord, position } of chords) {
+            for (const { chord, position, strum } of chords) {
               while (lineStr.length < position) lineStr += ' '
-              lineStr += chord
+              lineStr += chord + (strum || '')
               lineStr += ' '
             }
             return (

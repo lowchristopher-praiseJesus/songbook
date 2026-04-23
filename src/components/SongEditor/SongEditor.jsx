@@ -57,7 +57,7 @@ export function SongEditor({ songId }) {
       {/* Content textarea */}
       <div className="flex flex-1 flex-col px-4 pt-3 pb-4 min-h-0">
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 select-none">
-          {'{c: Section}'} for headers · [Chord] before a syllable · {'{note: text}'} for annotations
+          {'{c: Section}'} for headers · [Chord] before a syllable · {'{note: text}'} for annotations · [Chord]{'{strum: ///}'} for strum patterns
         </p>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"

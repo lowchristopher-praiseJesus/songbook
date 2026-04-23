@@ -176,8 +176,8 @@ describe('parseChordPro', () => {
     expect(line.type).toBe('lyric')
     expect(line.content).toBe('Amazing grace how sweet')
     expect(line.chords).toEqual([
-      { chord: 'G', position: 1 },
-      { chord: 'C', position: 18 },
+      { chord: 'G', position: 1, strum: null },
+      { chord: 'C', position: 18, strum: null },
     ])
   })
 

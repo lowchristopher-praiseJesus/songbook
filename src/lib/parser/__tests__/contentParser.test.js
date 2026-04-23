@@ -11,8 +11,8 @@ describe('parseContent', () => {
     expect(sections[0].lines[0].type).toBe('lyric')
     expect(sections[0].lines[0].content).toBe('El Shaddai, El Shaddai')
     expect(sections[0].lines[0].chords).toEqual([
-      { chord: 'Dm', position: 7 },
-      { chord: 'G', position: 19 },
+      { chord: 'Dm', position: 7, strum: null },
+      { chord: 'G', position: 19, strum: null },
     ])
   })
 
@@ -60,8 +60,8 @@ describe('parseContent', () => {
     const sections = parseContent(content)
     const line = sections[0].lines[0]
     expect(line.content).toBe('Hello world')
-    expect(line.chords[0]).toEqual({ chord: 'G', position: 0 })
-    expect(line.chords[1]).toEqual({ chord: 'Am', position: 6 })
+    expect(line.chords[0]).toEqual({ chord: 'G', position: 0, strum: null })
+    expect(line.chords[1]).toEqual({ chord: 'Am', position: 6, strum: null })
   })
 
   it('handles slash chords: G/B', () => {
@@ -142,5 +142,48 @@ describe('{note:} annotation tokens', () => {
     expect(sections[0].lines[0].annotation).toBeNull()
     expect(sections[0].lines[1].annotation).toBeNull() // blank
     expect(sections[0].lines[2].annotation).toBeNull()
+  })
+})
+
+describe('inline {strum:} on chord tokens', () => {
+  it('attaches strum to a chord when [E]{strum: ///} syntax is used', () => {
+    const sections = parseContent('{c: Intro}\n[E]{strum: ///}     [A]   [G]')
+    const chords = sections[0].lines[0].chords
+    expect(chords[0].chord).toBe('E')
+    expect(chords[0].strum).toBe('///')
+  })
+
+  it('leaves strum null on chords without inline {strum:}', () => {
+    const sections = parseContent('{c: Intro}\n[E]{strum: ///}     [A]   [G]')
+    const chords = sections[0].lines[0].chords
+    expect(chords[1].strum).toBeNull()
+    expect(chords[2].strum).toBeNull()
+  })
+
+  it('works on a lyric line: [G]{strum: ////}Amazing grace', () => {
+    const sections = parseContent('{c: Verse}\n[G]{strum: ////}Amazing grace')
+    const line = sections[0].lines[0]
+    expect(line.type).toBe('lyric')
+    expect(line.chords[0].chord).toBe('G')
+    expect(line.chords[0].strum).toBe('////')
+  })
+
+  it('chord without inline strum has strum: null', () => {
+    const sections = parseContent('{c: Verse}\n[G]Amazing grace')
+    expect(sections[0].lines[0].chords[0].strum).toBeNull()
+  })
+
+  it('chord position is correct when strum token follows chord', () => {
+    const sections = parseContent('{c: Verse}\n[G]{strum: ///}Amazing grace')
+    expect(sections[0].lines[0].chords[0].position).toBe(0)
+    expect(sections[0].lines[0].content).toBe('Amazing grace')
+  })
+
+  it('multiple chords can each have their own strum', () => {
+    const sections = parseContent('{c: Intro}\n[E]{strum: ///}     [F]{strum: /}   [A]')
+    const chords = sections[0].lines[0].chords
+    expect(chords[0].strum).toBe('///')
+    expect(chords[1].strum).toBe('/')
+    expect(chords[2].strum).toBeNull()
   })
 })

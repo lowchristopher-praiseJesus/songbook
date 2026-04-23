@@ -649,7 +649,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
             {/* Lyrics / chords */}
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Lyrics &amp; chords &mdash; <span className="font-normal">{'{c: Section}'} for headers &middot; [Chord] before a syllable</span>
+                Lyrics &amp; chords &mdash; <span className="font-normal">{'{c: Section}'} for headers &middot; [Chord] before a syllable &middot; {'{note: text}'} for annotations &middot; [Chord]{'{strum: ///}'} for strum patterns</span>
               </label>
               <textarea
                 className="w-full h-48 font-mono text-sm resize-none border border-gray-200 dark:border-gray-700
