@@ -763,6 +763,7 @@
           <a class="nav-item" href="#editor-metadata">Metadata Fields</a>
           <a class="nav-item" href="#editor-content">Content Syntax</a>
           <a class="nav-item" href="#annotations">Annotations</a>
+          <a class="nav-item" href="#strum-patterns">Strum Patterns</a>
         </div>
       </div>
 
@@ -1235,7 +1236,7 @@
 
         <div class="subsection" id="editor-content">
           <h3 class="subsection-title">Content Syntax</h3>
-          <p>Song content is plain text with three special markers:</p>
+          <p>Song content is plain text with four special markers:</p>
 
           <div class="syntax-box">
             <span class="syntax-comment"># Section header</span><br>
@@ -1244,6 +1245,8 @@
             <span class="syntax-lyric">El Shad</span><span class="syntax-chord">[Am]</span><span class="syntax-lyric">dai, El Shad</span><span class="syntax-chord">[F]</span><span class="syntax-lyric">dai</span><br><br>
             <span class="syntax-comment"># Chord-only line (instrumental)</span><br>
             <span class="syntax-chord">[Dm]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[G]</span><span class="syntax-lyric">     </span><span class="syntax-chord">[C]</span><br><br>
+            <span class="syntax-comment"># Strum pattern attached to a chord</span><br>
+            <span class="syntax-chord">[E]</span><span class="syntax-annotation" style="color:#f97316;">{strum: ///}</span><span class="syntax-lyric">     </span><span class="syntax-chord">[F]</span><span class="syntax-annotation" style="color:#f97316;">{strum: /}</span><span class="syntax-lyric">     </span><span class="syntax-chord">[A]</span><br><br>
             <span class="syntax-comment"># Section-level annotation (on its own line after a section header)</span><br>
             <span class="syntax-section">{c: Chorus}</span><br>
             <span class="syntax-annotation" style="color:#f97316;">{note: xx and yy to sing this}</span><br><br>
@@ -1256,6 +1259,7 @@
             <li><code>{c: Section Name}</code> — Creates a bold section header (e.g. Verse, Chorus, Bridge).</li>
             <li><code>[Chord]</code> — Places a chord directly above the following syllable. Put it immediately before the syllable with no space.</li>
             <li>A line containing <em>only</em> chord tokens separated by spaces is rendered as a purely instrumental chord line.</li>
+            <li><code>[Chord]{strum: pattern}</code> — Appends a strum pattern to a chord label (e.g. <code>E///</code>). Place immediately after the closing <code>]</code> with no space. See <a href="#strum-patterns" style="color:var(--accent)">Strum Patterns</a> for full details.</li>
             <li><code>{note: text}</code> — Attaches an annotation to the element (section header or lyric line) immediately <em>above</em> it. Must be on its own line. See <a href="#annotations" style="color:var(--accent)">Annotations</a> for full details.</li>
           </ul>
         </div>
@@ -1346,6 +1350,37 @@
             <li><strong>Download .sbp</strong> — <code>{note:}</code> tokens are stripped from the content field (SongBook Pro doesn't support them), but the song-level note is mapped to the <code>NotesText</code> field so it's preserved in SongBook Pro.</li>
             <li><strong>Share via Link</strong> — <code>{note:}</code> tokens are preserved in the shared song text, so recipients see annotations after importing.</li>
           </ul>
+        </div>
+
+        <div class="subsection" id="strum-patterns">
+          <h3 class="subsection-title">Strum Patterns</h3>
+          <p>A strum pattern lets you annotate how a chord should be played — strumming direction, rhythm, or any shorthand that's meaningful to your team. The pattern is appended directly to the chord label so it appears inline wherever that chord renders.</p>
+
+          <p><strong>Syntax:</strong> place <code>{strum: pattern}</code> immediately after the closing <code>]</code> of a chord token, with no space between them.</p>
+
+          <div class="syntax-box">
+            <span class="syntax-comment"># Chord-only line with strum patterns</span><br>
+            <span class="syntax-chord">[E]</span><span class="syntax-annotation" style="color:#f97316;">{strum: ///}</span><span class="syntax-lyric">     </span><span class="syntax-chord">[F]</span><span class="syntax-annotation" style="color:#f97316;">{strum: /}</span><span class="syntax-lyric">     </span><span class="syntax-chord">[A]</span><br><br>
+            <span class="syntax-comment"># Renders as:</span><br>
+            <span class="syntax-chord">E///     F/     A</span><br><br>
+            <span class="syntax-comment"># Chord above lyrics with strum</span><br>
+            <span class="syntax-chord">[G]</span><span class="syntax-annotation" style="color:#f97316;">{strum: ////}</span><span class="syntax-lyric">Amazing </span><span class="syntax-chord">[D]</span><span class="syntax-annotation" style="color:#f97316;">{strum: //}</span><span class="syntax-lyric">grace</span>
+          </div>
+
+          <ul class="feature-list">
+            <li>Each chord on a line can carry its own independent strum pattern — or none at all.</li>
+            <li>The pattern can be any text: <code>///</code>, <code>↓↑↓↑</code>, <code>x</code>, <code>hold</code>, etc.</li>
+            <li>Strum patterns are exported to <strong>Print PDF</strong> — the combined chord+strum label is rendered in the chord row.</li>
+            <li>There is no separate toggle for strum patterns; they are always shown as part of the chord label.</li>
+          </ul>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Alignment tip</strong>
+              On chord-only lines (instrumental), spacing between chords is determined by character position. If a strum pattern makes a chord label longer than its allocated space, it may push subsequent chords to the right. Adjust the spaces between chord tokens in the editor to compensate.
+            </div>
+          </div>
         </div>
       </section>
 
