@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/shallow'
 import {
-  DndContext, MouseSensor, TouchSensor, KeyboardSensor,
+  DndContext, MouseSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
+import { LongPressTouchSensor } from '../../sensors/LongPressTouchSensor'
 import {
   SortableContext, useSortable, arrayMove,
   verticalListSortingStrategy, sortableKeyboardCoordinates,
@@ -188,7 +189,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
 
   const sensors = useSensors(
     useSensor(MouseSensor),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(LongPressTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 

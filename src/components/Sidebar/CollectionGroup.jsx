@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   DndContext,
   MouseSensor,
-  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
+import { LongPressTouchSensor } from '../../sensors/LongPressTouchSensor'
 import {
   SortableContext,
   useSortable,
@@ -63,7 +63,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
 
   const sensors = useSensors(
     useSensor(MouseSensor),
-    useSensor(TouchSensor, {
+    useSensor(LongPressTouchSensor, {
       activationConstraint: {
         delay: 250,
         tolerance: 5,
