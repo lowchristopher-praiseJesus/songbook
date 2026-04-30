@@ -60,6 +60,62 @@ describe('GET /conductor/:code/status', () => {
   });
 });
 
+describe('POST /conductor/:code/start', () => {
+  it('sets live:true with valid director token', async () => {
+    await createConductor({ conductorCode: 'START1', directorToken: 'dir-tok' });
+    const res = await SELF.fetch('http://localhost/conductor/START1/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-tok' },
+    });
+    expect(res.status).toBe(200);
+
+    const status = await (await SELF.fetch('http://localhost/conductor/START1/status', { headers: h })).json() as { live: boolean };
+    expect(status.live).toBe(true);
+  });
+
+  it('returns 403 with wrong token', async () => {
+    await createConductor({ conductorCode: 'START2', directorToken: 'real-tok' });
+    const res = await SELF.fetch('http://localhost/conductor/START2/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'wrong-tok' },
+    });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /conductor/:code/current', () => {
+  it('sets currentSbpId and bumps version', async () => {
+    await createConductor({ conductorCode: 'CURR01', directorToken: 'dir-tok' });
+    const res = await SELF.fetch('http://localhost/conductor/CURR01/current', {
+      method: 'POST',
+      headers: { ...h, 'X-Director-Token': 'dir-tok' },
+      body: JSON.stringify({ sbpId: 42 }),
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json() as { currentSbpId: number; version: number };
+    expect(data.currentSbpId).toBe(42);
+    expect(data.version).toBe(1);
+  });
+});
+
+describe('POST /conductor/:code/stop', () => {
+  it('sets live:false and clears currentSbpId', async () => {
+    await createConductor({ conductorCode: 'STOP01', directorToken: 'dir-tok' });
+    await SELF.fetch('http://localhost/conductor/STOP01/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-tok' },
+    });
+    await SELF.fetch('http://localhost/conductor/STOP01/current', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-tok' },
+      body: JSON.stringify({ sbpId: 99 }),
+    });
+    const res = await SELF.fetch('http://localhost/conductor/STOP01/stop', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-tok' },
+    });
+    expect(res.status).toBe(200);
+    const status = await (await SELF.fetch('http://localhost/conductor/STOP01/status', { headers: h })).json() as { live: boolean; currentSbpId: null };
+    expect(status.live).toBe(false);
+    expect(status.currentSbpId).toBeNull();
+  });
+});
+
 describe('isConductorExpired', () => {
   it('returns true for a past expiresAt', () => {
     const data = {
