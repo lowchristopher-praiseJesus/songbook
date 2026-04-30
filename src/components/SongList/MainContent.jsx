@@ -30,9 +30,14 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
+  const [speedMode, setSpeedMode] = useState(false)
   const containerRef = useRef(null)
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
+
+  useEffect(() => {
+    if (!isScrolling) setSpeedMode(false)
+  }, [isScrolling])
 
   const navOrder = buildNavOrder(index, collections, viewMode)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
@@ -170,88 +175,106 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
 
       {/* Floating font-size + auto-scroll controls */}
       {activeSong && (
-        <div className="fixed bottom-4 right-4 flex flex-col gap-1 z-20 pointer-events-auto"
+        <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20 pointer-events-auto items-center"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          <button
-            type="button"
-            onClick={() => setIsFit(f => !f)}
-            className={`w-8 h-8 flex items-center justify-center rounded-full
-              text-gray-700 dark:text-gray-300 text-sm leading-none select-none
-              active:opacity-100 transition-opacity duration-150
-              ${isFit
-                ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-90'
-                : 'bg-gray-500/30 dark:bg-white/20 opacity-70'
-              }`}
-            aria-label="Fit song to screen"
-          >⤢</button>
-          <button
-            type="button"
-            onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
-            disabled={fontSize >= 28 || isFit}
-            className="w-8 h-8 flex items-center justify-center rounded-full
-              bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
-              text-lg font-light leading-none select-none
-              opacity-70 active:opacity-100 transition-opacity duration-150
-              disabled:opacity-20 disabled:cursor-not-allowed"
-            aria-label="Increase font size"
-          >+</button>
-          <button
-            type="button"
-            onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
-            disabled={fontSize <= 12 || isFit}
-            className="w-8 h-8 flex items-center justify-center rounded-full
-              bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
-              text-lg font-light leading-none select-none
-              opacity-70 active:opacity-100 transition-opacity duration-150
-              disabled:opacity-20 disabled:cursor-not-allowed"
-            aria-label="Decrease font size"
-          >−</button>
-
-          {isScrolling && (
+          {speedMode ? (
             <>
-              <div className="h-1" />
               <button
                 type="button"
                 onClick={() => setTargetDuration(targetDuration + 5)}
                 disabled={targetDuration >= 600}
-                className="w-8 h-8 flex items-center justify-center rounded-full
-                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
-                  text-lg font-light leading-none select-none
-                  opacity-70 active:opacity-100 transition-opacity duration-150
+                className="w-16 h-16 flex items-center justify-center rounded-full
+                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
+                  text-3xl font-light leading-none select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150
                   disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Increase scroll duration"
+                aria-label="Slower (increase scroll duration)"
               >+</button>
-              <span className="w-8 h-6 flex items-center justify-center
-                text-xs text-gray-500 dark:text-gray-400 font-mono select-none tabular-nums">
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none">
                 {formatDuration(targetDuration)}
               </span>
               <button
                 type="button"
                 onClick={() => setTargetDuration(targetDuration - 5)}
                 disabled={targetDuration <= 30}
-                className="w-8 h-8 flex items-center justify-center rounded-full
+                className="w-16 h-16 flex items-center justify-center rounded-full
+                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
+                  text-3xl font-light leading-none select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Faster (decrease scroll duration)"
+              >−</button>
+              <button
+                type="button"
+                onClick={() => setSpeedMode(false)}
+                className="mt-1 px-4 py-2 rounded-full
+                  bg-indigo-500/40 dark:bg-indigo-400/30
+                  text-gray-800 dark:text-gray-200 text-sm font-medium select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150"
+                aria-label="Done adjusting speed"
+              >Done</button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsFit(f => !f)}
+                className={`w-11 h-11 flex items-center justify-center rounded-full
+                  text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+                  active:opacity-100 transition-opacity duration-150
+                  ${isFit
+                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
+                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
+                  }`}
+                aria-label="Fit song to screen"
+              >⤢</button>
+              <button
+                type="button"
+                onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
+                disabled={fontSize >= 28 || isFit}
+                className="w-11 h-11 flex items-center justify-center rounded-full
                   bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
                   text-lg font-light leading-none select-none
-                  opacity-70 active:opacity-100 transition-opacity duration-150
+                  opacity-50 active:opacity-100 transition-opacity duration-150
                   disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Decrease scroll duration"
+                aria-label="Increase font size"
+              >+</button>
+              <button
+                type="button"
+                onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
+                disabled={fontSize <= 12 || isFit}
+                className="w-11 h-11 flex items-center justify-center rounded-full
+                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
+                  text-lg font-light leading-none select-none
+                  opacity-50 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Decrease font size"
               >−</button>
-              <div className="h-1" />
+              {isScrolling && (
+                <button
+                  type="button"
+                  onClick={() => setSpeedMode(true)}
+                  className="w-11 h-7 flex items-center justify-center rounded-full
+                    bg-gray-500/20 dark:bg-white/10
+                    text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none
+                    opacity-60 active:opacity-100 transition-opacity duration-150"
+                  aria-label="Adjust scroll speed"
+                >{formatDuration(targetDuration)}</button>
+              )}
+              <button
+                type="button"
+                onClick={isScrolling ? stop : () => { start(); setSpeedMode(true) }}
+                className={`w-11 h-11 flex items-center justify-center rounded-full
+                  text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+                  active:opacity-100 transition-opacity duration-150
+                  ${isScrolling
+                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
+                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
+                  }`}
+                aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
+              >{isScrolling ? '⏹' : '▶'}</button>
             </>
           )}
-
-          <button
-            type="button"
-            onClick={isScrolling ? stop : start}
-            className={`w-8 h-8 flex items-center justify-center rounded-full
-              text-gray-700 dark:text-gray-300 text-sm leading-none select-none
-              active:opacity-100 transition-opacity duration-150
-              ${isScrolling
-                ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-90'
-                : 'bg-gray-500/30 dark:bg-white/20 opacity-70'
-              }`}
-            aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
-          >{isScrolling ? '⏹' : '▶'}</button>
         </div>
       )}
 
