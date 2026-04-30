@@ -1,0 +1,203 @@
+<h2>Display Settings Tab — Layout Mockup</h2>
+<p class="subtitle">How the new Display tab would look inside the Settings panel. Click an option to select it.</p>
+
+<div class="cards">
+  <div class="card" data-choice="grouped" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f9f9f9;padding:16px;border-radius:6px;font-family:-apple-system,sans-serif;">
+      <div style="display:flex;gap:0;margin-bottom:14px;">
+        <div style="padding:6px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:6px 0 0 6px;font-size:13px;color:#6b7280;">General</div>
+        <div style="padding:6px 14px;background:#6366f1;border:1px solid #6366f1;border-radius:0 6px 6px 0;font-size:13px;color:#fff;font-weight:600;">Display</div>
+      </div>
+
+      <!-- Lyrics -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6366f1;margin-bottom:6px;">Lyrics</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;">
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Font</div>
+            <select style="width:100%;font-size:12px;padding:4px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+              <option>System Default</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Size offset</div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;cursor:pointer;">−</button>
+              <span style="font-size:12px;width:24px;text-align:center;">0</span>
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;cursor:pointer;">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Color</div>
+            <div style="display:flex;gap:4px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:#374151;border:2px solid #374151;box-shadow:0 0 0 1px white,0 0 0 3px #374151;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#6366f1;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#10b981;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);border:1px solid #ddd;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chords -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6366f1;margin-bottom:6px;">Chords</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;">
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Font</div>
+            <select style="width:100%;font-size:12px;padding:4px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+              <option>Menlo (mono)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Size offset</div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">−</button>
+              <span style="font-size:12px;width:24px;text-align:center;">−3</span>
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:2px;">Color</div>
+            <div style="display:flex;gap:4px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:#374151;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#6366f1;border:2px solid #6366f1;box-shadow:0 0 0 1px white,0 0 0 3px #6366f1;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#10b981;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);border:1px solid #ddd;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6366f1;margin-bottom:6px;">Sections</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;">
+          <div>
+            <select style="width:100%;font-size:12px;padding:4px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+              <option>System Default</option>
+            </select>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">−</button>
+              <span style="font-size:12px;width:24px;text-align:center;">12</span>
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;gap:4px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:#374151;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#6366f1;border:2px solid #6366f1;box-shadow:0 0 0 1px white,0 0 0 3px #6366f1;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#10b981;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);border:1px solid #ddd;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annotations -->
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6366f1;margin-bottom:6px;">Annotations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;">
+          <div>
+            <select style="width:100%;font-size:12px;padding:4px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;">
+              <option>System Default</option>
+            </select>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">−</button>
+              <span style="font-size:12px;width:24px;text-align:center;">12</span>
+              <button style="width:22px;height:22px;border:1px solid #e5e7eb;border-radius:3px;background:#fff;font-size:14px;line-height:1;">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;gap:4px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:#374151;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#6366f1;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#10b981;"></div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#9ca3af;border:2px solid #9ca3af;box-shadow:0 0 0 1px white,0 0 0 3px #9ca3af;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;display:flex;justify-content:flex-end;">
+        <button style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;text-decoration:underline;">Reset to defaults</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Compact Grid</h3>
+      <p>Font / Size / Color in a 3-column row per element. Dense but fits naturally in the existing settings panel width.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="stacked" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f9f9f9;padding:16px;border-radius:6px;font-family:-apple-system,sans-serif;">
+      <div style="display:flex;gap:0;margin-bottom:14px;">
+        <div style="padding:6px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:6px 0 0 6px;font-size:13px;color:#6b7280;">General</div>
+        <div style="padding:6px 14px;background:#6366f1;border:1px solid #6366f1;border-radius:0 6px 6px 0;font-size:13px;color:#fff;font-weight:600;">Display</div>
+      </div>
+
+      <!-- Element accordion-style rows -->
+      <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+        <div style="padding:8px 12px;background:#f3f4f6;font-size:12px;font-weight:600;color:#374151;display:flex;justify-content:space-between;align-items:center;">
+          Lyrics <span style="font-size:10px;color:#9ca3af;">System Default · 16px · ⬤</span>
+        </div>
+        <div style="padding:10px 12px;background:#fff;">
+          <div style="margin-bottom:8px;">
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:3px;">Font Family</div>
+            <select style="width:100%;font-size:12px;padding:5px;border:1px solid #e5e7eb;border-radius:4px;">
+              <option>System Default (SF Pro)</option><option>Georgia</option><option>Helvetica Neue</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:#9ca3af;margin-bottom:3px;">Font Size</div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button style="width:24px;height:24px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;font-size:16px;line-height:1;cursor:pointer;">−</button>
+                <span style="font-size:13px;font-weight:600;width:30px;text-align:center;">16px</span>
+                <button style="width:24px;height:24px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;font-size:16px;line-height:1;cursor:pointer;">+</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:#9ca3af;margin-bottom:3px;">Color</div>
+              <div style="display:flex;gap:5px;align-items:center;">
+                <div style="width:20px;height:20px;border-radius:50%;background:#374151;border:2px solid #374151;box-shadow:0 0 0 1px white,0 0 0 2px #374151;"></div>
+                <div style="width:20px;height:20px;border-radius:50%;background:#6366f1;"></div>
+                <div style="width:20px;height:20px;border-radius:50%;background:#10b981;"></div>
+                <div style="width:20px;height:20px;border-radius:50%;background:#f59e0b;"></div>
+                <div style="width:20px;height:20px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);border:1px solid #ddd;" title="Custom"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+        <div style="padding:8px 12px;background:#f3f4f6;font-size:12px;font-weight:600;color:#374151;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          Chords <span style="font-size:10px;color:#9ca3af;">Menlo · −3px · ⬤ indigo ▾</span>
+        </div>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+        <div style="padding:8px 12px;background:#f3f4f6;font-size:12px;font-weight:600;color:#374151;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          Sections <span style="font-size:10px;color:#9ca3af;">System Default · 12px · ⬤ indigo ▾</span>
+        </div>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+        <div style="padding:8px 12px;background:#f3f4f6;font-size:12px;font-weight:600;color:#374151;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          Annotations <span style="font-size:10px;color:#9ca3af;">System Default · 12px · ⬤ gray ▾</span>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+        <button style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;text-decoration:underline;">Reset to defaults</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Expandable Rows</h3>
+      <p>Each element is a collapsible row. Collapsed shows a summary; expanded reveals full controls. Less overwhelming, more room per element.</p>
+    </div>
+  </div>
+</div>

@@ -1,10 +1,9 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/shallow'
 import {
-  DndContext, MouseSensor, KeyboardSensor,
+  DndContext, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
-import { LongPressTouchSensor } from '../../sensors/LongPressTouchSensor'
 import {
   SortableContext, useSortable, arrayMove,
   verticalListSortingStrategy, sortableKeyboardCoordinates,
@@ -22,7 +21,6 @@ import { SongBody } from '../SongList/SongBody'
 import { TransposeControl } from '../SongList/TransposeControl'
 import { parseContent } from '../../lib/parser/contentParser'
 import { useTranspose } from '../../hooks/useTranspose'
-import { useIsMobile } from '../../hooks/useIsMobile'
 import { v4 as uuidv4 } from 'uuid'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { parseChordPro } from '../../lib/parser/chordProParser'
@@ -31,7 +29,6 @@ const KEY_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 
 function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemove, onSelect, isSelected }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: songId })
-  const isMobile = useIsMobile()
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const keyName = KEY_NAMES[song.meta.keyIndex] ?? ''
 
@@ -46,13 +43,12 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
         {...attributes}
         {...listeners}
         aria-label="Drag to reorder"
-        className={`shrink-0 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 hover:text-gray-500
-          ${isMobile ? 'px-1 py-1 text-lg' : 'text-sm text-gray-300 dark:text-gray-600'}`}
+        className="shrink-0 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 hover:text-gray-500 px-1 py-1"
       >&equiv;&equiv;</button>
 
       <button
         onClick={() => onSelect(songId)}
-        className="flex-1 min-w-0 text-left select-text"
+        className="flex-1 min-w-0 text-left"
       >
         <p className={`font-medium truncate ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-gray-100'}`}>
           {song.meta.title}
@@ -187,7 +183,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
 
   const sensors = useSensors(
     useSensor(MouseSensor),
-    useSensor(LongPressTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 

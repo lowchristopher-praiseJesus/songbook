@@ -1,0 +1,59 @@
+<h2>Design: Collections & All Songs Views</h2>
+<p class="subtitle">Segmented control in the sidebar header — persistent across sessions</p>
+
+<div class="section">
+  <h3>Sidebar — Collections view (current default)</h3>
+  <div class="mockup">
+    <div class="mockup-header">Sidebar — Collections</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:12px;background:#1e1e2e;color:#cdd6f4;padding:12px;text-align:left;line-height:1.9">
+      <div style="margin-bottom:8px">
+        <input style="width:100%;background:#313244;border:none;color:#cdd6f4;padding:4px 8px;border-radius:4px;font-size:11px" placeholder="🔍 Search songs…" readonly />
+      </div>
+      <div style="display:flex;background:#313244;border-radius:6px;padding:2px;margin-bottom:10px;gap:2px">
+        <span style="flex:1;text-align:center;background:#89b4fa;color:#1e1e2e;border-radius:4px;padding:3px 0;font-size:11px;font-weight:bold">Collections</span>
+        <span style="flex:1;text-align:center;color:#6c7086;padding:3px 0;font-size:11px">All Songs</span>
+      </div>
+      <div style="color:#89b4fa;font-size:11px">▾ Sunday Set <span style="color:#6c7086">(8)</span> <span style="float:right;color:#6c7086">✏ 🗑</span></div>
+      <div style="padding-left:14px;color:#cdd6f4;font-size:11px">♪ Amazing Grace</div>
+      <div style="padding-left:14px;color:#cdd6f4;font-size:11px">♪ How Great Thou Art</div>
+      <div style="color:#89b4fa;font-size:11px;margin-top:4px">▾ CNY 2026 <span style="color:#6c7086">(12)</span> <span style="float:right;color:#6c7086">✏ 🗑</span></div>
+      <div style="padding-left:14px;background:#313244;color:#89b4fa;font-size:11px;border-radius:3px;padding:2px 6px">♪ El Shaddai</div>
+      <div style="padding-left:14px;color:#cdd6f4;font-size:11px">♪ Emmanuel</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Sidebar — All Songs view</h3>
+  <div class="mockup">
+    <div class="mockup-header">Sidebar — All Songs</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:12px;background:#1e1e2e;color:#cdd6f4;padding:12px;text-align:left;line-height:1.9">
+      <div style="margin-bottom:8px">
+        <input style="width:100%;background:#313244;border:none;color:#cdd6f4;padding:4px 8px;border-radius:4px;font-size:11px" placeholder="🔍 Search songs…" readonly />
+      </div>
+      <div style="display:flex;background:#313244;border-radius:6px;padding:2px;margin-bottom:10px;gap:2px">
+        <span style="flex:1;text-align:center;color:#6c7086;padding:3px 0;font-size:11px">Collections</span>
+        <span style="flex:1;text-align:center;background:#89b4fa;color:#1e1e2e;border-radius:4px;padding:3px 0;font-size:11px;font-weight:bold">All Songs</span>
+      </div>
+      <div style="color:#6c7086;font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;padding-left:2px">A</div>
+      <div style="color:#cdd6f4;font-size:11px;padding-left:6px">♪ Amazing Grace <span style="color:#6c7086">— Traditional</span></div>
+      <div style="color:#6c7086;font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:6px 0 2px;padding-left:2px">E</div>
+      <div style="background:#313244;color:#89b4fa;font-size:11px;padding-left:6px;border-radius:3px;padding:2px 6px">♪ El Shaddai <span style="color:#6c7086">— Amy Grant</span></div>
+      <div style="color:#cdd6f4;font-size:11px;padding-left:6px">♪ Emmanuel <span style="color:#6c7086">— Michael W. Smith</span></div>
+      <div style="color:#6c7086;font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:6px 0 2px;padding-left:2px">H</div>
+      <div style="color:#cdd6f4;font-size:11px;padding-left:6px">♪ How Great Thou Art <span style="color:#6c7086">— Traditional</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Key behaviours</h3>
+  <ul style="font-size:13px;line-height:2;color:#cdd6f4">
+    <li><strong>Segmented control</strong> sits between the search box and the song list</li>
+    <li><strong>All Songs</strong> is sorted A–Z by title with letter dividers; shows title + artist</li>
+    <li><strong>Prev/next navigation</strong> (swipe/arrows) follows the active view's order</li>
+    <li><strong>Search</strong> works the same in both views — filters the active list</li>
+    <li><strong>Export mode</strong> works the same — checkboxes on individual songs; no letter-group select in All Songs (letters aren't meaningful collections)</li>
+    <li><strong>Preference persisted</strong> to localStorage (<code>songsheet_view_mode</code>), restored on load</li>
+  </ul>
+</div>

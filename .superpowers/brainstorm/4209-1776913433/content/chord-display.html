@@ -1,0 +1,44 @@
+<h2>How should chords be displayed?</h2>
+<p class="subtitle">The app already handles two common chord display styles. Which do you prefer for the PDF?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:6px;font-family:serif;line-height:1.6;color:#e0e0e0;min-height:160px">
+        <div style="font-weight:bold;font-size:13px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:6px">Amazing Grace</div>
+        <div style="color:#8ab8f0;font-size:9px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px">Verse 1</div>
+        <!-- Chords above lyrics -->
+        <div style="font-family:monospace;font-size:10px;color:#7eb8f7;letter-spacing:0.5px">G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G</div>
+        <div style="font-size:11px">Amazing grace how sweet the sound</div>
+        <div style="font-family:monospace;font-size:10px;color:#7eb8f7;margin-top:2px">G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;D</div>
+        <div style="font-size:11px">That saved a wretch like me</div>
+        <div style="font-family:monospace;font-size:10px;color:#7eb8f7;margin-top:2px">G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G</div>
+        <div style="font-size:11px">I once was lost but now am found</div>
+        <div style="font-family:monospace;font-size:10px;color:#7eb8f7;margin-top:2px">G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;&nbsp;G</div>
+        <div style="font-size:11px">Was blind but now I see</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Chords above lyrics (aligned)</h3>
+      <p>Each chord sits directly above the syllable where it changes. Standard chord chart format. Takes more vertical space but is easiest to follow while playing.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:6px;font-family:serif;font-size:11px;line-height:1.7;color:#e0e0e0;min-height:160px">
+        <div style="font-weight:bold;font-size:13px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:6px">Amazing Grace</div>
+        <div style="color:#8ab8f0;font-size:9px;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px">Verse 1</div>
+        <!-- Chords inline in brackets -->
+        <div><span style="color:#7eb8f7">[G]</span>Amazing <span style="color:#7eb8f7">[C]</span>grace how <span style="color:#7eb8f7">[G]</span>sweet the sound</div>
+        <div>That <span style="color:#7eb8f7">[G]</span>saved a <span style="color:#7eb8f7">[D]</span>wretch like me</div>
+        <div><span style="color:#7eb8f7">[G]</span>I once was <span style="color:#7eb8f7">[C]</span>lost but <span style="color:#7eb8f7">[G]</span>now am found</div>
+        <div>Was <span style="color:#7eb8f7">[G]</span>blind but <span style="color:#7eb8f7">[C]</span>now I <span style="color:#7eb8f7">[G]</span>see</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Chords inline in [brackets]</h3>
+      <p>Chords appear within the lyric line in square brackets at their position. More compact — fits more content per column. Slightly harder to sight-read while playing.</p>
+    </div>
+  </div>
+</div>

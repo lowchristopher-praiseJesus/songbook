@@ -1,0 +1,57 @@
+<h2>How should songs be added to a collection?</h2>
+<p class="subtitle">Once a collection is created, how does the user pick which songs go in it?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Modal Picker</h3>
+      <p>Each collection has an "Add Songs" button. Clicking it opens a modal showing all songs in the library — user checks the ones to include, then confirms.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="font-weight:600; margin-bottom:6px;">✅ Sunday Set</div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" checked disabled> Amazing Grace</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" checked disabled> El Shaddai</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" disabled> How Great Thou Art</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" disabled> 10,000 Reasons</label>
+        </div>
+        <button style="margin-top:8px;padding:4px 12px;background:#6366f1;color:white;border:none;border-radius:4px;font-size:11px;cursor:default;">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Right-click / Long-press on Song</h3>
+      <p>In "All Songs" view, right-clicking (or long-pressing on mobile) any song shows a context menu: "Add to Collection →" with a submenu of existing collections to choose from.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="padding:4px 8px; background:#e0e7ff; border-radius:4px; margin-bottom:6px;">El Shaddai</div>
+        <div style="background:white;border:1px solid #ddd;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.15);padding:4px 0;">
+          <div style="padding:6px 12px;font-size:11px;color:#555;">Add to Collection ›</div>
+          <div style="border-top:1px solid #eee; padding:4px 0;">
+            <div style="padding:5px 20px;font-size:11px;">Sunday Set</div>
+            <div style="padding:5px 20px;font-size:11px;">Worship Night</div>
+            <div style="padding:5px 20px;font-size:11px;color:#6366f1;">+ New collection…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Inline "Add Songs" inside collection</h3>
+      <p>When a collection is expanded in the sidebar, there's a small "+ Add songs" row at the bottom. Clicking it opens an inline mini-search/list to pick songs without a modal.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span>›</span> Sunday Set <span style="background:#ddd;border-radius:10px;padding:1px 6px;font-weight:normal;font-size:10px;">2</span></div>
+        <div style="margin-left:12px;display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:3px 6px; background:#e0e7ff; border-radius:3px;">Amazing Grace</div>
+          <div style="padding:3px 6px; background:#e0e7ff; border-radius:3px;">El Shaddai</div>
+          <div style="margin-top:4px; padding:3px 6px; border:1px dashed #aaa; border-radius:3px; color:#888; font-size:11px; cursor:default;">+ Add songs…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

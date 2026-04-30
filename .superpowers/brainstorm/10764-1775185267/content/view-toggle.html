@@ -1,0 +1,67 @@
+<h2>How should you switch between views?</h2>
+<p class="subtitle">The sidebar currently shows songs grouped by collection. Where/how should the toggle between "Collections" and "All Songs" live?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:12px;background:#1e1e2e;color:#cdd6f4;padding:12px;border-radius:6px;text-align:left;line-height:1.8">
+        <div style="background:#313244;border-radius:4px;padding:4px 8px;margin-bottom:8px;display:flex;gap:4px">
+          <span style="background:#89b4fa;color:#1e1e2e;border-radius:3px;padding:2px 10px;font-size:11px;font-weight:bold">Collections</span>
+          <span style="color:#6c7086;border-radius:3px;padding:2px 10px;font-size:11px">All Songs</span>
+        </div>
+        <div style="color:#89b4fa;font-size:11px;margin:4px 0">📁 Sunday Set <span style="color:#6c7086">(8)</span></div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ Amazing Grace</div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ How Great Thou Art</div>
+        <div style="color:#89b4fa;font-size:11px;margin:4px 0">📁 Worship <span style="color:#6c7086">(5)</span></div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ Blessed Be Your Name</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Segmented control in sidebar header</h3>
+      <p>A pill/tab toggle sits at the top of the song list area. Switching shows the flat alphabetical list or grouped collections below it.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:12px;background:#1e1e2e;color:#cdd6f4;padding:12px;border-radius:6px;text-align:left;line-height:1.8">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="color:#cdd6f4;font-size:12px;font-weight:bold">🎵 SongList</span>
+          <div style="display:flex;gap:6px">
+            <span style="color:#89b4fa;font-size:14px" title="Collections">⊞</span>
+            <span style="color:#6c7086;font-size:14px" title="All Songs">☰</span>
+            <span style="color:#6c7086;font-size:14px">⚙</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid #313244;padding-top:8px;color:#89b4fa;font-size:11px;margin:4px 0">📁 Sunday Set <span style="color:#6c7086">(8)</span></div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ Amazing Grace</div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ How Great Thou Art</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Icon buttons in the app header</h3>
+      <p>Two icon buttons (grid/list icons) live in the top header bar next to the settings gear. Clean, minimal footprint.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-family:monospace;font-size:12px;background:#1e1e2e;color:#cdd6f4;padding:12px;border-radius:6px;text-align:left;line-height:1.8">
+        <div style="margin-bottom:8px;border-bottom:1px solid #313244">
+          <span style="display:inline-block;padding:4px 10px;border-bottom:2px solid #89b4fa;color:#89b4fa;font-size:11px;font-weight:bold">Collections</span>
+          <span style="display:inline-block;padding:4px 10px;color:#6c7086;font-size:11px">All Songs</span>
+        </div>
+        <div style="color:#89b4fa;font-size:11px;margin:4px 0">📁 Sunday Set <span style="color:#6c7086">(8)</span></div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ Amazing Grace</div>
+        <div style="padding-left:12px;color:#cdd6f4;font-size:11px">♪ How Great Thou Art</div>
+        <div style="color:#89b4fa;font-size:11px;margin:4px 0">📁 Worship <span style="color:#6c7086">(5)</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Underline tabs in sidebar</h3>
+      <p>Tab-style navigation with an underline indicator sits at the top of the sidebar list. A familiar pattern, similar to browser devtools or mobile app tabs.</p>
+    </div>
+  </div>
+
+</div>

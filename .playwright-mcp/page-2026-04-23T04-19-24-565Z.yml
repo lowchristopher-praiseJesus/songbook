@@ -1,0 +1,688 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]: 🎵 SongList
+      - generic [ref=e7]:
+        - link "User guide" [ref=e8] [cursor=pointer]:
+          - /url: /Documentation-songbook/user-guide.html
+          - text: "?"
+        - button "Settings" [ref=e9] [cursor=pointer]: ⚙️
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - generic [ref=e12]:
+          - textbox "Search songs..." [ref=e13]
+          - generic [ref=e14]:
+            - button "Collections" [ref=e15] [cursor=pointer]
+            - button "All Songs" [ref=e16] [cursor=pointer]
+        - list [ref=e17]:
+          - listitem [ref=e18]:
+            - button "+ New Collection" [ref=e19] [cursor=pointer]
+          - listitem [ref=e20]:
+            - generic [ref=e21]:
+              - checkbox [checked] [ref=e547] [cursor=pointer]
+              - button "› Judah 25Feb26 (2-23-2026) 2 11" [ref=e22] [cursor=pointer]:
+                - generic [ref=e23]: ›
+                - generic [ref=e24]: Judah 25Feb26 (2-23-2026) 2
+                - generic [ref=e25]: "11"
+          - listitem [ref=e30]:
+            - generic [ref=e31]:
+              - checkbox [checked] [ref=e548] [cursor=pointer]
+              - button "› Judah 2 (3-18-2026) 5" [ref=e32] [cursor=pointer]:
+                - generic [ref=e33]: ›
+                - generic [ref=e34]: Judah 2 (3-18-2026)
+                - generic [ref=e35]: "5"
+        - generic [ref=e549]:
+          - generic [ref=e550]:
+            - generic [ref=e551]: 20 selected
+            - button "Deselect All" [active] [ref=e555] [cursor=pointer]
+          - button "Export" [ref=e553] [cursor=pointer]
+          - button "Cancel" [ref=e554] [cursor=pointer]
+      - main [ref=e45]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - heading "1 Beauty Of Holiness++" [level=1] [ref=e49]
+            - paragraph [ref=e50]: New Creation Worship
+            - generic [ref=e51]:
+              - generic "Transpose controls" [ref=e52]:
+                - combobox "Select key" [ref=e53] [cursor=pointer]:
+                  - option "Ab"
+                  - option "A"
+                  - option "Bb"
+                  - option "B"
+                  - option "C"
+                  - option "Db"
+                  - option "D"
+                  - option "Eb" [selected]
+                  - option "E"
+                  - option "F"
+                  - option "F#"
+                  - option "G"
+              - generic "Capo controls" [ref=e54]:
+                - generic [ref=e55]: Capo
+                - button "Decrease capo" [disabled] [ref=e56]: −
+                - generic [ref=e57]: "0"
+                - button "Increase capo" [ref=e58] [cursor=pointer]: +
+              - button "Edit" [ref=e59] [cursor=pointer]
+              - button "Hide annotations" [ref=e60] [cursor=pointer]: 💬
+              - button "Start recording" [ref=e61] [cursor=pointer]: 🎙 Rec
+              - button "Recordings" [ref=e62] [cursor=pointer]: 🎵 Recordings
+              - button "⛶ Performance" [ref=e63] [cursor=pointer]
+          - generic [ref=e64]:
+            - button "Chords ▴" [expanded] [ref=e65] [cursor=pointer]
+            - generic [ref=e66]:
+              - generic [ref=e68]: C
+              - generic [ref=e71]: Cmaj7
+              - generic [ref=e74]: F
+              - generic [ref=e77]: G
+              - generic [ref=e80]: Am
+          - generic [ref=e83]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - generic [ref=e89]:
+                  - generic [ref=e90]: C
+                  - text: i
+                - text: nstrumental
+              - generic [ref=e93]: Cmaj7
+              - generic [ref=e96]: F
+              - generic [ref=e99]: F
+            - generic [ref=e101]:
+              - heading "Verse1" [level=3] [ref=e102]
+              - generic [ref=e103]:
+                - generic [ref=e105]:
+                  - generic [ref=e106]:
+                    - generic [ref=e107]:
+                      - generic [ref=e108]: C
+                      - text: J
+                    - text: e
+                  - generic [ref=e109]: "-sus,"
+                  - generic [ref=e110]: I
+                  - generic [ref=e111]: hear
+                  - generic [ref=e112]: Your
+                  - generic [ref=e113]:
+                    - generic [ref=e114]:
+                      - generic [ref=e115]: Cmaj7
+                      - text: v
+                    - text: oice,
+                - generic [ref=e117]:
+                  - generic [ref=e118]: You
+                  - generic [ref=e119]: dra-w
+                  - generic [ref=e120]: me
+                  - generic [ref=e121]:
+                    - generic [ref=e122]:
+                      - generic [ref=e123]: F
+                      - text: "n"
+                    - text: ear,
+                - generic [ref=e125]:
+                  - generic [ref=e126]: to
+                  - generic [ref=e127]: the
+                  - generic [ref=e128]:
+                    - generic [ref=e129]:
+                      - generic [ref=e130]: F
+                      - text: b
+                    - text: eauty
+                  - generic [ref=e131]: of
+                  - generic [ref=e132]: Your
+                  - generic [ref=e133]:
+                    - generic [ref=e134]:
+                      - generic [ref=e135]: G
+                      - text: h
+                    - text: olines
+                    - generic [ref=e136]:
+                      - generic [ref=e137]: C
+                      - text: s
+                    - text: .
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Your
+                  - generic [ref=e141]: love
+                  - generic [ref=e142]: fills
+                  - generic [ref=e143]: my
+                  - generic [ref=e144]:
+                    - generic [ref=e145]:
+                      - generic [ref=e146]: Cmaj7
+                      - text: h
+                    - text: eart,
+                - generic [ref=e148]:
+                  - generic [ref=e149]: Your
+                  - generic [ref=e150]: word
+                  - generic [ref=e151]: stills
+                  - generic [ref=e152]: my
+                  - generic [ref=e153]:
+                    - text: s
+                    - generic [ref=e154]:
+                      - generic [ref=e155]: F
+                      - text: o
+                    - text: ul,
+                - generic [ref=e157]:
+                  - generic [ref=e158]: now
+                  - generic [ref=e159]: I'm
+                  - generic [ref=e160]:
+                    - generic [ref=e161]:
+                      - generic [ref=e162]: F
+                      - text: f
+                    - text: ound
+                  - generic [ref=e163]: in
+                  - generic [ref=e164]: Your
+                  - generic [ref=e165]:
+                    - generic [ref=e166]:
+                      - generic [ref=e167]: G
+                      - text: g
+                    - text: lory.
+                - generic [ref=e170]:
+                  - generic [ref=e171]:
+                    - generic [ref=e172]:
+                      - generic [ref=e173]: F
+                      - text: O
+                    - text: ne
+                  - generic [ref=e174]: thing
+                  - generic [ref=e175]: I
+                  - generic [ref=e176]: desire
+                  - generic [ref=e177]: and
+                  - generic [ref=e178]: I
+                  - generic [ref=e179]:
+                    - generic [ref=e180]:
+                      - generic [ref=e181]: G
+                      - text: s
+                    - text: eek,
+                - generic [ref=e183]:
+                  - generic [ref=e184]: to
+                  - generic [ref=e185]:
+                    - generic [ref=e186]:
+                      - generic [ref=e187]: F
+                      - text: g
+                    - text: aze
+                  - generic [ref=e188]: upon
+                  - generic [ref=e189]: the
+                  - generic [ref=e190]: beauty
+                  - generic [ref=e191]: of
+                  - generic [ref=e192]: my
+                  - generic [ref=e193]:
+                    - generic [ref=e194]:
+                      - generic [ref=e195]: G
+                      - text: K
+                    - text: ing.
+            - generic [ref=e197]:
+              - heading "Chorus" [level=3] [ref=e198]
+              - generic [ref=e199]:
+                - generic [ref=e201]:
+                  - generic [ref=e202]:
+                    - generic [ref=e203]:
+                      - generic [ref=e204]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e205]:
+                    - text: H
+                    - generic [ref=e206]:
+                      - generic [ref=e207]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e208]:
+                    - text: H
+                    - generic [ref=e209]:
+                      - generic [ref=e210]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e211]:
+                    - text: a
+                    - generic [ref=e212]:
+                      - generic [ref=e213]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e214]: You,
+                  - generic [ref=e215]:
+                    - generic [ref=e216]:
+                      - generic [ref=e217]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e218]:
+                    - text: "-"
+                    - generic [ref=e219]:
+                      - generic [ref=e220]: G
+                      - text: r
+                    - text: d.
+                - generic [ref=e222]:
+                  - generic [ref=e223]:
+                    - generic [ref=e224]:
+                      - generic [ref=e225]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e226]:
+                    - text: H
+                    - generic [ref=e227]:
+                      - generic [ref=e228]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e229]:
+                    - text: H
+                    - generic [ref=e230]:
+                      - generic [ref=e231]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e232]:
+                    - text: a
+                    - generic [ref=e233]:
+                      - generic [ref=e234]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e235]: You,
+                  - generic [ref=e236]:
+                    - generic [ref=e237]:
+                      - generic [ref=e238]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e239]:
+                    - text: "-"
+                    - generic [ref=e240]:
+                      - generic [ref=e241]: G
+                      - text: r
+                    - text: d.
+                - generic [ref=e244]:
+                  - generic [ref=e245]:
+                    - generic [ref=e246]: F
+                    - text: i
+                  - text: nstrumen
+                  - generic [ref=e247]:
+                    - generic [ref=e248]: F
+                    - text: t
+                  - text: al
+            - generic [ref=e250]:
+              - heading "Verse2" [level=3] [ref=e251]
+              - generic [ref=e252]:
+                - generic [ref=e254]:
+                  - generic [ref=e255]:
+                    - generic [ref=e256]:
+                      - generic [ref=e257]: C
+                      - text: J
+                    - text: e
+                  - generic [ref=e258]: "-sus,"
+                  - generic [ref=e259]: I
+                  - generic [ref=e260]: see
+                  - generic [ref=e261]: Your
+                  - generic [ref=e262]:
+                    - text: h
+                    - generic [ref=e263]:
+                      - generic [ref=e264]: Cmaj7
+                      - text: a
+                    - text: nds,
+                - generic [ref=e266]:
+                  - generic [ref=e267]: nailed
+                  - generic [ref=e268]: to
+                  - generic [ref=e269]: the
+                  - generic [ref=e270]:
+                    - text: t
+                    - generic [ref=e271]:
+                      - generic [ref=e272]: F
+                      - text: r
+                    - text: ee,
+                - generic [ref=e274]:
+                  - generic [ref=e275]: it's
+                  - generic [ref=e276]: Your
+                  - generic [ref=e277]:
+                    - generic [ref=e278]:
+                      - generic [ref=e279]: F
+                      - text: s
+                    - text: cars
+                  - generic [ref=e280]: that
+                  - generic [ref=e281]: have
+                  - generic [ref=e282]:
+                    - text: b
+                    - generic [ref=e283]:
+                      - generic [ref=e284]: G
+                      - text: o
+                    - text: ught
+                  - generic [ref=e285]: my
+                  - generic [ref=e286]:
+                    - generic [ref=e287]:
+                      - generic [ref=e288]: C
+                      - text: p
+                    - text: eace.
+                - generic [ref=e290]:
+                  - generic [ref=e291]: You
+                  - generic [ref=e292]: silence
+                  - generic [ref=e293]: the
+                  - generic [ref=e294]:
+                    - text: sto
+                    - generic [ref=e295]:
+                      - generic [ref=e296]: Cmaj7
+                      - text: r
+                    - text: ms,
+                - generic [ref=e298]:
+                  - generic [ref=e299]: all
+                  - generic [ref=e300]: fear
+                  - generic [ref=e301]: is
+                  - generic [ref=e302]:
+                    - text: undo
+                    - generic [ref=e303]:
+                      - generic [ref=e304]: F
+                      - text: "n"
+                    - text: e
+                - generic [ref=e306]:
+                  - generic [ref=e307]: in
+                  - generic [ref=e308]: the
+                  - generic [ref=e309]:
+                    - generic [ref=e310]:
+                      - generic [ref=e311]: F
+                      - text: l
+                    - text: ight
+                  - generic [ref=e312]: of
+                  - generic [ref=e313]: Your
+                  - generic [ref=e314]:
+                    - generic [ref=e315]:
+                      - generic [ref=e316]: G
+                      - text: g
+                    - text: race.
+                - generic [ref=e319]:
+                  - generic [ref=e320]:
+                    - generic [ref=e321]:
+                      - generic [ref=e322]: F
+                      - text: O
+                    - text: ne
+                  - generic [ref=e323]: thing
+                  - generic [ref=e324]: I
+                  - generic [ref=e325]: desire
+                  - generic [ref=e326]: and
+                  - generic [ref=e327]: I
+                  - generic [ref=e328]:
+                    - generic [ref=e329]:
+                      - generic [ref=e330]: G
+                      - text: s
+                    - text: eek,
+                - generic [ref=e332]:
+                  - generic [ref=e333]: to
+                  - generic [ref=e334]:
+                    - generic [ref=e335]:
+                      - generic [ref=e336]: F
+                      - text: g
+                    - text: aze
+                  - generic [ref=e337]: upon
+                  - generic [ref=e338]: the
+                  - generic [ref=e339]: beauty
+                  - generic [ref=e340]: of
+                  - generic [ref=e341]: my
+                  - generic [ref=e342]:
+                    - generic [ref=e343]:
+                      - generic [ref=e344]: G
+                      - text: K
+                    - text: ing.
+            - generic [ref=e346]:
+              - heading "Chorus" [level=3] [ref=e347]
+              - generic [ref=e348]:
+                - generic [ref=e350]:
+                  - generic [ref=e351]:
+                    - generic [ref=e352]:
+                      - generic [ref=e353]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e354]:
+                    - text: H
+                    - generic [ref=e355]:
+                      - generic [ref=e356]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e357]:
+                    - text: H
+                    - generic [ref=e358]:
+                      - generic [ref=e359]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e360]:
+                    - text: a
+                    - generic [ref=e361]:
+                      - generic [ref=e362]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e363]: You,
+                  - generic [ref=e364]:
+                    - generic [ref=e365]:
+                      - generic [ref=e366]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e367]:
+                    - text: "-"
+                    - generic [ref=e368]:
+                      - generic [ref=e369]: G
+                      - text: r
+                    - text: d.
+                - generic [ref=e371]:
+                  - generic [ref=e372]:
+                    - generic [ref=e373]:
+                      - generic [ref=e374]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e375]:
+                    - text: H
+                    - generic [ref=e376]:
+                      - generic [ref=e377]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e378]:
+                    - text: H
+                    - generic [ref=e379]:
+                      - generic [ref=e380]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e381]:
+                    - text: a
+                    - generic [ref=e382]:
+                      - generic [ref=e383]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e384]: You,
+                  - generic [ref=e385]:
+                    - generic [ref=e386]:
+                      - generic [ref=e387]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e388]:
+                    - text: "-"
+                    - generic [ref=e389]:
+                      - generic [ref=e390]: G
+                      - text: r
+                    - text: d.
+                - generic [ref=e392]:
+                  - generic [ref=e393]:
+                    - generic [ref=e394]:
+                      - generic [ref=e395]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e396]:
+                    - text: H
+                    - generic [ref=e397]:
+                      - generic [ref=e398]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e399]:
+                    - text: H
+                    - generic [ref=e400]:
+                      - generic [ref=e401]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e402]:
+                    - text: a
+                    - generic [ref=e403]:
+                      - generic [ref=e404]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e405]: You,
+                  - generic [ref=e406]:
+                    - generic [ref=e407]:
+                      - generic [ref=e408]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e409]:
+                    - text: "-"
+                    - generic [ref=e410]:
+                      - generic [ref=e411]: G
+                      - text: r
+                    - text: d.
+                - generic [ref=e413]:
+                  - generic [ref=e414]:
+                    - generic [ref=e415]:
+                      - generic [ref=e416]: F
+                      - text: H
+                    - text: oly,
+                  - generic [ref=e417]:
+                    - text: H
+                    - generic [ref=e418]:
+                      - generic [ref=e419]: G
+                      - text: o
+                    - text: ly,
+                  - generic [ref=e420]:
+                    - text: H
+                    - generic [ref=e421]:
+                      - generic [ref=e422]: Am
+                      - text: o
+                    - text: ly
+                  - generic [ref=e423]:
+                    - text: a
+                    - generic [ref=e424]:
+                      - generic [ref=e425]: G
+                      - text: r
+                    - text: e
+                  - generic [ref=e426]: You,
+                  - generic [ref=e427]:
+                    - generic [ref=e428]:
+                      - generic [ref=e429]: F
+                      - text: L
+                    - text: o
+                  - generic [ref=e430]:
+                    - text: "-"
+                    - generic [ref=e431]:
+                      - generic [ref=e432]: G
+                      - text: r
+                    - text: d.....
+                - generic [ref=e435]:
+                  - generic [ref=e436]:
+                    - generic [ref=e437]:
+                      - generic [ref=e438]: F
+                      - text: i
+                    - text: "n"
+                    - generic [ref=e439]:
+                      - generic [ref=e440]: G
+                      - text: s
+                    - text: t
+                    - generic [ref=e441]:
+                      - generic [ref=e442]: Am
+                      - text: r
+                    - text: um
+                    - generic [ref=e443]:
+                      - generic [ref=e444]: G
+                      - text: e
+                    - text: "n"
+                    - generic [ref=e445]:
+                      - generic [ref=e446]: F
+                      - text: t
+                    - text: a
+                    - generic [ref=e447]:
+                      - generic [ref=e448]: G
+                      - text: l
+                  - generic [ref=e449]: "[*x2]"
+                - generic [ref=e451]:
+                  - generic [ref=e452]:
+                    - generic [ref=e453]:
+                      - generic [ref=e454]: F
+                      - text: i
+                    - text: "n"
+                    - generic [ref=e455]:
+                      - generic [ref=e456]: G
+                      - text: s
+                    - text: t
+                    - generic [ref=e457]:
+                      - generic [ref=e458]: Am
+                      - text: r
+                    - text: um
+                    - generic [ref=e459]:
+                      - generic [ref=e460]: G/B
+                      - text: e
+                    - text: ntal
+                  - generic [ref=e463]: C
+                  - generic [ref=e466]: C
+                  - generic [ref=e467]: "[*x2]"
+            - generic [ref=e469]:
+              - heading "Interlude x4" [level=3] [ref=e470]
+              - generic [ref=e471]:
+                - generic [ref=e473]:
+                  - generic [ref=e474]: oh
+                  - generic [ref=e475]:
+                    - generic [ref=e476]:
+                      - generic [ref=e477]: F
+                      - text: p
+                    - text: riase
+                  - generic [ref=e478]: the
+                  - generic [ref=e479]:
+                    - generic [ref=e480]:
+                      - generic [ref=e481]: G
+                      - text: L
+                    - text: ord
+                  - generic [ref=e482]: who
+                  - generic [ref=e483]:
+                    - generic [ref=e484]:
+                      - generic [ref=e485]: Am
+                      - text: r
+                    - text: eigns,
+                - generic [ref=e487]:
+                  - generic [ref=e488]: for
+                  - generic [ref=e489]:
+                    - generic [ref=e490]:
+                      - generic [ref=e491]: G/B
+                      - text: H
+                    - text: e
+                  - generic [ref=e492]: is
+                  - generic [ref=e493]:
+                    - generic [ref=e494]:
+                      - generic [ref=e495]: C
+                      - text: g
+                    - text: ood.
+                  - generic [ref=e498]: C
+                - generic [ref=e500]:
+                  - generic [ref=e501]: His
+                  - generic [ref=e502]:
+                    - generic [ref=e503]:
+                      - generic [ref=e504]: F
+                      - text: m
+                    - text: ercies
+                  - generic [ref=e505]:
+                    - generic [ref=e506]:
+                      - generic [ref=e507]: G
+                      - text: "n"
+                    - text: ever
+                  - generic [ref=e508]:
+                    - generic [ref=e509]:
+                      - generic [ref=e510]: Am
+                      - text: f
+                    - text: ail,
+                - generic [ref=e512]:
+                  - generic [ref=e513]: His
+                  - generic [ref=e514]:
+                    - generic [ref=e515]:
+                      - generic [ref=e516]: G/B
+                      - text: l
+                    - text: ove
+                  - generic [ref=e517]:
+                    - text: endures..
+                    - generic [ref=e518]:
+                      - generic [ref=e519]: C
+                      - text: .
+                  - generic [ref=e520]: forever.
+                  - generic [ref=e523]: C
+                - generic [ref=e525]: tag
+                - generic [ref=e527]:
+                  - generic [ref=e528]: His
+                  - generic [ref=e529]:
+                    - generic [ref=e530]:
+                      - generic [ref=e531]: G/B
+                      - text: l
+                    - text: ove
+                  - generic [ref=e532]:
+                    - text: endures..
+                    - generic [ref=e533]:
+                      - generic [ref=e534]: C
+                      - text: .
+                  - generic [ref=e535]: forever.
+                  - generic [ref=e538]: F
+                - generic [ref=e540]: to chorus and end...
+        - generic [ref=e542]:
+          - button "Fit song to screen" [ref=e543] [cursor=pointer]: ⤢
+          - button "Increase font size" [ref=e544] [cursor=pointer]: +
+          - button "Decrease font size" [ref=e545] [cursor=pointer]: −
+          - button "Start auto-scroll" [ref=e546] [cursor=pointer]: ▶
+  - status

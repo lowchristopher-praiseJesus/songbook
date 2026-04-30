@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborative Session — UI Flows</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; padding: 32px; }
+  h2 { font-size: 1.3rem; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
+  .subtitle { color: #94a3b8; font-size: 0.88rem; margin-bottom: 32px; }
+
+  .flows { display: flex; flex-direction: column; gap: 40px; }
+  .flow-section { display: flex; flex-direction: column; gap: 12px; }
+  .flow-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+
+  .screens { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+
+  .screen {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 220px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .screen-bar {
+    background: #111827;
+    padding: 8px 12px;
+    font-size: 0.68rem;
+    color: #6b7280;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dots { display: flex; gap: 4px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-r { background: #ef4444; }
+  .dot-y { background: #f59e0b; }
+  .dot-g { background: #22c55e; }
+  .screen-body { padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .s-title { font-size: 0.82rem; font-weight: 700; color: #f1f5f9; }
+  .s-sub { font-size: 0.72rem; color: #64748b; margin-top: -6px; }
+  .s-input { background: #0f1117; border: 1px solid #374151; border-radius: 6px; padding: 7px 9px; font-size: 0.75rem; color: #94a3b8; }
+  .s-btn { border-radius: 7px; padding: 8px 10px; font-size: 0.75rem; font-weight: 600; text-align: center; cursor: pointer; }
+  .s-btn-primary { background: #4f46e5; color: #fff; }
+  .s-btn-outline { background: transparent; border: 1px solid #374151; color: #94a3b8; }
+  .s-btn-green { background: #059669; color: #fff; }
+  .s-btn-red { background: #dc2626; color: #fff; }
+
+  .s-divider { height: 1px; background: #1f2937; }
+
+  .s-link-box { background: #0f172a; border: 1px solid #1e3a5f; border-radius: 7px; padding: 8px 9px; }
+  .s-link-label { font-size: 0.65rem; color: #60a5fa; font-weight: 600; margin-bottom: 3px; }
+  .s-link-url { font-size: 0.68rem; color: #7dd3fc; font-family: monospace; word-break: break-all; }
+  .s-copy { font-size: 0.65rem; color: #4f46e5; text-align: right; margin-top: 4px; font-weight: 600; }
+
+  .s-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .badge-green { background: #14532d; color: #86efac; }
+  .badge-orange { background: #431407; color: #fdba74; }
+  .badge-blue { background: #1e3a5f; color: #7dd3fc; }
+  .badge-purple { background: #2e1065; color: #c4b5fd; }
+
+  .s-song { display: flex; align-items: center; gap: 7px; padding: 6px 0; border-bottom: 1px solid #1f2937; }
+  .s-song:last-child { border-bottom: none; }
+  .s-song-drag { color: #374151; font-size: 0.75rem; cursor: grab; }
+  .s-song-num { font-size: 0.65rem; color: #4b5563; width: 14px; text-align: center; }
+  .s-song-info { flex: 1; }
+  .s-song-title { font-size: 0.76rem; color: #f1f5f9; font-weight: 500; }
+  .s-song-key { font-size: 0.65rem; color: #64748b; }
+  .s-song-action { font-size: 0.68rem; }
+
+  .editing-indicator {
+    display: flex; align-items: center; gap: 5px;
+    background: #431407; border: 1px solid #92400e;
+    border-radius: 6px; padding: 5px 8px;
+    font-size: 0.68rem; color: #fdba74;
+  }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: #f97316; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+
+  .lock-icon { font-size: 0.65rem; }
+
+  .arrow { display: flex; align-items: center; padding-top: 60px; color: #374151; font-size: 1.2rem; }
+
+  .step-num { width: 20px; height: 20px; border-radius: 50%; background: #312e81; color: #a5b4fc; font-size: 0.68rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .sep { width: 100%; height: 1px; background: #1e293b; }
+
+  .note { background: #1e2d3d; border-left: 3px solid #3b82f6; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.78rem; color: #93c5fd; line-height: 1.5; }
+
+  .flow-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .flow-icon { font-size: 1.1rem; }
+</style>
+</head>
+<body>
+<h2>Collaborative Session — UI Flows</h2>
+<p class="subtitle">Three flows: Create session · Join session · Live collaborative editing</p>
+
+<div class="flows">
+
+  <!-- FLOW 1: Create Session -->
+  <div class="flow-section">
+    <div class="flow-head">
+      <div class="step-num">1</div>
+      <div class="flow-label">Worship Leader — Create Session</div>
+    </div>
+    <div class="screens">
+
+      <!-- Screen 1a: Export modal -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Sidebar</div>
+        <div class="screen-body">
+          <div class="s-title">Share Set</div>
+          <div class="s-sub">5 songs selected</div>
+          <div class="s-divider"></div>
+          <div class="s-btn s-btn-outline">↓ Download .sbp</div>
+          <div class="s-btn s-btn-outline">🔗 Share snapshot link</div>
+          <div class="s-btn s-btn-primary">👥 Start Live Session</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 1b: Create session form -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>New Session</div>
+        <div class="screen-body">
+          <div class="s-title">Live Session</div>
+          <div class="s-sub">Your team edits together</div>
+          <div class="s-divider"></div>
+          <div class="s-input">Session name (optional)</div>
+          <div style="font-size:0.68rem;color:#64748b">Auto-expires after 30 days</div>
+          <div class="s-btn s-btn-primary">Create Session →</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 1c: Session created, links shown -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Session Ready</div>
+        <div class="screen-body">
+          <div class="s-title">Session Created!</div>
+          <div class="s-badge badge-green">● Live</div>
+          <div class="s-divider"></div>
+          <div class="s-link-box">
+            <div class="s-link-label">MEMBER LINK (share this)</div>
+            <div class="s-link-url">songbook.app?session=ABC-123&join=xyz</div>
+            <div class="s-copy">📋 Copy link</div>
+          </div>
+          <div class="s-link-box">
+            <div class="s-link-label">YOUR LEADER LINK (keep private)</div>
+            <div class="s-link-url">songbook.app?session=ABC-123&token=secret</div>
+            <div class="s-copy">📋 Copy link</div>
+          </div>
+          <div class="s-btn s-btn-green">Open Session →</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- FLOW 2: Join Session -->
+  <div class="flow-section">
+    <div class="flow-head">
+      <div class="step-num">2</div>
+      <div class="flow-label">Member — Join via Link</div>
+    </div>
+    <div class="screens">
+
+      <!-- Screen 2a: Join confirmation -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Joining...</div>
+        <div class="screen-body">
+          <div class="s-title">Live Session</div>
+          <div class="s-sub">Sunday Service — Apr 20</div>
+          <div class="s-divider"></div>
+          <div style="font-size:0.75rem;color:#94a3b8">5 songs · Started 10 min ago</div>
+          <div class="s-btn s-btn-primary">Join Session →</div>
+          <div class="s-btn s-btn-outline">Cancel</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 2b: Live session view -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Live Session</div>
+        <div class="screen-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="s-title" style="font-size:0.75rem">Sunday Apr 20</div>
+            <div class="s-badge badge-green" style="font-size:0.62rem">● Live</div>
+          </div>
+          <div class="s-divider"></div>
+          <div class="s-song">
+            <div class="s-song-drag">⋮⋮</div>
+            <div class="s-song-num">1</div>
+            <div class="s-song-info">
+              <div class="s-song-title">Oceans</div>
+              <div class="s-song-key">Key of A</div>
+            </div>
+            <div class="s-song-action">✏️</div>
+          </div>
+          <div class="s-song">
+            <div class="s-song-drag">⋮⋮</div>
+            <div class="s-song-num">2</div>
+            <div class="s-song-info">
+              <div class="s-song-title">El Shaddai</div>
+              <div class="s-song-key">Key of Eb</div>
+            </div>
+            <div class="s-song-action">✏️</div>
+          </div>
+          <div class="s-song">
+            <div class="s-song-drag">⋮⋮</div>
+            <div class="s-song-num">3</div>
+            <div class="s-song-info">
+              <div class="s-song-title">How Great Thou Art</div>
+              <div class="s-song-key">Key of G</div>
+            </div>
+            <div class="s-song-action lock-icon">🔒</div>
+          </div>
+          <div class="editing-indicator">
+            <div class="pulse"></div>
+            Someone is editing song 3
+          </div>
+          <div class="s-btn s-btn-outline" style="font-size:0.72rem">+ Add Song</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="note">The edit lock indicator (🔒 + orange banner) appears in real time as members open the editor for a song. Others see the lock within 3–5s of the next poll.</div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- FLOW 3: Edit Lock in action -->
+  <div class="flow-section">
+    <div class="flow-head">
+      <div class="step-num">3</div>
+      <div class="flow-label">Edit Lock — Expired While Editing</div>
+    </div>
+    <div class="screens">
+
+      <!-- Screen 3a: Editing normally -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Song Editor</div>
+        <div class="screen-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="s-title" style="font-size:0.76rem">How Great Thou Art</div>
+            <div class="s-badge badge-blue">🔒 You</div>
+          </div>
+          <div class="s-divider"></div>
+          <div style="background:#0f1117;border:1px solid #1f2937;border-radius:6px;padding:8px;font-size:0.7rem;color:#94a3b8;line-height:1.6">
+            O Lord my God, when I<br>in awesome wonder...<br><span style="border-bottom:2px solid #4f46e5;color:#e2e8f0">consider all the worlds</span><br>thy hands have made...
+          </div>
+          <div style="font-size:0.65rem;color:#64748b">Lock renews every 30s ✓</div>
+          <div class="s-btn s-btn-primary">Save</div>
+          <div class="s-btn s-btn-outline">Cancel</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 3b: Lock expired warning -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Song Editor</div>
+        <div class="screen-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="s-title" style="font-size:0.76rem">How Great Thou Art</div>
+            <div class="s-badge badge-orange">⚠ Lock lost</div>
+          </div>
+          <div class="s-divider"></div>
+          <div style="background:#1c0a00;border:1px solid #92400e;border-radius:7px;padding:9px;font-size:0.72rem;color:#fdba74;line-height:1.5">
+            Your edit lock expired.<br>No one else edited this song — you can still save.
+          </div>
+          <div class="s-btn s-btn-green">Re-lock &amp; Save</div>
+          <div class="s-btn s-btn-outline">Discard</div>
+        </div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <!-- Screen 3c: Lock expired + conflict -->
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>Song Editor</div>
+        <div class="screen-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="s-title" style="font-size:0.76rem">How Great Thou Art</div>
+            <div class="s-badge badge-orange">⚠ Conflict</div>
+          </div>
+          <div class="s-divider"></div>
+          <div style="background:#1c0a00;border:1px solid #92400e;border-radius:7px;padding:9px;font-size:0.72rem;color:#fdba74;line-height:1.5">
+            Lock expired &amp; someone saved changes. Review before saving.
+          </div>
+          <div style="font-size:0.68rem;color:#64748b;margin-top:2px">
+            <span style="color:#86efac">+ consider all thy works</span><br>
+            <span style="color:#fca5a5">- consider all the worlds</span>
+          </div>
+          <div class="s-btn s-btn-primary" style="font-size:0.72rem">Keep my version</div>
+          <div class="s-btn s-btn-outline" style="font-size:0.72rem">Keep their version</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

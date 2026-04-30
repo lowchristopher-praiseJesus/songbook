@@ -1,0 +1,106 @@
+<h2>Sidebar — Collections View</h2>
+<p class="subtitle">Full interaction flow for creating a collection and adding songs</p>
+
+<div class="section">
+  <h3>Step 1 — Collections view with "+ New Collection" row</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Sidebar (Collections view)</div>
+      <div class="mockup-body" style="font-size:12px; padding:8px;">
+        <div style="margin-bottom:8px;">
+          <input class="mock-input" placeholder="Search songs..." style="width:100%;font-size:11px;padding:4px 8px;">
+        </div>
+        <div style="display:flex;background:#e5e7eb;border-radius:8px;padding:3px;margin-bottom:8px;">
+          <div style="flex:1;background:white;border-radius:6px;text-align:center;padding:4px;font-size:11px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1);">Collections</div>
+          <div style="flex:1;text-align:center;padding:4px;font-size:11px;color:#9ca3af;">All Songs</div>
+        </div>
+        <!-- New Collection row -->
+        <div style="padding:5px 8px;border:1px dashed #9ca3af;border-radius:5px;color:#6366f1;font-size:11px;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;gap:4px;">
+          <span style="font-size:14px;line-height:1;">+</span> New Collection
+        </div>
+        <!-- Existing collections -->
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Sunday Set</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">3</span>
+          </div>
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Worship Night</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">After clicking "+ New Collection"</div>
+      <div class="mockup-body" style="font-size:12px;padding:8px;">
+        <div style="margin-bottom:8px;">
+          <input class="mock-input" placeholder="Search songs..." style="width:100%;font-size:11px;padding:4px 8px;">
+        </div>
+        <div style="display:flex;background:#e5e7eb;border-radius:8px;padding:3px;margin-bottom:8px;">
+          <div style="flex:1;background:white;border-radius:6px;text-align:center;padding:4px;font-size:11px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1);">Collections</div>
+          <div style="flex:1;text-align:center;padding:4px;font-size:11px;color:#9ca3af;">All Songs</div>
+        </div>
+        <!-- Inline name input (replaces the dashed row) -->
+        <div style="margin-bottom:6px;">
+          <input value="CNY 2026" style="width:100%;padding:4px 8px;font-size:11px;border:1px solid #6366f1;border-radius:5px;outline:none;box-sizing:border-box;" readonly>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px;">Press Enter to create · Esc to cancel</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Sunday Set</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">3</span>
+          </div>
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Worship Night</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Step 2 — New collection appears, with "Add Songs" button on hover</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">After pressing Enter — collection created (empty)</div>
+      <div class="mockup-body" style="font-size:12px;padding:8px;">
+        <div style="padding:5px 8px;border:1px dashed #9ca3af;border-radius:5px;color:#6366f1;font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:4px;">
+          <span style="font-size:14px;line-height:1;">+</span> New Collection
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <!-- New empty collection, highlighted -->
+          <div style="padding:5px 8px;background:#ede9fe;border:1px solid #a5b4fc;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;font-weight:600;">CNY 2026</span>
+            <span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">0</span>
+            <button style="font-size:10px;padding:2px 6px;background:#6366f1;color:white;border:none;border-radius:3px;cursor:default;">+ Songs</button>
+          </div>
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Sunday Set</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">3</span>
+          </div>
+          <div style="padding:5px 8px;background:#e0e7ff;border-radius:5px;display:flex;align-items:center;gap:4px;">
+            <span>›</span><span style="flex:1;">Worship Night</span><span style="background:#ddd;border-radius:10px;padding:1px 6px;font-size:10px;">5</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:6px;font-style:italic;">✏️ and 🗑 appear on hover as usual</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Add Songs modal</div>
+      <div class="mockup-body" style="font-size:12px;padding:8px;">
+        <div style="font-weight:600;margin-bottom:6px;">Add songs to "CNY 2026"</div>
+        <input class="mock-input" placeholder="Filter songs..." style="width:100%;font-size:11px;padding:4px 8px;margin-bottom:8px;">
+        <div style="display:flex;flex-direction:column;gap:3px;max-height:160px;overflow:auto;">
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;background:#f0fdf4;"><input type="checkbox" checked disabled><span>Amazing Grace</span><span style="margin-left:auto;font-size:10px;color:#9ca3af;">Sunday Set</span></label>
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;"><input type="checkbox" disabled><span>El Shaddai</span></label>
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;"><input type="checkbox" disabled><span>How Great Thou Art</span><span style="margin-left:auto;font-size:10px;color:#9ca3af;">Worship Night</span></label>
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;"><input type="checkbox" disabled><span>10,000 Reasons</span></label>
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;"><input type="checkbox" disabled><span>Oceans</span></label>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:4px;">Songs already in other collections are shown with their collection name — they can still be added here.</div>
+        <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+          <button style="padding:4px 10px;background:#e5e7eb;border:none;border-radius:4px;font-size:11px;cursor:default;">Cancel</button>
+          <button style="padding:4px 10px;background:#6366f1;color:white;border:none;border-radius:4px;font-size:11px;cursor:default;">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

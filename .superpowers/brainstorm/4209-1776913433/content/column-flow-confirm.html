@@ -1,0 +1,153 @@
+<h2>Confirming the column flow direction</h2>
+<p class="subtitle">You want B (inline title, continuous flow). Which of these matches how you'd like content to fill the columns?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:6px;font-family:serif;font-size:10.5px;line-height:1.55;color:#e0e0e0">
+        <div style="text-align:center;font-size:9px;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">3-column landscape page</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-top:1px solid #444;padding-top:8px">
+          <!-- Col 1 -->
+          <div style="border-right:1px solid #333;padding-right:8px">
+            <div style="font-weight:bold;font-size:12px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:4px">How Great Thou Art</div>
+            <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 1</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            O Lord my God when I<br/>
+            in awesome wonder<br/>
+            <span style="color:#7eb8f7">[D]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[G]</span><br/>
+            consider all the worlds<br/>
+            thy hands have made<br/>
+            <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin:5px 0 2px">Chorus</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            Then sings my soul<br/>
+            my Saviour God to Thee<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+            How great Thou art<br/>
+            how great Thou art<br/>
+            <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin:5px 0 2px">Verse 2</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            When through the woods<br/>
+          </div>
+          <!-- Col 2 -->
+          <div style="border-right:1px solid #333;padding-right:8px">
+            <div style="color:#aaa;font-size:8px;font-style:italic;margin-bottom:3px">↑ Song 1 continues from col 1</div>
+            and forest glades I wander<br/>
+            <span style="color:#7eb8f7">[D]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[G]</span><br/>
+            and hear the birds sing<br/>
+            sweetly in the trees<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            When I look down<br/>
+            from lofty mountain grandeur<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+            and hear the brook<br/>
+            and feel the gentle breeze<br/>
+            <br/>
+            <!-- Song 2 starts here inline, mid-column -->
+            <div style="font-weight:bold;font-size:12px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:4px">Amazing Grace</div>
+            <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 1</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            Amazing grace how sweet<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+            the sound that saved<br/>
+            a wretch like me<br/>
+          </div>
+          <!-- Col 3 -->
+          <div>
+            <div style="color:#aaa;font-size:8px;font-style:italic;margin-bottom:3px">↑ Song 2 continues from col 2</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            I once was lost<br/>
+            but now am found<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+            was blind but now I see<br/>
+            <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin:5px 0 2px">Verse 2</div>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+            'Twas grace that taught<br/>
+            my heart to fear<br/>
+            <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+            and grace my fears relieved<br/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Newspaper flow (fill each column top-to-bottom)</h3>
+      <p>Column 1 fills completely top-to-bottom, then column 2, then column 3. A song mid-column simply continues from the top of the next column. New songs start right after the previous one ends, mid-column if needed.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:14px;border-radius:6px;font-family:serif;font-size:10.5px;line-height:1.55;color:#e0e0e0">
+        <div style="text-align:center;font-size:9px;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">3-column landscape page</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-top:1px solid #444;padding-top:8px">
+          <!-- Row-based: each song spans all columns as a row -->
+          <div style="grid-column:1/-1">
+            <div style="font-weight:bold;font-size:12px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:6px">How Great Thou Art</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div style="border-right:1px solid #333;padding-right:8px">
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 1</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                O Lord my God when I<br/>
+                in awesome wonder<br/>
+                <span style="color:#7eb8f7">[D]</span>&nbsp;<span style="color:#7eb8f7">[G]</span><br/>
+                consider all the worlds<br/>
+                thy hands have made<br/>
+              </div>
+              <div style="border-right:1px solid #333;padding-right:8px">
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Chorus</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                Then sings my soul<br/>
+                my Saviour God to Thee<br/>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+                How great Thou art<br/>
+                how great Thou art<br/>
+              </div>
+              <div>
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 2</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                When through the woods<br/>
+                and forest glades I wander<br/>
+                <span style="color:#7eb8f7">[D]</span>&nbsp;<span style="color:#7eb8f7">[G]</span><br/>
+                and hear the birds sing<br/>
+                sweetly in the trees<br/>
+              </div>
+            </div>
+          </div>
+          <!-- Song 2 -->
+          <div style="grid-column:1/-1;margin-top:8px">
+            <div style="font-weight:bold;font-size:12px;color:#fff;border-top:2px solid #7eb8f7;padding-top:4px;margin-bottom:6px">Amazing Grace</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div style="border-right:1px solid #333;padding-right:8px">
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 1</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                Amazing grace how sweet<br/>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+                the sound that saved<br/>
+                a wretch like me<br/>
+              </div>
+              <div style="border-right:1px solid #333;padding-right:8px">
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Verse 2</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                'Twas grace that taught<br/>
+                my heart to fear<br/>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+                and grace my fears relieved<br/>
+              </div>
+              <div>
+                <div style="color:#8ab8f0;font-size:8.5px;text-transform:uppercase;margin-bottom:2px">Chorus</div>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[C]</span><br/>
+                Praise God praise God<br/>
+                <span style="color:#7eb8f7">[G]</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7eb8f7">[D]</span><br/>
+                how great is His name<br/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Each song spans all columns as a row</h3>
+      <p>Each song gets its own full-width row. Content within the song fills left column, then middle, then right. Songs never mix within a column — Song 1 always ends before Song 2 begins in any column.</p>
+    </div>
+  </div>
+</div>

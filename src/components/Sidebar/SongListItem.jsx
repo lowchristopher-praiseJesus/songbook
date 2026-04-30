@@ -1,5 +1,4 @@
 import { useLibraryStore } from '../../store/libraryStore'
-import { useIsMobile } from '../../hooks/useIsMobile'
 
 export function SongListItem({
   entry,
@@ -19,7 +18,6 @@ export function SongListItem({
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleSongSelection = useLibraryStore(s => s.toggleSongSelection)
   const viewMode = useLibraryStore(s => s.viewMode)
-  const isMobile = useIsMobile()
 
   const isActive = !isExportMode && activeSongId === entry.id
   const isSelected = isExportMode && selectedSongIds.has(entry.id)
@@ -57,8 +55,7 @@ export function SongListItem({
           {...dragHandleListeners}
           {...dragHandleAttributes}
           aria-label="Drag to reorder"
-          className={`shrink-0 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500
-            ${isMobile ? 'px-2 py-2 text-lg' : 'ml-1 mr-0.5 text-sm text-gray-300 dark:text-gray-600'}`}
+          className="ml-1 shrink-0 px-1 py-2 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500"
         >
           ⠿
         </span>

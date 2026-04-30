@@ -1,0 +1,134 @@
+<h2>How should song titles appear in the layout?</h2>
+<p class="subtitle">Each song flows continuously into the next. How should a new song be introduced?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:12px;border-radius:6px;font-family:serif;font-size:11px;line-height:1.5;color:#e0e0e0;min-height:200px">
+        <!-- Column 1 end + Column 2 start, with full-width title banner -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="color:#aaa;font-size:9px">...continuing from page</div>
+            <div style="margin-top:4px">
+              <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[Em]</span><br/>
+              And I will love You, Lord<br/>
+              <span style="color:#7eb8f7">[D]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+              forever and always<br/>
+            </div>
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:9px">...end of song 1</div>
+            <div style="margin-top:4px">
+              <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+              Holy is the Lord<br/>
+            </div>
+          </div>
+        </div>
+        <!-- Full-width title banner spanning columns -->
+        <div style="background:#2a2a4e;border-left:3px solid #7eb8f7;padding:5px 8px;margin:8px 0;font-weight:bold;font-size:13px;letter-spacing:0.5px">
+          Amazing Grace
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><br/>
+            Amazing grace, how sweet<br/>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+            the sound that saved<br/>
+          </div>
+          <div>
+            <span style="color:#7eb8f7">[G]</span><br/>
+            a wretch like me<br/>
+            <span style="color:#7eb8f7">[C]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+            I once was lost<br/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Full-width title banner</h3>
+      <p>Song title spans all columns as a horizontal divider. Creates clear visual breaks between songs. Interrupts the column grid briefly.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:12px;border-radius:6px;font-family:serif;font-size:11px;line-height:1.5;color:#e0e0e0;min-height:200px">
+        <!-- 2-column layout, song title inline -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="color:#aaa;font-size:9px">...continuing</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><br/>
+            And I will love You, Lord<br/>
+            <span style="color:#7eb8f7">[D]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+            forever and always<br/>
+            <br/>
+            <!-- Inline title - starts at top of its column block -->
+            <div style="border-top:1px solid #7eb8f7;padding-top:5px;font-weight:bold;font-size:13px;color:#fff;margin-top:6px">Amazing Grace</div>
+            <div style="color:#8ab8f0;font-size:9px;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Verse 1</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><br/>
+            Amazing grace, how sweet<br/>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+            the sound that saved<br/>
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:9px">...end of song 1</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+            Holy is the Lord<br/>
+            <br/>
+            <span style="color:#7eb8f7">[G]</span><br/>
+            a wretch like me<br/>
+            <span style="color:#7eb8f7">[C]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+            I once was lost<br/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Inline title, stays within column</h3>
+      <p>Song title appears inline within the column flow with a thin separator line above it. Columns remain perfectly even. Denser, more compact layout.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;padding:12px;border-radius:6px;font-family:serif;font-size:11px;line-height:1.5;color:#e0e0e0;min-height:200px">
+        <!-- Each song starts at column top -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="font-weight:bold;font-size:13px;color:#fff;border-bottom:2px solid #7eb8f7;padding-bottom:3px;margin-bottom:5px">How Great Thou Art</div>
+            <div style="color:#8ab8f0;font-size:9px;margin-bottom:2px;text-transform:uppercase">Verse 1</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><br/>
+            O Lord my God when I<br/>
+            <span style="color:#7eb8f7">[D]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+            in awesome wonder<br/>
+            <div style="color:#8ab8f0;font-size:9px;margin:5px 0 2px;text-transform:uppercase">Chorus</div>
+            <span style="color:#7eb8f7">[G]</span><br/>
+            Then sings my soul<br/>
+            <br/>
+            <div style="font-weight:bold;font-size:13px;color:#fff;border-bottom:2px solid #7eb8f7;padding-bottom:3px;margin-bottom:5px">Amazing Grace</div>
+            <div style="color:#8ab8f0;font-size:9px;margin-bottom:2px;text-transform:uppercase">Verse 1</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[C]</span><br/>
+            Amazing grace, how sweet<br/>
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:9px;font-style:italic">← How Great Thou Art continues</div>
+            <span style="color:#7eb8f7">[C]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[G]</span><br/>
+            My Saviour God to Thee<br/>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+            How great Thou art<br/>
+            <br/>
+            <div style="color:#aaa;font-size:9px;font-style:italic">← Amazing Grace continues</div>
+            <span style="color:#7eb8f7">[G]</span><span style="color:#aaa">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#7eb8f7">[D]</span><br/>
+            the sound that saved<br/>
+            <span style="color:#7eb8f7">[G]</span><br/>
+            a wretch like me<br/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Song starts at column top, content wraps</h3>
+      <p>Each song title anchors to the top of a new column. Lyrics flow into adjacent columns. Clearest navigation between songs; slightly more whitespace.</p>
+    </div>
+  </div>
+</div>

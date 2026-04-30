@@ -1,0 +1,74 @@
+<h2>How should colors be picked?</h2>
+<p class="subtitle">For chord color, section color, lyric color, and annotation color</p>
+
+<div class="cards">
+  <div class="card" data-choice="palette" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f8f8f8; border-radius: 6px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px;">Chord Color</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div style="width:28px;height:28px;border-radius:50%;background:#6366f1;border:3px solid #6366f1;box-shadow:0 0 0 2px white,0 0 0 4px #6366f1;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#3b82f6;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#10b981;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#f59e0b;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#ef4444;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#ec4899;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#6b7280;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Curated Palette</h3>
+      <p>8–12 hand-picked colors per element. Fast to pick, always looks good, no bad choices possible.</p>
+      <div class="pros-cons" style="margin-top:10px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Instant to use</li><li>Always harmonious</li><li>Simple to implement</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Limited choice</li><li>Can't match brand colors</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="picker" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f8f8f8; border-radius: 6px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px;">Chord Color</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#6366f1;border:1px solid #ddd;"></div>
+        <input type="color" value="#6366f1" style="width:120px;height:36px;border-radius:6px;border:1px solid #ddd;cursor:pointer;">
+        <input type="text" value="#6366f1" style="width:80px;padding:6px;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:13px;">
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Free Color Picker</h3>
+      <p>Native OS color wheel + hex input for any color. Maximum flexibility.</p>
+      <div class="pros-cons" style="margin-top:10px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Any color possible</li><li>Hex input for precision</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Easy to pick clashing colors</li><li>More UI real estate</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="both" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f8f8f8; border-radius: 6px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px;">Chord Color</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#6366f1;border:2px solid #6366f1;box-shadow:0 0 0 1px white,0 0 0 3px #6366f1;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#3b82f6;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#10b981;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#f59e0b;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#ef4444;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#8b5cf6;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);border:1px solid #ddd;" title="Custom..."></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:#888;">Custom:</span>
+        <input type="text" value="#6366f1" style="width:70px;padding:4px;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:12px;">
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Palette + Custom</h3>
+      <p>Palette swatches for quick picks, plus a "Custom" swatch that opens the color picker for any color.</p>
+      <div class="pros-cons" style="margin-top:10px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Fast common case</li><li>Unlimited when needed</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Slightly more complex UI</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,84 @@
+<h2>Drag handle style</h2>
+<p class="subtitle">How the grip icon appears on each song row. Click to select your preference.</p>
+
+<div class="section">
+  <div class="split">
+
+    <!-- Option A: Handle left of title, always visible muted -->
+    <div class="mockup">
+      <div class="mockup-header">A — Handle on left, muted</div>
+      <div class="mockup-body" style="padding: 10px; background: #f9fafb;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; align-items: center; gap-6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; gap: 6px;">
+            <span style="color: #d1d5db; font-size: 14px; cursor: grab; user-select: none; line-height: 1;">⠿</span>
+            <span style="font-size: 13px; color: #111827; flex: 1;">Amazing Grace</span>
+            <span style="font-size: 10px; color: #9ca3af;">Amy Grant</span>
+          </div>
+          <div style="display: flex; align-items: center; background: #eef2ff; border: 1px solid #818cf8; border-radius: 6px; padding: 5px 8px; gap: 6px; box-shadow: 0 2px 8px rgba(99,102,241,0.2);">
+            <span style="color: #818cf8; font-size: 14px; cursor: grabbing; user-select: none; line-height: 1;">⠿</span>
+            <span style="font-size: 13px; color: #3730a3; flex: 1;">How Great Thou Art</span>
+            <span style="font-size: 10px; color: #818cf8;">Stuart Hine</span>
+          </div>
+          <div style="display: flex; align-items: center; background: white; border: 1px dashed #c7d2fe; border-radius: 6px; padding: 5px 8px; gap: 6px; opacity: 0.4;">
+            <span style="color: #d1d5db; font-size: 14px; line-height: 1;">⠿</span>
+            <span style="font-size: 13px; color: #111827; flex: 1;">El Shaddai</span>
+            <span style="font-size: 10px; color: #9ca3af;">Amy Grant</span>
+          </div>
+          <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; gap: 6px;">
+            <span style="color: #d1d5db; font-size: 14px; cursor: grab; user-select: none; line-height: 1;">⠿</span>
+            <span style="font-size: 13px; color: #111827; flex: 1;">Blessed Be Your Name</span>
+            <span style="font-size: 10px; color: #9ca3af;">Matt Redman</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option B: Handle right of title, only on hover -->
+    <div class="mockup">
+      <div class="mockup-header">B — Handle on right, hover-only</div>
+      <div class="mockup-body" style="padding: 10px; background: #f9fafb;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; gap: 6px;">
+            <span style="font-size: 13px; color: #111827; flex: 1;">Amazing Grace</span>
+            <span style="font-size: 10px; color: #9ca3af; margin-right: 4px;">Amy Grant</span>
+            <span style="color: #e5e7eb; font-size: 14px; cursor: grab; user-select: none; line-height: 1;">⠿</span>
+          </div>
+          <div style="display: flex; align-items: center; background: #eef2ff; border: 1px solid #818cf8; border-radius: 6px; padding: 5px 8px; gap: 6px; box-shadow: 0 2px 8px rgba(99,102,241,0.2);">
+            <span style="font-size: 13px; color: #3730a3; flex: 1;">How Great Thou Art</span>
+            <span style="font-size: 10px; color: #818cf8; margin-right: 4px;">Stuart Hine</span>
+            <span style="color: #818cf8; font-size: 14px; cursor: grabbing; user-select: none; line-height: 1;">⠿</span>
+          </div>
+          <div style="display: flex; align-items: center; background: white; border: 1px dashed #c7d2fe; border-radius: 6px; padding: 5px 8px; gap: 6px; opacity: 0.4;">
+            <span style="font-size: 13px; color: #111827; flex: 1;">El Shaddai</span>
+            <span style="font-size: 10px; color: #9ca3af; margin-right: 4px;">Amy Grant</span>
+            <span style="color: #d1d5db; font-size: 14px; line-height: 1;">⠿</span>
+          </div>
+          <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; gap: 6px;">
+            <span style="font-size: 13px; color: #111827; flex: 1;">Blessed Be Your Name</span>
+            <span style="font-size: 10px; color: #9ca3af; margin-right: 4px;">Matt Redman</span>
+            <span style="color: #e5e7eb; font-size: 14px; cursor: grab; user-select: none; line-height: 1;">⠿</span>
+          </div>
+        </div>
+        <p style="font-size: 10px; color: #9ca3af; margin-top: 8px; font-style: italic;">Handle fades in on hover (desktop). Always visible on touch devices.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="options" style="margin-top: 20px;">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Handle on left, always visible</h3>
+        <p>Muted gray, always there. Immediately scannable — users know the list is draggable.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Handle on right, hover-only</h3>
+        <p>Cleaner default state. Appears on hover (desktop) or always on touch. Slightly less discoverable.</p>
+      </div>
+    </div>
+  </div>
+</div>

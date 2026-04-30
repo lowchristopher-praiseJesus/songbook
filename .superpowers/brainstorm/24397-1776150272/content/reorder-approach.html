@@ -1,0 +1,124 @@
+<h2>How should songs be reordered within a collection?</h2>
+<p class="subtitle">Three approaches — each with a different interaction model</p>
+
+<div class="cards">
+
+  <!-- Option A: Always-on drag handles -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f9fafb;">
+      <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 8px;">Worship Songs ▾</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px;">
+          <span style="color: #d1d5db; font-size: 14px; cursor: grab;">⠿</span>
+          <span style="font-size: 13px; color: #111827; flex: 1;">Amazing Grace</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: #eef2ff; border: 1px solid #818cf8; border-radius: 6px; padding: 6px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+          <span style="color: #818cf8; font-size: 14px; cursor: grabbing;">⠿</span>
+          <span style="font-size: 13px; color: #3730a3; flex: 1;">How Great Thou Art</span>
+          <span style="font-size: 9px; color: #818cf8;">dragging…</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px dashed #818cf8; border-radius: 6px; padding: 6px 8px; opacity: 0.5;">
+          <span style="color: #d1d5db; font-size: 14px;">⠿</span>
+          <span style="font-size: 13px; color: #111827; flex: 1;">El Shaddai</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 8px;">
+          <span style="color: #d1d5db; font-size: 14px; cursor: grab;">⠿</span>
+          <span style="font-size: 13px; color: #111827; flex: 1;">Blessed Be Your Name</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Drag handles (always visible)</h3>
+      <p>Every song has a drag handle (⠿) on the left. Drag to reorder anytime. Simple and discoverable.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Immediate, no mode switch</li><li>Familiar pattern</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Handles clutter normal use</li><li>Requires drag-and-drop library</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Up/Down arrows -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f9fafb;">
+      <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 8px;">Worship Songs ▾</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="font-size: 13px; color: #111827; flex: 1;">Amazing Grace</span>
+          <span style="font-size: 11px; color: #d1d5db;" title="can't move up">↑</span>
+          <span style="font-size: 11px; color: #6b7280; cursor: pointer;" title="move down">↓</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 5px 8px;">
+          <span style="font-size: 13px; color: #111827; flex: 1;">How Great Thou Art</span>
+          <span style="font-size: 11px; color: #22c55e; cursor: pointer;" title="move up">↑</span>
+          <span style="font-size: 11px; color: #22c55e; cursor: pointer;" title="move down">↓</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="font-size: 13px; color: #111827; flex: 1;">El Shaddai</span>
+          <span style="font-size: 11px; color: #6b7280; cursor: pointer;">↑</span>
+          <span style="font-size: 11px; color: #6b7280; cursor: pointer;">↓</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="font-size: 13px; color: #111827; flex: 1;">Blessed Be Your Name</span>
+          <span style="font-size: 11px; color: #6b7280; cursor: pointer;">↑</span>
+          <span style="font-size: 11px; color: #d1d5db;" title="can't move down">↓</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Up/Down arrow buttons</h3>
+      <p>Each song row shows ↑↓ buttons. Click to move one position. No extra library needed.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>No drag-and-drop library</li><li>Works well on mobile/touch</li><li>Accessible by default</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Slow for large reorders</li><li>Arrows add visual noise</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Reorder mode toggle -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 16px; background: #f9fafb;">
+      <!-- Normal mode -->
+      <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+        Worship Songs
+        <span style="color: #9ca3af; margin-left: auto; font-size: 10px; cursor: pointer; font-weight: normal; text-transform: none; letter-spacing: normal;">Reorder</span>
+        <span style="color: #6b7280;">▾</span>
+      </div>
+      <div style="font-size: 9px; color: #9ca3af; margin-bottom: 6px; font-style: italic;">(normal view)</div>
+      <div style="display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #111827;">Amazing Grace</div>
+        <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #111827;">How Great Thou Art</div>
+        <div style="display: flex; align-items: center; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #111827;">El Shaddai</div>
+      </div>
+      <!-- Reorder mode active -->
+      <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+        Worship Songs
+        <span style="color: #6366f1; margin-left: auto; font-size: 10px; cursor: pointer; font-weight: 600; text-transform: none; letter-spacing: normal;">Done</span>
+        <span style="color: #6b7280;">▾</span>
+      </div>
+      <div style="font-size: 9px; color: #6366f1; margin-bottom: 6px; font-style: italic;">(reorder mode active)</div>
+      <div style="display: flex; flex-direction: column; gap: 3px; border: 1px dashed #818cf8; border-radius: 8px; padding: 6px;">
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="color: #9ca3af; font-size: 14px; cursor: grab;">⠿</span>
+          <span style="font-size: 12px; color: #111827;">Amazing Grace</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="color: #9ca3af; font-size: 14px; cursor: grab;">⠿</span>
+          <span style="font-size: 12px; color: #111827;">How Great Thou Art</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+          <span style="color: #9ca3af; font-size: 14px; cursor: grab;">⠿</span>
+          <span style="font-size: 12px; color: #111827;">El Shaddai</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Reorder mode (toggle)</h3>
+      <p>A small "Reorder" link in the collection header activates drag-and-drop. Normal view stays clean. "Done" exits the mode.</p>
+      <div class="pros-cons" style="margin-top: 8px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Cleanest normal view</li><li>Intent is explicit</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Extra step to reorder</li><li>Still needs drag library</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

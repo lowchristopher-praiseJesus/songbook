@@ -16,8 +16,6 @@ vi.mock('../../../store/libraryStore', () => ({
     }),
 }))
 
-vi.mock('../../../hooks/useIsMobile', () => ({ useIsMobile: () => false }))
-
 const entry = { id: 's1', title: 'Amazing Grace', artist: 'Amy Grant' }
 
 describe('SongListItem drag handle', () => {
@@ -52,11 +50,9 @@ describe('SongListItem drag handle', () => {
     )
     expect(container.querySelector('li')).toHaveClass('opacity-40')
   })
-})
 
-describe('SongListItem drag handle — mobile', () => {
-  it('shows a larger drag handle on mobile (touch-none, bigger padding)', () => {
-    render(
+  it('applies select-none to the row to prevent text selection during drag', () => {
+    const { container } = render(
       <ul>
         <SongListItem
           entry={entry}
@@ -65,8 +61,6 @@ describe('SongListItem drag handle — mobile', () => {
         />
       </ul>
     )
-    const handle = screen.getByLabelText('Drag to reorder')
-    expect(handle).toBeInTheDocument()
-    expect(handle.className).toContain('touch-none')
+    expect(container.querySelector('li')).toHaveClass('select-none')
   })
 })

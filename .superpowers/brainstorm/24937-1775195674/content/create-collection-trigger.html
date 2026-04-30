@@ -1,0 +1,56 @@
+<h2>Where does "New Collection" live in the sidebar?</h2>
+<p class="subtitle">How does the user trigger creating a new collection?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Button in the footer toolbar</h3>
+      <p>A "+ New Collection" button sits in the sidebar footer alongside Import / Export / Search UG.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button style="padding:5px 10px;background:#6366f1;color:white;border:none;border-radius:5px;cursor:default;font-size:11px;">+ Import</button>
+          <button style="padding:5px 10px;background:#e5e7eb;color:#374151;border:none;border-radius:5px;cursor:default;font-size:11px;">Export</button>
+          <button style="padding:5px 10px;background:#e5e7eb;color:#374151;border:none;border-radius:5px;cursor:default;font-size:11px;">Search UG</button>
+          <button style="padding:5px 10px;background:#e5e7eb;color:#374151;border:none;border-radius:5px;cursor:default;font-size:11px;">+ New Collection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Inline header next to "Collections" tab</h3>
+      <p>A small "+" icon sits right next to the Collections tab label in the view toggle.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="display:flex; background:#e5e7eb; border-radius:8px; padding:3px; gap:2px; align-items:center;">
+          <div style="flex:1; background:white; border-radius:6px; text-align:center; padding:4px 6px; font-size:11px; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; gap:4px;">
+            Collections
+            <span style="color:#6366f1;font-weight:bold;font-size:13px;">+</span>
+          </div>
+          <div style="flex:1; text-align:center; padding:4px 6px; font-size:11px; color:#9ca3af;">All Songs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Floating "+" row at top of collections list</h3>
+      <p>A sticky "+ New Collection" row appears at the top of the collections list, always visible when in Collections view.</p>
+      <div style="margin-top:10px; padding:10px; background:#f5f5f5; border-radius:6px; font-size:12px; color:#444;">
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <div style="padding:5px 8px; border:1px dashed #9ca3af; border-radius:5px; color:#6366f1; font-size:11px; cursor:default;">+ New Collection</div>
+          <div style="padding:5px 8px; background:#e0e7ff; border-radius:5px; display:flex; align-items:center; gap:4px; font-size:11px;">
+            <span>›</span> Sunday Set <span style="background:#ddd;border-radius:10px;padding:1px 5px;font-size:10px;">3</span>
+          </div>
+          <div style="padding:5px 8px; background:#e0e7ff; border-radius:5px; display:flex; align-items:center; gap:4px; font-size:11px;">
+            <span>›</span> Worship Night <span style="background:#ddd;border-radius:10px;padding:1px 5px;font-size:10px;">5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

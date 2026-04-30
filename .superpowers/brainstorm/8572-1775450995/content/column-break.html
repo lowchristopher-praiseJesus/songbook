@@ -1,0 +1,75 @@
+<h2>Column layout — can sections split across columns?</h2>
+<p class="subtitle">When content flows into multiple columns, should a section (Verse, Chorus, etc.) be allowed to break mid-section into the next column?</p>
+
+<div class="split">
+
+  <div class="mockup">
+    <div class="mockup-header">A — Sections can split (natural flow)</div>
+    <div class="mockup-body" style="padding:10px;">
+      <div style="font-family:sans-serif;font-size:11px;">
+        <div style="font-weight:bold;font-size:13px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:8px;">Amazing Grace <span style="color:#9ca3af;font-weight:normal;font-size:10px;">John Newton</span></div>
+        <div style="column-count:2;column-gap:16px;font-size:11px;line-height:1.6;">
+          <div style="margin-bottom:6px;">
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Verse 1</div>
+            <div>Amazing grace, how sweet the sound</div>
+            <div>That saved a wretch like me</div>
+            <div>I once was lost but now am found</div>
+          </div>
+          <div style="margin-bottom:6px;">
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Chorus</div>
+            <div>My chains are gone I've been set free</div>
+            <div>My God my Savior has ransomed me</div>
+            <div>And like a flood His mercy reigns</div>
+            <!-- This part naturally breaks into col 2 -->
+            <div>Unending love amazing grace</div>
+          </div>
+          <div>
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Verse 2</div>
+            <div>Twas grace that taught my heart to fear</div>
+            <div>And grace my fears relieved</div>
+            <div>How precious did that grace appear</div>
+            <div>The hour I first believed</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;padding:4px 6px;background:#fef3c7;border-radius:4px;font-size:9px;color:#92400e;">
+          ⚠ "Chorus" label appears at bottom of col 1, its last line at top of col 2
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B — Sections stay together (no mid-break)</div>
+    <div class="mockup-body" style="padding:10px;">
+      <div style="font-family:sans-serif;font-size:11px;">
+        <div style="font-weight:bold;font-size:13px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:8px;">Amazing Grace <span style="color:#9ca3af;font-weight:normal;font-size:10px;">John Newton</span></div>
+        <div style="column-count:2;column-gap:16px;font-size:11px;line-height:1.6;">
+          <div style="break-inside:avoid;margin-bottom:6px;">
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Verse 1</div>
+            <div>Amazing grace, how sweet the sound</div>
+            <div>That saved a wretch like me</div>
+            <div>I once was lost but now am found</div>
+          </div>
+          <div style="break-inside:avoid;margin-bottom:6px;">
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Chorus</div>
+            <div>My chains are gone I've been set free</div>
+            <div>My God my Savior has ransomed me</div>
+            <div>And like a flood His mercy reigns</div>
+            <div>Unending love amazing grace</div>
+          </div>
+          <div style="break-inside:avoid;">
+            <div style="color:#6366f1;font-size:8px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Verse 2</div>
+            <div>Twas grace that taught my heart to fear</div>
+            <div>And grace my fears relieved</div>
+            <div>How precious did that grace appear</div>
+            <div>The hour I first believed</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;padding:4px 6px;background:#d1fae5;border-radius:4px;font-size:9px;color:#065f46;">
+          ✓ Each section label always stays with its lines
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

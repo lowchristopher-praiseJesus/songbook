@@ -1,0 +1,142 @@
+<h2>Maximize Mode — What happens to the song header?</h2>
+<p class="subtitle">When "fit to screen" is active, how much of the header controls should remain visible?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="border:1px solid #ccc;border-radius:6px;overflow:hidden;font-family:sans-serif;font-size:11px;background:#fff;">
+        <!-- App shell -->
+        <div style="background:#f3f4f6;padding:4px 8px;border-bottom:1px solid #ddd;font-weight:bold;font-size:10px;">🎵 SongList &nbsp;&nbsp;&nbsp; ⚙️</div>
+        <div style="display:flex;height:200px;">
+          <div style="width:70px;background:#f9fafb;border-right:1px solid #ddd;padding:4px;font-size:9px;color:#666;">
+            <div style="margin-bottom:3px;font-weight:600;color:#4f46e5;">Amazing Grace</div>
+            <div style="margin-bottom:3px;color:#888;">El Shaddai</div>
+            <div style="margin-bottom:3px;color:#888;">10,000 Reasons</div>
+          </div>
+          <div style="flex:1;padding:6px;overflow:hidden;">
+            <!-- Full header remains -->
+            <div style="border-bottom:1px solid #e5e7eb;margin-bottom:4px;padding-bottom:4px;">
+              <div style="font-weight:bold;font-size:13px;">Amazing Grace</div>
+              <div style="color:#9ca3af;font-size:9px;">John Newton</div>
+              <div style="display:flex;gap:4px;margin-top:3px;">
+                <span style="background:#e0e7ff;color:#4f46e5;border-radius:3px;padding:1px 4px;font-size:8px;">Key: G</span>
+                <span style="background:#f3f4f6;border-radius:3px;padding:1px 4px;font-size:8px;">Capo 0</span>
+                <span style="background:#f3f4f6;border-radius:3px;padding:1px 4px;font-size:8px;">Edit</span>
+                <span style="background:#4f46e5;color:white;border-radius:3px;padding:1px 4px;font-size:8px;margin-left:auto;">⛶ Perf</span>
+              </div>
+            </div>
+            <!-- 2-column song body -->
+            <div style="column-count:2;column-gap:12px;font-size:9px;line-height:1.5;">
+              <div style="margin-bottom:4px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 1</span>
+              <div>Amazing grace how sweet</div>
+              <div>the sound that saved a wretch</div>
+              <div>like me. I once was lost</div>
+              <div>but now I'm found.</div></div>
+              <div style="margin-bottom:4px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Chorus</span>
+              <div>How sweet the name of</div>
+              <div>Jesus sounds in a believer's</div>
+              <div>ear. It soothes his sorrows</div>
+              <div>heals his wounds.</div></div>
+              <div><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 2</span>
+              <div>Through many dangers, toils</div>
+              <div>and snares I have already</div>
+              <div>come. 'Tis grace hath brought</div>
+              <div>me safe thus far.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Full header stays</h3>
+      <p>Title, key, controls all remain. Song body below fills remaining space in columns.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="border:1px solid #ccc;border-radius:6px;overflow:hidden;font-family:sans-serif;font-size:11px;background:#fff;">
+        <div style="background:#f3f4f6;padding:4px 8px;border-bottom:1px solid #ddd;font-weight:bold;font-size:10px;">🎵 SongList &nbsp;&nbsp;&nbsp; ⚙️</div>
+        <div style="display:flex;height:200px;">
+          <div style="width:70px;background:#f9fafb;border-right:1px solid #ddd;padding:4px;font-size:9px;color:#666;">
+            <div style="margin-bottom:3px;font-weight:600;color:#4f46e5;">Amazing Grace</div>
+            <div style="margin-bottom:3px;color:#888;">El Shaddai</div>
+            <div style="margin-bottom:3px;color:#888;">10,000 Reasons</div>
+          </div>
+          <div style="flex:1;padding:6px;overflow:hidden;">
+            <!-- Minimal header: just title -->
+            <div style="border-bottom:1px solid #e5e7eb;margin-bottom:4px;padding-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-weight:bold;font-size:12px;">Amazing Grace</div>
+              <div style="color:#9ca3af;font-size:8px;">John Newton</div>
+            </div>
+            <!-- 2-column song body — more space -->
+            <div style="column-count:2;column-gap:12px;font-size:10px;line-height:1.6;">
+              <div style="margin-bottom:5px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 1</span>
+              <div>Amazing grace how sweet</div>
+              <div>the sound that saved a wretch</div>
+              <div>like me. I once was lost</div>
+              <div>but now I'm found.</div></div>
+              <div style="margin-bottom:5px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Chorus</span>
+              <div>How sweet the name of</div>
+              <div>Jesus sounds in a believer's</div>
+              <div>ear. It soothes his sorrows</div>
+              <div>heals his wounds.</div></div>
+              <div><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 2</span>
+              <div>Through many dangers, toils</div>
+              <div>and snares I have already</div>
+              <div>come. 'Tis grace hath brought</div>
+              <div>me safe thus far.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Collapsed header</h3>
+      <p>Only title + artist shown. Controls hidden to free up space. Song body gets more room.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="border:1px solid #ccc;border-radius:6px;overflow:hidden;font-family:sans-serif;font-size:11px;background:#fff;">
+        <div style="background:#f3f4f6;padding:4px 8px;border-bottom:1px solid #ddd;font-weight:bold;font-size:10px;">🎵 SongList &nbsp;&nbsp;&nbsp; ⚙️</div>
+        <div style="display:flex;height:200px;">
+          <div style="width:70px;background:#f9fafb;border-right:1px solid #ddd;padding:4px;font-size:9px;color:#666;">
+            <div style="margin-bottom:3px;font-weight:600;color:#4f46e5;">Amazing Grace</div>
+            <div style="margin-bottom:3px;color:#888;">El Shaddai</div>
+            <div style="margin-bottom:3px;color:#888;">10,000 Reasons</div>
+          </div>
+          <!-- Full pane overlay -->
+          <div style="flex:1;padding:8px;overflow:hidden;background:#fff;">
+            <div style="font-weight:bold;font-size:11px;margin-bottom:2px;">Amazing Grace <span style="color:#9ca3af;font-weight:normal;font-size:9px;">— John Newton</span></div>
+            <!-- 3-column song body — maximum space -->
+            <div style="column-count:3;column-gap:8px;font-size:10px;line-height:1.6;">
+              <div style="margin-bottom:4px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 1</span>
+              <div>Amazing grace</div>
+              <div>how sweet the sound</div>
+              <div>that saved a wretch</div>
+              <div>like me.</div></div>
+              <div style="margin-bottom:4px;"><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Chorus</span>
+              <div>How sweet the name</div>
+              <div>of Jesus sounds</div>
+              <div>in a believer's ear.</div>
+              <div>It soothes his sorrows.</div></div>
+              <div><span style="color:#6366f1;font-size:7px;text-transform:uppercase;font-weight:600;">Verse 2</span>
+              <div>Through many dangers,</div>
+              <div>toils and snares</div>
+              <div>I have already come.</div>
+              <div>'Tis grace hath brought.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Title-only inline</h3>
+      <p>Title + artist on a single compact line. Maximum vertical space for lyrics. Most content visible.</p>
+    </div>
+  </div>
+
+</div>
