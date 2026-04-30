@@ -70,6 +70,6 @@ describe('SongListItem drag handle — mobile', () => {
     )
     expect(screen.queryByLabelText('Drag to reorder')).not.toBeInTheDocument()
     const btn = screen.getByText('Amazing Grace').closest('button')
-    expect(btn.className).toContain('touch-none')
+    expect(btn.className).not.toContain('touch-none')
   })
 })

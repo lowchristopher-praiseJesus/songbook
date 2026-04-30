@@ -38,6 +38,7 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
     <li
       ref={setNodeRef}
       style={style}
+      {...(isMobile ? { ...attributes, ...listeners } : {})}
       className={`flex items-center gap-2 px-2 py-2 rounded-lg text-sm
         ${isDragging ? 'bg-indigo-50 dark:bg-indigo-900/20' : isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
     >
@@ -52,8 +53,7 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
 
       <button
         onClick={() => onSelect(songId)}
-        {...(isMobile ? { ...attributes, ...listeners } : {})}
-        className={`flex-1 min-w-0 text-left${isMobile ? ' touch-none select-none' : ''}`}
+        className="flex-1 min-w-0 text-left"
       >
         <p className={`font-medium truncate ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-gray-100'}`}>
           {song.meta.title}

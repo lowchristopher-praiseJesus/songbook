@@ -50,6 +50,7 @@ export function SongListItem({
     <li
       ref={sortableRef}
       style={sortableStyle}
+      {...(isMobile && dragHandleListeners ? { ...dragHandleListeners, ...dragHandleAttributes } : {})}
       className={`flex items-center group${isDragging ? ' opacity-40' : ''}`}
     >
       {dragHandleListeners && !isMobile && (
@@ -74,9 +75,7 @@ export function SongListItem({
       <button
         type="button"
         onClick={handleRowClick}
-        {...(isMobile && dragHandleListeners ? { ...dragHandleListeners, ...dragHandleAttributes } : {})}
         className={`flex-1 min-w-0 text-left px-3 py-2 rounded-lg cursor-pointer
-          ${isMobile && dragHandleListeners ? 'touch-none select-none' : ''}
           ${isSelected
             ? 'bg-indigo-100 dark:bg-indigo-900/40 text-gray-900 dark:text-gray-100'
             : isActive
