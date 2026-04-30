@@ -3,6 +3,7 @@ import type { Env } from './types';
 import share from './routes/share';
 import walkieShare from './routes/walkieShare';
 import session from './routes/session';
+import conductor from './routes/conductor';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -41,5 +42,6 @@ app.get('/health', (c) => c.json({ ok: true }));
 app.route('/share', share);
 app.route('/walkie-shares', walkieShare);
 app.route('/session', session);
+app.route('/conductor', conductor);
 
 export default app;
