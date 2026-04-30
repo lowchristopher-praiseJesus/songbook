@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { SELF } from 'cloudflare:test';
+import { isConductorExpired } from '../lib/conductor';
 
 const ORIGIN = 'http://localhost:5173';
 const h = { 'Content-Type': 'application/json', 'Origin': ORIGIN };
@@ -40,5 +41,35 @@ describe('GET /conductor/:code/status', () => {
   it('returns 404 for unknown code', async () => {
     const res = await SELF.fetch('http://localhost/conductor/XXXXXX/status', { headers: h });
     expect(res.status).toBe(404);
+  });
+});
+
+describe('isConductorExpired', () => {
+  it('returns true for a past expiresAt', () => {
+    const data = {
+      conductorCode: 'X',
+      directorToken: 'y',
+      maxFollowers: 5,
+      live: false,
+      currentSbpId: null,
+      version: 0,
+      followers: {},
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    };
+    expect(isConductorExpired(data)).toBe(true);
+  });
+
+  it('returns false for a future expiresAt', () => {
+    const data = {
+      conductorCode: 'X',
+      directorToken: 'y',
+      maxFollowers: 5,
+      live: false,
+      currentSbpId: null,
+      version: 0,
+      followers: {},
+      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    };
+    expect(isConductorExpired(data)).toBe(false);
   });
 });
