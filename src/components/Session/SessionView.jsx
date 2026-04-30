@@ -21,6 +21,7 @@ import { SongBody } from '../SongList/SongBody'
 import { TransposeControl } from '../SongList/TransposeControl'
 import { parseContent } from '../../lib/parser/contentParser'
 import { useTranspose } from '../../hooks/useTranspose'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { v4 as uuidv4 } from 'uuid'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { parseChordPro } from '../../lib/parser/chordProParser'
@@ -29,6 +30,7 @@ const KEY_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 
 function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemove, onSelect, isSelected }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: songId })
+  const isMobile = useIsMobile()
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const keyName = KEY_NAMES[song.meta.keyIndex] ?? ''
 
@@ -39,14 +41,20 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
       className={`flex items-center gap-2 px-2 py-2 rounded-lg text-sm
         ${isDragging ? 'bg-indigo-50 dark:bg-indigo-900/20' : isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-        className="text-gray-300 dark:text-gray-600 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
-      >&equiv;&equiv;</button>
+      {!isMobile && (
+        <button
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder"
+          className="text-gray-300 dark:text-gray-600 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
+        >&equiv;&equiv;</button>
+      )}
 
-      <button onClick={() => onSelect(songId)} className="flex-1 min-w-0 text-left">
+      <button
+        onClick={() => onSelect(songId)}
+        {...(isMobile ? { ...attributes, ...listeners } : {})}
+        className={`flex-1 min-w-0 text-left${isMobile ? ' touch-none select-none' : ''}`}
+      >
         <p className={`font-medium truncate ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-gray-100'}`}>
           {song.meta.title}
         </p>

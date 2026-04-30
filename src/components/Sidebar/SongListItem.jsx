@@ -1,4 +1,5 @@
 import { useLibraryStore } from '../../store/libraryStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 export function SongListItem({
   entry,
@@ -18,6 +19,7 @@ export function SongListItem({
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleSongSelection = useLibraryStore(s => s.toggleSongSelection)
   const viewMode = useLibraryStore(s => s.viewMode)
+  const isMobile = useIsMobile()
 
   const isActive = !isExportMode && activeSongId === entry.id
   const isSelected = isExportMode && selectedSongIds.has(entry.id)
@@ -50,7 +52,7 @@ export function SongListItem({
       style={sortableStyle}
       className={`flex items-center group${isDragging ? ' opacity-40' : ''}`}
     >
-      {dragHandleListeners && (
+      {dragHandleListeners && !isMobile && (
         <span
           {...dragHandleListeners}
           {...dragHandleAttributes}
@@ -72,7 +74,9 @@ export function SongListItem({
       <button
         type="button"
         onClick={handleRowClick}
+        {...(isMobile && dragHandleListeners ? { ...dragHandleListeners, ...dragHandleAttributes } : {})}
         className={`flex-1 min-w-0 text-left px-3 py-2 rounded-lg cursor-pointer
+          ${isMobile && dragHandleListeners ? 'touch-none select-none' : ''}
           ${isSelected
             ? 'bg-indigo-100 dark:bg-indigo-900/40 text-gray-900 dark:text-gray-100'
             : isActive

@@ -16,6 +16,8 @@ vi.mock('../../../store/libraryStore', () => ({
     }),
 }))
 
+vi.mock('../../../hooks/useIsMobile', () => ({ useIsMobile: () => false }))
+
 const entry = { id: 's1', title: 'Amazing Grace', artist: 'Amy Grant' }
 
 describe('SongListItem drag handle', () => {
@@ -49,5 +51,25 @@ describe('SongListItem drag handle', () => {
       </ul>
     )
     expect(container.querySelector('li')).toHaveClass('opacity-40')
+  })
+})
+
+describe('SongListItem drag handle — mobile', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  it('hides the drag icon and makes the song button the drag handle on mobile', async () => {
+    vi.doMock('../../../hooks/useIsMobile', () => ({ useIsMobile: () => true }))
+    const { SongListItem: MobileSongListItem } = await import('../SongListItem')
+    const listeners = { onPointerDown: vi.fn() }
+    render(
+      <ul>
+        <MobileSongListItem entry={entry} onSelect={vi.fn()} dragHandleListeners={listeners} />
+      </ul>
+    )
+    expect(screen.queryByLabelText('Drag to reorder')).not.toBeInTheDocument()
+    const btn = screen.getByText('Amazing Grace').closest('button')
+    expect(btn.className).toContain('touch-none')
   })
 })
