@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import type { Env } from '../types';
 import { CONDUCTOR } from '../config';
 import {
-  generateCode as _generateCode,
   getConductor, putConductor,
   countActiveFollowers, isConductorExpired,
 } from '../lib/conductor';
@@ -20,12 +19,12 @@ conductor.post('/create', async (c) => {
   if (typeof body.directorToken !== 'string' || !body.directorToken)
     return c.json({ error: 'missing_director_token' }, 400);
 
-  const maxFollowers = typeof body.maxFollowers === 'number'
-    ? Math.min(body.maxFollowers, CONDUCTOR.MAX_FOLLOWERS)
-    : CONDUCTOR.MAX_FOLLOWERS;
-
   if (typeof body.maxFollowers === 'number' && body.maxFollowers > CONDUCTOR.MAX_FOLLOWERS)
     return c.json({ error: 'max_followers_exceeded' }, 400);
+
+  const maxFollowers = typeof body.maxFollowers === 'number'
+    ? body.maxFollowers
+    : CONDUCTOR.MAX_FOLLOWERS;
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CONDUCTOR.SESSION_DAYS * 24 * 60 * 60 * 1000);

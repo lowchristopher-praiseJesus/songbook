@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 import { isConductorExpired } from '../lib/conductor';
 
 const ORIGIN = 'http://localhost:5173';
@@ -41,6 +41,22 @@ describe('GET /conductor/:code/status', () => {
   it('returns 404 for unknown code', async () => {
     const res = await SELF.fetch('http://localhost/conductor/XXXXXX/status', { headers: h });
     expect(res.status).toBe(404);
+  });
+
+  it('returns 410 for an expired session', async () => {
+    const expiredData = JSON.stringify({
+      conductorCode: 'EXPRD1',
+      directorToken: 'tok',
+      maxFollowers: 5,
+      live: false,
+      currentSbpId: null,
+      version: 0,
+      followers: {},
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    });
+    await env.SESSION_KV.put('conductor:EXPRD1', expiredData);
+    const res = await SELF.fetch('http://localhost/conductor/EXPRD1/status', { headers: h });
+    expect(res.status).toBe(410);
   });
 });
 
