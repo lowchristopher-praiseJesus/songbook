@@ -55,21 +55,18 @@ describe('SongListItem drag handle', () => {
 })
 
 describe('SongListItem drag handle — mobile', () => {
-  beforeEach(() => {
-    vi.resetModules()
-  })
-
-  it('hides the drag icon and makes the song button the drag handle on mobile', async () => {
-    vi.doMock('../../../hooks/useIsMobile', () => ({ useIsMobile: () => true }))
-    const { SongListItem: MobileSongListItem } = await import('../SongListItem')
-    const listeners = { onPointerDown: vi.fn() }
+  it('shows a larger drag handle on mobile (touch-none, bigger padding)', () => {
     render(
       <ul>
-        <MobileSongListItem entry={entry} onSelect={vi.fn()} dragHandleListeners={listeners} />
+        <SongListItem
+          entry={entry}
+          onSelect={vi.fn()}
+          dragHandleListeners={{ onPointerDown: vi.fn() }}
+        />
       </ul>
     )
-    expect(screen.queryByLabelText('Drag to reorder')).not.toBeInTheDocument()
-    const btn = screen.getByText('Amazing Grace').closest('button')
-    expect(btn.className).not.toContain('touch-none')
+    const handle = screen.getByLabelText('Drag to reorder')
+    expect(handle).toBeInTheDocument()
+    expect(handle.className).toContain('touch-none')
   })
 })

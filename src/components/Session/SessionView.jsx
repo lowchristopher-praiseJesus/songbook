@@ -39,22 +39,20 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
     <li
       ref={setNodeRef}
       style={style}
-      {...(isMobile ? { ...attributes, ...listeners } : {})}
-      className={`flex items-center gap-2 px-2 py-2 rounded-lg text-sm
+      className={`flex items-center gap-2 px-2 py-2 rounded-lg text-sm select-none
         ${isDragging ? 'bg-indigo-50 dark:bg-indigo-900/20' : isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
     >
-      {!isMobile && (
-        <button
-          {...attributes}
-          {...listeners}
-          aria-label="Drag to reorder"
-          className="text-gray-300 dark:text-gray-600 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
-        >&equiv;&equiv;</button>
-      )}
+      <button
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+        className={`shrink-0 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500 hover:text-gray-500
+          ${isMobile ? 'px-1 py-1 text-lg' : 'text-sm text-gray-300 dark:text-gray-600'}`}
+      >&equiv;&equiv;</button>
 
       <button
         onClick={() => onSelect(songId)}
-        className="flex-1 min-w-0 text-left"
+        className="flex-1 min-w-0 text-left select-text"
       >
         <p className={`font-medium truncate ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-gray-100'}`}>
           {song.meta.title}

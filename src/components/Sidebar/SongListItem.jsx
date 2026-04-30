@@ -50,15 +50,15 @@ export function SongListItem({
     <li
       ref={sortableRef}
       style={sortableStyle}
-      {...(isMobile && dragHandleListeners ? { ...dragHandleListeners, ...dragHandleAttributes } : {})}
-      className={`flex items-center group${isDragging ? ' opacity-40' : ''}`}
+      className={`flex items-center group${isDragging ? ' opacity-40' : ''}${dragHandleListeners ? ' select-none' : ''}`}
     >
-      {dragHandleListeners && !isMobile && (
+      {dragHandleListeners && (
         <span
           {...dragHandleListeners}
           {...dragHandleAttributes}
           aria-label="Drag to reorder"
-          className="ml-1 mr-0.5 text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing shrink-0 select-none touch-none"
+          className={`shrink-0 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500
+            ${isMobile ? 'px-2 py-2 text-lg' : 'ml-1 mr-0.5 text-sm text-gray-300 dark:text-gray-600'}`}
         >
           ⠿
         </span>
