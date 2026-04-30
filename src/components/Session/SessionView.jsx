@@ -452,7 +452,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <button onClick={onExit} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm shrink-0">&larr;</button>
+          <button onClick={onExit} className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 text-lg leading-none">&larr;</button>
           <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">{name || 'Live Session'}</span>
           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
