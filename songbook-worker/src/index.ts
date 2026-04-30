@@ -23,7 +23,7 @@ app.use('*', async (c, next) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
         'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token',
         'Access-Control-Max-Age': '86400',
       },
     });
