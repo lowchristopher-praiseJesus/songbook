@@ -5,8 +5,15 @@ const MIME_CANDIDATES = [
   'audio/mp4',
 ]
 
-const BITRATE = 128_000
+const BITRATE = 320_000
 const TIMESLICE_MS = 500
+
+const AUDIO_CONSTRAINTS = {
+  echoCancellation: false,
+  noiseSuppression: false,
+  autoGainControl: false,
+  sampleRate: 48000,
+}
 
 export class AudioRecorder {
   static detectMimeType() {
@@ -26,7 +33,7 @@ export class AudioRecorder {
     const mimeType = AudioRecorder.detectMimeType()
     let stream
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS })
     } catch (err) {
       this.state = 'inactive'
       throw err

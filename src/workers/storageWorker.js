@@ -114,7 +114,13 @@ self.onmessage = async (e) => {
               const metaHandle = await handle.getFileHandle('meta.json')
               const file = await metaHandle.getFile()
               const text = await file.text()
-              results.push({ recordingId: name, ...JSON.parse(text) })
+              let size = 0
+              try {
+                const audioHandle = await handle.getFileHandle('audio.webm')
+                const audioFile = await audioHandle.getFile()
+                size = audioFile.size
+              } catch { /* audio file not yet written */ }
+              results.push({ recordingId: name, ...JSON.parse(text), size })
             } catch {
               // skip recordings with missing meta
             }

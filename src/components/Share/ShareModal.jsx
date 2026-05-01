@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [step, setStep] = useState('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
   const [shareLyricsOnly, setShareLyricsOnly] = useState(false);
   const [conductorEnabled, setConductorEnabled] = useState(false)
@@ -40,6 +41,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
 
   async function handleCreateLink() {
     setStep('uploading')
+    setErrorMessage('')
     try {
       let conductorCode = null
       let directorToken = null
@@ -51,10 +53,26 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
       }
 
       const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, conductorCode)
-      const result = await uploadShare(blob, expiresInDays)
+
+      let result
+      try {
+        result = await uploadShare(blob, expiresInDays)
+      } catch (err) {
+        console.error('[ShareModal] upload failed:', err)
+        setErrorMessage('Upload failed. Please check your connection and try again.')
+        setStep('error')
+        return
+      }
 
       if (conductorEnabled) {
-        await createConductorSession({ conductorCode, directorToken, maxFollowers })
+        try {
+          await createConductorSession({ conductorCode, directorToken, maxFollowers })
+        } catch (err) {
+          console.error('[ShareModal] conductor session creation failed:', err)
+          setErrorMessage('Conductor session could not be created. The share link was not saved.')
+          setStep('error')
+          return
+        }
         const directorUrl = `${result.shareUrl}&director=${directorToken}`
         setConductorData({ conductorCode, directorToken, directorUrl, memberUrl: result.shareUrl })
       }
@@ -62,7 +80,9 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
       setShareUrl(result.shareUrl)
       setExpiresAt(result.expiresAt)
       setStep('done')
-    } catch {
+    } catch (err) {
+      console.error('[ShareModal] unexpected error:', err)
+      setErrorMessage('An unexpected error occurred. Please try again.')
       setStep('error')
     }
   }
@@ -113,6 +133,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
 
   function handleClose() {
     setStep('idle');
+    setErrorMessage('');
     setNameValue(collectionName ?? '');
     setExpiresInDays(7);
     setShareUrl('');
@@ -278,7 +299,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
       {step === 'error' && (
         <div className="space-y-4">
           <p className="text-sm text-red-600 dark:text-red-400">
-            Upload failed. Please check your connection and try again.
+            {errorMessage || 'An unexpected error occurred. Please try again.'}
           </p>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>

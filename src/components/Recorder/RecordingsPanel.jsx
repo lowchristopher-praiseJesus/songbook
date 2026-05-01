@@ -40,10 +40,21 @@ async function blobToWav(blob) {
   writeUint32(28, sampleRate * numChannels * 2); writeUint16(32, numChannels * 2)
   writeUint16(34, 16); writeStr(36, 'data'); writeUint32(40, dataSize)
 
+  // Peak-normalize so quiet room recordings aren't inaudible in the exported WAV
+  let peak = 0
+  for (let c = 0; c < numChannels; c++) {
+    const data = decoded.getChannelData(c)
+    for (let s = 0; s < numSamples; s++) {
+      const abs = Math.abs(data[s])
+      if (abs > peak) peak = abs
+    }
+  }
+  const gain = peak > 0.001 ? 0.9 / peak : 1
+
   let offset = 44
   for (let s = 0; s < numSamples; s++) {
     for (let c = 0; c < numChannels; c++) {
-      const sample = Math.max(-1, Math.min(1, decoded.getChannelData(c)[s]))
+      const sample = Math.max(-1, Math.min(1, decoded.getChannelData(c)[s] * gain))
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
       offset += 2
     }
@@ -55,6 +66,7 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
   const [recordings, setRecordings] = useState([])
   const [loading, setLoading] = useState(true)
   const [quota, setQuota] = useState(null)
+  const [recordingsBytes, setRecordingsBytes] = useState(0)
   const [playingSrc, setPlayingSrc] = useState(null)
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
@@ -71,6 +83,7 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
       ])
       setRecordings(recs)
       setQuota(q)
+      setRecordingsBytes(recs.reduce((sum, r) => sum + (r.size ?? 0), 0))
     } finally {
       setLoading(false)
     }
@@ -143,8 +156,8 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
       <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
         {quota && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Storage: {formatBytes(quota.usedBytes)} used
-            {quota.totalBytes > 0 && ` of ${formatBytes(quota.totalBytes)}`}
+            Recordings: {formatBytes(recordingsBytes)}
+            {quota.totalBytes > 0 && ` · ${formatBytes(quota.totalBytes)} available`}
           </p>
         )}
 

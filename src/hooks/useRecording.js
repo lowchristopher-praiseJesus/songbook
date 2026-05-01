@@ -19,6 +19,7 @@ export function useRecording({ songId, songTitle }) {
   const clientRef = useRef(null)
   const recordingIdRef = useRef(null)
   const mimeTypeRef = useRef(null)
+  const sizeRef = useRef(0)
   const timerRef = useRef(null)
   const startTimeRef = useRef(null)
   const pausedElapsedRef = useRef(0)
@@ -88,6 +89,7 @@ export function useRecording({ songId, songTitle }) {
     if (chunks.length > 0) {
       const buffers = await Promise.all(chunks.map(c => c.arrayBuffer()))
       const totalBytes = buffers.reduce((sum, b) => sum + b.byteLength, 0)
+      sizeRef.current = totalBytes
       const combined = new Uint8Array(totalBytes)
       let offset = 0
       for (const buf of buffers) { combined.set(new Uint8Array(buf), offset); offset += buf.byteLength }
@@ -106,7 +108,7 @@ export function useRecording({ songId, songTitle }) {
       name: name.trim() || defaultName(songTitle),
       date: new Date().toISOString(),
       duration: elapsedMs,
-      size: 0,
+      size: sizeRef.current,
       mimeType: mimeTypeRef.current,
     }
     await clientRef.current?.send('write-meta', {
