@@ -9,6 +9,9 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [step, setStep] = useState('idle');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
   const [shareLyricsOnly, setShareLyricsOnly] = useState(false);
+  const [conductorEnabled, setConductorEnabled] = useState(false)
+  const maxCap = Number(import.meta.env.VITE_CONDUCTOR_MAX_FOLLOWERS ?? 20)
+  const [maxFollowers, setMaxFollowers] = useState(maxCap)
 
   // Sync nameValue from prop each time the modal opens (useState initial value
   // is only evaluated once on mount, so prop changes after mount are ignored).
@@ -92,6 +95,8 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     setShareUrl('');
     setCopied(false);
     setShareLyricsOnly(false);
+    setConductorEnabled(false);
+    setMaxFollowers(maxCap);
     onClose();
   }
 
@@ -147,6 +152,44 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
               </span>
               <span className="text-sm text-gray-700 dark:text-gray-300">Share lyrics only</span>
             </button>
+          </div>
+          {/* Conductor broadcast section */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={conductorEnabled}
+              aria-label="Enable Conductor Broadcast"
+              onClick={() => setConductorEnabled(v => !v)}
+              className="flex items-center gap-3 w-full text-left"
+            >
+              <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+                transition-colors duration-200
+                ${conductorEnabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                  ${conductorEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+              </span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Enable Conductor Broadcast</span>
+            </button>
+            {conductorEnabled && (
+              <div className="mt-3 flex items-center gap-3">
+                <label className="text-sm text-gray-600 dark:text-gray-400 shrink-0" htmlFor="maxFollowers">
+                  Max followers
+                </label>
+                <input
+                  id="maxFollowers"
+                  type="number"
+                  min={1}
+                  max={maxCap}
+                  value={maxFollowers}
+                  onChange={e => setMaxFollowers(Math.min(Number(e.target.value), maxCap))}
+                  className="w-20 rounded-lg border border-gray-300 dark:border-gray-600
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
+                  aria-label="Max followers"
+                />
+                <span className="text-xs text-gray-400">(max: {maxCap})</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
