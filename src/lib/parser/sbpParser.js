@@ -81,7 +81,12 @@ export async function parseSbpFile(arrayBuffer) {
 
   const collectionName = data.sets?.[0]?.details?.name ?? data.collectionName ?? null
 
-  return { songs, collectionName, lyricsOnly: data.lyricsOnly ?? false }
+  return {
+    songs,
+    collectionName,
+    lyricsOnly: data.lyricsOnly ?? false,
+    conductorCode: data.conductorCode ?? null,
+  }
 }
 
 function songFromJson(s, setEntry = null) {

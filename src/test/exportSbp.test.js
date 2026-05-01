@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import JSZip from 'jszip'
 import SparkMD5 from 'spark-md5'
 import { buildSbpZip } from '../lib/exportSbp'
+import { parseSbpFile } from '../lib/parser/sbpParser'
 
 const mockSong = {
   meta: {
@@ -233,5 +234,21 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       expect(json.songs[0].key).toBe(3)    // keyIndex 1 + capo 2 = 3 (Eb)
       expect(json.songs[0].KeyShift).toBe(0)
     })
+  })
+})
+
+describe('conductorCode round-trip', () => {
+  it('embeds conductorCode in the zip when provided', async () => {
+    const zip = buildSbpZip([], 'Test', false, 'COND01')
+    const buf = await zip.generateAsync({ type: 'arraybuffer' })
+    const { conductorCode } = await parseSbpFile(buf)
+    expect(conductorCode).toBe('COND01')
+  })
+
+  it('returns null conductorCode when not embedded', async () => {
+    const zip = buildSbpZip([], 'Test', false, null)
+    const buf = await zip.generateAsync({ type: 'arraybuffer' })
+    const { conductorCode } = await parseSbpFile(buf)
+    expect(conductorCode).toBeNull()
   })
 })
