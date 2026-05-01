@@ -169,7 +169,7 @@ export default function App() {
             <span className="font-bold text-lg select-none">🎵 SongSheet</span>
           </div>
           <div className="flex items-center gap-1">
-            <ConductorBar sync={conductorSync} />
+            {conductorCollection && <ConductorBar sync={conductorSync} />}
             <a
               href="/Documentation-songbook/user-guide.html"
               target="_blank"

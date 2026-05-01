@@ -37,13 +37,13 @@ export function ConductorBar({ sync }) {
   }
 
   // Follower states
-  if (phase === 'dormant') {
+  if (phase === 'dormant' || phase === 'waiting') {
     const timeLabel = broadcastTime
       ? new Date(broadcastTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
       : null
     return (
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        {timeLabel ? `Broadcast scheduled for ${timeLabel}` : 'Broadcast not yet started'}
+        {timeLabel ? `Broadcast at ${timeLabel} — waiting...` : 'Waiting for broadcast...'}
       </span>
     )
   }
@@ -56,6 +56,7 @@ export function ConductorBar({ sync }) {
     )
   }
 
+  // phase === 'live'
   if (!live) return null
 
   if (!isFollowing) {
