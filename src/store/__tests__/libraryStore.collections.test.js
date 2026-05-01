@@ -187,6 +187,18 @@ describe('addSongs return value', () => {
   })
 })
 
+describe('addSongs sbpId', () => {
+  it('includes sbpId in index entry when song has meta.sbpId', () => {
+    const { addSongs } = useLibraryStore.getState()
+    addSongs([{
+      meta: { title: 'Conductor Song', artist: '', keyIndex: 0, usesFlats: false, sbpId: 12345 },
+      rawText: '',
+    }])
+    const entry = useLibraryStore.getState().index.find(e => e.title === 'Conductor Song')
+    expect(entry?.sbpId).toBe(12345)
+  })
+})
+
 describe('init() migration', () => {
   it('strips collectionId from index entries on load', () => {
     saveSong({ id: 's1', meta: { title: 'Song 1', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })

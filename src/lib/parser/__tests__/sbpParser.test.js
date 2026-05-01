@@ -225,6 +225,20 @@ describe('parseSbpFile', () => {
     expect(songs[0].rawText).toBe('[G]hello [C]world')  // D+5=G, G+5=C
   })
 
+  it('includes sbpId derived from song Id field', async () => {
+    const { buildSbpZip } = await import('../../exportSbp.js')
+    const song = {
+      id: 'test-id',
+      meta: { title: 'Test Song', artist: 'Artist', keyIndex: 0, usesFlats: false },
+      rawText: '[C]Hello world',
+    }
+    const zip = buildSbpZip([song], null, false)
+    const buf = await zip.generateAsync({ type: 'arraybuffer' })
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.sbpId).toBeDefined()
+    expect(typeof songs[0].meta.sbpId).toBe('number')
+  })
+
   it('KeyShift + set Capo: real-world case where content is already in sounding key', async () => {
     // Mirrors "That's The Power" in CNY 2026: key=1 (Db), KeyShift=9 → sounding Bb (10).
     // Content already has Bb-key chords (Gm, Ebmaj7). Set entry Capo=3 shifts display

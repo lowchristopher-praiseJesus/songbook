@@ -93,6 +93,7 @@ export const useLibraryStore = create((set, get) => ({
         title: song.meta.title,
         artist: song.meta.artist ?? '',
         importedAt: song.importedAt,
+        ...(song.meta.sbpId != null ? { sbpId: song.meta.sbpId } : {}),
       }
 
       if (existingIdx >= 0) {

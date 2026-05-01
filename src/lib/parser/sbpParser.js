@@ -169,6 +169,7 @@ function songFromJson(s, setEntry = null) {
       sbpKeyOfset: keyOfset,
       sbpOriginalContent: content,
       sbpBaselineKeyIndex: keyIndex,
+      sbpId: typeof s.Id === 'number' ? s.Id : null,
     },
     sections: parseContent(rawText),
   }
