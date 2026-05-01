@@ -15,6 +15,8 @@ import { parseSbpFile } from './lib/parser/sbpParser'
 import { useSessionStore } from './store/sessionStore'
 import { SessionView } from './components/Session/SessionView'
 import { saveSessionHistory } from './lib/storage'
+import { useConductorSync } from './hooks/useConductorSync'
+import { ConductorBar } from './components/Conductor/ConductorBar'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -23,6 +25,8 @@ export default function App() {
   const setExpandedCollectionId = useLibraryStore(state => state.setExpandedCollectionId)
   const selectSong = useLibraryStore(state => state.selectSong)
   const updateCollection = useLibraryStore(state => state.updateCollection)
+  const collections = useLibraryStore(s => s.collections)
+  const activeSong = useLibraryStore(s => s.activeSong)
   const { toasts, addToast } = useToast()
   const [activeSession, setActiveSession] = useState(null) // { code, leaderToken } | null
   const initClient = useSessionStore(s => s.initClient)
@@ -123,6 +127,14 @@ export default function App() {
     clearShareParam()
   }
 
+  const conductorCollection = collections.find(c => c.conductorCode) ?? null
+  const conductorSync = useConductorSync({
+    conductorCode: conductorCollection?.conductorCode ?? null,
+    directorToken: conductorCollection?.conductorDirectorToken ?? null,
+    activeSongSbpId: activeSong?.meta?.sbpId ?? null,
+    onAddToast: addToast,
+  })
+
   function handleToggleLyricsOnly() {
     setSessionLyricsOnly(false)
     setLyricsOnly(!effectiveLyricsOnly)
@@ -149,6 +161,7 @@ export default function App() {
             <span className="font-bold text-lg select-none">🎵 SongSheet</span>
           </div>
           <div className="flex items-center gap-1">
+            <ConductorBar sync={conductorSync} />
             <a
               href="/Documentation-songbook/user-guide.html"
               target="_blank"
