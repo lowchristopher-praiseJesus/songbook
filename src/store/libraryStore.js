@@ -360,6 +360,19 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Merge arbitrary fields into an existing collection.
+   * Used to attach conductor-mode fields (e.g. conductorCode, conductorDirectorToken)
+   * after importing a conductor-enabled share.
+   */
+  updateCollection(collectionId, updates) {
+    const collections = get().collections.map(c =>
+      c.id === collectionId ? { ...c, ...updates } : c
+    )
+    saveCollections(collections)
+    set({ collections })
+  },
+
+  /**
    * Duplicate a collection by inserting a new collection with the same songIds
    * immediately after the source collection in the list.
    */

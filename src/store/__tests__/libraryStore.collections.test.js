@@ -219,6 +219,22 @@ describe('init() migration', () => {
   })
 })
 
+describe('updateCollection', () => {
+  it('merges fields into an existing collection and persists', () => {
+    const { addSongs, updateCollection } = useLibraryStore.getState()
+    addSongs(
+      [{ meta: { title: 'Song A', artist: '', keyIndex: 0, usesFlats: false }, rawText: '' }],
+      'My Collection',
+    )
+    const { collectionId } = useLibraryStore.getState().collections.reduce(
+      (acc, c) => c.name === 'My Collection' ? { collectionId: c.id } : acc, {}
+    )
+    updateCollection(collectionId, { conductorCode: 'XXYYZZ' })
+    const col = useLibraryStore.getState().collections.find(c => c.id === collectionId)
+    expect(col.conductorCode).toBe('XXYYZZ')
+  })
+})
+
 describe('duplicateCollection', () => {
   beforeEach(() => {
     const seed = [
