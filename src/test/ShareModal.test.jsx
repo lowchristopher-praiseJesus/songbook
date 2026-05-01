@@ -79,7 +79,8 @@ describe('ShareModal', () => {
     expect(exportSongsAsSbp).toHaveBeenCalledWith(
       songs,
       null,  // nameValue is '' → ''.trim() || null = null
-      true
+      true,
+      null   // conductorCode is null when conductor is disabled
     );
   });
 });

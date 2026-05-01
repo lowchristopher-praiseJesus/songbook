@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { ShareModal } from '../ShareModal.jsx'
 
@@ -20,4 +20,28 @@ describe('ShareModal conductor section', () => {
     fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
     expect(screen.getByLabelText(/max followers/i)).toBeInTheDocument()
   })
+})
+
+vi.mock('../../../lib/shareApi.js', () => ({
+  uploadShare: vi.fn().mockResolvedValue({
+    shareUrl: 'https://app/?share=XYZ',
+    expiresAt: new Date(Date.now() + 86400000).toISOString()
+  }),
+}))
+vi.mock('../../../lib/conductorApi.js', () => ({
+  createConductorSession: vi.fn().mockResolvedValue({ ok: true }),
+}))
+vi.mock('../../../lib/exportSbp.js', () => ({
+  exportSongsAsSbp: vi.fn().mockResolvedValue(new Blob()),
+}))
+
+it('shows director link in done step when conductor is enabled', async () => {
+  render(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
+  // Enable conductor
+  fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
+  // Click Create link
+  fireEvent.click(screen.getByText(/create link/i))
+  // Wait for done step
+  await waitFor(() => expect(screen.getByText(/director link/i)).toBeInTheDocument())
+  expect(screen.getByText(/keep private/i)).toBeInTheDocument()
 })

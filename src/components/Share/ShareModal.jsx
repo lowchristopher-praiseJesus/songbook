@@ -4,6 +4,8 @@ import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare } from '../../lib/shareApi';
 import { exportSongsAsSbp } from '../../lib/exportSbp';
+import { createConductorSession } from '../../lib/conductorApi';
+import { v4 as uuidv4 } from 'uuid';
 
 export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [step, setStep] = useState('idle');
@@ -23,24 +25,45 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
   const qrCanvasRef = useRef(null);
+  const [conductorData, setConductorData] = useState(null) // { conductorCode, directorToken, directorUrl, memberUrl }
+  const directorQrRef = useRef(null)
 
   // Render QR code once the done step is visible and canvas is in the DOM
   useEffect(() => {
     if (step === 'done' && shareUrl && qrCanvasRef.current) {
       QRCode.toCanvas(qrCanvasRef.current, shareUrl, { width: 220, margin: 2 })
     }
-  }, [step, shareUrl]);
+    if (step === 'done' && conductorData?.directorUrl && directorQrRef.current) {
+      QRCode.toCanvas(directorQrRef.current, conductorData.directorUrl, { width: 220, margin: 2 })
+    }
+  }, [step, shareUrl, conductorData]);
 
   async function handleCreateLink() {
-    setStep('uploading');
+    setStep('uploading')
     try {
-      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly);
-      const result = await uploadShare(blob, expiresInDays);
-      setShareUrl(result.shareUrl);
-      setExpiresAt(result.expiresAt);
-      setStep('done');
+      let conductorCode = null
+      let directorToken = null
+
+      if (conductorEnabled) {
+        conductorCode = Array.from(crypto.getRandomValues(new Uint8Array(6)))
+          .map(b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('')
+        directorToken = uuidv4()
+      }
+
+      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, conductorCode)
+      const result = await uploadShare(blob, expiresInDays)
+
+      if (conductorEnabled) {
+        await createConductorSession({ conductorCode, directorToken, maxFollowers })
+        const directorUrl = `${result.shareUrl}&director=${directorToken}`
+        setConductorData({ conductorCode, directorToken, directorUrl, memberUrl: result.shareUrl })
+      }
+
+      setShareUrl(result.shareUrl)
+      setExpiresAt(result.expiresAt)
+      setStep('done')
     } catch {
-      setStep('error');
+      setStep('error')
     }
   }
 
@@ -54,8 +77,8 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     }
   }
 
-  function handleDownloadQr() {
-    const qr = qrCanvasRef.current
+  function handleDownloadQr(ref, filename = 'share-qr.png') {
+    const qr = ref.current
     if (!qr) return
 
     const name = nameValue.trim()
@@ -84,7 +107,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
 
     const a = document.createElement('a')
     a.href = offscreen.toDataURL('image/png')
-    a.download = 'share-qr.png'
+    a.download = filename
     a.click()
   }
 
@@ -97,6 +120,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     setShareLyricsOnly(false);
     setConductorEnabled(false);
     setMaxFollowers(maxCap);
+    setConductorData(null);
     onClose();
   }
 
@@ -210,33 +234,41 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Link expires {new Date(expiresAt).toLocaleDateString()}.
           </p>
-          <div className="flex gap-2">
-            <input
-              readOnly
-              value={shareUrl}
-              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
-            />
-            <Button variant="secondary" onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy'}
-            </Button>
+
+          {/* Member link */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Member link</p>
+            <div className="flex gap-2">
+              <input readOnly value={shareUrl}
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm" />
+              <Button variant="secondary" onClick={handleCopy}>{copied ? 'Copied!' : 'Copy'}</Button>
+            </div>
+            <div className="flex flex-col items-center gap-2 mt-2">
+              <canvas ref={qrCanvasRef} className="rounded-lg border border-gray-200 dark:border-gray-700" />
+              <Button variant="secondary" onClick={() => handleDownloadQr(qrCanvasRef, 'member-qr.png')}>Save Member QR</Button>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <canvas
-              ref={qrCanvasRef}
-              className="rounded-lg border border-gray-200 dark:border-gray-700"
-            />
-            {nameValue.trim() && (
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                {nameValue.trim()}
+
+          {/* Director link — only when conductor enabled */}
+          {conductorData && (
+            <div className="border-t border-orange-200 dark:border-orange-800 pt-3">
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">
+                Director link &nbsp;⚠ Keep private — gives broadcast control
               </p>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Expires {new Date(expiresAt).toLocaleDateString()}
-            </p>
-            <Button variant="secondary" onClick={handleDownloadQr}>
-              Save QR Code
-            </Button>
-          </div>
+              <div className="flex gap-2">
+                <input readOnly value={conductorData.directorUrl}
+                  className="flex-1 rounded-lg border border-orange-300 dark:border-orange-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm" />
+                <Button variant="secondary" onClick={() => {
+                  navigator.clipboard.writeText(conductorData.directorUrl).catch(() => {})
+                }}>Copy</Button>
+              </div>
+              <div className="flex flex-col items-center gap-2 mt-2">
+                <canvas ref={directorQrRef} className="rounded-lg border border-orange-200 dark:border-orange-700" />
+                <Button variant="secondary" onClick={() => handleDownloadQr(directorQrRef, 'director-qr.png')}>Save Director QR</Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end">
             <Button variant="ghost" onClick={handleClose}>Done</Button>
           </div>
