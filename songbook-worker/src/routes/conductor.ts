@@ -107,4 +107,69 @@ conductor.post('/:code/stop', async (c) => {
   return c.json({ ok: true });
 });
 
+// POST /conductor/:code/join
+conductor.post('/:code/join', async (c) => {
+  const code = c.req.param('code');
+  let body: { clientId?: unknown };
+  try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
+  if (typeof body.clientId !== 'string' || !body.clientId)
+    return c.json({ error: 'missing_client_id' }, 400);
+
+  const data = await getConductor(c.env.SESSION_KV, code);
+  if (!data) return c.json({ error: 'not_found' }, 404);
+  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+
+  const clientId = body.clientId;
+  const alreadyRegistered = !!data.followers[clientId];
+  const activeCount = countActiveFollowers(data);
+
+  if (!alreadyRegistered && activeCount >= data.maxFollowers)
+    return c.json({ error: 'full' }, 403);
+
+  const updated: ConductorData = {
+    ...data,
+    followers: { ...data.followers, [clientId]: { lastSeen: new Date().toISOString() } },
+  };
+  await putConductor(c.env.SESSION_KV, updated);
+  return c.json({ ok: true });
+});
+
+// POST /conductor/:code/heartbeat
+conductor.post('/:code/heartbeat', async (c) => {
+  const code = c.req.param('code');
+  let body: { clientId?: unknown };
+  try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
+  if (typeof body.clientId !== 'string') return c.json({ error: 'missing_client_id' }, 400);
+
+  const data = await getConductor(c.env.SESSION_KV, code);
+  if (!data) return c.json({ error: 'not_found' }, 404);
+
+  const clientId = body.clientId;
+  if (!data.followers[clientId]) return c.json({ error: 'not_registered' }, 404);
+
+  const updated: ConductorData = {
+    ...data,
+    followers: { ...data.followers, [clientId]: { lastSeen: new Date().toISOString() } },
+  };
+  await putConductor(c.env.SESSION_KV, updated);
+  return c.json({ ok: true });
+});
+
+// DELETE /conductor/:code/join
+conductor.delete('/:code/join', async (c) => {
+  const code = c.req.param('code');
+  let body: { clientId?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
+
+  const data = await getConductor(c.env.SESSION_KV, code);
+  if (!data) return new Response(null, { status: 204 });
+
+  if (typeof body.clientId === 'string' && data.followers[body.clientId]) {
+    const followers = { ...data.followers };
+    delete followers[body.clientId];
+    await putConductor(c.env.SESSION_KV, { ...data, followers });
+  }
+  return new Response(null, { status: 204 });
+});
+
 export default conductor;

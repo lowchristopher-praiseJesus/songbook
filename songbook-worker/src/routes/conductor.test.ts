@@ -145,3 +145,82 @@ describe('isConductorExpired', () => {
     expect(isConductorExpired(data)).toBe(false);
   });
 });
+
+describe('POST /conductor/:code/join', () => {
+  it('registers a follower and returns ok', async () => {
+    await createConductor({ conductorCode: 'JOIN01', directorToken: 'd', maxFollowers: 5 });
+    await SELF.fetch('http://localhost/conductor/JOIN01/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'd' },
+    });
+    const res = await SELF.fetch('http://localhost/conductor/JOIN01/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json() as { ok: boolean };
+    expect(data.ok).toBe(true);
+  });
+
+  it('returns 403 when at capacity', async () => {
+    await createConductor({ conductorCode: 'FULL01', directorToken: 'd', maxFollowers: 1 });
+    await SELF.fetch('http://localhost/conductor/FULL01/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'd' },
+    });
+    await SELF.fetch('http://localhost/conductor/FULL01/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    const res = await SELF.fetch('http://localhost/conductor/FULL01/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-b' }),
+    });
+    expect(res.status).toBe(403);
+    const data = await res.json() as { error: string };
+    expect(data.error).toBe('full');
+  });
+
+  it('allows re-join for an existing clientId', async () => {
+    await createConductor({ conductorCode: 'REJOIN', directorToken: 'd', maxFollowers: 1 });
+    await SELF.fetch('http://localhost/conductor/REJOIN/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    const res = await SELF.fetch('http://localhost/conductor/REJOIN/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /conductor/:code/heartbeat', () => {
+  it('updates lastSeen for a registered follower', async () => {
+    await createConductor({ conductorCode: 'HB0001', directorToken: 'd', maxFollowers: 5 });
+    await SELF.fetch('http://localhost/conductor/HB0001/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    const res = await SELF.fetch('http://localhost/conductor/HB0001/heartbeat', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 for unregistered clientId', async () => {
+    await createConductor({ conductorCode: 'HB0002', directorToken: 'd', maxFollowers: 5 });
+    const res = await SELF.fetch('http://localhost/conductor/HB0002/heartbeat', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'ghost' }),
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('DELETE /conductor/:code/join', () => {
+  it('removes follower and returns 204', async () => {
+    await createConductor({ conductorCode: 'LEAVE1', directorToken: 'd', maxFollowers: 5 });
+    await SELF.fetch('http://localhost/conductor/LEAVE1/join', {
+      method: 'POST', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    const res = await SELF.fetch('http://localhost/conductor/LEAVE1/join', {
+      method: 'DELETE', headers: h, body: JSON.stringify({ clientId: 'client-a' }),
+    });
+    expect(res.status).toBe(204);
+
+    const status = await (await SELF.fetch('http://localhost/conductor/LEAVE1/status', { headers: h })).json() as { followerCount: number };
+    expect(status.followerCount).toBe(0);
+  });
+});
