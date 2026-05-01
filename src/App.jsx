@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
@@ -22,6 +22,7 @@ export default function App() {
   const setViewMode = useLibraryStore(state => state.setViewMode)
   const setExpandedCollectionId = useLibraryStore(state => state.setExpandedCollectionId)
   const selectSong = useLibraryStore(state => state.selectSong)
+  const updateCollection = useLibraryStore(state => state.updateCollection)
   const { toasts, addToast } = useToast()
   const [activeSession, setActiveSession] = useState(null) // { code, leaderToken } | null
   const initClient = useSessionStore(s => s.initClient)
@@ -34,6 +35,7 @@ export default function App() {
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
   const displaySettings = useDisplaySettings()
   const [shareSongs, setShareSongs] = useState(null)
+  const directorTokenRef = useRef(null)
 
   useEffect(() => { init() }, [init])
 
@@ -57,6 +59,8 @@ export default function App() {
     }
 
     const shareCode = params.get('share')
+    const directorToken = params.get('director') || null
+    directorTokenRef.current = directorToken
     if (!shareCode) return
 
     fetchShare(shareCode)
@@ -89,6 +93,7 @@ export default function App() {
   function clearShareParam() {
     const url = new URL(window.location.href)
     url.searchParams.delete('share')
+    url.searchParams.delete('director')
     window.history.replaceState({}, '', url.toString())
   }
 
@@ -99,6 +104,14 @@ export default function App() {
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
+      if (collectionId && shareSongs.conductorCode) {
+        const updates = { conductorCode: shareSongs.conductorCode }
+        if (directorTokenRef.current) {
+          updates.conductorDirectorToken = directorTokenRef.current
+          directorTokenRef.current = null
+        }
+        updateCollection(collectionId, updates)
+      }
       setSidebarOpen(true)
       if (newSongIds.length > 0) {
         setViewMode('collections')
