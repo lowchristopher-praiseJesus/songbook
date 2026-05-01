@@ -1,9 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLibraryStore } from '../store/libraryStore'
 import {
   fetchConductorStatus, startBroadcast, setCurrentSong,
   stopBroadcast, joinBroadcast, sendFollowerHeartbeat, leaveBroadcast,
 } from '../lib/conductorApi'
+
+// Backoff delays for WAITING phase (ms): 5s, 10s, 20s, 40s, 80s, 160s, then cap at 300s
+const BACKOFF_MS = [5000, 10000, 20000, 40000, 80000, 160000, 300000]
+const LIVE_INTERVAL_MS = 3000
+const PRE_BROADCAST_WINDOW_MS = 30 * 60 * 1000
 
 function getClientId() {
   let id = sessionStorage.getItem('conductor_client_id')
@@ -14,7 +19,7 @@ function getClientId() {
   return id
 }
 
-export function useConductorSync({ conductorCode, directorToken, activeSongSbpId, onAddToast }) {
+export function useConductorSync({ conductorCode, directorToken, broadcastTime, activeSongSbpId, onAddToast }) {
   const index = useLibraryStore(s => s.index)
   const selectSong = useLibraryStore(s => s.selectSong)
 
@@ -23,48 +28,114 @@ export function useConductorSync({ conductorCode, directorToken, activeSongSbpId
   const [followerCount, setFollowerCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
   const [isBroadcasting, setIsBroadcasting] = useState(false)
+  // 'dormant' → 'waiting' → 'live' → 'ended'  (one-way)
+  const [phase, setPhase] = useState('dormant')
 
   const isDirector = !!directorToken
-  const pollRef = useRef(null)
+  const phaseRef = useRef('dormant')
+  const backoffIndexRef = useRef(0)
+  const timerRef = useRef(null)
   const heartbeatRef = useRef(null)
   const prevSbpIdRef = useRef(null)
 
-  const poll = useCallback(async () => {
-    if (!conductorCode) return
+  function clearTimer() {
+    clearTimeout(timerRef.current)
+    timerRef.current = null
+  }
+
+  function scheduleNextPoll(delayMs) {
+    clearTimer()
+    timerRef.current = setTimeout(() => executePollRef.current?.(), delayMs)
+  }
+
+  // Ref-based callback so it always closes over the latest render values
+  const executePollRef = useRef(null)
+  executePollRef.current = async function executePoll() {
+    if (!conductorCode || phaseRef.current === 'ended' || phaseRef.current === 'dormant') return
+
     try {
       const status = await fetchConductorStatus(conductorCode)
+      const wasLive = phaseRef.current === 'live'
+
       setLive(status.live)
       setFollowerCount(status.followerCount)
+
       if (status.currentSbpId !== prevSbpIdRef.current) {
         prevSbpIdRef.current = status.currentSbpId
         setCurrentSbpId(status.currentSbpId)
       }
-      if (!status.live) setIsFollowing(false)
-    } catch {
-      // Network errors silently skipped
-    }
-  }, [conductorCode])
 
-  // 1-second poll
+      if (status.live) {
+        phaseRef.current = 'live'
+        setPhase('live')
+        backoffIndexRef.current = 0
+        scheduleNextPoll(LIVE_INTERVAL_MS)
+      } else if (wasLive) {
+        // Director stopped — session over, stop polling
+        phaseRef.current = 'ended'
+        setPhase('ended')
+        setIsFollowing(false)
+        setLive(false)
+      } else {
+        // Still waiting — advance backoff
+        const idx = Math.min(backoffIndexRef.current, BACKOFF_MS.length - 1)
+        backoffIndexRef.current = Math.min(backoffIndexRef.current + 1, BACKOFF_MS.length - 1)
+        scheduleNextPoll(BACKOFF_MS[idx])
+      }
+    } catch (err) {
+      if (err.code === 'expired' || err.code === 'not_found') {
+        phaseRef.current = 'ended'
+        setPhase('ended')
+        setLive(false)
+        setIsFollowing(false)
+      } else if (phaseRef.current !== 'ended') {
+        // Network error — retry with current schedule
+        const delay = phaseRef.current === 'live'
+          ? LIVE_INTERVAL_MS
+          : BACKOFF_MS[Math.min(backoffIndexRef.current, BACKOFF_MS.length - 1)]
+        scheduleNextPoll(delay)
+      }
+    }
+  }
+
+  // Main scheduling effect — determines initial phase and starts the state machine
   useEffect(() => {
     if (!conductorCode) return
-    poll()
-    function startPolling() { pollRef.current = setInterval(poll, 1000) }
-    startPolling()
+
+    function startWaiting() {
+      phaseRef.current = 'waiting'
+      setPhase('waiting')
+      backoffIndexRef.current = 0
+      executePollRef.current?.()
+    }
+
+    if (broadcastTime) {
+      const msUntilWindow = new Date(broadcastTime).getTime() - Date.now() - PRE_BROADCAST_WINDOW_MS
+      if (msUntilWindow > 0) {
+        phaseRef.current = 'dormant'
+        setPhase('dormant')
+        timerRef.current = setTimeout(startWaiting, msUntilWindow)
+        return () => clearTimer()
+      }
+    }
+
+    startWaiting()
+    return () => clearTimer()
+  }, [conductorCode, broadcastTime]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pause poll when tab is hidden; resume when visible (don't touch dormant timer)
+  useEffect(() => {
+    if (!conductorCode) return
     function handleVisibility() {
       if (document.visibilityState === 'hidden') {
-        clearInterval(pollRef.current)
-      } else {
-        poll()
-        startPolling()
+        if (phaseRef.current === 'waiting' || phaseRef.current === 'live') clearTimer()
+      } else if (phaseRef.current === 'waiting' || phaseRef.current === 'live') {
+        executePollRef.current?.()
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
-    return () => {
-      clearInterval(pollRef.current)
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
-  }, [conductorCode, poll])
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [conductorCode])
 
   // Director: broadcast song when activeSongSbpId changes
   useEffect(() => {
@@ -135,6 +206,8 @@ export function useConductorSync({ conductorCode, directorToken, activeSongSbpId
 
   return {
     live,
+    phase,
+    broadcastTime,
     currentSbpId,
     followerCount,
     isFollowing,

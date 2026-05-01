@@ -40,6 +40,7 @@ export default function App() {
   const displaySettings = useDisplaySettings()
   const [shareSongs, setShareSongs] = useState(null)
   const directorTokenRef = useRef(null)
+  const broadcastTimeRef = useRef(null)
 
   useEffect(() => { init() }, [init])
 
@@ -65,6 +66,7 @@ export default function App() {
     const shareCode = params.get('share')
     const directorToken = params.get('director') || null
     directorTokenRef.current = directorToken
+    broadcastTimeRef.current = params.get('bt') || null
     if (!shareCode) return
 
     fetchShare(shareCode)
@@ -98,6 +100,7 @@ export default function App() {
     const url = new URL(window.location.href)
     url.searchParams.delete('share')
     url.searchParams.delete('director')
+    url.searchParams.delete('bt')
     window.history.replaceState({}, '', url.toString())
   }
 
@@ -113,6 +116,10 @@ export default function App() {
         if (directorTokenRef.current) {
           updates.conductorDirectorToken = directorTokenRef.current
           directorTokenRef.current = null
+        }
+        if (broadcastTimeRef.current) {
+          updates.conductorBroadcastTime = broadcastTimeRef.current
+          broadcastTimeRef.current = null
         }
         updateCollection(collectionId, updates)
       }
@@ -131,6 +138,7 @@ export default function App() {
   const conductorSync = useConductorSync({
     conductorCode: conductorCollection?.conductorCode ?? null,
     directorToken: conductorCollection?.conductorDirectorToken ?? null,
+    broadcastTime: conductorCollection?.conductorBroadcastTime ?? null,
     activeSongSbpId: activeSong?.meta?.sbpId ?? null,
     onAddToast: addToast,
   })

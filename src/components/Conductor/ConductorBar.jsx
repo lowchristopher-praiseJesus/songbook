@@ -1,7 +1,7 @@
 // src/components/Conductor/ConductorBar.jsx
 export function ConductorBar({ sync }) {
-  const { live, isDirector, isFollowing, isBroadcasting, followerCount,
-          startBroadcast, stopBroadcast, followDirector, stopFollowing } = sync
+  const { live, phase, broadcastTime, isDirector, isFollowing, isBroadcasting,
+          followerCount, startBroadcast, stopBroadcast, followDirector, stopFollowing } = sync
 
   if (isDirector) {
     if (!isBroadcasting) {
@@ -36,7 +36,26 @@ export function ConductorBar({ sync }) {
     )
   }
 
-  // Follower
+  // Follower states
+  if (phase === 'dormant') {
+    const timeLabel = broadcastTime
+      ? new Date(broadcastTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+      : null
+    return (
+      <span className="text-xs text-gray-500 dark:text-gray-400">
+        {timeLabel ? `Broadcast scheduled for ${timeLabel}` : 'Broadcast not yet started'}
+      </span>
+    )
+  }
+
+  if (phase === 'ended') {
+    return (
+      <span className="text-xs text-gray-500 dark:text-gray-400">
+        Broadcast has ended
+      </span>
+    )
+  }
+
   if (!live) return null
 
   if (!isFollowing) {

@@ -29,16 +29,22 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers() })
 
 describe('useConductorSync', () => {
-  it('polls fetchConductorStatus every second when conductorCode is set', async () => {
+  it('polls fetchConductorStatus with exponential backoff when conductorCode is set', async () => {
+    // First call: immediate. Second call: after 5s. No third call within 10s total.
     renderHook(() => useConductorSync({
       conductorCode: 'ABC123',
       directorToken: null,
+      broadcastTime: null,
       activeSongSbpId: null,
       onAddToast: vi.fn(),
     }))
-    await act(async () => { vi.advanceTimersByTime(3000) })
+    // Immediate call fires on mount
+    await act(async () => { vi.advanceTimersByTime(0) })
+    expect(api.fetchConductorStatus).toHaveBeenCalledTimes(1)
+    // Second call fires after 5s backoff
+    await act(async () => { vi.advanceTimersByTime(5000) })
+    expect(api.fetchConductorStatus).toHaveBeenCalledTimes(2)
     expect(api.fetchConductorStatus).toHaveBeenCalledWith('ABC123')
-    expect(api.fetchConductorStatus.mock.calls.length).toBeGreaterThanOrEqual(3)
   })
 
   it('does not poll when conductorCode is null', async () => {

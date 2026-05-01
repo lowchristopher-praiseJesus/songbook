@@ -15,6 +15,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [conductorEnabled, setConductorEnabled] = useState(false)
   const maxCap = Number(import.meta.env.VITE_CONDUCTOR_MAX_FOLLOWERS ?? 20)
   const [maxFollowers, setMaxFollowers] = useState(maxCap)
+  const [broadcastTime, setBroadcastTime] = useState('')
 
   // Sync nameValue from prop each time the modal opens (useState initial value
   // is only evaluated once on mount, so prop changes after mount are ignored).
@@ -73,11 +74,15 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
           setStep('error')
           return
         }
+        const memberUrl = broadcastTime
+          ? `${result.shareUrl}&bt=${encodeURIComponent(new Date(broadcastTime).toISOString())}`
+          : result.shareUrl
         const directorUrl = `${result.shareUrl}&director=${directorToken}`
-        setConductorData({ conductorCode, directorToken, directorUrl, memberUrl: result.shareUrl })
+        setConductorData({ conductorCode, directorToken, directorUrl, memberUrl })
+        setShareUrl(memberUrl)
+      } else {
+        setShareUrl(result.shareUrl)
       }
-
-      setShareUrl(result.shareUrl)
       setExpiresAt(result.expiresAt)
       setStep('done')
     } catch (err) {
@@ -141,6 +146,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     setShareLyricsOnly(false);
     setConductorEnabled(false);
     setMaxFollowers(maxCap);
+    setBroadcastTime('');
     setConductorData(null);
     onClose();
   }
@@ -217,22 +223,41 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
               <span className="text-sm text-gray-700 dark:text-gray-300">Enable Conductor Broadcast</span>
             </button>
             {conductorEnabled && (
-              <div className="mt-3 flex items-center gap-3">
-                <label className="text-sm text-gray-600 dark:text-gray-400 shrink-0" htmlFor="maxFollowers">
-                  Max followers
-                </label>
-                <input
-                  id="maxFollowers"
-                  type="number"
-                  min={1}
-                  max={maxCap}
-                  value={maxFollowers}
-                  onChange={e => setMaxFollowers(Math.min(Number(e.target.value), maxCap))}
-                  className="w-20 rounded-lg border border-gray-300 dark:border-gray-600
-                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
-                  aria-label="Max followers"
-                />
-                <span className="text-xs text-gray-400">(max: {maxCap})</span>
+              <div className="mt-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-600 dark:text-gray-400 shrink-0" htmlFor="maxFollowers">
+                    Max followers
+                  </label>
+                  <input
+                    id="maxFollowers"
+                    type="number"
+                    min={1}
+                    max={maxCap}
+                    value={maxFollowers}
+                    onChange={e => setMaxFollowers(Math.min(Number(e.target.value), maxCap))}
+                    className="w-20 rounded-lg border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
+                    aria-label="Max followers"
+                  />
+                  <span className="text-xs text-gray-400">(max: {maxCap})</span>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1" htmlFor="broadcastTime">
+                    Scheduled broadcast time <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+                  </label>
+                  <input
+                    id="broadcastTime"
+                    type="datetime-local"
+                    value={broadcastTime}
+                    onChange={e => setBroadcastTime(e.target.value)}
+                    className="rounded-lg border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
+                    aria-label="Scheduled broadcast time"
+                  />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Followers won't probe the server until 30 min before this time.
+                  </p>
+                </div>
               </div>
             )}
           </div>
