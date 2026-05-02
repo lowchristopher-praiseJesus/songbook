@@ -16,6 +16,7 @@ import { useSessionStore } from './store/sessionStore'
 import { SessionView } from './components/Session/SessionView'
 import { saveSessionHistory } from './lib/storage'
 import { useConductorSync } from './hooks/useConductorSync'
+import { useMetronome } from './hooks/useMetronome'
 import { ConductorBar } from './components/Conductor/ConductorBar'
 
 export default function App() {
@@ -37,6 +38,9 @@ export default function App() {
   const [sessionLyricsOnly, setSessionLyricsOnly] = useState(false)
   const effectiveLyricsOnly = lyricsOnly || sessionLyricsOnly
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
+  const [metronomeBpm, setMetronomeBpm] = useLocalStorage('songsheet_metronome_bpm', 120)
+  const [metronomeEnabled, setMetronomeEnabled] = useLocalStorage('songsheet_metronome_enabled', false)
+  const { isFlashing } = useMetronome(metronomeBpm, metronomeEnabled)
   const displaySettings = useDisplaySettings()
   const [shareSongs, setShareSongs] = useState(null)
   const directorTokenRef = useRef(null)
@@ -157,7 +161,7 @@ export default function App() {
     <ThemeProvider>
       <div className="flex flex-col h-[100dvh] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         {/* Top Nav */}
-        <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <header className={`flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0 transition-colors duration-75 ${isFlashing ? 'bg-red-500/40' : ''}`}>
           <div className="flex items-center gap-2">
             <button
               className="md:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -212,7 +216,7 @@ export default function App() {
                 onStartSession={handleStartSession}
                 onJoinSession={handleJoinSession}
               />
-              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} />
+              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} />
             </>
           )}
         </div>
@@ -226,6 +230,8 @@ export default function App() {
           displaySettings={displaySettings}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
+          metronomeBpm={metronomeBpm}
+          onMetronomeBpmChange={setMetronomeBpm}
         />
       )}
       <ImportConfirmModal

@@ -13,8 +13,9 @@ import { buildNavOrder } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
+import metronomeIcon from '../../assets/metronome.png'
 
-export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess }) {
+export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -273,6 +274,18 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                   }`}
                 aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
               >{isScrolling ? '⏹' : '▶'}</button>
+              <button
+                type="button"
+                onClick={onMetronomeToggle}
+                className={`w-11 h-11 flex items-center justify-center rounded-full
+                  text-gray-700 dark:text-gray-300 text-lg leading-none select-none
+                  active:opacity-100 transition-opacity duration-150
+                  ${metronomeEnabled
+                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
+                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
+                  }`}
+                aria-label={metronomeEnabled ? 'Disable metronome flash' : 'Enable metronome flash'}
+              ><img src={metronomeIcon} alt="" className="w-6 h-6 object-contain" /></button>
             </>
           )}
         </div>
