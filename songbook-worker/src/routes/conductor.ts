@@ -3,7 +3,7 @@ import type { Env } from '../types';
 import { CONDUCTOR } from '../config';
 import {
   getConductor, putConductor,
-  countActiveFollowers, isConductorExpired,
+  countActiveFollowers, isConductorExpired, isConductorTerminated,
 } from '../lib/conductor';
 import type { ConductorData } from '../lib/conductor';
 
@@ -49,13 +49,14 @@ conductor.get('/:code/status', async (c) => {
   const code = c.req.param('code');
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
-  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
 
   return c.json({
     live: data.live,
     currentSbpId: data.currentSbpId,
     version: data.version,
     followerCount: countActiveFollowers(data),
+    expiresAt: data.expiresAt,
   });
 });
 
@@ -69,7 +70,7 @@ conductor.post('/:code/start', async (c) => {
   const token = c.req.header('X-Director-Token');
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
-  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
   if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
 
   await putConductor(c.env.SESSION_KV, { ...data, live: true });
@@ -82,7 +83,7 @@ conductor.post('/:code/current', async (c) => {
   const token = c.req.header('X-Director-Token');
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
-  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
   if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
 
   let body: { sbpId?: unknown };
@@ -100,11 +101,40 @@ conductor.post('/:code/stop', async (c) => {
   const token = c.req.header('X-Director-Token');
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
-  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
   if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
 
   await putConductor(c.env.SESSION_KV, { ...data, live: false, currentSbpId: null });
   return c.json({ ok: true });
+});
+
+// POST /conductor/:code/end
+conductor.post('/:code/end', async (c) => {
+  const code = c.req.param('code');
+  const token = c.req.header('X-Director-Token');
+  const data = await getConductor(c.env.SESSION_KV, code);
+  if (!data) return c.json({ ok: true }); // idempotent: already gone
+  if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
+  if (isConductorTerminated(data)) return c.json({ ok: true }); // already terminated
+  await putConductor(c.env.SESSION_KV, { ...data, terminated: true, live: false, currentSbpId: null });
+  return c.json({ ok: true });
+});
+
+// POST /conductor/:code/preview
+conductor.post('/:code/preview', async (c) => {
+  const code = c.req.param('code');
+  const token = c.req.header('X-Director-Token');
+  const data = await getConductor(c.env.SESSION_KV, code);
+  if (!data) return c.json({ error: 'not_found' }, 404);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
+  if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
+
+  let body: { sbpId?: unknown };
+  try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
+  if (typeof body.sbpId !== 'number') return c.json({ error: 'missing_sbp_id' }, 400);
+
+  await putConductor(c.env.SESSION_KV, { ...data, currentSbpId: body.sbpId, version: data.version + 1 });
+  return c.json({ ok: true, currentSbpId: body.sbpId, version: data.version + 1 });
 });
 
 // POST /conductor/:code/join
@@ -117,7 +147,7 @@ conductor.post('/:code/join', async (c) => {
 
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
-  if (isConductorExpired(data)) return c.json({ error: 'expired' }, 410);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
 
   const clientId = body.clientId;
   const alreadyRegistered = !!data.followers[clientId];
@@ -143,6 +173,7 @@ conductor.post('/:code/heartbeat', async (c) => {
 
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
+  if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
 
   const clientId = body.clientId;
   if (!data.followers[clientId]) return c.json({ error: 'not_registered' }, 404);

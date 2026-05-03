@@ -15,6 +15,7 @@ export interface ConductorData {
   version: number;
   followers: Record<string, ConductorFollower>;
   expiresAt: string;
+  terminated?: boolean;   // set by /end; causes 410 on all subsequent reads
 }
 
 export { generateCode };
@@ -63,4 +64,8 @@ export function stripStaleFollowers(data: ConductorData): ConductorData {
 
 export function isConductorExpired(data: ConductorData): boolean {
   return new Date(data.expiresAt).getTime() <= Date.now();
+}
+
+export function isConductorTerminated(data: ConductorData): boolean {
+  return !!data.terminated;
 }

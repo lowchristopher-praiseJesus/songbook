@@ -207,6 +207,27 @@ describe('POST /conductor/:code/heartbeat', () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it('returns 410 when session is terminated', async () => {
+    await createConductor({ conductorCode: 'HB_TERM1', directorToken: 'dir-hb' });
+    // Join so a follower entry exists
+    await SELF.fetch('http://localhost/conductor/HB_TERM1/join', {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ clientId: 'cli-1' }),
+    });
+    // Terminate the session
+    await SELF.fetch('http://localhost/conductor/HB_TERM1/end', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-hb' },
+    });
+    // Heartbeat should now return 410
+    const res = await SELF.fetch('http://localhost/conductor/HB_TERM1/heartbeat', {
+      method: 'POST',
+      headers: h,
+      body: JSON.stringify({ clientId: 'cli-1' }),
+    });
+    expect(res.status).toBe(410);
+  });
 });
 
 describe('DELETE /conductor/:code/join', () => {
@@ -222,5 +243,93 @@ describe('DELETE /conductor/:code/join', () => {
 
     const status = await (await SELF.fetch('http://localhost/conductor/LEAVE1/status', { headers: h })).json() as { followerCount: number };
     expect(status.followerCount).toBe(0);
+  });
+});
+
+describe('POST /conductor/:code/end', () => {
+  it('marks session terminated; subsequent status returns 410', async () => {
+    await createConductor({ conductorCode: 'END001', directorToken: 'dir-end' });
+    // start broadcast first
+    await SELF.fetch('http://localhost/conductor/END001/start', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-end' },
+    });
+    const res = await SELF.fetch('http://localhost/conductor/END001/end', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir-end' },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { ok: boolean };
+    expect(body.ok).toBe(true);
+
+    const status = await SELF.fetch('http://localhost/conductor/END001/status', { headers: h });
+    expect(status.status).toBe(410);
+  });
+
+  it('returns 403 with wrong token', async () => {
+    await createConductor({ conductorCode: 'END002', directorToken: 'real-tok' });
+    const res = await SELF.fetch('http://localhost/conductor/END002/end', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'wrong-tok' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('is idempotent: calling /end twice returns 200 both times', async () => {
+    await createConductor({ conductorCode: 'END003', directorToken: 'dir3' });
+    await SELF.fetch('http://localhost/conductor/END003/end', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir3' },
+    });
+    const res2 = await SELF.fetch('http://localhost/conductor/END003/end', {
+      method: 'POST', headers: { ...h, 'X-Director-Token': 'dir3' },
+    });
+    expect(res2.status).toBe(200);
+
+    // Also confirm the session still shows as terminated after the second /end
+    const status = await SELF.fetch('http://localhost/conductor/END003/status', { headers: h });
+    expect(status.status).toBe(410);
+  });
+});
+
+describe('POST /conductor/:code/preview', () => {
+  it('sets currentSbpId without making session live', async () => {
+    await createConductor({ conductorCode: 'PRV001', directorToken: 'dir-prv' });
+    const res = await SELF.fetch('http://localhost/conductor/PRV001/preview', {
+      method: 'POST',
+      headers: { ...h, 'X-Director-Token': 'dir-prv' },
+      body: JSON.stringify({ sbpId: 42 }),
+    });
+    expect(res.status).toBe(200);
+
+    const status = await (await SELF.fetch('http://localhost/conductor/PRV001/status', { headers: h })).json() as { live: boolean; currentSbpId: number };
+    expect(status.live).toBe(false);
+    expect(status.currentSbpId).toBe(42);
+  });
+
+  it('returns 403 with wrong token', async () => {
+    await createConductor({ conductorCode: 'PRV002', directorToken: 'real' });
+    const res = await SELF.fetch('http://localhost/conductor/PRV002/preview', {
+      method: 'POST',
+      headers: { ...h, 'X-Director-Token': 'wrong' },
+      body: JSON.stringify({ sbpId: 1 }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 when sbpId is missing from body', async () => {
+    await createConductor({ conductorCode: 'PRV003', directorToken: 'dir-prv3' });
+    const res = await SELF.fetch('http://localhost/conductor/PRV003/preview', {
+      method: 'POST',
+      headers: { ...h, 'X-Director-Token': 'dir-prv3' },
+      body: JSON.stringify({}), // no sbpId
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /conductor/:code/status includes expiresAt', () => {
+  it('status response includes expiresAt string', async () => {
+    await createConductor({ conductorCode: 'EXPAT1' });
+    const res = await SELF.fetch('http://localhost/conductor/EXPAT1/status', { headers: h });
+    const body = await res.json() as { expiresAt: string };
+    expect(typeof body.expiresAt).toBe('string');
+    expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });
 });
