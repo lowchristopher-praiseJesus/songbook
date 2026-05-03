@@ -9,6 +9,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { PerformanceModal } from '../PerformanceMode/PerformanceModal'
 import { SongEditor } from '../SongEditor/SongEditor'
+import { NewSongEditor } from '../SongEditor/NewSongEditor'
 import { buildNavOrder } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
@@ -23,6 +24,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const selectSong = useLibraryStore(s => s.selectSong)
   const editingSongId = useLibraryStore(s => s.editingSongId)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
+  const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
   const viewMode = useLibraryStore(s => s.viewMode)
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
@@ -133,7 +135,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {editingSongId
+      {isCreatingNewSong
+        ? <NewSongEditor />
+        : editingSongId
         ? <SongEditor songId={editingSongId} />
         : !activeSong
           ? <EmptyState onFileChange={handleFileInput} />

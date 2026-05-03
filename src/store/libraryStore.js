@@ -14,6 +14,7 @@ export const useLibraryStore = create((set, get) => ({
   activeSongId: null,
   activeSong: null,    // Full song object (loaded from localStorage)
   editingSongId: null, // id of the song currently being edited, or null
+  isCreatingNewSong: false,
   isExportMode: false,
   selectedSongIds: new Set(), // Set<id> of songs checked for export
   viewMode: 'collections',   // 'collections' | 'allSongs'
@@ -140,7 +141,7 @@ export const useLibraryStore = create((set, get) => ({
     const song = loadSong(id)
     if (!song) return
     setLastSongId(id)
-    set({ activeSongId: id, activeSong: song, editingSongId: null })
+    set({ activeSongId: id, activeSong: song, editingSongId: null, isCreatingNewSong: false })
   },
 
   /**
@@ -230,6 +231,10 @@ export const useLibraryStore = create((set, get) => ({
    */
   setEditingSongId(id) {
     set({ editingSongId: id })
+  },
+
+  setIsCreatingNewSong(val) {
+    set({ isCreatingNewSong: val })
   },
 
   /**

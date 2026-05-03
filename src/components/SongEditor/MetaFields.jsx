@@ -4,18 +4,23 @@ const inputClass =
   'px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 ' +
   'bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
-export function MetaFields({ meta, onChange }) {
+export function MetaFields({ meta, onChange, titleError = false, titleRequired = false }) {
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
       <label className="flex flex-col gap-0.5">
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</span>
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          Title {titleRequired && <span className="text-red-500">*</span>}
+        </span>
         <input
           type="text"
           value={meta.title ?? ''}
           onChange={e => onChange('title', e.target.value)}
-          className={`w-48 ${inputClass}`}
+          className={`w-48 ${inputClass} ${titleError ? 'border-red-500 focus:ring-red-500' : ''}`}
           aria-label="Title"
         />
+        {titleError && (
+          <span className="text-xs text-red-500">Title is required</span>
+        )}
       </label>
 
       <label className="flex flex-col gap-0.5">

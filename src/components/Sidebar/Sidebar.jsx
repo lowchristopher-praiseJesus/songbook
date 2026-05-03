@@ -38,6 +38,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
+  const setIsCreatingNewSong = useLibraryStore(s => s.setIsCreatingNewSong)
   const createCollection = useLibraryStore(s => s.createCollection)
   const duplicateCollection = useLibraryStore(s => s.duplicateCollection)
   const selectSong = useLibraryStore(s => s.selectSong)
@@ -283,6 +284,19 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           </>
         ) : viewMode === 'allSongs' ? (
           <>
+            <li>
+              <button
+                type="button"
+                onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
+                className="w-full flex items-center gap-1 px-2 py-1 text-xs
+                  text-indigo-500 dark:text-indigo-400
+                  border border-dashed border-gray-300 dark:border-gray-600 rounded
+                  hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
+                  transition-colors"
+              >
+                + New Song
+              </button>
+            </li>
             {index.length > 0
               ? <AllSongsList entries={index} onSelect={onSongSelect} />
               : (
