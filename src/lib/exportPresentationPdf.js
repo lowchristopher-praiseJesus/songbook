@@ -10,9 +10,13 @@ const USABLE_H = PAGE_H - MARGIN_TOP - MARGIN_BOTTOM  // 450 pt
 const MAX_FONT = 32
 const MIN_FONT = 8
 const COL_GAP = 40
-const COL_W = (MAX_W - COL_GAP) / 2           // 400 pt per column
-const COL1_CX = MARGIN_X + COL_W / 2          // 260 pt (left column centre)
+const COL_W = (MAX_W - COL_GAP) / 2                      // 400 pt per column
+const COL1_CX = MARGIN_X + COL_W / 2                     // 260 pt (left column centre)
 const COL2_CX = MARGIN_X + COL_W + COL_GAP + COL_W / 2  // 700 pt (right column centre)
+const COL3_W  = (MAX_W - COL_GAP * 2) / 3                // ≈ 253.3 pt per column (3-col)
+const COL1_3CX = MARGIN_X + COL3_W / 2                                       // ≈ 186.7 pt
+const COL2_3CX = MARGIN_X + COL3_W + COL_GAP + COL3_W / 2                   // 480 pt (exact)
+const COL3_3CX = MARGIN_X + 2 * (COL3_W + COL_GAP) + COL3_W / 2            // ≈ 773.3 pt
 const TWO_COL_THRESHOLD = PAGE_H * 0.75        // 405 pt — use two columns when lyric content exceeds this
 
 // ---------------------------------------------------------------------------
@@ -154,14 +158,104 @@ function splitSections(doc, sections, fontSize, contentH) {
 }
 
 /**
- * Starting at desiredFont, step down up to 2pt until the song fits
- * within the given column constraint, or return desiredFont-2 as fallback.
+ * Split sections into three roughly balanced columns for three-column layout.
+ * Returns { left, middle, right } where each is an array of section objects.
+ *
+ * Strategy mirrors splitSections:
+ *   - 1 section  → split lines at height thirds
+ *   - 2 sections → first section in left; split second at height midpoint
+ *   - 3+ sections → find the most balanced pair of section-boundary splits
+ *                   where all three columns fit within contentH
+ *
+ * @param {jsPDF} doc
+ * @param {Section[]} sections
+ * @param {number} fontSize
+ * @param {number} contentH  Available column height (USABLE_H minus header height)
+ */
+function splitSections3(doc, sections, fontSize, contentH) {
+  const filtered = sections.filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
+  if (filtered.length === 0) return { left: [], middle: [], right: [] }
+
+  if (filtered.length === 1) {
+    const section = filtered[0]
+    const lines = section.lines ?? []
+    if (lines.filter(l => l.type !== 'chord').length <= 2) return { left: filtered, middle: [], right: [] }
+
+    const totalH = measureSections(doc, filtered, fontSize, COL3_W)
+    const third = totalH / 3
+    let accumulated = 0
+    let split1 = Math.floor(lines.length / 3)
+    let split2 = Math.floor(2 * lines.length / 3)
+    let found1 = false
+    for (let i = 0; i < lines.length - 1; i++) {
+      accumulated += measureSections(doc, [{ ...section, lines: [lines[i]] }], fontSize, COL3_W)
+      if (!found1 && accumulated >= third) { split1 = i + 1; found1 = true }
+      else if (found1 && accumulated >= 2 * third) { split2 = i + 1; break }
+    }
+    return {
+      left:   [{ ...section, lines: lines.slice(0, split1) }],
+      middle: [{ ...section, label: null, lines: lines.slice(split1, split2) }],
+      right:  [{ ...section, label: null, lines: lines.slice(split2) }],
+    }
+  }
+
+  if (filtered.length === 2) {
+    const sec = filtered[1]
+    const lines = sec.lines ?? []
+    const half = measureSections(doc, [sec], fontSize, COL3_W) / 2
+    let accumulated = 0
+    let splitAt = Math.ceil(lines.length / 2)
+    for (let i = 0; i < lines.length - 1; i++) {
+      accumulated += measureSections(doc, [{ ...sec, lines: [lines[i]] }], fontSize, COL3_W)
+      if (accumulated >= half) { splitAt = i + 1; break }
+    }
+    return {
+      left:   [filtered[0]],
+      middle: [{ ...sec, lines: lines.slice(0, splitAt) }],
+      right:  [{ ...sec, label: null, lines: lines.slice(splitAt) }],
+    }
+  }
+
+  // 3+ sections: find the most balanced valid pair of section-boundary split points.
+  let bestSplit = null
+  let bestBalance = Infinity
+  for (let i = 1; i < filtered.length - 1; i++) {
+    const leftH = measureSections(doc, filtered.slice(0, i), fontSize, COL3_W)
+    if (leftH > contentH) continue
+    for (let j = i + 1; j <= filtered.length - 1; j++) {
+      const midH  = measureSections(doc, filtered.slice(i, j), fontSize, COL3_W)
+      const rightH = measureSections(doc, filtered.slice(j),    fontSize, COL3_W)
+      if (midH <= contentH && rightH <= contentH) {
+        const balance = Math.max(leftH, midH, rightH) - Math.min(leftH, midH, rightH)
+        if (balance < bestBalance) { bestBalance = balance; bestSplit = { i, j } }
+      }
+    }
+  }
+  if (bestSplit !== null) {
+    return {
+      left:   filtered.slice(0, bestSplit.i),
+      middle: filtered.slice(bestSplit.i, bestSplit.j),
+      right:  filtered.slice(bestSplit.j),
+    }
+  }
+
+  // Fallback: even thirds by count
+  const n = filtered.length
+  const i = Math.max(1, Math.floor(n / 3))
+  const j = Math.min(n - 1, Math.floor(2 * n / 3))
+  return { left: filtered.slice(0, i), middle: filtered.slice(i, j), right: filtered.slice(j) }
+}
+
+/**
+ * Starting at desiredFont, step down until the song fits within the given
+ * column constraint, returning the largest font that fits and the layout
+ * column count decided at that font.
  *
  * @param {jsPDF} doc
  * @param {object} song
- * @param {number} desiredFont  Caller-specified starting size
- * @param {number} maxCols      1 = force single-column; 2 = allow two-column
- * @returns {{ font: number }}
+ * @param {number} desiredFont  Starting font size
+ * @param {number} maxCols      1 = single-column only; 2 = up to two columns; 3 = up to three columns
+ * @returns {{ font: number, cols: 1|2|3 }}
  */
 function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible) {
   const sections = song.sections ?? []
@@ -170,17 +264,25 @@ function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVis
     const contentH = USABLE_H - measureHeader(doc, song, fs, annotationsVisible)
 
     if (maxCols === 1) {
-      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= contentH) return { font: fs }
+      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= contentH) return { font: fs, cols: 1 }
     } else {
-      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= TWO_COL_THRESHOLD) return { font: fs }
+      if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= TWO_COL_THRESHOLD) return { font: fs, cols: 1 }
       const { left, right } = splitSections(doc, sections, fs, contentH)
       if (
         measureSections(doc, left, fs, COL_W, annotationsVisible) <= contentH &&
         measureSections(doc, right, fs, COL_W, annotationsVisible) <= contentH
-      ) return { font: fs }
+      ) return { font: fs, cols: 2 }
+      if (maxCols >= 3) {
+        const { left: l3, middle, right: r3 } = splitSections3(doc, sections, fs, contentH)
+        if (
+          measureSections(doc, l3, fs, COL3_W, annotationsVisible) <= contentH &&
+          measureSections(doc, middle, fs, COL3_W, annotationsVisible) <= contentH &&
+          measureSections(doc, r3, fs, COL3_W, annotationsVisible) <= contentH
+        ) return { font: fs, cols: 3 }
+      }
     }
   }
-  return { font: MIN_FONT }
+  return { font: MIN_FONT, cols: maxCols === 1 ? 1 : 2 }
 }
 
 // ---------------------------------------------------------------------------
@@ -303,47 +405,108 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
  * Layout per page:
  *   - Title + artist centred at full-page width
  *   - Sections in single column (centred) when they fit
- *   - Sections in two columns (each centred in its column) when single-column overflows
+ *   - Sections in two columns when single-column overflows
+ *   - Sections in three columns when two-column overflows (requires maxCols=3)
  *
- * Font consistency:
- *   globalFont = min over all songs of findBestFont(song).
- *   Every song renders at globalFont → font variation across pages = 0.
+ * Font modes:
+ *   Default — globalFont = min over all songs of findBestFont(song, desiredFont).
+ *             Every song renders at the same font → zero variation across pages.
+ *   optimizedFont — each song independently maximises its font size starting from
+ *             MAX_FONT=32, so longer songs shrink while shorter songs stay large.
+ *             desiredFont and maxCols are ignored; columns are chosen automatically.
  *
  * @param {Array<{ meta: { title: string, artist: string|null }, sections: Section[] }>} songs
  * @param {HTMLImageElement} bgImage  Pre-loaded image element drawn full-bleed behind each page
- * @param {{ desiredFont?: number, maxCols?: number }} [options]
- *   desiredFont — target font size (8–32); may decrease up to 2pt to fit. Default 20.
- *   maxCols     — maximum columns per page (1 or 2). Default 2.
+ * @param {{ desiredFont?: number, maxCols?: number, annotationsVisible?: boolean, optimizedFont?: boolean }} [options]
+ *   desiredFont    — target font size (8–32); ignored when optimizedFont is true. Default 20.
+ *   maxCols        — maximum columns per page (1, 2, or 3); ignored when optimizedFont is true. Default 2.
+ *   optimizedFont  — when true, each song uses the largest font that fits on one page. Default false.
  */
-export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true } = {}) {
+export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true, optimizedFont = false } = {}) {
   if (!songs.length) return
 
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
 
-  // Pass 1: find the largest font at which every song fits (1 or 2 cols)
-  const globalFont = songs.reduce((min, song) => {
-    const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
-    return Math.min(min, font)
-  }, desiredFont)
+  // Determine per-song fonts.
+  // Optimized mode: each song maximises independently from MAX_FONT, columns auto.
+  //   Prefer single-column when the font reduction required to stay in one column is
+  //   small (≤ PREFER_SINGLE_COL_DELTA pt). Only use two columns for genuinely long
+  //   songs where two-col gives a meaningfully larger font.
+  // Default mode: single global font = min over all songs, honouring desiredFont + maxCols.
+  const PREFER_SINGLE_COL_DELTA = 4
 
-  // Pass 2: render each song at globalFont
+  const songFonts = optimizedFont
+    ? songs.map(song => {
+        // Find the largest font allowing up to 3 columns, then prefer fewer columns
+        // when the font sacrifice is small (≤ PREFER_SINGLE_COL_DELTA pt).
+        const { font: maxFont, cols: maxCols3 } = findBestFontConstrained(doc, song, MAX_FONT, 3, annotationsVisible)
+
+        if (maxCols3 === 1) return maxFont  // already single-col — no trade-off
+
+        if (maxCols3 === 3) {
+          // Try 2-col: prefer over 3-col when font loss is small
+          const { font: twoFont, cols: twoCols } = findBestFontConstrained(doc, song, MAX_FONT, 2, annotationsVisible)
+          if (twoFont >= maxFont - PREFER_SINGLE_COL_DELTA) {
+            if (twoCols === 1) return twoFont  // 2-col search returned single-col
+            const { font: oneFont } = findBestFontConstrained(doc, song, MAX_FONT, 1, annotationsVisible)
+            return oneFont >= twoFont - PREFER_SINGLE_COL_DELTA ? oneFont : twoFont
+          }
+          return maxFont  // 3-col wins
+        }
+
+        // maxCols3 === 2: check if 1-col is close enough
+        const { font: oneFont } = findBestFontConstrained(doc, song, MAX_FONT, 1, annotationsVisible)
+        return oneFont >= maxFont - PREFER_SINGLE_COL_DELTA ? oneFont : maxFont
+      })
+    : (() => {
+        const globalFont = songs.reduce((min, song) => {
+          const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
+          return Math.min(min, font)
+        }, desiredFont)
+        return songs.map(() => globalFont)
+      })()
+
+  const effectiveMaxCols = optimizedFont ? 3 : maxCols
+
+  // In optimized mode use the smallest body font as the common title base so that
+  // all slides share the same title size regardless of lyric length.
+  const titleBase = optimizedFont ? Math.min(...songFonts) : null
+
   songs.forEach((song, i) => {
     if (i > 0) doc.addPage()
 
     doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
 
     const sections = song.sections ?? []
-    const startY = renderHeader(doc, song, globalFont, annotationsVisible)
+    const songFont = songFonts[i]
+    const headerFont = titleBase ?? songFont
+    const startY = renderHeader(doc, song, headerFont, annotationsVisible)
 
-    if (maxCols >= 2 && measureSections(doc, sections, globalFont, MAX_W, annotationsVisible) > TWO_COL_THRESHOLD) {
-      // Two-column layout
+    const totalH = measureSections(doc, sections, songFont, MAX_W, annotationsVisible)
+    if (effectiveMaxCols >= 2 && totalH > TWO_COL_THRESHOLD) {
       const contentH = USABLE_H - (startY - MARGIN_TOP)
-      const { left, right } = splitSections(doc, sections, globalFont, contentH)
-      renderSections(doc, left, globalFont, COL1_CX, COL_W, startY, annotationsVisible)
-      renderSections(doc, right, globalFont, COL2_CX, COL_W, startY, annotationsVisible)
+      const { left, right } = splitSections(doc, sections, songFont, contentH)
+      const twoColFits = (
+        measureSections(doc, left,  songFont, COL_W, annotationsVisible) <= contentH &&
+        measureSections(doc, right, songFont, COL_W, annotationsVisible) <= contentH
+      )
+      if (twoColFits) {
+        renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
+        renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
+      } else if (effectiveMaxCols >= 3) {
+        // Three-column layout
+        const { left: l3, middle, right: r3 } = splitSections3(doc, sections, songFont, contentH)
+        renderSections(doc, l3,     songFont, COL1_3CX, COL3_W, startY, annotationsVisible)
+        renderSections(doc, middle, songFont, COL2_3CX, COL3_W, startY, annotationsVisible)
+        renderSections(doc, r3,     songFont, COL3_3CX, COL3_W, startY, annotationsVisible)
+      } else {
+        // maxCols=2 fallback — font may overflow at MIN_FONT; best effort
+        renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
+        renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
+      }
     } else {
       // Single-column layout
-      renderSections(doc, sections, globalFont, PAGE_W / 2, MAX_W, startY, annotationsVisible)
+      renderSections(doc, sections, songFont, PAGE_W / 2, MAX_W, startY, annotationsVisible)
     }
   })
 

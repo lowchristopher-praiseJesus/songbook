@@ -29,6 +29,7 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
   const [bgImage, setBgImage] = useState(null)
   const [fontSizeStr, setFontSizeStr] = useState('20')
   const [maxCols, setMaxCols] = useState(2)
+  const [optimizedFont, setOptimizedFont] = useState(false)
 
   const activeUrl = customUrl ?? TEMPLATES.find(t => t.id === selectedId)?.url ?? null
 
@@ -72,7 +73,7 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
         const raw = localStorage.getItem('songsheet_annotations_visible')
         if (raw !== null) annotationsVisible = JSON.parse(raw)
       } catch { /* keep default true */ }
-      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols, annotationsVisible })
+      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols, annotationsVisible, optimizedFont })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
@@ -136,8 +137,20 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
           }
         </div>
 
-        {/* Settings row */}
-        <div className="flex gap-4">
+        {/* Optimized font size toggle */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={optimizedFont}
+            onChange={e => setOptimizedFont(e.target.checked)}
+            className="w-4 h-4 accent-indigo-600"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">Optimized Font Size</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">(maximize each song independently)</span>
+        </label>
+
+        {/* Settings row — disabled when optimized font is active */}
+        <div className={`flex gap-4 transition-opacity ${optimizedFont ? 'opacity-40 pointer-events-none' : ''}`}>
           <label className="flex flex-col gap-0.5">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Font size</span>
             <input
@@ -150,6 +163,7 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
                 const clamped = Math.min(32, Math.max(8, Number(e.target.value) || 20))
                 setFontSizeStr(String(clamped))
               }}
+              disabled={optimizedFont}
               className="w-20 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600
                 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
@@ -158,11 +172,12 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Max columns</span>
             <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden">
-              {[1, 2].map(n => (
+              {[1, 2, 3].map(n => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setMaxCols(n)}
+                  disabled={optimizedFont}
                   className={`px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500
                     ${maxCols === n
                       ? 'bg-indigo-600 text-white'
