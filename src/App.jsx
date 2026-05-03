@@ -216,7 +216,7 @@ export default function App() {
                 onStartSession={handleStartSession}
                 onJoinSession={handleJoinSession}
               />
-              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} />
+              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
             </>
           )}
         </div>
@@ -230,8 +230,6 @@ export default function App() {
           displaySettings={displaySettings}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}
-          metronomeBpm={metronomeBpm}
-          onMetronomeBpmChange={setMetronomeBpm}
         />
       )}
       <ImportConfirmModal

@@ -6,7 +6,7 @@ import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/sto
 import { Button } from '../UI/Button'
 import { DisplayTab } from './DisplayTab'
 
-export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, displaySettings, fontSize, onFontSizeChange, metronomeBpm, onMetronomeBpmChange }) {
+export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, displaySettings, fontSize, onFontSizeChange }) {
   const [tab, setTab] = useState('general')
   const { theme, setTheme } = useTheme()
   const index = useLibraryStore(s => s.index)
@@ -107,39 +107,6 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
             </span>
             <span className="text-sm text-gray-700 dark:text-gray-300">Lyrics only (hide chords)</span>
           </button>
-        </div>
-
-        {/* Metronome BPM */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 dark:text-gray-300">Metronome BPM</label>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onMetronomeBpmChange(Math.max(30, metronomeBpm - 5))}
-              disabled={metronomeBpm <= 30}
-              className="w-8 h-8 flex items-center justify-center rounded-full
-                bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300
-                text-lg font-medium leading-none
-                hover:bg-gray-300 dark:hover:bg-gray-500
-                disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label="Decrease BPM by 5"
-            >−</button>
-            <span className="w-12 text-center text-lg font-mono tabular-nums text-gray-900 dark:text-gray-100 select-none">
-              {metronomeBpm}
-            </span>
-            <button
-              type="button"
-              onClick={() => onMetronomeBpmChange(Math.min(300, metronomeBpm + 5))}
-              disabled={metronomeBpm >= 300}
-              className="w-8 h-8 flex items-center justify-center rounded-full
-                bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300
-                text-lg font-medium leading-none
-                hover:bg-gray-300 dark:hover:bg-gray-500
-                disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label="Increase BPM by 5"
-            >+</button>
-          </div>
-          <p className="mt-1 text-xs text-gray-400">Range: 30–300 BPM (step: 5)</p>
         </div>
 
         {/* Firecrawl API Key */}

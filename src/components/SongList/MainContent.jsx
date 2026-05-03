@@ -16,7 +16,7 @@ import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 import metronomeIcon from '../../assets/metronome.png'
 
-export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle }) {
+export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -34,6 +34,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
   const [speedMode, setSpeedMode] = useState(false)
+  const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
@@ -41,6 +42,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   useEffect(() => {
     if (!isScrolling) setSpeedMode(false)
   }, [isScrolling])
+
+  useEffect(() => {
+    if (!metronomeEnabled) setBpmMode(false)
+  }, [metronomeEnabled])
 
   const navOrder = buildNavOrder(index, collections, viewMode)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
@@ -219,6 +224,43 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 aria-label="Done adjusting speed"
               >Done</button>
             </>
+          ) : bpmMode ? (
+            <>
+              <button
+                type="button"
+                onClick={() => onMetronomeBpmChange(Math.min(300, metronomeBpm + 5))}
+                disabled={metronomeBpm >= 300}
+                className="w-16 h-16 flex items-center justify-center rounded-full
+                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
+                  text-3xl font-light leading-none select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Increase BPM"
+              >+</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none">
+                {metronomeBpm}
+              </span>
+              <button
+                type="button"
+                onClick={() => onMetronomeBpmChange(Math.max(30, metronomeBpm - 5))}
+                disabled={metronomeBpm <= 30}
+                className="w-16 h-16 flex items-center justify-center rounded-full
+                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
+                  text-3xl font-light leading-none select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150
+                  disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label="Decrease BPM"
+              >−</button>
+              <button
+                type="button"
+                onClick={() => setBpmMode(false)}
+                className="mt-1 px-4 py-2 rounded-full
+                  bg-indigo-500/40 dark:bg-indigo-400/30
+                  text-gray-800 dark:text-gray-200 text-sm font-medium select-none
+                  opacity-80 active:opacity-100 transition-opacity duration-150"
+                aria-label="Done adjusting BPM"
+              >Done</button>
+            </>
           ) : (
             <>
               <button
@@ -278,9 +320,20 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                   }`}
                 aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
               >{isScrolling ? '⏹' : '▶'}</button>
+              {metronomeEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setBpmMode(true)}
+                  className="w-11 h-7 flex items-center justify-center rounded-full
+                    bg-gray-500/20 dark:bg-white/10
+                    text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none
+                    opacity-60 active:opacity-100 transition-opacity duration-150"
+                  aria-label="Adjust metronome BPM"
+                >{metronomeBpm}</button>
+              )}
               <button
                 type="button"
-                onClick={onMetronomeToggle}
+                onClick={metronomeEnabled ? onMetronomeToggle : () => { onMetronomeToggle(); setBpmMode(true) }}
                 className={`w-11 h-11 flex items-center justify-center rounded-full
                   text-gray-700 dark:text-gray-300 text-lg leading-none select-none
                   active:opacity-100 transition-opacity duration-150
