@@ -50,6 +50,20 @@ export const useLibraryStore = create((set, get) => ({
     })
     if (collectionsChanged) saveCollections(collections)
 
+    // Conductor role migration: assign conductorRole to legacy records that predate the field
+    let conductorMigrated = false
+    collections = collections.map(c => {
+      if (c.conductorCode && !c.conductorRole) {
+        conductorMigrated = true
+        return {
+          ...c,
+          conductorRole: c.conductorDirectorToken ? 'conductor' : 'follower',
+        }
+      }
+      return c
+    })
+    if (conductorMigrated) saveCollections(collections)
+
     const activeSong = lastId ? loadSong(lastId) : null
 
     set({
@@ -373,6 +387,30 @@ export const useLibraryStore = create((set, get) => ({
     const collections = get().collections.map(c =>
       c.id === collectionId ? { ...c, ...updates } : c
     )
+    saveCollections(collections)
+    set({ collections })
+  },
+
+  /**
+   * Strip all conductor broadcast fields from a collection, leaving its songs intact.
+   * Used by "Forget broadcast" in BroadcastsPanel.
+   */
+  clearBroadcastFields(collectionId) {
+    const collections = get().collections.map(c => {
+      if (c.id !== collectionId) return c
+      const {
+        conductorCode: _cc,
+        conductorDirectorToken: _cdt,
+        conductorBroadcastTime: _cbt,
+        conductorRole: _cr,
+        conductorShareCode: _csc,
+        conductorCreatedAt: _cca,
+        conductorExpiresAt: _cea,
+        conductorEnded: _ce,
+        ...rest
+      } = c
+      return rest
+    })
     saveCollections(collections)
     set({ collections })
   },
