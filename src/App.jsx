@@ -19,6 +19,7 @@ import { useConductorSync } from './hooks/useConductorSync'
 import { useMetronome } from './hooks/useMetronome'
 import { ConductorBar } from './components/Conductor/ConductorBar'
 import { ConductorJoinModal } from './components/Conductor/ConductorJoinModal'
+import { BroadcastWaitingBanner } from './components/Conductor/BroadcastWaitingBanner'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -29,6 +30,7 @@ export default function App() {
   const updateCollection = useLibraryStore(state => state.updateCollection)
   const collections = useLibraryStore(s => s.collections)
   const activeSong = useLibraryStore(s => s.activeSong)
+  const index = useLibraryStore(s => s.index)
   const { toasts, addToast } = useToast()
   const [activeSession, setActiveSession] = useState(null) // { code, leaderToken } | null
   const initClient = useSessionStore(s => s.initClient)
@@ -145,6 +147,10 @@ export default function App() {
     onAddToast: addToast,
   })
 
+  const previewSongTitle = conductorSync.currentSbpId != null
+    ? (index.find(e => e.sbpId === conductorSync.currentSbpId)?.title ?? null)
+    : null
+
   function handleToggleLyricsOnly() {
     setSessionLyricsOnly(false)
     setLyricsOnly(!effectiveLyricsOnly)
@@ -248,6 +254,20 @@ export default function App() {
             />
           ) : (
             <>
+              {conductorCollection?.conductorRole === 'follower' &&
+                ['dormant', 'waiting', 'ended'].includes(conductorSync.phase) && (
+                <div className="absolute inset-x-0 top-0 z-10">
+                  <BroadcastWaitingBanner
+                    phase={conductorSync.phase}
+                    broadcastTime={conductorCollection.conductorBroadcastTime ?? null}
+                    collectionName={conductorCollection.name}
+                    previewSongTitle={previewSongTitle}
+                    onForget={() => {
+                      useLibraryStore.getState().clearBroadcastFields(conductorCollection.id)
+                    }}
+                  />
+                </div>
+              )}
               <Sidebar
                 isOpen={sidebarOpen}
                 onAddToast={addToast}
