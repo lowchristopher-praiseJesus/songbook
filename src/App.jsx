@@ -18,6 +18,7 @@ import { saveSessionHistory } from './lib/storage'
 import { useConductorSync } from './hooks/useConductorSync'
 import { useMetronome } from './hooks/useMetronome'
 import { ConductorBar } from './components/Conductor/ConductorBar'
+import { ConductorJoinModal } from './components/Conductor/ConductorJoinModal'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -45,6 +46,8 @@ export default function App() {
   const [shareSongs, setShareSongs] = useState(null)
   const directorTokenRef = useRef(null)
   const broadcastTimeRef = useRef(null)
+  const [conductorTokenFromUrl, setConductorTokenFromUrl] = useState(null)
+  const [broadcastTimeFromUrl, setBroadcastTimeFromUrl] = useState(null)
 
   useEffect(() => { init() }, [init])
 
@@ -68,9 +71,12 @@ export default function App() {
     }
 
     const shareCode = params.get('share')
-    const directorToken = params.get('director') || null
+    const directorToken = params.get('conductor_token') || params.get('director') || null
     directorTokenRef.current = directorToken
-    broadcastTimeRef.current = params.get('bt') || null
+    setConductorTokenFromUrl(directorToken)
+    const broadcastTimeVal = params.get('bt') || null
+    broadcastTimeRef.current = broadcastTimeVal
+    setBroadcastTimeFromUrl(broadcastTimeVal)
     if (!shareCode) return
 
     fetchShare(shareCode)
@@ -104,6 +110,7 @@ export default function App() {
     const url = new URL(window.location.href)
     url.searchParams.delete('share')
     url.searchParams.delete('director')
+    url.searchParams.delete('conductor_token')
     url.searchParams.delete('bt')
     window.history.replaceState({}, '', url.toString())
   }
@@ -115,18 +122,6 @@ export default function App() {
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
-      if (collectionId && shareSongs.conductorCode) {
-        const updates = { conductorCode: shareSongs.conductorCode }
-        if (directorTokenRef.current) {
-          updates.conductorDirectorToken = directorTokenRef.current
-          directorTokenRef.current = null
-        }
-        if (broadcastTimeRef.current) {
-          updates.conductorBroadcastTime = broadcastTimeRef.current
-          broadcastTimeRef.current = null
-        }
-        updateCollection(collectionId, updates)
-      }
       setSidebarOpen(true)
       if (newSongIds.length > 0) {
         setViewMode('collections')
@@ -156,6 +151,49 @@ export default function App() {
   }
 
   function handleShareCancel() {
+    setShareSongs(null)
+    clearShareParam()
+  }
+
+  function handleConductorShareImport(role) {
+    if (!shareSongs) return
+    const name = shareSongs.collectionName || 'Shared Songs'
+    const { newSongIds, collectionId } = addSongs(shareSongs.songs, name)
+    const count = shareSongs.songs.length
+    addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
+    if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
+    if (collectionId && shareSongs.conductorCode) {
+      const updates = {
+        conductorCode: shareSongs.conductorCode,
+        conductorRole: role,
+      }
+      if (conductorTokenFromUrl) {
+        updates.conductorDirectorToken = conductorTokenFromUrl
+        setConductorTokenFromUrl(null)
+      }
+      if (broadcastTimeFromUrl) {
+        updates.conductorBroadcastTime = broadcastTimeFromUrl
+        setBroadcastTimeFromUrl(null)
+      }
+      updateCollection(collectionId, updates)
+    }
+    setSidebarOpen(true)
+    if (newSongIds.length > 0) {
+      setViewMode('collections')
+      setExpandedCollectionId(collectionId)
+      selectSong(newSongIds[0])
+    }
+    setShareSongs(null)
+    clearShareParam()
+  }
+
+  function handleConductorRejoin() {
+    const existing = collections.find(c => c.conductorCode === shareSongs?.conductorCode)
+    if (existing && existing.songIds.length > 0) {
+      setViewMode('collections')
+      setExpandedCollectionId(existing.id)
+      selectSong(existing.songIds[0])
+    }
     setShareSongs(null)
     clearShareParam()
   }
@@ -236,14 +274,26 @@ export default function App() {
           onFontSizeChange={setFontSize}
         />
       )}
-      <ImportConfirmModal
-        isOpen={shareSongs !== null}
-        songs={shareSongs?.songs ?? []}
-        collectionName={shareSongs?.collectionName ?? null}
-        lyricsOnly={shareSongs?.lyricsOnly ?? false}
-        onImport={handleShareImport}
-        onCancel={handleShareCancel}
-      />
+      {shareSongs?.conductorCode ? (
+        <ConductorJoinModal
+          isOpen={shareSongs !== null}
+          shareSongs={shareSongs}
+          conductorToken={conductorTokenFromUrl}
+          broadcastTime={broadcastTimeFromUrl}
+          onImport={(role) => handleConductorShareImport(role)}
+          onRejoin={handleConductorRejoin}
+          onCancel={handleShareCancel}
+        />
+      ) : (
+        <ImportConfirmModal
+          isOpen={shareSongs !== null}
+          songs={shareSongs?.songs ?? []}
+          collectionName={shareSongs?.collectionName ?? null}
+          lyricsOnly={shareSongs?.lyricsOnly ?? false}
+          onImport={handleShareImport}
+          onCancel={handleShareCancel}
+        />
+      )}
     </ThemeProvider>
   )
 }
