@@ -1,10 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ShareModal } from '../components/Share/ShareModal';
+import { useLibraryStore } from '../store/libraryStore';
 
 vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn() }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));
+vi.mock('../lib/conductorApi', () => ({
+  createConductorSession: vi.fn().mockResolvedValue({}),
+}));
 
 import { uploadShare } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';
@@ -17,7 +21,7 @@ beforeEach(() => {
 
 describe('ShareModal', () => {
   it('renders title and default 7-day expiry when open', () => {
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     expect(screen.getByText('Share via link')).toBeInTheDocument();
     expect(screen.getByDisplayValue('7 days')).toBeInTheDocument();
     expect(screen.getByText('1 song will be shared.')).toBeInTheDocument();
@@ -25,7 +29,7 @@ describe('ShareModal', () => {
 
   it('shows uploading spinner after clicking Create link', async () => {
     uploadShare.mockReturnValue(new Promise(() => {})); // never resolves
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByText('Uploading…')).toBeInTheDocument();
   });
@@ -36,7 +40,7 @@ describe('ShareModal', () => {
       shareUrl: 'http://app?share=abc',
       expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
     });
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByDisplayValue('http://app?share=abc')).toBeInTheDocument();
     expect(screen.getByText('Copy')).toBeInTheDocument();
@@ -44,7 +48,7 @@ describe('ShareModal', () => {
 
   it('shows error message and Retry button on upload failure', async () => {
     uploadShare.mockRejectedValue(Object.assign(new Error('fail'), { code: 'upload_failed' }));
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByText('Retry')).toBeInTheDocument();
     expect(screen.getByText(/Upload failed/)).toBeInTheDocument();
@@ -52,7 +56,7 @@ describe('ShareModal', () => {
 
   it('resets to idle when Retry is clicked', async () => {
     uploadShare.mockRejectedValue(new Error('fail'));
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     const retryBtn = await screen.findByText('Retry');
     fireEvent.click(retryBtn);
@@ -60,7 +64,7 @@ describe('ShareModal', () => {
   });
 
   it('renders "Share lyrics only" toggle unchecked by default', () => {
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     const toggle = screen.getByRole('switch', { name: /share lyrics only/i });
     expect(toggle).toBeInTheDocument();
     expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -72,7 +76,7 @@ describe('ShareModal', () => {
       shareUrl: 'http://app?share=x',
       expiresAt: new Date().toISOString(),
     });
-    render(<ShareModal isOpen songs={songs} onClose={() => {}} />);
+    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('switch', { name: /share lyrics only/i }));
     fireEvent.click(screen.getByText('Create link'));
     await screen.findByDisplayValue('http://app?share=x');
@@ -84,3 +88,41 @@ describe('ShareModal', () => {
     );
   });
 });
+
+describe('ShareModal — self-direct conductor path', () => {
+  it('calls updateCollection with conductorRole "conductor" when selfDirect is on and collectionId is provided', async () => {
+    const { uploadShare } = await import('../lib/shareApi')
+    uploadShare.mockResolvedValue({
+      shareCode: 'sc1',
+      shareUrl: 'http://app?share=sc1',
+      expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+    })
+
+    const { createConductorSession } = await import('../lib/conductorApi')
+    vi.mock('../lib/conductorApi', () => ({
+      createConductorSession: vi.fn().mockResolvedValue({}),
+    }))
+
+    useLibraryStore.setState({
+      collections: [{ id: 'col-99', name: 'Easter', songIds: [], createdAt: '' }],
+    })
+
+    render(<ShareModal isOpen songs={songs} collectionId="col-99" onClose={() => {}} />)
+
+    // Enable conductor broadcast
+    const conductorToggle = screen.getByRole('switch', { name: /enable conductor broadcast/i })
+    fireEvent.click(conductorToggle)
+
+    // selfDirect is on by default, click Create link
+    fireEvent.click(screen.getByText(/create link/i))
+
+    // Wait for done step
+    await screen.findByText(/you're set up as the conductor/i)
+
+    // Verify collection was updated
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'col-99')
+    expect(col.conductorCode).toBeTruthy()
+    expect(col.conductorRole).toBe('conductor')
+    expect(col.conductorDirectorToken).toBeTruthy()
+  })
+})

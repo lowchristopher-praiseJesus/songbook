@@ -137,7 +137,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
             type="checkbox"
             checked={allSelected}
             onChange={() => {
-              onGroupCheckboxChange(allSelected ? null : group.name)
+              onGroupCheckboxChange(allSelected ? null : { name: group.name, id: group.id })
               toggleGroupSelection(groupIds)
             }}
             onClick={e => e.stopPropagation()}

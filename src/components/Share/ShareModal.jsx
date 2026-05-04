@@ -6,8 +6,9 @@ import { uploadShare } from '../../lib/shareApi';
 import { exportSongsAsSbp } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { v4 as uuidv4 } from 'uuid';
+import { useLibraryStore } from '../../store/libraryStore';
 
-export function ShareModal({ isOpen, songs, collectionName, onClose }) {
+export function ShareModal({ isOpen, songs, collectionName, collectionId, onClose }) {
   const [step, setStep] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
@@ -27,8 +28,10 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
   const qrCanvasRef = useRef(null);
-  const [conductorData, setConductorData] = useState(null) // { conductorCode, directorToken, directorUrl, memberUrl }
+  const [conductorData, setConductorData] = useState(null) // { conductorCode, directorToken, directorUrl, memberUrl, selfDirect }
+  const [selfDirect, setSelfDirect] = useState(true)
   const directorQrRef = useRef(null)
+  const updateCollection = useLibraryStore(s => s.updateCollection)
 
   // Render QR code once the done step is visible and canvas is in the DOM
   useEffect(() => {
@@ -78,7 +81,19 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
           ? `${result.shareUrl}&bt=${encodeURIComponent(new Date(broadcastTime).toISOString())}`
           : result.shareUrl
         const directorUrl = `${result.shareUrl}&director=${directorToken}`
-        setConductorData({ conductorCode, directorToken, directorUrl, memberUrl })
+        // Self-direct: wire the conductor token into the existing local collection
+        if (selfDirect && collectionId) {
+          const shareCode = result.shareCode ?? new URL(result.shareUrl).searchParams.get('share')
+          updateCollection(collectionId, {
+            conductorCode,
+            conductorDirectorToken: directorToken,
+            conductorRole: 'conductor',
+            conductorShareCode: shareCode,
+            conductorCreatedAt: new Date().toISOString(),
+            conductorExpiresAt: result.expiresAt,
+          })
+        }
+        setConductorData({ conductorCode, directorToken, directorUrl, memberUrl, selfDirect })
         setShareUrl(memberUrl)
       } else {
         setShareUrl(result.shareUrl)
@@ -148,6 +163,7 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
     setMaxFollowers(maxCap);
     setBroadcastTime('');
     setConductorData(null);
+    setSelfDirect(true);
     onClose();
   }
 
@@ -223,6 +239,26 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
               <span className="text-sm text-gray-700 dark:text-gray-300">Enable Conductor Broadcast</span>
             </button>
             {conductorEnabled && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={selfDirect}
+                  aria-label="I'll be conducting this myself"
+                  onClick={() => setSelfDirect(v => !v)}
+                  className="flex items-center gap-3 w-full text-left"
+                >
+                  <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+                    transition-colors duration-200
+                    ${selfDirect ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                    <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                      ${selfDirect ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">I'll be conducting this myself</span>
+                </button>
+              </div>
+            )}
+            {conductorEnabled && (
               <div className="mt-3 space-y-3">
                 <div className="flex items-center gap-3">
                   <label className="text-sm text-gray-600 dark:text-gray-400 shrink-0" htmlFor="maxFollowers">
@@ -295,8 +331,8 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
             </div>
           </div>
 
-          {/* Director link — only when conductor enabled */}
-          {conductorData && (
+          {/* Director link — only when conductor enabled AND not self-directing */}
+          {conductorData && !conductorData.selfDirect && (
             <div className="border-t border-orange-200 dark:border-orange-800 pt-3">
               <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">
                 Director link &nbsp;⚠ Keep private — gives broadcast control
@@ -313,6 +349,12 @@ export function ShareModal({ isOpen, songs, collectionName, onClose }) {
                 <Button variant="secondary" onClick={() => handleDownloadQr(directorQrRef, 'director-qr.png')}>Save Director QR</Button>
               </div>
             </div>
+          )}
+          {/* Self-directing: reassure user they're set up */}
+          {conductorData?.selfDirect && (
+            <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-3">
+              ✓ You're set up as the Conductor. Open the Broadcasts panel to start when ready.
+            </p>
           )}
 
           <div className="flex justify-end">

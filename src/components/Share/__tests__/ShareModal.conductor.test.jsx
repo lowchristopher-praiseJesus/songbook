@@ -35,10 +35,12 @@ vi.mock('../../../lib/exportSbp.js', () => ({
   exportSongsAsSbp: vi.fn().mockResolvedValue(new Blob()),
 }))
 
-it('shows director link in done step when conductor is enabled', async () => {
+it('shows director link in done step when conductor is enabled and selfDirect is off', async () => {
   render(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
   // Enable conductor
   fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
+  // Turn off selfDirect (it defaults to true) so the director link is shown
+  fireEvent.click(screen.getByLabelText(/i'll be conducting this myself/i))
   // Click Create link
   fireEvent.click(screen.getByText(/create link/i))
   // Wait for done step

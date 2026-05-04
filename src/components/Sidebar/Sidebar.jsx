@@ -48,6 +48,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [collectionDraft, setCollectionDraft] = useState('')
   const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
   const [exportSourceName, setExportSourceName] = useState(null)
+  const [exportSourceCollectionId, setExportSourceCollectionId] = useState(null)
   const creatingEscapeRef = useRef(false)
   const [duplicatingCollectionId, setDuplicatingCollectionId] = useState(null)
   const [duplicateDraft, setDuplicateDraft] = useState('')
@@ -55,7 +56,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
   // Clear tracked collection name when export mode is turned off
   useEffect(() => {
-    if (!isExportMode) setExportSourceName(null)
+    if (!isExportMode) {
+      setExportSourceName(null)
+      setExportSourceCollectionId(null)
+    }
   }, [isExportMode])
 
   // Duplicate resolution: show inline modal, resolve via Promise
@@ -367,7 +371,15 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                     setDuplicatingCollectionId(id)
                     setDuplicateDraft('Copy of ' + group.name)
                   }}
-                  onGroupCheckboxChange={setExportSourceName}
+                  onGroupCheckboxChange={(val) => {
+                    if (val === null) {
+                      setExportSourceName(null)
+                      setExportSourceCollectionId(null)
+                    } else {
+                      setExportSourceName(val.name)
+                      setExportSourceCollectionId(val.id)
+                    }
+                  }}
                 />
                 {duplicatingCollectionId === group.id && (
                   <li>
@@ -559,6 +571,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         isOpen={shareModalOpen}
         songs={selectedSongs}
         collectionName={exportSourceName}
+        collectionId={exportSourceCollectionId}
         onClose={() => { setShareModalOpen(false); toggleExportMode() }}
       />
 
