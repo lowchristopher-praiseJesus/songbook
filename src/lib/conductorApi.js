@@ -78,3 +78,24 @@ export async function leaveBroadcast(code, clientId) {
     body: JSON.stringify({ clientId }),
   })
 }
+
+export async function endBroadcast(code, conductorToken) {
+  const res = await fetch(`${workerUrl()}/conductor/${code}/end`, {
+    method: 'POST',
+    headers: { 'X-Director-Token': conductorToken },
+  })
+  if (res.status === 403) throw Object.assign(new Error('forbidden'), { code: 'forbidden' })
+  if (!res.ok) throw Object.assign(new Error('end_failed'), { code: 'end_failed' })
+  return res.json()
+}
+
+export async function previewSong(code, sbpId, conductorToken) {
+  const res = await fetch(`${workerUrl()}/conductor/${code}/preview`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Director-Token': conductorToken },
+    body: JSON.stringify({ sbpId }),
+  })
+  if (res.status === 403) throw Object.assign(new Error('forbidden'), { code: 'forbidden' })
+  if (!res.ok) throw Object.assign(new Error('preview_failed'), { code: 'preview_failed' })
+  return res.json()
+}
