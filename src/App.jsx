@@ -138,7 +138,10 @@ export default function App() {
     clearShareParam()
   }
 
-  const conductorCollection = collections.find(c => c.conductorCode) ?? null
+  const conductorCollection =
+    collections.find(c => c.conductorCode && (c.conductorRole === 'conductor' || c.conductorRole === 'follower') && !c.conductorEnded) ??
+    collections.find(c => c.conductorCode && !c.conductorEnded) ??
+    null
   const conductorSync = useConductorSync({
     conductorCode: conductorCollection?.conductorCode ?? null,
     directorToken: conductorCollection?.conductorDirectorToken ?? null,

@@ -27,7 +27,6 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
   const [currentSbpId, setCurrentSbpId] = useState(null)
   const [followerCount, setFollowerCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
-  const [isBroadcasting, setIsBroadcasting] = useState(false)
   // 'dormant' → 'waiting' → 'live' → 'ended'  (one-way)
   const [phase, setPhase] = useState('dormant')
 
@@ -139,9 +138,9 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
 
   // Director: broadcast song when activeSongSbpId changes
   useEffect(() => {
-    if (!isDirector || !isBroadcasting || !activeSongSbpId || !conductorCode) return
+    if (!isDirector || !live || !activeSongSbpId || !conductorCode) return
     setCurrentSong(conductorCode, activeSongSbpId, directorToken).catch(() => {})
-  }, [activeSongSbpId, isDirector, isBroadcasting, conductorCode, directorToken])
+  }, [activeSongSbpId, isDirector, live, conductorCode, directorToken])
 
   // Follower: navigate when currentSbpId changes
   useEffect(() => {
@@ -158,7 +157,6 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     if (!conductorCode || !directorToken) return
     try {
       await startBroadcast(conductorCode, directorToken)
-      setIsBroadcasting(true)
       setLive(true)
       if (activeSongSbpId) {
         await setCurrentSong(conductorCode, activeSongSbpId, directorToken)
@@ -170,7 +168,6 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     if (!conductorCode || !directorToken) return
     try {
       await stopBroadcast(conductorCode, directorToken)
-      setIsBroadcasting(false)
       setLive(false)
     } catch { /* ignore */ }
   }
@@ -211,8 +208,9 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     currentSbpId,
     followerCount,
     isFollowing,
-    isBroadcasting,
+    isBroadcasting: isDirector && live,
     isDirector,
+    conductorCode,
     startBroadcast: handleStartBroadcast,
     stopBroadcast: handleStopBroadcast,
     followDirector: handleFollowDirector,
