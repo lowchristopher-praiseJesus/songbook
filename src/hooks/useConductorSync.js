@@ -138,7 +138,7 @@ export function useConductorSync({ conductorCode, conductorToken, broadcastTime,
 
   // Conductor: broadcast song when activeSongSbpId changes
   useEffect(() => {
-    if (!isConductor || !live || !activeSongSbpId || !conductorCode) return
+    if (!isConductor || !live || activeSongSbpId == null || !conductorCode) return
     setCurrentSong(conductorCode, activeSongSbpId, conductorToken).catch(() => {})
   }, [activeSongSbpId, isConductor, live, conductorCode, conductorToken])
 
@@ -158,7 +158,7 @@ export function useConductorSync({ conductorCode, conductorToken, broadcastTime,
     try {
       await startBroadcast(conductorCode, conductorToken)
       setLive(true)
-      if (activeSongSbpId) {
+      if (activeSongSbpId != null) {
         await setCurrentSong(conductorCode, activeSongSbpId, conductorToken)
       }
     } catch { /* ignore */ }
