@@ -11,7 +11,19 @@ vi.mock('../../../contexts/ThemeContext', () => ({
   useTheme: () => ({ theme: mockTheme, setTheme: mockSetTheme }),
 }))
 
-// Mock libraryStore
+// Mock LicenseContext
+const mockSetLicenseKey = vi.fn()
+let mockLicenseStatus = 'missing'
+let mockLicenseKey = null
+let mockIsLicensed = false
+vi.mock('../../../contexts/LicenseContext', () => ({
+  useLicense: () => ({
+    licenseKey: mockLicenseKey,
+    setLicenseKey: mockSetLicenseKey,
+    licenseStatus: mockLicenseStatus,
+    isLicensed: mockIsLicensed,
+  }),
+}))
 let mockIndex = []
 const mockDeleteSong = vi.fn()
 vi.mock('../../../store/libraryStore', () => ({

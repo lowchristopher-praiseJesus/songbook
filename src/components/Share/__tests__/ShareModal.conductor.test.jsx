@@ -1,26 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ShareModal } from '../ShareModal.jsx'
+import { LicenseContext } from '../../../contexts/LicenseContext'
 
 const songs = [{ id: 's1', meta: { title: 'Song A' }, rawText: '' }]
 
-describe('ShareModal conductor section', () => {
-  it('shows Enable Conductor Broadcast toggle in idle step', () => {
-    render(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
-    expect(screen.getByLabelText(/enable conductor broadcast/i)).toBeInTheDocument()
-  })
+const licensedValue = { isLicensed: true, licenseStatus: 'valid', licenseKey: 'fake-key', setLicenseKey: vi.fn() }
 
-  it('hides max followers input when toggle is off', () => {
-    render(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
-    expect(screen.queryByLabelText(/max followers/i)).not.toBeInTheDocument()
-  })
-
-  it('shows max followers input when toggle is on', () => {
-    render(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
-    fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
-    expect(screen.getByLabelText(/max followers/i)).toBeInTheDocument()
-  })
-})
+function renderLicensed(ui) {
+  return render(
+    <LicenseContext.Provider value={licensedValue}>
+      {ui}
+    </LicenseContext.Provider>
+  )
+}
 
 vi.mock('../../../lib/shareApi.js', () => ({
   uploadShare: vi.fn().mockResolvedValue({
@@ -36,8 +29,30 @@ vi.mock('../../../lib/exportSbp.js', () => ({
   computeExportId: vi.fn().mockReturnValue(1),
 }))
 
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+describe('ShareModal conductor section', () => {
+  it('shows Enable Conductor Broadcast toggle in idle step when licensed', () => {
+    renderLicensed(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
+    expect(screen.getByLabelText(/enable conductor broadcast/i)).toBeInTheDocument()
+  })
+
+  it('hides max followers input when toggle is off', () => {
+    renderLicensed(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
+    expect(screen.queryByLabelText(/max followers/i)).not.toBeInTheDocument()
+  })
+
+  it('shows max followers input when toggle is on', () => {
+    renderLicensed(<ShareModal isOpen songs={songs} collectionName="Test" onClose={vi.fn()} />)
+    fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
+    expect(screen.getByLabelText(/max followers/i)).toBeInTheDocument()
+  })
+})
+
 it('shows conductor link in done step when conductor is enabled and selfDirect is off', async () => {
-  render(<ShareModal isOpen songs={songs} collectionName="Test" collectionId="col-test" onClose={vi.fn()} />)
+  renderLicensed(<ShareModal isOpen songs={songs} collectionName="Test" collectionId="col-test" onClose={vi.fn()} />)
   // Enable conductor
   fireEvent.click(screen.getByLabelText(/enable conductor broadcast/i))
   // Turn off selfDirect (it defaults to true) so the conductor link is shown

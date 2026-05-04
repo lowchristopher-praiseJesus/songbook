@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { LicenseProvider } from './contexts/LicenseContext'
 import { useLibraryStore } from './store/libraryStore'
 import { ToastContainer } from './components/UI/Toast'
 import { useToast } from './components/UI/useToast'
@@ -52,6 +53,13 @@ export default function App() {
   const [broadcastTimeFromUrl, setBroadcastTimeFromUrl] = useState(null)
 
   useEffect(() => { init() }, [init])
+
+  // Listen for open-settings custom event (e.g. from ShareModal license prompt)
+  useEffect(() => {
+    function handleOpenSettings() { setSettingsOpen(true) }
+    window.addEventListener('songsheet:openSettings', handleOpenSettings)
+    return () => window.removeEventListener('songsheet:openSettings', handleOpenSettings)
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -206,6 +214,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      <LicenseProvider>
       <div className="flex flex-col h-[100dvh] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         {/* Top Nav */}
         <header className={`flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0 transition-colors duration-75 ${isFlashing ? 'bg-red-500/40' : ''}`}>
@@ -314,6 +323,7 @@ export default function App() {
           onCancel={handleShareCancel}
         />
       )}
+      </LicenseProvider>
     </ThemeProvider>
   )
 }

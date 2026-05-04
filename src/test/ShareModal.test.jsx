@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ShareModal } from '../components/Share/ShareModal';
 import { useLibraryStore } from '../store/libraryStore';
+import { LicenseContext } from '../contexts/LicenseContext';
 
 vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
@@ -15,13 +16,24 @@ import { exportSongsAsSbp } from '../lib/exportSbp';
 
 const songs = [{ meta: { title: 'El Shaddai' }, id: '1' }];
 
+const defaultLicense = { isLicensed: false, licenseStatus: 'missing', licenseKey: null, setLicenseKey: vi.fn() };
+
+function renderWithLicense(ui, licenseOverrides = {}) {
+  const license = { ...defaultLicense, ...licenseOverrides };
+  return render(
+    <LicenseContext.Provider value={license}>
+      {ui}
+    </LicenseContext.Provider>
+  );
+}
+
 beforeEach(() => {
   exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
 });
 
 describe('ShareModal', () => {
   it('renders title and default 7-day expiry when open', () => {
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     expect(screen.getByText('Share via link')).toBeInTheDocument();
     expect(screen.getByDisplayValue('7 days')).toBeInTheDocument();
     expect(screen.getByText('1 song will be shared.')).toBeInTheDocument();
@@ -29,7 +41,7 @@ describe('ShareModal', () => {
 
   it('shows uploading spinner after clicking Create link', async () => {
     uploadShare.mockReturnValue(new Promise(() => {})); // never resolves
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByText('Uploading…')).toBeInTheDocument();
   });
@@ -40,7 +52,7 @@ describe('ShareModal', () => {
       shareUrl: 'http://app?share=abc',
       expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
     });
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByDisplayValue('http://app?share=abc')).toBeInTheDocument();
     expect(screen.getByText('Copy')).toBeInTheDocument();
@@ -48,7 +60,7 @@ describe('ShareModal', () => {
 
   it('shows error message and Retry button on upload failure', async () => {
     uploadShare.mockRejectedValue(Object.assign(new Error('fail'), { code: 'upload_failed' }));
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     expect(await screen.findByText('Retry')).toBeInTheDocument();
     expect(screen.getByText(/Upload failed/)).toBeInTheDocument();
@@ -56,7 +68,7 @@ describe('ShareModal', () => {
 
   it('resets to idle when Retry is clicked', async () => {
     uploadShare.mockRejectedValue(new Error('fail'));
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByText('Create link'));
     const retryBtn = await screen.findByText('Retry');
     fireEvent.click(retryBtn);
@@ -64,7 +76,7 @@ describe('ShareModal', () => {
   });
 
   it('renders "Share lyrics only" toggle unchecked by default', () => {
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     const toggle = screen.getByRole('switch', { name: /share lyrics only/i });
     expect(toggle).toBeInTheDocument();
     expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -76,7 +88,7 @@ describe('ShareModal', () => {
       shareUrl: 'http://app?share=x',
       expiresAt: new Date().toISOString(),
     });
-    render(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('switch', { name: /share lyrics only/i }));
     fireEvent.click(screen.getByText('Create link'));
     await screen.findByDisplayValue('http://app?share=x');
@@ -86,6 +98,19 @@ describe('ShareModal', () => {
       true,
       null   // conductorCode is null when conductor is disabled
     );
+  });
+
+  it('hides conductor toggle when not licensed', () => {
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    expect(screen.queryByLabelText(/enable conductor broadcast/i)).not.toBeInTheDocument();
+  });
+
+  it('hides conductor toggle when license is expired', () => {
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />,
+      { isLicensed: false, licenseStatus: 'expired' }
+    );
+    expect(screen.queryByLabelText(/enable conductor broadcast/i)).not.toBeInTheDocument();
   });
 });
 
@@ -107,7 +132,10 @@ describe('ShareModal — self-direct conductor path', () => {
       collections: [{ id: 'col-99', name: 'Easter', songIds: [], createdAt: '' }],
     })
 
-    render(<ShareModal isOpen songs={songs} collectionId="col-99" onClose={() => {}} />)
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="col-99" onClose={() => {}} />,
+      { isLicensed: true, licenseStatus: 'valid' }
+    )
 
     // Enable conductor broadcast
     const conductorToggle = screen.getByRole('switch', { name: /enable conductor broadcast/i })

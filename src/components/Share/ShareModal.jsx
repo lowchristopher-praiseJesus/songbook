@@ -7,8 +7,10 @@ import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { v4 as uuidv4 } from 'uuid';
 import { useLibraryStore } from '../../store/libraryStore';
+import { useLicense } from '../../contexts/LicenseContext';
 
 export function ShareModal({ isOpen, songs, collectionName, collectionId, onClose }) {
+  const { isLicensed, licenseStatus } = useLicense();
   const [step, setStep] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
@@ -229,6 +231,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             </button>
           </div>
           {/* Conductor broadcast section */}
+          {isLicensed ? (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
             <button
               type="button"
@@ -305,6 +308,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               </div>
             )}
           </div>
+          ) : null}
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
             <Button variant="primary" onClick={handleCreateLink}>Create link</Button>

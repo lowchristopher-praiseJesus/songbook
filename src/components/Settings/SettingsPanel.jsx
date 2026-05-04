@@ -1,6 +1,7 @@
 // src/components/Settings/SettingsPanel.jsx
 import { useEffect, useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useLicense } from '../../contexts/LicenseContext'
 import { useLibraryStore } from '../../store/libraryStore'
 import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/storage'
 import { Button } from '../UI/Button'
@@ -14,10 +15,31 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
   const stats = getStorageStats()
   const [firecrawlKey, setFirecrawlKeyState] = useState(getFirecrawlKey)
   const [showKey, setShowKey] = useState(false)
+  const { licenseKey, setLicenseKey, licenseStatus } = useLicense()
+  const [licenseInput, setLicenseInput] = useState(licenseKey ?? '')
+  const [showLicenseKey, setShowLicenseKey] = useState(false)
 
   function handleKeyChange(e) {
     setFirecrawlKeyState(e.target.value)
     setFirecrawlKey(e.target.value)
+  }
+
+  function handleLicenseInputChange(e) {
+    setLicenseInput(e.target.value)
+  }
+
+  function handleLicenseBlur() {
+    const trimmed = licenseInput.trim()
+    if (trimmed) {
+      setLicenseKey(trimmed)
+    } else {
+      setLicenseKey(null)
+    }
+  }
+
+  function handleClearLicense() {
+    setLicenseInput('')
+    setLicenseKey(null)
   }
 
   useEffect(() => {
@@ -146,6 +168,59 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
               How to get a Firecrawl API key
             </a>
           </p>
+        </div>
+
+        {/* Conductor Broadcast License */}
+        <div className="mb-6">
+          <label htmlFor="conductor-license-key" className="block text-sm font-medium mb-2 dark:text-gray-300">
+            Conductor Broadcast License
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="conductor-license-key"
+              type={showLicenseKey ? 'text' : 'password'}
+              value={licenseInput}
+              onChange={handleLicenseInputChange}
+              onBlur={handleLicenseBlur}
+              onKeyDown={e => { if (e.key === 'Enter') handleLicenseBlur() }}
+              placeholder="SONGBOOK-XXXX-XXXX-XXXX-XXXX"
+              className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onClick={() => setShowLicenseKey(v => !v)}
+              className="px-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label={showLicenseKey ? 'Hide license key' : 'Show license key'}
+            >
+              {showLicenseKey ? 'Hide' : 'Show'}
+            </button>
+            {licenseKey && (
+              <button
+                type="button"
+                onClick={handleClearLicense}
+                className="px-2 text-sm text-red-500 hover:text-red-700 dark:hover:text-red-300"
+                aria-label="Clear license key"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {licenseStatus === 'valid' && (
+            <p className="mt-1 text-xs text-green-600 dark:text-green-400">License active &mdash; Conductor Broadcast unlocked</p>
+          )}
+          {licenseStatus === 'expired' && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">License expired &mdash; Conductor Broadcast is locked</p>
+          )}
+          {licenseStatus === 'invalid' && licenseInput.trim() && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">Invalid license key</p>
+          )}
+          {licenseStatus === 'missing' && !licenseInput.trim() && (
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              Enter a license key to unlock Conductor Broadcast.
+            </p>
+          )}
         </div>
 
         {/* Storage stats */}
