@@ -58,14 +58,14 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 sm:p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 id="settings-title" className="text-xl font-semibold dark:text-white">Settings</h2>
           <button type="button" aria-label="Close settings" onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex gap-0 mb-5">
+        <div className="flex gap-0 mb-3 sm:mb-5">
           {['general', 'display'].map(t => (
             <button
               key={t}
@@ -96,7 +96,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
         {tab === 'general' && (<>
 
         {/* Theme */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-sm font-medium mb-2 dark:text-gray-300">Theme</label>
           <div className="flex gap-2">
             {['light', 'dark', 'system'].map(t => (
@@ -112,7 +112,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
         </div>
 
         {/* Display */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-sm font-medium mb-2 dark:text-gray-300">Display</label>
           <button
             type="button"
@@ -132,7 +132,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
         </div>
 
         {/* Firecrawl API Key */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label htmlFor="firecrawl-api-key" className="block text-sm font-medium mb-2 dark:text-gray-300">
             Firecrawl API Key
             <span className="ml-1 text-xs font-normal text-gray-400">(for UG search)</span>
@@ -171,7 +171,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
         </div>
 
         {/* Conductor Broadcast License */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label htmlFor="conductor-license-key" className="block text-sm font-medium mb-2 dark:text-gray-300">
             Conductor Broadcast License
           </label>
@@ -224,7 +224,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
         </div>
 
         {/* Storage stats */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-sm font-medium mb-2 dark:text-gray-300">Library</label>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {`${index.length} song${index.length !== 1 ? 's' : ''}`}
