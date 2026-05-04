@@ -215,6 +215,7 @@ export default function App() {
                 onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
                 onStartSession={handleStartSession}
                 onJoinSession={handleJoinSession}
+                conductorSync={conductorSync}
               />
               <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
             </>

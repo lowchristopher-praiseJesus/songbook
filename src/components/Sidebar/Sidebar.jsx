@@ -16,8 +16,9 @@ import { ExportPrintModal } from './ExportPrintModal'
 import { AllSongsList } from './AllSongsList'
 import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
+import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
 
-export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
@@ -409,6 +410,8 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           </>
         )}
       </ul>
+
+      <BroadcastsPanel conductorSync={conductorSync} onAddToast={onAddToast} />
 
       {/* Footer: normal mode → Import + Export; export mode → selection bar */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
