@@ -141,7 +141,7 @@ export default function App() {
     null
   const conductorSync = useConductorSync({
     conductorCode: conductorCollection?.conductorCode ?? null,
-    directorToken: conductorCollection?.conductorDirectorToken ?? null,
+    conductorToken: conductorCollection?.conductorDirectorToken ?? conductorCollection?.conductorToken ?? null,
     broadcastTime: conductorCollection?.conductorBroadcastTime ?? null,
     activeSongSbpId: activeSong?.meta?.sbpId ?? null,
     onAddToast: addToast,

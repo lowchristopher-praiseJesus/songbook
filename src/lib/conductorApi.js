@@ -24,7 +24,7 @@ export async function fetchConductorStatus(code) {
 export async function startBroadcast(code, directorToken) {
   const res = await fetch(`${workerUrl()}/conductor/${code}/start`, {
     method: 'POST',
-    headers: { 'X-Director-Token': directorToken },
+    headers: { 'X-Conductor-Token': directorToken },
   })
   if (res.status === 403) throw Object.assign(new Error('forbidden'), { code: 'forbidden' })
   if (!res.ok) throw Object.assign(new Error('start_failed'), { code: 'start_failed' })
@@ -34,7 +34,7 @@ export async function startBroadcast(code, directorToken) {
 export async function setCurrentSong(code, sbpId, directorToken) {
   const res = await fetch(`${workerUrl()}/conductor/${code}/current`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Director-Token': directorToken },
+    headers: { 'Content-Type': 'application/json', 'X-Conductor-Token': directorToken },
     body: JSON.stringify({ sbpId }),
   })
   if (!res.ok) throw Object.assign(new Error('current_failed'), { code: 'current_failed' })
@@ -44,7 +44,7 @@ export async function setCurrentSong(code, sbpId, directorToken) {
 export async function stopBroadcast(code, directorToken) {
   const res = await fetch(`${workerUrl()}/conductor/${code}/stop`, {
     method: 'POST',
-    headers: { 'X-Director-Token': directorToken },
+    headers: { 'X-Conductor-Token': directorToken },
   })
   if (!res.ok) throw Object.assign(new Error('stop_failed'), { code: 'stop_failed' })
   return res.json()
@@ -82,7 +82,7 @@ export async function leaveBroadcast(code, clientId) {
 export async function endBroadcast(code, conductorToken) {
   const res = await fetch(`${workerUrl()}/conductor/${code}/end`, {
     method: 'POST',
-    headers: { 'X-Director-Token': conductorToken },
+    headers: { 'X-Conductor-Token': conductorToken },
   })
   if (res.status === 403) throw Object.assign(new Error('forbidden'), { code: 'forbidden' })
   if (!res.ok) throw Object.assign(new Error('end_failed'), { code: 'end_failed' })
@@ -92,7 +92,7 @@ export async function endBroadcast(code, conductorToken) {
 export async function previewSong(code, sbpId, conductorToken) {
   const res = await fetch(`${workerUrl()}/conductor/${code}/preview`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Director-Token': conductorToken },
+    headers: { 'Content-Type': 'application/json', 'X-Conductor-Token': conductorToken },
     body: JSON.stringify({ sbpId }),
   })
   if (res.status === 403) throw Object.assign(new Error('forbidden'), { code: 'forbidden' })

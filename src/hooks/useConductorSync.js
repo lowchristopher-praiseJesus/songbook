@@ -19,7 +19,7 @@ function getClientId() {
   return id
 }
 
-export function useConductorSync({ conductorCode, directorToken, broadcastTime, activeSongSbpId, onAddToast }) {
+export function useConductorSync({ conductorCode, conductorToken, broadcastTime, activeSongSbpId, onAddToast }) {
   const index = useLibraryStore(s => s.index)
   const selectSong = useLibraryStore(s => s.selectSong)
 
@@ -30,7 +30,7 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
   // 'dormant' → 'waiting' → 'live' → 'ended'  (one-way)
   const [phase, setPhase] = useState('dormant')
 
-  const isDirector = !!directorToken
+  const isConductor = !!conductorToken
   const phaseRef = useRef('dormant')
   const backoffIndexRef = useRef(0)
   const timerRef = useRef(null)
@@ -136,11 +136,11 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [conductorCode])
 
-  // Director: broadcast song when activeSongSbpId changes
+  // Conductor: broadcast song when activeSongSbpId changes
   useEffect(() => {
-    if (!isDirector || !live || !activeSongSbpId || !conductorCode) return
-    setCurrentSong(conductorCode, activeSongSbpId, directorToken).catch(() => {})
-  }, [activeSongSbpId, isDirector, live, conductorCode, directorToken])
+    if (!isConductor || !live || !activeSongSbpId || !conductorCode) return
+    setCurrentSong(conductorCode, activeSongSbpId, conductorToken).catch(() => {})
+  }, [activeSongSbpId, isConductor, live, conductorCode, conductorToken])
 
   // Follower: navigate when currentSbpId changes
   useEffect(() => {
@@ -149,25 +149,25 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     if (entry) {
       selectSong(entry.id)
     } else {
-      onAddToast?.("Director switched to a song not in your library", 'info')
+      onAddToast?.("Conductor switched to a song not in your library", 'info')
     }
   }, [currentSbpId, isFollowing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleStartBroadcast() {
-    if (!conductorCode || !directorToken) return
+    if (!conductorCode || !conductorToken) return
     try {
-      await startBroadcast(conductorCode, directorToken)
+      await startBroadcast(conductorCode, conductorToken)
       setLive(true)
       if (activeSongSbpId) {
-        await setCurrentSong(conductorCode, activeSongSbpId, directorToken)
+        await setCurrentSong(conductorCode, activeSongSbpId, conductorToken)
       }
     } catch { /* ignore */ }
   }
 
   async function handleStopBroadcast() {
-    if (!conductorCode || !directorToken) return
+    if (!conductorCode || !conductorToken) return
     try {
-      await stopBroadcast(conductorCode, directorToken)
+      await stopBroadcast(conductorCode, conductorToken)
       setLive(false)
     } catch { /* ignore */ }
   }
@@ -208,8 +208,8 @@ export function useConductorSync({ conductorCode, directorToken, broadcastTime, 
     currentSbpId,
     followerCount,
     isFollowing,
-    isBroadcasting: isDirector && live,
-    isDirector,
+    isBroadcasting: isConductor && live,
+    isConductor,
     conductorCode,
     startBroadcast: handleStartBroadcast,
     stopBroadcast: handleStopBroadcast,

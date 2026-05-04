@@ -80,7 +80,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
         const memberUrl = broadcastTime
           ? `${result.shareUrl}&bt=${encodeURIComponent(new Date(broadcastTime).toISOString())}`
           : result.shareUrl
-        const directorUrl = `${result.shareUrl}&director=${directorToken}`
+        const directorUrl = `${result.shareUrl}&conductor_token=${directorToken}`
         // Self-direct: wire the conductor token into the existing local collection
         if (selfDirect && collectionId) {
           const shareCode = result.shareCode ?? new URL(result.shareUrl).searchParams.get('share')
@@ -331,11 +331,11 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             </div>
           </div>
 
-          {/* Director link — only when conductor enabled AND not self-directing */}
+          {/* Conductor link — only when conductor enabled AND not self-directing */}
           {conductorData && !conductorData.selfDirect && (
             <div className="border-t border-orange-200 dark:border-orange-800 pt-3">
               <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">
-                Director link &nbsp;⚠ Keep private — gives broadcast control
+                Conductor link &nbsp;⚠ Keep private — gives broadcast control
               </p>
               <div className="flex gap-2">
                 <input readOnly value={conductorData.directorUrl}
@@ -346,7 +346,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               </div>
               <div className="flex flex-col items-center gap-2 mt-2">
                 <canvas ref={directorQrRef} className="rounded-lg border border-orange-200 dark:border-orange-700" />
-                <Button variant="secondary" onClick={() => handleDownloadQr(directorQrRef, 'director-qr.png')}>Save Director QR</Button>
+                <Button variant="secondary" onClick={() => handleDownloadQr(directorQrRef, 'director-qr.png')}>Save Conductor QR</Button>
               </div>
             </div>
           )}

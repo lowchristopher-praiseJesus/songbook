@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { Env } from '../types';
 import { CONDUCTOR } from '../config';
 import {
@@ -60,6 +61,10 @@ conductor.get('/:code/status', async (c) => {
   });
 });
 
+function getConductorToken(c: Context): string | undefined {
+  return c.req.header('X-Conductor-Token') ?? c.req.header('X-Director-Token');
+}
+
 function requireDirector(data: ConductorData, token: string | undefined): boolean {
   return !!token && token === data.directorToken;
 }
@@ -67,7 +72,7 @@ function requireDirector(data: ConductorData, token: string | undefined): boolea
 // POST /conductor/:code/start
 conductor.post('/:code/start', async (c) => {
   const code = c.req.param('code');
-  const token = c.req.header('X-Director-Token');
+  const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
   if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
@@ -80,7 +85,7 @@ conductor.post('/:code/start', async (c) => {
 // POST /conductor/:code/current
 conductor.post('/:code/current', async (c) => {
   const code = c.req.param('code');
-  const token = c.req.header('X-Director-Token');
+  const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
   if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
@@ -98,7 +103,7 @@ conductor.post('/:code/current', async (c) => {
 // POST /conductor/:code/stop
 conductor.post('/:code/stop', async (c) => {
   const code = c.req.param('code');
-  const token = c.req.header('X-Director-Token');
+  const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
   if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
@@ -111,7 +116,7 @@ conductor.post('/:code/stop', async (c) => {
 // POST /conductor/:code/end
 conductor.post('/:code/end', async (c) => {
   const code = c.req.param('code');
-  const token = c.req.header('X-Director-Token');
+  const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ ok: true }); // idempotent: already gone
   if (!requireDirector(data, token)) return c.json({ error: 'forbidden' }, 403);
@@ -123,7 +128,7 @@ conductor.post('/:code/end', async (c) => {
 // POST /conductor/:code/preview
 conductor.post('/:code/preview', async (c) => {
   const code = c.req.param('code');
-  const token = c.req.header('X-Director-Token');
+  const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
   if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);

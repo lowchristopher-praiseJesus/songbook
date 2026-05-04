@@ -33,7 +33,7 @@ describe('useConductorSync', () => {
     // First call: immediate. Second call: after 5s. No third call within 10s total.
     renderHook(() => useConductorSync({
       conductorCode: 'ABC123',
-      directorToken: null,
+      conductorToken: null,
       broadcastTime: null,
       activeSongSbpId: null,
       onAddToast: vi.fn(),
@@ -50,7 +50,7 @@ describe('useConductorSync', () => {
   it('does not poll when conductorCode is null', async () => {
     renderHook(() => useConductorSync({
       conductorCode: null,
-      directorToken: null,
+      conductorToken: null,
       activeSongSbpId: null,
       onAddToast: vi.fn(),
     }))
@@ -61,7 +61,7 @@ describe('useConductorSync', () => {
   it('exposes live:true when status returns live', async () => {
     api.fetchConductorStatus.mockResolvedValue({ live: true, currentSbpId: null, version: 1, followerCount: 0 })
     const { result } = renderHook(() => useConductorSync({
-      conductorCode: 'ABC123', directorToken: null, activeSongSbpId: null, onAddToast: vi.fn(),
+      conductorCode: 'ABC123', conductorToken: null, activeSongSbpId: null, onAddToast: vi.fn(),
     }))
     await act(async () => { vi.advanceTimersByTime(1100) })
     expect(result.current.live).toBe(true)

@@ -1,9 +1,9 @@
 // src/components/Conductor/ConductorBar.jsx
 export function ConductorBar({ sync }) {
-  const { live, phase, broadcastTime, isDirector, isFollowing, isBroadcasting,
+  const { live, phase, broadcastTime, isConductor, isFollowing, isBroadcasting,
           followerCount, startBroadcast, stopBroadcast, followDirector, stopFollowing } = sync
 
-  if (isDirector) {
+  if (isConductor) {
     if (!isBroadcasting) {
       return (
         <button

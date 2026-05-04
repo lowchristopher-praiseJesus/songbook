@@ -401,6 +401,7 @@ export const useLibraryStore = create((set, get) => ({
       const {
         conductorCode: _cc,
         conductorDirectorToken: _cdt,
+        conductorToken: _ct,
         conductorBroadcastTime: _cbt,
         conductorRole: _cr,
         conductorShareCode: _csc,
