@@ -33,6 +33,7 @@ vi.mock('../../../lib/conductorApi.js', () => ({
 }))
 vi.mock('../../../lib/exportSbp.js', () => ({
   exportSongsAsSbp: vi.fn().mockResolvedValue(new Blob()),
+  computeExportId: vi.fn().mockReturnValue(1),
 }))
 
 it('shows conductor link in done step when conductor is enabled and selfDirect is off', async () => {

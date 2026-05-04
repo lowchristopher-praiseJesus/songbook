@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare } from '../../lib/shareApi';
-import { exportSongsAsSbp } from '../../lib/exportSbp';
+import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { v4 as uuidv4 } from 'uuid';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -32,6 +32,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const [selfDirect, setSelfDirect] = useState(true)
   const directorQrRef = useRef(null)
   const updateCollection = useLibraryStore(s => s.updateCollection)
+  const backfillSongSbpId = useLibraryStore(s => s.backfillSongSbpId)
 
   // Render QR code once the done step is visible and canvas is in the DOM
   useEffect(() => {
@@ -67,6 +68,13 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
         setStep('error')
         return
       }
+
+      // Backfill sbpId on in-app-created songs so conductor sync can track them
+      songs.forEach(song => {
+        if (song.meta.sbpId == null) {
+          backfillSongSbpId(song.id, computeExportId(song))
+        }
+      })
 
       if (conductorEnabled) {
         try {

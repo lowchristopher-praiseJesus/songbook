@@ -67,9 +67,8 @@ function songToSbpJson(song) {
   // across the conductor's library and the follower's imported copy.
   // Fall back to a content-hash-derived Id for in-app-created songs.
   const idHash = SparkMD5.hash(name + content)
-  const id = typeof meta.sbpId === 'number'
-    ? meta.sbpId
-    : (parseInt(idHash.slice(0, 8), 16) % 1000000 || 1)
+  const hashId = parseInt(idHash.slice(0, 8), 16) % 1000000 || 1
+  const id = typeof meta.sbpId === 'number' ? meta.sbpId : hashId
 
   // Per-song content hash: MD5 of content with line endings normalised to CRLF.
   const normalizedContent = content.replace(/\r\n|\r|\n/g, '\r\n')
@@ -189,4 +188,20 @@ export function safeFilename(title) {
  */
 export async function exportSongsAsSbp(songs, collectionName = null, lyricsOnly = false, conductorCode = null) {
   return buildSbpZip(songs, collectionName, lyricsOnly, conductorCode).generateAsync({ type: 'blob', compression: 'DEFLATE' })
+}
+
+/**
+ * Return the stable integer Id that would be assigned to this song in an export.
+ * Used to backfill meta.sbpId on songs created in-app so conductor sync works.
+ */
+export function computeExportId(song) {
+  if (typeof song.meta?.sbpId === 'number') return song.meta.sbpId
+  const { meta, rawText } = song
+  const name = meta?.title ?? 'Untitled'
+  const hasSbpRoundTrip = typeof meta?.sbpKey === 'number'
+  const content = stripNoteTokens(
+    hasSbpRoundTrip ? (meta.sbpOriginalContent ?? rawText ?? '') : (rawText ?? '')
+  )
+  const idHash = SparkMD5.hash(name + content)
+  return parseInt(idHash.slice(0, 8), 16) % 1000000 || 1
 }

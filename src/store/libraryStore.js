@@ -379,6 +379,26 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Assign a stable sbpId to a song that was created in-app (no sbpId yet).
+   * Called after share export so conductor sync can track the active song.
+   * No-op if the song already has sbpId.
+   */
+  backfillSongSbpId(songId, sbpId) {
+    const song = loadSong(songId)
+    if (!song || song.meta.sbpId != null) return
+    const updated = { ...song, meta: { ...song.meta, sbpId } }
+    saveSong(updated)
+    const newIndex = get().index.map(e =>
+      e.id === songId ? { ...e, sbpId } : e
+    )
+    saveIndex(newIndex)
+    set({
+      index: newIndex,
+      ...(get().activeSongId === songId ? { activeSong: updated } : {}),
+    })
+  },
+
+  /**
    * Merge arbitrary fields into an existing collection.
    * Used to attach conductor-mode fields (e.g. conductorCode, conductorDirectorToken)
    * after importing a conductor-enabled share.

@@ -4,7 +4,7 @@ import { ShareModal } from '../components/Share/ShareModal';
 import { useLibraryStore } from '../store/libraryStore';
 
 vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
-vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn() }));
+vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));
 vi.mock('../lib/conductorApi', () => ({
   createConductorSession: vi.fn().mockResolvedValue({}),
