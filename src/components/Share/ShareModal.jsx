@@ -238,7 +238,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               </span>
               <span className="text-sm text-gray-700 dark:text-gray-300">Enable Conductor Broadcast</span>
             </button>
-            {conductorEnabled && (
+            {conductorEnabled && collectionId && (
               <div className="mt-3">
                 <button
                   type="button"

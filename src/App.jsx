@@ -168,7 +168,7 @@ export default function App() {
     const count = shareSongs.songs.length
     addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
     if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
-    if (collectionId && shareSongs.conductorCode) {
+    if (role && collectionId && shareSongs.conductorCode) {
       const updates = {
         conductorCode: shareSongs.conductorCode,
         conductorRole: role,

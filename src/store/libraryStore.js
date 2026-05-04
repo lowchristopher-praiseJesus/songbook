@@ -170,7 +170,7 @@ export const useLibraryStore = create((set, get) => ({
 
     let collections = get().collections
       .map(c => ({ ...c, songIds: c.songIds.filter(sid => sid !== id) }))
-      .filter(c => c.songIds.length > 0)
+      .filter(c => c.songIds.length > 0 || c.conductorCode)
     saveCollections(collections)
 
     const wasActive = get().activeSongId === id
@@ -235,7 +235,7 @@ export const useLibraryStore = create((set, get) => ({
         ? { ...c, songIds: c.songIds.filter(id => id !== songId) }
         : c
       )
-      .filter(c => c.songIds.length > 0)
+      .filter(c => c.songIds.length > 0 || c.conductorCode)
     saveCollections(collections)
     set({ collections })
   },

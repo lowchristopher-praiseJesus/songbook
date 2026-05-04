@@ -111,7 +111,7 @@ export function ConductorJoinModal({ isOpen, shareSongs, conductorToken, broadca
         )}
         <div className="flex gap-2 justify-end flex-wrap">
           <button onClick={onCancel} className="px-4 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-          <button onClick={() => onImport('follower')} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Songs only (no broadcast)</button>
+          <button onClick={() => onImport(null)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Songs only (no broadcast)</button>
           <button onClick={() => onImport('follower')} className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
             {isLive ? 'Import & follow live' : 'Import & wait for broadcast'}
           </button>

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useBroadcastRegistry } from '../../hooks/useBroadcastRegistry'
 import { useBroadcastStatuses } from '../../hooks/useBroadcastStatuses'
 import { endBroadcast } from '../../lib/conductorApi'
-import { useLibraryStore } from '../../store/libraryStore'
 
 function deriveUrl(shareCode, token, broadcastTime) {
   const base = `${window.location.origin}${window.location.pathname}?share=${shareCode}`
@@ -38,7 +37,7 @@ export function BroadcastsPanel({ conductorSync, onAddToast }) {
   const allCodes = broadcasts.map(b => b.conductorCode).filter(Boolean)
   const { statuses, loading, refresh } = useBroadcastStatuses(allCodes)
 
-  useEffect(() => { if (open) refresh() }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open) refresh() }, [open, refresh])
 
   if (broadcasts.length === 0 && endedBroadcasts.length === 0) return null
 
@@ -131,7 +130,7 @@ export function BroadcastsPanel({ conductorSync, onAddToast }) {
               </button>
             )
           )}
-          {col.conductorRole !== 'follower' && (
+          {col.conductorRole === 'conductor' && (
             confirmEnd === col.id ? (
               <span className="flex items-center gap-1 text-xs">
                 <span className="text-gray-500 dark:text-gray-400">End for everyone?</span>

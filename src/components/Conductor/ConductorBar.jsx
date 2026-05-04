@@ -67,9 +67,9 @@ export function ConductorBar({ sync }) {
           bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300
           hover:bg-green-200 dark:hover:bg-green-800/50 transition-colors
           animate-[fadeIn_0.3s_ease-in]"
-        aria-label="Follow director"
+        aria-label="Follow conductor"
       >
-        Follow Director
+        Follow Conductor
       </button>
     )
   }
