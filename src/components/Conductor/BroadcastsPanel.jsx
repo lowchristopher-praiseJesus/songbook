@@ -65,6 +65,11 @@ export function BroadcastsPanel({ conductorSync, onAddToast }) {
 
     const isActive = conductorSync?.conductorCode === col.conductorCode
     const isLive = isActive ? conductorSync.live : status?.live
+    // Use live conductorSync data when available — it polls every 3s, unlike
+    // the one-shot useBroadcastStatuses which only updates on manual refresh.
+    const liveStatus = isActive
+      ? { live: conductorSync.live, followerCount: conductorSync.followerCount }
+      : status
 
     return (
       <div key={col.id} className="py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
@@ -75,10 +80,10 @@ export function BroadcastsPanel({ conductorSync, onAddToast }) {
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{col.name}</span>
             </div>
             <div className="mt-0.5">
-              <StatusPill status={status} />
+              <StatusPill status={liveStatus} />
             </div>
           </div>
-          {loading && <span className="text-xs text-gray-400 shrink-0">...</span>}
+          {!isActive && loading && <span className="text-xs text-gray-400 shrink-0">...</span>}
         </div>
 
         <div className="flex flex-wrap gap-1.5 mt-2">
