@@ -82,14 +82,14 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
 
   return (
     <Modal isOpen={isOpen} title="Presentation PDF" onClose={onClose}>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
 
         {/* Template thumbnail grid */}
         <div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
             Background template
           </p>
-          <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 sm:max-h-64 overflow-y-auto pr-1">
             {TEMPLATES.map(t => (
               <button
                 key={t.id}
@@ -120,8 +120,8 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
           </div>
         </div>
 
-        {/* Large preview of selected / custom background */}
-        <div>
+        {/* Large preview of selected / custom background — hidden on mobile to save space */}
+        <div className="hidden sm:block">
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Preview</p>
           {activeUrl
             ? <img
