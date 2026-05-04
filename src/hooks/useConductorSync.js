@@ -59,6 +59,7 @@ export function useConductorSync({ conductorCode, conductorToken, broadcastTime,
       setLive(status.live)
       setFollowerCount(status.followerCount)
 
+      console.log('[follower] poll: status.currentSbpId=%s prev=%s live=%s', status.currentSbpId, prevSbpIdRef.current, status.live)
       if (status.currentSbpId !== prevSbpIdRef.current) {
         prevSbpIdRef.current = status.currentSbpId
         setCurrentSbpId(status.currentSbpId)
@@ -138,14 +139,18 @@ export function useConductorSync({ conductorCode, conductorToken, broadcastTime,
 
   // Conductor: broadcast song when activeSongSbpId changes
   useEffect(() => {
+    console.log('[conductor] song effect: isConductor=%s live=%s sbpId=%s code=%s', isConductor, live, activeSongSbpId, conductorCode)
     if (!isConductor || !live || activeSongSbpId == null || !conductorCode) return
-    setCurrentSong(conductorCode, activeSongSbpId, conductorToken).catch(() => {})
+    console.log('[conductor] calling setCurrentSong sbpId=%s', activeSongSbpId)
+    setCurrentSong(conductorCode, activeSongSbpId, conductorToken).catch(err => console.error('[conductor] setCurrentSong failed', err))
   }, [activeSongSbpId, isConductor, live, conductorCode, conductorToken])
 
   // Follower: navigate when currentSbpId changes
   useEffect(() => {
+    console.log('[follower] nav effect: isFollowing=%s currentSbpId=%s indexSbpIds=%o', isFollowing, currentSbpId, index.map(e => e.sbpId))
     if (!isFollowing || currentSbpId == null) return
     const entry = index.find(e => e.sbpId === currentSbpId)
+    console.log('[follower] found entry:', entry)
     if (entry) {
       selectSong(entry.id)
     } else {
