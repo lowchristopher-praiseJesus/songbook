@@ -63,11 +63,13 @@ function songToSbpJson(song) {
     content        = stripNoteTokens(rawText ?? '')
   }
 
-  // Generate a stable pseudo-Id from a hash of the song content so that
-  // the same song exported twice gets the same Id. SBP Pro uses DB auto-
-  // increment, but on import it only needs a unique integer.
+  // Preserve the original sbpId so that conductor sync can match songs by Id
+  // across the conductor's library and the follower's imported copy.
+  // Fall back to a content-hash-derived Id for in-app-created songs.
   const idHash = SparkMD5.hash(name + content)
-  const id = parseInt(idHash.slice(0, 8), 16) % 1000000 || 1
+  const id = typeof meta.sbpId === 'number'
+    ? meta.sbpId
+    : (parseInt(idHash.slice(0, 8), 16) % 1000000 || 1)
 
   // Per-song content hash: MD5 of content with line endings normalised to CRLF.
   const normalizedContent = content.replace(/\r\n|\r|\n/g, '\r\n')
