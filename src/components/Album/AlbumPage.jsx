@@ -20,10 +20,12 @@ export function AlbumPage({ albumCode }) {
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [trackLoading, setTrackLoading] = useState(false)
   const audioRef = useRef(null)
   const progressRef = useRef(null)
   const isDraggingRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
+  const normalizedUrlRef = useRef(null)
 
   useEffect(() => {
     fetchAlbumMeta(albumCode)
@@ -31,32 +33,56 @@ export function AlbumPage({ albumCode }) {
       .catch(err => setError(err.code === 'not_found' ? 'Album not found.' : 'Could not load album.'))
   }, [albumCode])
 
+  // Revoke blob URL on unmount
+  useEffect(() => () => {
+    if (normalizedUrlRef.current) URL.revokeObjectURL(normalizedUrlRef.current)
+  }, [])
+
   const currentTrack = meta?.tracks?.[currentIdx] ?? null
 
-  // When the current track changes, update the audio src
-  useEffect(() => {
+  const loadNormalizedTrack = useCallback(async (trackUrl, shouldPlay) => {
     const audio = audioRef.current
-    if (!audio || !currentTrack) return
-    audio.src = albumTrackUrl(albumCode, currentTrack.trackId)
-    audio.load()
-    if (playing) audio.play().catch(() => {})
+    if (!audio) return
+    if (normalizedUrlRef.current) {
+      URL.revokeObjectURL(normalizedUrlRef.current)
+      normalizedUrlRef.current = null
+    }
+    setTrackLoading(true)
+    try {
+      const blob = await fetch(trackUrl).then(r => r.blob())
+      const wavBuffer = await blobToWav(blob)
+      const blobUrl = URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }))
+      normalizedUrlRef.current = blobUrl
+      audio.src = blobUrl
+      audio.load()
+      if (shouldPlay) audio.play().catch(() => {})
+    } catch {
+      audio.src = trackUrl
+      audio.load()
+      if (shouldPlay) audio.play().catch(() => {})
+    } finally {
+      setTrackLoading(false)
+    }
+  }, [])
+
+  // When the current track changes, reload (and play if already playing)
+  useEffect(() => {
+    if (!currentTrack) return
+    loadNormalizedTrack(albumTrackUrl(albumCode, currentTrack.trackId), playing)
   }, [currentIdx, albumCode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const playTrack = useCallback((idx) => {
     setCurrentIdx(idx)
     setPlaying(true)
-    const audio = audioRef.current
-    if (!audio || !meta) return
-    audio.src = albumTrackUrl(albumCode, meta.tracks[idx].trackId)
-    audio.load()
-    audio.play().catch(() => {})
-  }, [albumCode, meta])
+    if (!meta) return
+    loadNormalizedTrack(albumTrackUrl(albumCode, meta.tracks[idx].trackId), true)
+  }, [albumCode, meta, loadNormalizedTrack])
 
   function togglePlay() {
     const audio = audioRef.current
     if (!audio) return
-    if (!audio.src || audio.src === window.location.href) {
-      playTrack(currentIdx)
+    if (!normalizedUrlRef.current) {
+      if (meta) loadNormalizedTrack(albumTrackUrl(albumCode, meta.tracks[currentIdx].trackId), true)
       return
     }
     if (playing) { audio.pause(); setPlaying(false) }
@@ -229,11 +255,13 @@ export function AlbumPage({ albumCode }) {
                   </button>
                   <button
                     onClick={togglePlay}
+                    disabled={trackLoading}
                     className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700
-                      flex items-center justify-center text-white text-xl transition-colors shadow-md"
-                    aria-label={playing ? 'Pause' : 'Play'}
+                      flex items-center justify-center text-white text-xl transition-colors shadow-md
+                      disabled:opacity-70"
+                    aria-label={trackLoading ? 'Loading' : playing ? 'Pause' : 'Play'}
                   >
-                    {playing ? '⏸' : '▶'}
+                    {trackLoading ? <span className="animate-spin text-base">⏳</span> : playing ? '⏸' : '▶'}
                   </button>
                   <button
                     onClick={handleNext}
