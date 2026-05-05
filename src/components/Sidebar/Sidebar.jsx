@@ -444,7 +444,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <BroadcastsPanel conductorSync={conductorSync} onAddToast={onAddToast} />
 
       {/* Footer: normal mode → Import + Export; export mode → selection bar */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+      {(viewMode !== 'albums' || trimmedQuery) && <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
         {isExportMode ? (
           <div className="flex items-center gap-2">
             <div className="flex-1 flex flex-col">
@@ -511,7 +511,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           className="hidden"
           onChange={handleFileInput}
         />
-      </div>
+      </div>}
 
       {/* Duplicate resolution modal */}
       <Modal
