@@ -60,7 +60,6 @@ export function AlbumsPanel({ onSelect }) {
 
       <AlbumCreatorModal
         isOpen={creatorOpen}
-        collection={null}
         onClose={handleClose}
       />
     </div>

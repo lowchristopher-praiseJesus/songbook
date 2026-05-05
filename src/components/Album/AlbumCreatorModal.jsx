@@ -15,11 +15,12 @@ function formatDuration(ms) {
 
 // ── Step 1: Select recordings ────────────────────────────────────────────────
 
-function StepSelectRecordings({ collection, onNext }) {
+function StepSelectRecordings({ onNext }) {
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
-  const [bysong, setBysong] = useState({}) // { songId: { song, collectionName, recordings: [...], selected: Set } }
+  const [bysong, setBysong] = useState({})
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState('collections')
   const clientRef = useRef(null)
 
   useEffect(() => {
@@ -29,20 +30,15 @@ function StepSelectRecordings({ collection, onNext }) {
 
   useEffect(() => {
     const client = clientRef.current
-    const songIds = collection ? collection.songIds : index.map(e => e.id)
     async function load() {
       setLoading(true)
       const result = {}
-      for (const songId of songIds) {
-        const songEntry = index.find(e => e.id === songId)
-        if (!songEntry) continue
+      for (const songEntry of index) {
         try {
-          const recs = await client.send('list-recordings', { songId })
+          const recs = await client.send('list-recordings', { songId: songEntry.id })
           if (recs.length > 0) {
-            const col = collection ?? collections.find(c => c.songIds.includes(songId))
-            result[songId] = {
+            result[songEntry.id] = {
               song: songEntry,
-              collectionName: col?.name ?? null,
               recordings: recs,
               selected: new Set(recs.map(r => r.recordingId)),
             }
@@ -53,7 +49,7 @@ function StepSelectRecordings({ collection, onNext }) {
       setLoading(false)
     }
     load()
-  }, [collection, index, collections])
+  }, [index])
 
   function toggleRecording(songId, recordingId) {
     setBysong(prev => {
@@ -73,18 +69,22 @@ function StepSelectRecordings({ collection, onNext }) {
     }
   }
 
+  const collectionsWithRecordings = collections
+    .filter(col => col.songIds?.some(id => id in bysong))
+    .map(col => ({
+      col,
+      entries: (col.songIds ?? []).filter(id => id in bysong).map(id => bysong[id]),
+    }))
+
   if (loading) return (
     <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400 text-sm">
       Loading recordings…
     </div>
   )
 
-  const songIds = Object.keys(bysong)
-  if (songIds.length === 0) return (
+  if (Object.keys(bysong).length === 0) return (
     <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-4">
-      <p className="text-gray-500 dark:text-gray-400 text-sm">
-        {collection ? 'No recordings found in this collection.' : 'No recordings found in your library.'}
-      </p>
+      <p className="text-gray-500 dark:text-gray-400 text-sm">No recordings found in your library.</p>
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Record songs using the Rec button on any song, then come back.
       </p>
@@ -97,14 +97,74 @@ function StepSelectRecordings({ collection, onNext }) {
         Select the recordings to include in your album.
       </p>
 
+      {/* Tab bar */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
+        {['collections', 'songs'].map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
+              tab === t
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {t === 'collections' ? 'Collections' : 'Songs'}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-        {Object.values(bysong).map(({ song, collectionName, recordings, selected }) => (
+        {tab === 'collections' && (
+          collectionsWithRecordings.length === 0 ? (
+            <p className="text-sm text-center text-gray-400 dark:text-gray-500 py-8">
+              No collections have recordings yet.
+            </p>
+          ) : collectionsWithRecordings.map(({ col, entries }) => (
+            <div key={col.id ?? col.name}>
+              <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-2">
+                {col.name}
+              </p>
+              <div className="space-y-3">
+                {entries.map(({ song, recordings, selected }) => (
+                  <div key={song.id}>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 px-3">
+                      {song.title}
+                    </p>
+                    <div className="space-y-1">
+                      {recordings.map(rec => (
+                        <label
+                          key={rec.recordingId}
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer
+                            hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected.has(rec.recordingId)}
+                            onChange={() => toggleRecording(song.id, rec.recordingId)}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 truncate">
+                            {rec.name}
+                          </span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums shrink-0">
+                            {formatDuration(rec.duration)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+
+        {tab === 'songs' && Object.values(bysong).map(({ song, recordings, selected }) => (
           <div key={song.id}>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               {song.title}
-              {!collection && collectionName && (
-                <span className="ml-2 font-normal normal-case text-gray-400 dark:text-gray-500">— {collectionName}</span>
-              )}
             </p>
             <div className="space-y-1">
               {recordings.map(rec => (
@@ -378,7 +438,7 @@ function StepDone({ albumCode, onClose }) {
 
 // ── Main modal ───────────────────────────────────────────────────────────────
 
-export function AlbumCreatorModal({ isOpen, collection, onClose }) {
+export function AlbumCreatorModal({ isOpen, onClose }) {
   const [step, setStep] = useState('select')
   const [tracks, setTracks] = useState([])
   const [details, setDetails] = useState(null)
@@ -396,13 +456,12 @@ export function AlbumCreatorModal({ isOpen, collection, onClose }) {
       <div className="w-full max-w-md">
         {step === 'select' && (
           <StepSelectRecordings
-            collection={collection}
             onNext={selected => { setTracks(selected); setStep('details') }}
           />
         )}
         {step === 'details' && (
           <StepAlbumDetails
-            defaultTitle={collection?.name ?? ''}
+            defaultTitle=""
             defaultArtist=""
             onNext={d => { setDetails(d); setStep('uploading') }}
             onBack={() => setStep('select')}
