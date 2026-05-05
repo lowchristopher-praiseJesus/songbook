@@ -25,7 +25,13 @@ export function AlbumPage({ albumCode }) {
   const progressRef = useRef(null)
   const isDraggingRef = useRef(false)
   const [isDragging, setIsDragging] = useState(false)
-  const normalizedUrlRef = useRef(null)
+  // Map<trackId, Promise<string>> — Promise resolves to a blob URL
+  const trackCacheRef = useRef(new Map())
+  // Which trackId is currently being loaded into the audio element
+  const currentTrackIdRef = useRef(null)
+  // Stable ref to meta so callbacks don't go stale
+  const metaRef = useRef(null)
+  metaRef.current = meta
 
   useEffect(() => {
     fetchAlbumMeta(albumCode)
@@ -33,61 +39,85 @@ export function AlbumPage({ albumCode }) {
       .catch(err => setError(err.code === 'not_found' ? 'Album not found.' : 'Could not load album.'))
   }, [albumCode])
 
-  // Revoke blob URL on unmount
+  // Revoke all cached blob URLs on unmount
   useEffect(() => () => {
-    if (normalizedUrlRef.current) URL.revokeObjectURL(normalizedUrlRef.current)
+    trackCacheRef.current.forEach(p => p.then(url => URL.revokeObjectURL(url)).catch(() => {}))
+    trackCacheRef.current.clear()
   }, [])
 
-  const currentTrack = meta?.tracks?.[currentIdx] ?? null
+  // Fetch, filter, normalize, and cache a track. Concurrent calls for the same
+  // trackId share the same Promise so work is never duplicated.
+  const processTrack = useCallback((trackId) => {
+    if (trackCacheRef.current.has(trackId)) return trackCacheRef.current.get(trackId)
+    const promise = fetch(albumTrackUrl(albumCode, trackId))
+      .then(r => r.blob())
+      .then(blob => blobToWav(blob))
+      .then(wav => URL.createObjectURL(new Blob([wav], { type: 'audio/wav' })))
+    // On failure remove the entry so a retry can try again
+    promise.catch(() => trackCacheRef.current.delete(trackId))
+    trackCacheRef.current.set(trackId, promise)
+    return promise
+  }, [albumCode])
 
-  const loadNormalizedTrack = useCallback(async (trackUrl, shouldPlay) => {
+  // Once meta arrives, process all tracks sequentially in the background so
+  // they are ready before the user needs them.
+  useEffect(() => {
+    if (!meta) return
+    let cancelled = false
+    ;(async () => {
+      for (const track of meta.tracks) {
+        if (cancelled) break
+        try { await processTrack(track.trackId) } catch {}
+      }
+    })()
+    return () => { cancelled = true }
+  }, [meta, processTrack])
+
+  // Load a processed track into the audio element. If the cache already has it
+  // the await resolves instantly; otherwise shows a spinner until ready.
+  const loadTrack = useCallback(async (trackId, shouldPlay) => {
     const audio = audioRef.current
     if (!audio) return
-    if (normalizedUrlRef.current) {
-      URL.revokeObjectURL(normalizedUrlRef.current)
-      normalizedUrlRef.current = null
-    }
+    currentTrackIdRef.current = trackId
     setTrackLoading(true)
     try {
-      const blob = await fetch(trackUrl).then(r => r.blob())
-      const wavBuffer = await blobToWav(blob)
-      const blobUrl = URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }))
-      normalizedUrlRef.current = blobUrl
+      const blobUrl = await processTrack(trackId)
+      if (currentTrackIdRef.current !== trackId) return // user switched away
       audio.src = blobUrl
       audio.load()
       if (shouldPlay) audio.play().catch(() => {})
     } catch {
-      audio.src = trackUrl
+      if (currentTrackIdRef.current !== trackId) return
+      audio.src = albumTrackUrl(albumCode, trackId)
       audio.load()
       if (shouldPlay) audio.play().catch(() => {})
     } finally {
-      setTrackLoading(false)
+      if (currentTrackIdRef.current === trackId) setTrackLoading(false)
     }
-  }, [])
-
-  // When the current track changes, reload (and play if already playing)
-  useEffect(() => {
-    if (!currentTrack) return
-    loadNormalizedTrack(albumTrackUrl(albumCode, currentTrack.trackId), playing)
-  }, [currentIdx, albumCode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [albumCode, processTrack])
 
   const playTrack = useCallback((idx) => {
+    const tracks = metaRef.current?.tracks
+    if (!tracks) return
     setCurrentIdx(idx)
     setPlaying(true)
-    if (!meta) return
-    loadNormalizedTrack(albumTrackUrl(albumCode, meta.tracks[idx].trackId), true)
-  }, [albumCode, meta, loadNormalizedTrack])
+    loadTrack(tracks[idx].trackId, true)
+    // Pre-fetch the next track so the transition is instant
+    if (idx + 1 < tracks.length) processTrack(tracks[idx + 1].trackId).catch(() => {})
+  }, [loadTrack, processTrack])
 
   function togglePlay() {
     const audio = audioRef.current
-    if (!audio) return
-    if (!normalizedUrlRef.current) {
-      if (meta) loadNormalizedTrack(albumTrackUrl(albumCode, meta.tracks[currentIdx].trackId), true)
+    if (!audio || !meta) return
+    if (!audio.src || audio.src === window.location.href) {
+      playTrack(currentIdx)
       return
     }
     if (playing) { audio.pause(); setPlaying(false) }
     else { audio.play().catch(() => {}); setPlaying(true) }
   }
+
+  const currentTrack = meta?.tracks?.[currentIdx] ?? null
 
   // webm recordings don't embed duration, so audio.duration is often Infinity.
   // Fall back to the stored track duration (ms) from album metadata.
@@ -156,7 +186,6 @@ export function AlbumPage({ albumCode }) {
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        crossOrigin="anonymous"
         onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
         onDurationChange={e => setDuration(e.target.duration)}
         onEnded={handleNext}
@@ -317,19 +346,22 @@ export function AlbumPage({ albumCode }) {
                     <button
                       onClick={async e => {
                         e.stopPropagation()
-                        const blob = await fetch(albumTrackUrl(albumCode, track.trackId)).then(r => r.blob())
-                        let downloadBlob = blob
-                        let ext = 'webm'
+                        // Reuse cached blob URL if already processed
                         try {
-                          const wavBuffer = await blobToWav(blob)
-                          downloadBlob = new Blob([wavBuffer], { type: 'audio/wav' })
-                          ext = 'wav'
-                        } catch { /* AudioContext unavailable, fall back to raw webm */ }
-                        const a = document.createElement('a')
-                        a.href = URL.createObjectURL(downloadBlob)
-                        a.download = `${track.title}.${ext}`
-                        a.click()
-                        URL.revokeObjectURL(a.href)
+                          const blobUrl = await processTrack(track.trackId)
+                          const a = document.createElement('a')
+                          a.href = blobUrl
+                          a.download = `${track.title}.wav`
+                          a.click()
+                        } catch {
+                          // Fallback: fetch and process independently
+                          const blob = await fetch(albumTrackUrl(albumCode, track.trackId)).then(r => r.blob())
+                          const a = document.createElement('a')
+                          a.href = URL.createObjectURL(blob)
+                          a.download = `${track.title}.webm`
+                          a.click()
+                          URL.revokeObjectURL(a.href)
+                        }
                       }}
                       className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100
                         hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
