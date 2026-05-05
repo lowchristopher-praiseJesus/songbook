@@ -1,0 +1,103 @@
+<!-- Run: npx serve . → open http://localhost:3000/experiments/audio-test.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎙 Audio Recording Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-6 max-w-2xl mx-auto">
+
+  <h1 class="text-2xl font-bold mb-1">🎙 Audio Recording Test</h1>
+  <p class="text-xs text-gray-500 mb-6">Record once · compare current vs new processing side by side</p>
+
+  <!-- CONTROLS — visible in idle, countdown, recording -->
+  <div id="controls" class="flex flex-wrap items-center gap-3 mb-4">
+    <button id="btn-studio"
+      class="text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      Studio Mode
+    </button>
+    <button id="btn-record"
+      class="text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+      ● Record
+    </button>
+  </div>
+
+  <!-- CAPTURE STATUS — visible during countdown + recording -->
+  <div id="capture-status" class="hidden flex flex-wrap items-center gap-4 mb-3">
+    <div class="flex items-center gap-2" aria-label="Input level">
+      <div class="w-24 h-3 bg-gray-700 rounded-full overflow-hidden">
+        <div id="vu-bar" class="h-full rounded-full bg-green-500 w-0"></div>
+      </div>
+      <span id="clip-label" class="hidden text-xs font-bold text-red-400">CLIP</span>
+    </div>
+    <span id="countdown-display" class="hidden text-3xl font-bold text-yellow-400 tabular-nums w-8 text-center"></span>
+    <span id="timer-display"    class="hidden font-mono text-sm text-red-400 tabular-nums"></span>
+    <div class="flex gap-2">
+      <button id="btn-pause"  class="hidden text-xs px-2 py-1 rounded border border-yellow-600 text-yellow-400 hover:bg-yellow-900/20">⏸ Pause</button>
+      <button id="btn-resume" class="hidden text-xs px-2 py-1 rounded border border-green-600  text-green-400  hover:bg-green-900/20">▶ Resume</button>
+      <button id="btn-stop"   class="hidden text-xs px-2 py-1 rounded border border-gray-600   text-gray-300   hover:bg-gray-700">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS INFO — visible during countdown + recording -->
+  <p id="settings-info" class="hidden text-xs text-gray-500 mb-4"></p>
+
+  <!-- PROCESSING SPINNER -->
+  <p id="spinner" class="hidden text-gray-400 text-sm mb-4 animate-pulse">⏳ Processing both versions…</p>
+
+  <!-- COMPARISON — visible when done -->
+  <div id="comparison" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="bg-gray-800 rounded-xl p-4 flex flex-col gap-3">
+      <h2 class="font-semibold text-sm text-gray-300">Current (v1)</h2>
+      <p id="old-error" class="hidden text-xs text-red-400">Processing failed</p>
+      <audio id="old-player" controls playsInline class="w-full hidden"></audio>
+      <p id="old-stats" class="text-xs text-gray-500 leading-relaxed whitespace-pre-line"></p>
+      <button id="btn-dl-old" class="hidden text-xs px-3 py-1.5 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 self-start">↓ Download WAV</button>
+    </div>
+    <div class="bg-gray-800 rounded-xl p-4 flex flex-col gap-3">
+      <h2 class="font-semibold text-sm text-indigo-300">New (v2)</h2>
+      <p id="new-error" class="hidden text-xs text-red-400">Processing failed</p>
+      <audio id="new-player" controls playsInline class="w-full hidden"></audio>
+      <p id="new-stats" class="text-xs text-gray-500 leading-relaxed whitespace-pre-line"></p>
+      <button id="btn-dl-new" class="hidden text-xs px-3 py-1.5 rounded-lg border border-indigo-700 text-indigo-300 hover:bg-indigo-900/20 self-start">↓ Download WAV</button>
+    </div>
+  </div>
+  <button id="btn-again" class="hidden text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium">
+    ● Record again
+  </button>
+
+  <script>
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function show(id, condition = true) {
+      document.getElementById(id).classList.toggle('hidden', !condition)
+    }
+    function hide(id) { show(id, false) }
+
+    // ── Phase state machine ──────────────────────────────────────────────────
+    // Phases: 'idle' | 'countdown' | 'recording' | 'processing' | 'done'
+
+    let phase = 'idle'
+
+    function setPhase(p) {
+      phase = p
+      const capturing = p === 'countdown' || p === 'recording'
+      show('controls',          p === 'idle' || capturing)
+      show('capture-status',    capturing)
+      show('settings-info',     capturing)
+      show('countdown-display', p === 'countdown')
+      show('timer-display',     p === 'recording')
+      show('btn-pause',         p === 'recording')
+      show('btn-stop',          capturing)
+      show('spinner',           p === 'processing')
+      show('comparison',        p === 'done')
+      show('btn-again',         p === 'done')
+      hide('btn-resume')
+    }
+
+    setPhase('idle')
+  </script>
+</body>
+</html>
