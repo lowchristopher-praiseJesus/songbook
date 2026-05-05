@@ -15,8 +15,16 @@ export async function blobToWav(blob) {
   const filter = offlineCtx.createBiquadFilter()
   filter.type = 'highpass'
   filter.frequency.value = 80
+  const compressor = offlineCtx.createDynamicsCompressor()
+  compressor.threshold.value = -24
+  compressor.knee.value = 10
+  compressor.ratio.value = 4
+  compressor.attack.value = 0.005
+  compressor.release.value = 0.15
+
   source.connect(filter)
-  filter.connect(offlineCtx.destination)
+  filter.connect(compressor)
+  compressor.connect(offlineCtx.destination)
   source.start()
   const filtered = await offlineCtx.startRendering()
 
