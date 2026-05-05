@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchAlbumMeta, albumTrackUrl, albumCoverUrl } from '../../lib/albumApi'
+import { blobToWav } from '../../lib/wavUtils'
 
 function formatTime(sec) {
   if (!isFinite(sec)) return '0:00'
@@ -286,18 +287,21 @@ export function AlbumPage({ albumCode }) {
 
                     {/* Download */}
                     <button
-                      onClick={e => {
+                      onClick={async e => {
                         e.stopPropagation()
-                        const url = albumTrackUrl(albumCode, track.trackId)
-                        fetch(url)
-                          .then(r => r.blob())
-                          .then(blob => {
-                            const a = document.createElement('a')
-                            a.href = URL.createObjectURL(blob)
-                            a.download = `${track.title}.webm`
-                            a.click()
-                            URL.revokeObjectURL(a.href)
-                          })
+                        const blob = await fetch(albumTrackUrl(albumCode, track.trackId)).then(r => r.blob())
+                        let downloadBlob = blob
+                        let ext = 'webm'
+                        try {
+                          const wavBuffer = await blobToWav(blob)
+                          downloadBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+                          ext = 'wav'
+                        } catch { /* AudioContext unavailable, fall back to raw webm */ }
+                        const a = document.createElement('a')
+                        a.href = URL.createObjectURL(downloadBlob)
+                        a.download = `${track.title}.${ext}`
+                        a.click()
+                        URL.revokeObjectURL(a.href)
                       }}
                       className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100
                         hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
