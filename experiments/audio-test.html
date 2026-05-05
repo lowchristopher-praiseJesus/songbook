@@ -122,6 +122,149 @@
     })
 
     renderStudioBtn()
+
+    // ── Constants ────────────────────────────────────────────────────────────
+
+    const STUDIO_CONSTRAINTS = {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 1,
+      sampleSize: 16,
+      latency: 0,
+    }
+    const DEFAULT_CONSTRAINTS = { channelCount: 1 }
+    const BITRATE_MONO    = 128_000
+    const BITRATE_STEREO  = 192_000
+
+    // ── Recorder state ───────────────────────────────────────────────────────
+
+    let micStream       = null
+    let mediaRecorder   = null
+    let recordedChunks  = []
+    let actualChannels  = 1
+    let actualBitrate   = BITRATE_MONO
+    let cancelCountdown = null
+
+    // ── Mic acquisition ──────────────────────────────────────────────────────
+
+    async function acquireStream() {
+      const constraints = studioMode ? STUDIO_CONSTRAINTS : DEFAULT_CONSTRAINTS
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: constraints })
+      const settings = micStream.getAudioTracks()[0]?.getSettings() ?? {}
+      actualChannels = settings.channelCount ?? 1
+      actualBitrate  = actualChannels >= 2 ? BITRATE_STEREO : BITRATE_MONO
+      document.getElementById('settings-info').textContent =
+        `${actualChannels === 1 ? 'Mono' : 'Stereo'} · ${actualBitrate / 1000} kbps · ` +
+        `browser DSP ${studioMode ? 'off' : 'on'}`
+      startVU(micStream)
+    }
+
+    function releaseStream() {
+      micStream?.getTracks().forEach(t => t.stop())
+      micStream = null
+    }
+
+    // ── VU meter ─────────────────────────────────────────────────────────────
+
+    let vuAudioCtx = null
+    let vuRaf      = null
+
+    function startVU(stream) {
+      vuAudioCtx = new AudioContext()
+      const src      = vuAudioCtx.createMediaStreamSource(stream)
+      const analyser = vuAudioCtx.createAnalyser()
+      analyser.fftSize = 1024
+      src.connect(analyser)
+      const buf    = new Float32Array(analyser.fftSize)
+      const vuBar  = document.getElementById('vu-bar')
+      const clipLbl = document.getElementById('clip-label')
+      function tick() {
+        analyser.getFloatTimeDomainData(buf)
+        let peak = 0
+        for (let i = 0; i < buf.length; i++) { const a = Math.abs(buf[i]); if (a > peak) peak = a }
+        const db       = peak > 0 ? 20 * Math.log10(peak) : -Infinity
+        const pct      = Math.max(0, Math.min(100, (db + 60) / 60 * 100))
+        const clipping = db >= -1
+        vuBar.style.width = pct + '%'
+        vuBar.className = `h-full rounded-full ${clipping ? 'bg-red-500' : 'bg-green-500'}`
+        clipLbl.classList.toggle('hidden', !clipping)
+        vuRaf = requestAnimationFrame(tick)
+      }
+      vuRaf = requestAnimationFrame(tick)
+    }
+
+    function stopVU() {
+      cancelAnimationFrame(vuRaf)
+      vuRaf = null
+      vuAudioCtx?.close()
+      vuAudioCtx = null
+      document.getElementById('vu-bar').style.width = '0%'
+      document.getElementById('clip-label').classList.add('hidden')
+    }
+
+    // ── Countdown ────────────────────────────────────────────────────────────
+
+    function runCountdown(onDone) {
+      const display = document.getElementById('countdown-display')
+      let remaining = 3
+      display.textContent = remaining
+      const id = setInterval(() => {
+        remaining -= 1
+        if (remaining <= 0) {
+          clearInterval(id)
+          display.textContent = ''
+          onDone()
+        } else {
+          display.textContent = remaining
+        }
+      }, 1000)
+      return () => { clearInterval(id); display.textContent = '' }
+    }
+
+    // ── Record button ────────────────────────────────────────────────────────
+
+    document.getElementById('btn-record').addEventListener('click', async () => {
+      try {
+        setPhase('countdown')
+        await acquireStream()
+        cancelCountdown = runCountdown(() => {
+          cancelCountdown = null
+          startRecording()
+        })
+      } catch (err) {
+        stopVU()
+        releaseStream()
+        setPhase('idle')
+        alert(`Mic error: ${err.message}`)
+      }
+    })
+
+    // Stub — fully implemented in Task 4
+    function startRecording() {
+      setPhase('recording')
+    }
+
+    // ── Stop button ──────────────────────────────────────────────────────────
+
+    document.getElementById('btn-stop').addEventListener('click', () => {
+      if (cancelCountdown) {
+        cancelCountdown()
+        cancelCountdown = null
+        stopVU()
+        releaseStream()
+        setPhase('idle')
+        return
+      }
+      stopRecording()
+    })
+
+    // Stub — fully implemented in Task 4
+    function stopRecording() {
+      stopVU()
+      releaseStream()
+      setPhase('idle')
+    }
   </script>
 </body>
 </html>
