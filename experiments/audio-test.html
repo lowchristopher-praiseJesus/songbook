@@ -240,9 +240,19 @@
       }
     })
 
-    // Stub — fully implemented in Task 4
     function startRecording() {
+      recordedChunks = []
+      const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
+        .find(t => MediaRecorder.isTypeSupported(t))
+      const options = { audioBitsPerSecond: actualBitrate }
+      if (mimeType) options.mimeType = mimeType
+      mediaRecorder = new MediaRecorder(micStream, options)
+      mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) recordedChunks.push(e.data) }
+      mediaRecorder.start(500)
+      resetTimer()
+      startTimer()
       setPhase('recording')
+      acquireWakeLock()
     }
 
     // ── Stop button ──────────────────────────────────────────────────────────
@@ -259,12 +269,78 @@
       stopRecording()
     })
 
-    // Stub — fully implemented in Task 4
     function stopRecording() {
+      pauseTimer()
       stopVU()
-      releaseStream()
-      setPhase('idle')
+      releaseWakeLock()
+      setPhase('processing')
+      mediaRecorder.onstop = async () => {
+        releaseStream()
+        await processAndShow()
+      }
+      mediaRecorder.stop()
     }
-  </script>
+
+    // Stub — processAndShow fully implemented in Task 7
+    async function processAndShow() {
+      setPhase('done')
+    }
+
+    // ── Timer ────────────────────────────────────────────────────────────────
+
+    let timerInterval   = null
+    let timerStartedAt  = null
+    let pausedElapsedMs = 0
+
+    function fmtTime(ms) {
+      const s = Math.floor(ms / 1000)
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+    }
+
+    function startTimer() {
+      timerStartedAt = Date.now()
+      timerInterval = setInterval(() => {
+        const elapsed = pausedElapsedMs + (Date.now() - timerStartedAt)
+        document.getElementById('timer-display').textContent = fmtTime(elapsed)
+      }, 200)
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval)
+      pausedElapsedMs += Date.now() - timerStartedAt
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval)
+      pausedElapsedMs = 0
+      timerStartedAt  = null
+      document.getElementById('timer-display').textContent = '0:00'
+    }
+
+    // ── Pause / Resume ───────────────────────────────────────────────────────
+
+    document.getElementById('btn-pause').addEventListener('click', () => {
+      if (mediaRecorder?.state === 'recording') {
+        mediaRecorder.pause()
+        pauseTimer()
+        show('btn-resume')
+        hide('btn-pause')
+      }
+    })
+
+    document.getElementById('btn-resume').addEventListener('click', () => {
+      if (mediaRecorder?.state === 'paused') {
+        mediaRecorder.resume()
+        startTimer()
+        hide('btn-resume')
+        show('btn-pause')
+      }
+    })
+
+    // ── Wake lock (placeholder — fully implemented in Task 7) ────────────────
+
+    async function acquireWakeLock() {}
+    function releaseWakeLock() {}
+</script>
 </body>
 </html>
