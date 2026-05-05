@@ -20,6 +20,7 @@ describe('AudioRecorder instance', () => {
   beforeEach(() => {
     navigator.mediaDevices.getUserMedia = vi.fn().mockResolvedValue({
       getTracks: () => [{ stop: vi.fn() }],
+      getAudioTracks: () => [{ getSettings: () => ({ channelCount: 2 }) }],
     })
     recorder = new AudioRecorder()
   })
@@ -32,9 +33,16 @@ describe('AudioRecorder instance', () => {
     expect(recorder.state).toBe('inactive')
   })
 
-  it('start() calls getUserMedia with correct constraints', async () => {
+  it('start() calls getUserMedia with music-optimised constraints', async () => {
     await recorder.start()
-    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true })
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+      audio: expect.objectContaining({
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 2,
+      }),
+    })
   })
 
   it('start() sets state to recording', async () => {
@@ -74,6 +82,21 @@ describe('AudioRecorder instance', () => {
     expect(recorder.mimeType).toBeTruthy()
   })
 
+  it('channels reflects actual track channel count after start()', async () => {
+    await recorder.start()
+    expect(recorder.channels).toBe(2)
+  })
+
+  it('channels falls back to 1 when track settings unavailable', async () => {
+    navigator.mediaDevices.getUserMedia = vi.fn().mockResolvedValue({
+      getTracks: () => [{ stop: vi.fn() }],
+      getAudioTracks: () => [],
+    })
+    recorder = new AudioRecorder()
+    await recorder.start()
+    expect(recorder.channels).toBe(1)
+  })
+
   it('onChunk callback is called when data is available', async () => {
     const onChunk = vi.fn()
     recorder = new AudioRecorder({ onChunk })
@@ -86,6 +109,7 @@ describe('AudioRecorder instance', () => {
     const stopFn = vi.fn()
     navigator.mediaDevices.getUserMedia = vi.fn().mockResolvedValue({
       getTracks: () => [{ stop: stopFn }, { stop: stopFn }],
+      getAudioTracks: () => [{ getSettings: () => ({ channelCount: 2 }) }],
     })
     recorder = new AudioRecorder()
     await recorder.start()

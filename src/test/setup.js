@@ -77,6 +77,7 @@ if (!navigator.mediaDevices) {
 if (!navigator.mediaDevices.getUserMedia) {
   navigator.mediaDevices.getUserMedia = vi.fn().mockResolvedValue({
     getTracks: () => [{ stop: vi.fn() }],
+    getAudioTracks: () => [{ getSettings: () => ({ channelCount: 1 }) }],
   })
 }
 

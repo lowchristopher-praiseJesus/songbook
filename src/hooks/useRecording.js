@@ -14,6 +14,7 @@ export function useRecording({ songId, songTitle }) {
   const [elapsedMs, setElapsedMs] = useState(0)
   const [pendingName, setPendingName] = useState('')
   const [error, setError] = useState(null)
+  const [channels, setChannels] = useState(null)
 
   const recorderRef = useRef(null)
   const clientRef = useRef(null)
@@ -63,6 +64,7 @@ export function useRecording({ songId, songTitle }) {
     try {
       await recorder.start()
       mimeTypeRef.current = recorder.mimeType
+      setChannels(recorder.channels)
       setStatus('recording')
       startTimer()
     } catch (err) {
@@ -119,6 +121,7 @@ export function useRecording({ songId, songTitle }) {
     resetTimer()
     setElapsedMs(0)
     setPendingName('')
+    setChannels(null)
     recorderRef.current = null
     setStatus('idle')
   }, [songId, songTitle, elapsedMs])
@@ -131,5 +134,5 @@ export function useRecording({ songId, songTitle }) {
     setStatus('idle')
   }, [])
 
-  return { status, elapsedMs, pendingName, error, startRecording, pauseRecording, resumeRecording, stopRecording, saveRecording, cancelNaming }
+  return { status, elapsedMs, pendingName, error, channels, startRecording, pauseRecording, resumeRecording, stopRecording, saveRecording, cancelNaming }
 }

@@ -13,6 +13,9 @@ const AUDIO_CONSTRAINTS = {
   noiseSuppression: false,
   autoGainControl: false,
   sampleRate: 48000,
+  channelCount: 2,
+  sampleSize: 16,
+  latency: 0,
 }
 
 export class AudioRecorder {
@@ -27,6 +30,7 @@ export class AudioRecorder {
     this._chunks = []
     this.state = 'inactive'
     this.mimeType = null
+    this.channels = null
   }
 
   async start() {
@@ -42,6 +46,7 @@ export class AudioRecorder {
     this._stream = stream
     this._chunks = []
     this.mimeType = mimeType
+    this.channels = stream.getAudioTracks()[0]?.getSettings().channelCount ?? 1
 
     const options = { audioBitsPerSecond: BITRATE }
     if (mimeType) options.mimeType = mimeType

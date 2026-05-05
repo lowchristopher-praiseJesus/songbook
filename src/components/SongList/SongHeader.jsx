@@ -119,6 +119,11 @@ export function SongHeader({
         {songId && RECORDER_SUPPORTED && (
           <>
             <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
+            {recording.channels != null && (recording.status === 'recording' || recording.status === 'paused') && (
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
+                {recording.channels >= 2 ? 'Stereo' : 'Mono'}
+              </span>
+            )}
             <RecorderButton
               status={recording.status}
               onStart={recording.startRecording}
