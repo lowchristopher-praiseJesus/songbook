@@ -20,6 +20,7 @@ export const useLibraryStore = create((set, get) => ({
   selectedSongIds: new Set(), // Set<id> of songs checked for export
   viewMode: 'collections',   // 'collections' | 'allSongs' | 'albums'
   expandedCollectionId: null, // string | null — drives CollectionGroup auto-expand
+  activeCollectionId: null,   // string | null — collection the user last navigated from
   albums: [],                 // [{albumCode, creatorToken, title, artist, createdAt, tracks}]
   activeAlbumCode: null,      // string | null
 
@@ -154,12 +155,16 @@ export const useLibraryStore = create((set, get) => ({
 
   /**
    * Set the active (displayed) song.
+   * Pass collectionId to scope swipe navigation to that collection.
+   * Pass null to clear collection scope (e.g. selecting from All Songs).
+   * Omit (undefined) to preserve current collection scope (e.g. swipe navigation).
    */
-  selectSong(id) {
+  selectSong(id, collectionId = undefined) {
     const song = loadSong(id)
     if (!song) return
     setLastSongId(id)
-    set({ activeSongId: id, activeSong: song, editingSongId: null, isCreatingNewSong: false, activeAlbumCode: null })
+    const collectionUpdate = collectionId !== undefined ? { activeCollectionId: collectionId } : {}
+    set({ activeSongId: id, activeSong: song, editingSongId: null, isCreatingNewSong: false, activeAlbumCode: null, ...collectionUpdate })
   },
 
   /**
@@ -332,7 +337,7 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}) })
+    set({ viewMode: mode, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */

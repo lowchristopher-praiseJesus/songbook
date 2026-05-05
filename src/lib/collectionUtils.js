@@ -11,13 +11,19 @@ export function buildGroups(index, collections) {
 /**
  * Returns a flat ordered array of song entries for prev/next navigation.
  * In 'allSongs' mode: sorted A-Z by title.
- * In 'collections' mode: follows collection order via buildGroups.
+ * In 'collections' mode with an activeCollectionId: scoped to that collection only.
+ * In 'collections' mode without activeCollectionId: all collections flattened.
  */
-export function buildNavOrder(index, collections, viewMode) {
+export function buildNavOrder(index, collections, viewMode, activeCollectionId = null) {
   if (viewMode === 'allSongs') {
     return [...index].sort((a, b) =>
       a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
     )
   }
-  return buildGroups(index, collections).flatMap(g => g.entries)
+  const groups = buildGroups(index, collections)
+  if (viewMode === 'collections' && activeCollectionId) {
+    const group = groups.find(g => g.id === activeCollectionId)
+    return group?.entries ?? []
+  }
+  return groups.flatMap(g => g.entries)
 }

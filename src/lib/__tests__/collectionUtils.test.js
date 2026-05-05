@@ -17,6 +17,21 @@ describe('buildNavOrder', () => {
     expect(order.map(e => e.id)).toEqual(['b', 'a', 'c'])
   })
 
+  it('scopes to a single collection when activeCollectionId is provided', () => {
+    const order = buildNavOrder(index, collections, 'collections', 'c1')
+    expect(order.map(e => e.id)).toEqual(['b', 'a'])
+  })
+
+  it('returns empty array when activeCollectionId does not match any collection', () => {
+    const order = buildNavOrder(index, collections, 'collections', 'no-such-id')
+    expect(order).toEqual([])
+  })
+
+  it('ignores activeCollectionId in allSongs mode', () => {
+    const order = buildNavOrder(index, collections, 'allSongs', 'c1')
+    expect(order.map(e => e.id)).toEqual(['a', 'b', 'c'])
+  })
+
   it('returns A-Z order when viewMode is "allSongs"', () => {
     const order = buildNavOrder(index, collections, 'allSongs')
     expect(order.map(e => e.id)).toEqual(['a', 'b', 'c'])

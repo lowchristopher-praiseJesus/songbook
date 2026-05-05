@@ -39,7 +39,7 @@ export function SongListItem({
     if (isExportMode) {
       toggleSongSelection(entry.id)
     } else {
-      selectSong(entry.id)
+      selectSong(entry.id, collectionId)
       onSelect?.()
     }
   }

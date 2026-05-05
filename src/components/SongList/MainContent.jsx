@@ -27,6 +27,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
   const viewMode = useLibraryStore(s => s.viewMode)
+  const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
   const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
   const albums = useLibraryStore(s => s.albums)
   const activeAlbum = activeAlbumCode ? albums.find(a => a.albumCode === activeAlbumCode) ?? null : null
@@ -51,7 +52,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     if (!metronomeEnabled) setBpmMode(false)
   }, [metronomeEnabled])
 
-  const navOrder = buildNavOrder(index, collections, viewMode)
+  const navOrder = buildNavOrder(index, collections, viewMode, activeCollectionId)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
   const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
   const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
