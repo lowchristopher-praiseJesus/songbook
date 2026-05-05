@@ -1,23 +1,39 @@
 import { useMemo } from 'react'
 import { chordToSprite } from '../../lib/chords/chordSprite'
-import { ChordDiagram } from './ChordDiagram'
+import { slashChordImage } from '../../lib/chords/slashChordImages'
+import { ChordDiagram, SlashChordDiagram } from './ChordDiagram'
 
 /**
- * Extract unique chord names (in order of first appearance) from transposed sections.
- * Strips slash bass, deduplicates, and filters to only chords present in the sprite.
+ * Extract unique chords from transposed sections.
+ * Slash chords with a known fingering image are returned as { name, kind:'slash', imgSrc }.
+ * All others are looked up in the sprite sheet as { name, kind:'sprite', sprite }.
+ * Deduplicates by full chord name; unrecognised slash chords fall back to their root.
  */
 function extractUniqueChords(sections) {
-  const seen = new Set()
-  const result = []
+  const seenFull  = new Set()
+  const seenRoots = new Set()
+  const result    = []
 
   for (const section of sections) {
     for (const line of section.lines) {
       for (const { chord } of (line.chords ?? [])) {
-        // Strip slash bass: "G/B" → "G"
-        const name = chord.includes('/') ? chord.slice(0, chord.indexOf('/')) : chord
-        if (seen.has(name)) continue
-        seen.add(name)
-        if (chordToSprite(name) !== null) result.push(name)
+        if (seenFull.has(chord)) continue
+        seenFull.add(chord)
+
+        if (chord.includes('/')) {
+          const imgSrc = slashChordImage(chord)
+          if (imgSrc) {
+            result.push({ name: chord, kind: 'slash', imgSrc })
+            continue
+          }
+        }
+
+        // Regular chord or slash chord without a dedicated image → show root via sprite
+        const root = chord.includes('/') ? chord.slice(0, chord.indexOf('/')) : chord
+        if (seenRoots.has(root)) continue
+        seenRoots.add(root)
+        const sprite = chordToSprite(root)
+        if (sprite) result.push({ name: root, kind: 'sprite', sprite })
       }
     }
   }
@@ -37,7 +53,6 @@ export function ChordStrip({ sections, open, onToggle }) {
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700">
-      {/* Toggle button */}
       <button
         type="button"
         onClick={onToggle}
@@ -49,13 +64,15 @@ export function ChordStrip({ sections, open, onToggle }) {
         Chords {open ? '▴' : '▾'}
       </button>
 
-      {/* Diagram row */}
       {open && (
         <div className="flex flex-wrap gap-1 px-4 pb-3">
-          {chords.map(name => (
-            <div key={name} data-chord={name}>
-              <span className="sr-only">{name}</span>
-              <ChordDiagram sprite={chordToSprite(name)} />
+          {chords.map(item => (
+            <div key={item.name} data-chord={item.name}>
+              <span className="sr-only">{item.name}</span>
+              {item.kind === 'slash'
+                ? <SlashChordDiagram imgSrc={item.imgSrc} name={item.name} />
+                : <ChordDiagram sprite={item.sprite} />
+              }
             </div>
           ))}
         </div>

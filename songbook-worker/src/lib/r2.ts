@@ -26,3 +26,95 @@ export async function getShareIfValid(
   if (!object) return { error: 'not_found' };
   return { object };
 }
+
+// ── Album helpers ────────────────────────────────────────────────────────────
+
+export interface AlbumMeta {
+  albumCode: string;
+  title: string;
+  artist: string;
+  createdAt: string;
+  creatorToken: string;
+  hasCover: boolean;
+  coverExt: string;
+  tracks: Array<{
+    trackId: string;
+    title: string;
+    duration: number;
+    mimeType: string;
+  }>;
+}
+
+export async function putAlbumMeta(
+  bucket: R2Bucket,
+  albumCode: string,
+  meta: AlbumMeta,
+): Promise<void> {
+  await bucket.put(`albums/${albumCode}/meta.json`, JSON.stringify(meta), {
+    httpMetadata: { contentType: 'application/json' },
+  });
+}
+
+export async function getAlbumMetaRaw(
+  bucket: R2Bucket,
+  albumCode: string,
+): Promise<AlbumMeta | null> {
+  const obj = await bucket.get(`albums/${albumCode}/meta.json`);
+  if (!obj) return null;
+  return obj.json<AlbumMeta>();
+}
+
+export async function putAlbumCover(
+  bucket: R2Bucket,
+  albumCode: string,
+  ext: string,
+  body: ArrayBuffer | ReadableStream,
+  contentType: string,
+): Promise<void> {
+  await bucket.put(`albums/${albumCode}/cover.${ext}`, body, {
+    httpMetadata: { contentType },
+  });
+}
+
+export async function getAlbumCover(
+  bucket: R2Bucket,
+  albumCode: string,
+  ext: string,
+): Promise<R2ObjectBody | null> {
+  return bucket.get(`albums/${albumCode}/cover.${ext}`);
+}
+
+export async function putAlbumTrack(
+  bucket: R2Bucket,
+  albumCode: string,
+  trackId: string,
+  body: ArrayBuffer | ReadableStream,
+  mimeType: string,
+): Promise<void> {
+  await bucket.put(`albums/${albumCode}/tracks/${trackId}`, body, {
+    httpMetadata: { contentType: mimeType },
+  });
+}
+
+export async function getAlbumTrack(
+  bucket: R2Bucket,
+  albumCode: string,
+  trackId: string,
+): Promise<R2ObjectBody | null> {
+  return bucket.get(`albums/${albumCode}/tracks/${trackId}`);
+}
+
+export async function deleteAlbum(
+  bucket: R2Bucket,
+  albumCode: string,
+): Promise<void> {
+  const prefix = `albums/${albumCode}/`;
+  let cursor: string | undefined;
+  do {
+    const listed = await bucket.list({ prefix, cursor, limit: 100 });
+    if (listed.objects.length > 0) {
+      await Promise.all(listed.objects.map(obj => bucket.delete(obj.key)));
+    }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+}

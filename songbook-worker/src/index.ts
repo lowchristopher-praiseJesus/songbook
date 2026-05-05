@@ -4,6 +4,7 @@ import share from './routes/share';
 import walkieShare from './routes/walkieShare';
 import session from './routes/session';
 import conductor from './routes/conductor';
+import album from './routes/album';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -43,5 +44,6 @@ app.route('/share', share);
 app.route('/walkie-shares', walkieShare);
 app.route('/session', session);
 app.route('/conductor', conductor);
+app.route('/album', album);
 
 export default app;

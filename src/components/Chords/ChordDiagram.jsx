@@ -20,3 +20,23 @@ export function ChordDiagram({ sprite }) {
     />
   )
 }
+
+/**
+ * Renders a slash chord diagram from a pre-cropped image file.
+ * @param {{ imgSrc: string, name: string }} props
+ */
+export function SlashChordDiagram({ imgSrc, name }) {
+  return (
+    <img
+      src={imgSrc}
+      alt={name}
+      aria-hidden="true"
+      style={{
+        width:      SPRITE_W,
+        height:     SPRITE_H,
+        objectFit:  'contain',
+        flexShrink: 0,
+      }}
+    />
+  )
+}

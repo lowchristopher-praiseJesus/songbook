@@ -10,7 +10,7 @@ const sections = [
       { type: 'lyric',  content: 'Hello',  chords: [{ chord: 'G',    position: 0 }] },
       { type: 'lyric',  content: 'World',  chords: [{ chord: 'Am',   position: 0 }] },
       { type: 'lyric',  content: 'Again',  chords: [{ chord: 'G',    position: 0 }] }, // duplicate G
-      { type: 'lyric',  content: 'Slash',  chords: [{ chord: 'G/B',  position: 0 }] }, // slash → G, already present
+      { type: 'lyric',  content: 'Slash',  chords: [{ chord: 'G/B',  position: 0 }] }, // slash chord with its own diagram
       { type: 'chord',  content: '',       chords: [{ chord: 'Cmaj7',position: 0 }] },
     ],
   },
@@ -24,9 +24,9 @@ describe('ChordStrip', () => {
 
   it('shows chord diagrams when open=true', () => {
     render(<ChordStrip sections={sections} open onToggle={() => {}} />)
-    // G, Am, Cmaj7 — three unique chords (G/B deduped as G)
+    // G, Am, G/B (slash diagram), Cmaj7 — four unique chords
     const diagrams = document.querySelectorAll('[data-chord]')
-    expect(diagrams).toHaveLength(3)
+    expect(diagrams).toHaveLength(4)
   })
 
   it('hides chord diagrams when open=false', () => {

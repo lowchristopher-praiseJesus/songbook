@@ -6,6 +6,13 @@ export default defineConfig({
   plugins: [react(), basicSsl()],
   server: {
     host: true,
+    proxy: {
+      '/worker': {
+        target: 'http://localhost:8787',
+        rewrite: path => path.replace(/^\/worker/, ''),
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: true,

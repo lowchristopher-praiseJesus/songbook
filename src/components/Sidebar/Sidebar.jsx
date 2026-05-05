@@ -17,6 +17,7 @@ import { AllSongsList } from './AllSongsList'
 import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
 import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
+import { AlbumCreatorModal } from '../Album/AlbumCreatorModal'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync }) {
   const [query, setQuery] = useState('')
@@ -53,6 +54,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [duplicatingCollectionId, setDuplicatingCollectionId] = useState(null)
   const [duplicateDraft, setDuplicateDraft] = useState('')
   const duplicatingEscapeRef = useRef(false)
+  const [albumModalCollection, setAlbumModalCollection] = useState(null)
 
   // Clear tracked collection name when export mode is turned off
   useEffect(() => {
@@ -371,6 +373,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                     setDuplicatingCollectionId(id)
                     setDuplicateDraft('Copy of ' + group.name)
                   }}
+                  onAlbum={g => setAlbumModalCollection(collections.find(c => c.id === g.id) ?? null)}
                   onGroupCheckboxChange={(val) => {
                     if (val === null) {
                       setExportSourceName(null)
@@ -609,6 +612,12 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         onClose={() => setLiveSessionModalOpen(false)}
         onStartSession={onStartSession}
         onJoinSession={onJoinSession}
+      />
+
+      <AlbumCreatorModal
+        isOpen={albumModalCollection !== null}
+        collection={albumModalCollection}
+        onClose={() => setAlbumModalCollection(null)}
       />
     </>
   )
