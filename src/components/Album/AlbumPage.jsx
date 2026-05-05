@@ -115,6 +115,17 @@ export function AlbumPage({ albumCode }) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      {/* Back link */}
+      <div className="px-4 pt-4">
+        <a
+          href={window.location.origin + window.location.pathname}
+          className="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400
+            hover:underline"
+        >
+          ← Songsheet
+        </a>
+      </div>
+
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
