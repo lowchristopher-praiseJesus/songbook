@@ -285,17 +285,27 @@ export function AlbumPage({ albumCode }) {
                     </span>
 
                     {/* Download */}
-                    <a
-                      href={albumTrackUrl(albumCode, track.trackId)}
-                      download={`${track.title}.webm`}
-                      onClick={e => e.stopPropagation()}
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        const url = albumTrackUrl(albumCode, track.trackId)
+                        fetch(url)
+                          .then(r => r.blob())
+                          .then(blob => {
+                            const a = document.createElement('a')
+                            a.href = URL.createObjectURL(blob)
+                            a.download = `${track.title}.webm`
+                            a.click()
+                            URL.revokeObjectURL(a.href)
+                          })
+                      }}
                       className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100
                         hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-gray-500"
                       aria-label={`Download ${track.title}`}
                       title="Download"
                     >
                       ↓
-                    </a>
+                    </button>
                   </li>
                 )
               })}
