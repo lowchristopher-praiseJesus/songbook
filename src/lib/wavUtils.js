@@ -4,9 +4,25 @@ export async function blobToWav(blob) {
   const decoded = await audioCtx.decodeAudioData(arrayBuffer)
   await audioCtx.close()
 
-  const numChannels = decoded.numberOfChannels
-  const sampleRate = decoded.sampleRate
-  const numSamples = decoded.length
+  // High-pass filter at 80Hz to remove room rumble and handling noise
+  const offlineCtx = new OfflineAudioContext(
+    decoded.numberOfChannels,
+    decoded.length,
+    decoded.sampleRate
+  )
+  const source = offlineCtx.createBufferSource()
+  source.buffer = decoded
+  const filter = offlineCtx.createBiquadFilter()
+  filter.type = 'highpass'
+  filter.frequency.value = 80
+  source.connect(filter)
+  filter.connect(offlineCtx.destination)
+  source.start()
+  const filtered = await offlineCtx.startRendering()
+
+  const numChannels = filtered.numberOfChannels
+  const sampleRate = filtered.sampleRate
+  const numSamples = filtered.length
   const wavBuffer = new ArrayBuffer(44 + numSamples * numChannels * 2)
   const view = new DataView(wavBuffer)
 
@@ -23,7 +39,7 @@ export async function blobToWav(blob) {
 
   let peak = 0
   for (let c = 0; c < numChannels; c++) {
-    const data = decoded.getChannelData(c)
+    const data = filtered.getChannelData(c)
     for (let s = 0; s < numSamples; s++) {
       const abs = Math.abs(data[s])
       if (abs > peak) peak = abs
@@ -34,7 +50,7 @@ export async function blobToWav(blob) {
   let offset = 44
   for (let s = 0; s < numSamples; s++) {
     for (let c = 0; c < numChannels; c++) {
-      const sample = Math.max(-1, Math.min(1, decoded.getChannelData(c)[s] * gain))
+      const sample = Math.max(-1, Math.min(1, filtered.getChannelData(c)[s] * gain))
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
       offset += 2
     }
