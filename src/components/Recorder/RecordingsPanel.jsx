@@ -24,6 +24,8 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
   const [quota, setQuota] = useState(null)
   const [recordingsBytes, setRecordingsBytes] = useState(0)
   const [playingSrc, setPlayingSrc] = useState(null)
+  const [processingId, setProcessingId] = useState(null)
+  const [downloadingId, setDownloadingId] = useState(null)
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const clientRef = useRef(null)
@@ -61,11 +63,23 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
 
   async function handlePlay(rec) {
     if (playingSrc?.recordingId === rec.recordingId) { setPlayingSrc(null); return }
-    const buffer = await clientRef.current.send('read-audio', { songId, recordingId: rec.recordingId })
-    const blob = new Blob([buffer], { type: rec.mimeType ?? 'audio/webm' })
-    const url = URL.createObjectURL(blob)
-    objectUrlsRef.current.push(url)
-    setPlayingSrc({ recordingId: rec.recordingId, url, mimeType: rec.mimeType, durationMs: rec.duration })
+    setProcessingId(rec.recordingId)
+    try {
+      const buffer = await clientRef.current.send('read-audio', { songId, recordingId: rec.recordingId })
+      const blob = new Blob([buffer], { type: rec.mimeType ?? 'audio/webm' })
+      let playBlob = blob
+      let mimeType = rec.mimeType
+      try {
+        const wavBuffer = await blobToWav(blob)
+        playBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+        mimeType = 'audio/wav'
+      } catch {}
+      const url = URL.createObjectURL(playBlob)
+      objectUrlsRef.current.push(url)
+      setPlayingSrc({ recordingId: rec.recordingId, url, mimeType, durationMs: rec.duration })
+    } finally {
+      setProcessingId(null)
+    }
   }
 
   async function handleDelete(rec) {
@@ -76,24 +90,29 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
   }
 
   async function handleDownload(rec) {
-    const buffer = await clientRef.current.send('read-audio', { songId, recordingId: rec.recordingId })
-    const blob = new Blob([buffer], { type: rec.mimeType ?? 'audio/webm' })
-    let downloadBlob = blob
-    let ext = 'webm'
+    setDownloadingId(rec.recordingId)
     try {
-      const wavBuffer = await blobToWav(blob)
-      downloadBlob = new Blob([wavBuffer], { type: 'audio/wav' })
-      ext = 'wav'
-    } catch { /* AudioContext unavailable, fall back to raw */ }
+      const buffer = await clientRef.current.send('read-audio', { songId, recordingId: rec.recordingId })
+      const blob = new Blob([buffer], { type: rec.mimeType ?? 'audio/webm' })
+      let downloadBlob = blob
+      let ext = 'webm'
+      try {
+        const wavBuffer = await blobToWav(blob)
+        downloadBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+        ext = 'wav'
+      } catch { /* AudioContext unavailable, fall back to raw */ }
 
-    const url = URL.createObjectURL(downloadBlob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${rec.name.replace(/[^a-z0-9 _-]/gi, '_')}.${ext}`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+      const url = URL.createObjectURL(downloadBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${rec.name.replace(/[^a-z0-9 _-]/gi, '_')}.${ext}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
   async function handleRenameSubmit(rec) {
@@ -152,7 +171,10 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
                   aria-label={`Rename ${rec.name}`}>✏️</Button>
                 <Button variant="ghost" className="text-xs px-1.5 py-0.5"
                   onClick={() => handleDownload(rec)}
-                  aria-label={`Download ${rec.name}`}>↓ Download</Button>
+                  disabled={downloadingId === rec.recordingId}
+                  aria-label={`Download ${rec.name}`}>
+                  {downloadingId === rec.recordingId ? '⏳ Processing…' : '↓ Download'}
+                </Button>
                 <Button variant="danger" className="text-xs px-1.5 py-0.5"
                   onClick={() => handleDelete(rec)}
                   aria-label={`Delete ${rec.name}`}>Delete</Button>
@@ -162,7 +184,11 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
             {playingSrc?.recordingId === rec.recordingId ? (
               <AudioPlayer src={playingSrc.url} mimeType={playingSrc.mimeType} durationMs={playingSrc.durationMs} />
             ) : (
-              <Button variant="secondary" className="text-xs self-start" onClick={() => handlePlay(rec)}>▶ Play</Button>
+              <Button variant="secondary" className="text-xs self-start"
+                onClick={() => handlePlay(rec)}
+                disabled={processingId === rec.recordingId}>
+                {processingId === rec.recordingId ? '⏳ Processing…' : '▶ Play'}
+              </Button>
             )}
           </div>
         ))}
