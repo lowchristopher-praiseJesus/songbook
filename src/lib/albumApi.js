@@ -69,7 +69,7 @@ export async function deleteAlbum(albumCode, creatorToken) {
     method: 'DELETE',
     headers: { 'X-Creator-Token': creatorToken },
   })
-  if (!res.ok) throw Object.assign(new Error('delete_failed'), { code: 'delete_failed' })
+  if (!res.ok && res.status !== 404) throw Object.assign(new Error('delete_failed'), { code: 'delete_failed' })
 }
 
 // ── localStorage helpers for "my albums" ────────────────────────────────────
