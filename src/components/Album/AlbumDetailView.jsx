@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import QRCode from 'qrcode'
 import { useLibraryStore } from '../../store/libraryStore'
 import { deleteAlbum, removeAlbumLocally } from '../../lib/albumApi'
 
@@ -29,6 +30,13 @@ export function AlbumDetailView({ album }) {
 
   const albumUrl = `${window.location.origin}${window.location.pathname}?album=${album.albumCode}`
   const tracks = album.tracks ?? []
+  const qrCanvasRef = useRef(null)
+
+  useEffect(() => {
+    if (qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, albumUrl, { width: 160, margin: 1 })
+    }
+  }, [albumUrl])
 
   async function handleDelete() {
     setDeleting(true)
@@ -128,6 +136,12 @@ export function AlbumDetailView({ album }) {
           >
             Open ↗
           </a>
+        </div>
+        <div className="mt-4">
+          <canvas
+            ref={qrCanvasRef}
+            className="rounded-lg border border-gray-200 dark:border-gray-700"
+          />
         </div>
       </div>
 
