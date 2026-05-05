@@ -15,11 +15,13 @@
   <!-- CONTROLS — visible in idle, countdown, recording -->
   <div id="controls" class="flex flex-wrap items-center gap-3 mb-4">
     <button id="btn-studio"
-      class="text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      class="text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      aria-label="Toggle studio mode">
       Studio Mode
     </button>
     <button id="btn-record"
-      class="text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+      class="text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
+      aria-label="Start recording">
       ● Record
     </button>
   </div>
@@ -32,12 +34,12 @@
       </div>
       <span id="clip-label" class="hidden text-xs font-bold text-red-400">CLIP</span>
     </div>
-    <span id="countdown-display" class="hidden text-3xl font-bold text-yellow-400 tabular-nums w-8 text-center"></span>
-    <span id="timer-display"    class="hidden font-mono text-sm text-red-400 tabular-nums"></span>
+    <span id="countdown-display" class="hidden text-3xl font-bold text-yellow-400 tabular-nums w-8 text-center" aria-live="polite" aria-label="Countdown"></span>
+    <span id="timer-display"    class="hidden font-mono text-sm text-red-400 tabular-nums" aria-label="Recording duration"></span>
     <div class="flex gap-2">
-      <button id="btn-pause"  class="hidden text-xs px-2 py-1 rounded border border-yellow-600 text-yellow-400 hover:bg-yellow-900/20">⏸ Pause</button>
-      <button id="btn-resume" class="hidden text-xs px-2 py-1 rounded border border-green-600  text-green-400  hover:bg-green-900/20">▶ Resume</button>
-      <button id="btn-stop"   class="hidden text-xs px-2 py-1 rounded border border-gray-600   text-gray-300   hover:bg-gray-700">⏹ Stop</button>
+      <button id="btn-pause"  class="hidden text-xs px-2 py-1 rounded border border-yellow-600 text-yellow-400 hover:bg-yellow-900/20" aria-label="Pause recording">⏸ Pause</button>
+      <button id="btn-resume" class="hidden text-xs px-2 py-1 rounded border border-green-600  text-green-400  hover:bg-green-900/20" aria-label="Resume recording">▶ Resume</button>
+      <button id="btn-stop"   class="hidden text-xs px-2 py-1 rounded border border-gray-600   text-gray-300   hover:bg-gray-700" aria-label="Stop recording">⏹ Stop</button>
     </div>
   </div>
 
@@ -64,7 +66,7 @@
       <button id="btn-dl-new" class="hidden text-xs px-3 py-1.5 rounded-lg border border-indigo-700 text-indigo-300 hover:bg-indigo-900/20 self-start">↓ Download WAV</button>
     </div>
   </div>
-  <button id="btn-again" class="hidden text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium">
+  <button id="btn-again" class="hidden text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium" aria-label="Record again">
     ● Record again
   </button>
 
