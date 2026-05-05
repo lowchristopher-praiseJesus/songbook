@@ -40,7 +40,7 @@ function StepSelectRecordings({ onNext }) {
             result[songEntry.id] = {
               song: songEntry,
               recordings: recs,
-              selected: new Set(recs.map(r => r.recordingId)),
+              selected: new Set(),
             }
           }
         } catch { /* no recordings */ }
@@ -58,6 +58,20 @@ function StepSelectRecordings({ onNext }) {
       next.has(recordingId) ? next.delete(recordingId) : next.add(recordingId)
       return { ...prev, [songId]: { ...entry, selected: next } }
     })
+  }
+
+  function selectAll() {
+    setBysong(prev => Object.fromEntries(
+      Object.entries(prev).map(([id, entry]) => [
+        id, { ...entry, selected: new Set(entry.recordings.map(r => r.recordingId)) }
+      ])
+    ))
+  }
+
+  function unselectAll() {
+    setBysong(prev => Object.fromEntries(
+      Object.entries(prev).map(([id, entry]) => [id, { ...entry, selected: new Set() }])
+    ))
   }
 
   const tracks = []
@@ -91,11 +105,35 @@ function StepSelectRecordings({ onNext }) {
     </div>
   )
 
+  const totalRecordings = Object.values(bysong).reduce((n, e) => n + e.recordings.length, 0)
+  const allSelected = tracks.length === totalRecordings
+
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Select the recordings to include in your album.
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Select recordings to include in your album.
+        </p>
+        <div className="flex gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={selectAll}
+            disabled={allSelected}
+            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40 disabled:no-underline"
+          >
+            Select all
+          </button>
+          <span className="text-xs text-gray-300 dark:text-gray-600">|</span>
+          <button
+            type="button"
+            onClick={unselectAll}
+            disabled={tracks.length === 0}
+            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40 disabled:no-underline"
+          >
+            Unselect all
+          </button>
+        </div>
+      </div>
 
       {/* Tab bar */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
