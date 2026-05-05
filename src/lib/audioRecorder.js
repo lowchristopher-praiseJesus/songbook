@@ -8,11 +8,15 @@ const MIME_CANDIDATES = [
 const BITRATE = 320_000
 const TIMESLICE_MS = 500
 
+// iPads on iOS 13+ report as MacIntel with touch support
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
 const AUDIO_CONSTRAINTS = {
   echoCancellation: false,
   noiseSuppression: false,
   autoGainControl: false,
-  sampleRate: 48000,
+  ...(IS_IOS ? {} : { sampleRate: 48000 }),
   channelCount: 2,
   sampleSize: 16,
   latency: 0,
