@@ -17,7 +17,7 @@ import { AllSongsList } from './AllSongsList'
 import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
 import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
-import { AlbumCreatorModal } from '../Album/AlbumCreatorModal'
+import { AlbumsPanel } from '../Album/AlbumsPanel'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync }) {
   const [query, setQuery] = useState('')
@@ -54,8 +54,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [duplicatingCollectionId, setDuplicatingCollectionId] = useState(null)
   const [duplicateDraft, setDuplicateDraft] = useState('')
   const duplicatingEscapeRef = useRef(false)
-  const [albumModalCollection, setAlbumModalCollection] = useState(null)
-
   // Clear tracked collection name when export mode is turned off
   useEffect(() => {
     if (!isExportMode) {
@@ -272,11 +270,28 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             >
               All Songs
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('albums')}
+              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+                viewMode === 'albums'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Albums
+            </button>
           </div>
         )}
       </div>
 
+      {/* Albums tab panel */}
+      {!trimmedQuery && viewMode === 'albums' && (
+        <AlbumsPanel onSelect={onSongSelect} />
+      )}
+
       {/* Song list */}
+      {(trimmedQuery || viewMode !== 'albums') && (
       <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
         {trimmedQuery ? (
           <>
@@ -373,7 +388,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                     setDuplicatingCollectionId(id)
                     setDuplicateDraft('Copy of ' + group.name)
                   }}
-                  onAlbum={g => setAlbumModalCollection(collections.find(c => c.id === g.id) ?? null)}
                   onGroupCheckboxChange={(val) => {
                     if (val === null) {
                       setExportSourceName(null)
@@ -425,6 +439,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           </>
         )}
       </ul>
+      )}
 
       <BroadcastsPanel conductorSync={conductorSync} onAddToast={onAddToast} />
 
@@ -614,11 +629,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         onJoinSession={onJoinSession}
       />
 
-      <AlbumCreatorModal
-        isOpen={albumModalCollection !== null}
-        collection={albumModalCollection}
-        onClose={() => setAlbumModalCollection(null)}
-      />
     </>
   )
 }

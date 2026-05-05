@@ -6,6 +6,7 @@ import {
   loadCollections, saveCollections, getViewMode, saveViewMode,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
+import { loadMyAlbums } from '../lib/albumApi'
 
 export const useLibraryStore = create((set, get) => ({
   // State
@@ -17,8 +18,10 @@ export const useLibraryStore = create((set, get) => ({
   isCreatingNewSong: false,
   isExportMode: false,
   selectedSongIds: new Set(), // Set<id> of songs checked for export
-  viewMode: 'collections',   // 'collections' | 'allSongs'
+  viewMode: 'collections',   // 'collections' | 'allSongs' | 'albums'
   expandedCollectionId: null, // string | null — drives CollectionGroup auto-expand
+  albums: [],                 // [{albumCode, creatorToken, title, artist, createdAt, tracks}]
+  activeAlbumCode: null,      // string | null
 
   /**
    * Initialize from localStorage on app start.
@@ -72,6 +75,7 @@ export const useLibraryStore = create((set, get) => ({
       activeSongId: activeSong ? activeSong.id : null,
       activeSong,
       viewMode: getViewMode(),
+      albums: loadMyAlbums(),
     })
   },
 
@@ -155,7 +159,7 @@ export const useLibraryStore = create((set, get) => ({
     const song = loadSong(id)
     if (!song) return
     setLastSongId(id)
-    set({ activeSongId: id, activeSong: song, editingSongId: null, isCreatingNewSong: false })
+    set({ activeSongId: id, activeSong: song, editingSongId: null, isCreatingNewSong: false, activeAlbumCode: null })
   },
 
   /**
@@ -328,12 +332,20 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode })
+    set({ viewMode: mode, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}) })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */
   setExpandedCollectionId(id) {
     set({ expandedCollectionId: id })
+  },
+
+  setActiveAlbumCode(code) {
+    set({ activeAlbumCode: code })
+  },
+
+  syncAlbums() {
+    set({ albums: loadMyAlbums() })
   },
 
   /** Create a new empty collection with the given name. No-op if name is blank. */

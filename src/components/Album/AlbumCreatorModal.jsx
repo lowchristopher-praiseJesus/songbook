@@ -17,7 +17,8 @@ function formatDuration(ms) {
 
 function StepSelectRecordings({ collection, onNext }) {
   const index = useLibraryStore(s => s.index)
-  const [bysong, setBysong] = useState({}) // { songId: { song, recordings: [...], selected: Set } }
+  const collections = useLibraryStore(s => s.collections)
+  const [bysong, setBysong] = useState({}) // { songId: { song, collectionName, recordings: [...], selected: Set } }
   const [loading, setLoading] = useState(true)
   const clientRef = useRef(null)
 
@@ -27,19 +28,21 @@ function StepSelectRecordings({ collection, onNext }) {
   }, [])
 
   useEffect(() => {
-    if (!collection) return
     const client = clientRef.current
+    const songIds = collection ? collection.songIds : index.map(e => e.id)
     async function load() {
       setLoading(true)
       const result = {}
-      for (const songId of collection.songIds) {
+      for (const songId of songIds) {
         const songEntry = index.find(e => e.id === songId)
         if (!songEntry) continue
         try {
           const recs = await client.send('list-recordings', { songId })
           if (recs.length > 0) {
+            const col = collection ?? collections.find(c => c.songIds.includes(songId))
             result[songId] = {
               song: songEntry,
+              collectionName: col?.name ?? null,
               recordings: recs,
               selected: new Set(recs.map(r => r.recordingId)),
             }
@@ -50,7 +53,7 @@ function StepSelectRecordings({ collection, onNext }) {
       setLoading(false)
     }
     load()
-  }, [collection, index])
+  }, [collection, index, collections])
 
   function toggleRecording(songId, recordingId) {
     setBysong(prev => {
@@ -80,7 +83,7 @@ function StepSelectRecordings({ collection, onNext }) {
   if (songIds.length === 0) return (
     <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-4">
       <p className="text-gray-500 dark:text-gray-400 text-sm">
-        No recordings found in this collection.
+        {collection ? 'No recordings found in this collection.' : 'No recordings found in your library.'}
       </p>
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Record songs using the Rec button on any song, then come back.
@@ -95,10 +98,13 @@ function StepSelectRecordings({ collection, onNext }) {
       </p>
 
       <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-        {Object.values(bysong).map(({ song, recordings, selected }) => (
+        {Object.values(bysong).map(({ song, collectionName, recordings, selected }) => (
           <div key={song.id}>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               {song.title}
+              {!collection && collectionName && (
+                <span className="ml-2 font-normal normal-case text-gray-400 dark:text-gray-500">— {collectionName}</span>
+              )}
             </p>
             <div className="space-y-1">
               {recordings.map(rec => (
@@ -273,7 +279,10 @@ function StepUploading({ tracks, details, onDone, onError, onClose }) {
         await uploadTrack(albumCode, trackId, buffer, mimeType, creatorToken)
       }
 
-      saveAlbumLocally({ albumCode, creatorToken, title: details.title, artist: details.artist })
+      saveAlbumLocally({
+        albumCode, creatorToken, title: details.title, artist: details.artist,
+        tracks: trackMeta.map(({ trackId, title, duration }) => ({ trackId, title, duration })),
+      })
       client.terminate()
       onDone({ albumCode, creatorToken })
     })().catch(err => {

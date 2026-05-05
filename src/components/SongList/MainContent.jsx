@@ -15,6 +15,7 @@ import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 import metronomeIcon from '../../assets/metronome.png'
+import { AlbumDetailView } from '../Album/AlbumDetailView'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -26,6 +27,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
   const viewMode = useLibraryStore(s => s.viewMode)
+  const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
+  const albums = useLibraryStore(s => s.albums)
+  const activeAlbum = activeAlbumCode ? albums.find(a => a.albumCode === activeAlbumCode) ?? null : null
   const [performanceSections, setPerformanceSections] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
   const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
@@ -140,7 +144,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {isCreatingNewSong
+      {activeAlbum
+        ? <AlbumDetailView album={activeAlbum} />
+        : isCreatingNewSong
         ? <NewSongEditor />
         : editingSongId
         ? <SongEditor songId={editingSongId} />

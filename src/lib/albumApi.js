@@ -76,9 +76,9 @@ export async function deleteAlbum(albumCode, creatorToken) {
 
 const ALBUMS_KEY = 'songsheet_albums'
 
-export function saveAlbumLocally({ albumCode, creatorToken, title, artist }) {
+export function saveAlbumLocally({ albumCode, creatorToken, title, artist, tracks = [] }) {
   const existing = loadMyAlbums()
-  const updated = [{ albumCode, creatorToken, title, artist, createdAt: new Date().toISOString() }, ...existing]
+  const updated = [{ albumCode, creatorToken, title, artist, createdAt: new Date().toISOString(), tracks }, ...existing]
   localStorage.setItem(ALBUMS_KEY, JSON.stringify(updated))
 }
 
