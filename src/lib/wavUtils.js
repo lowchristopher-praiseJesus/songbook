@@ -21,21 +21,10 @@ export async function blobToWav(blob) {
   writeUint32(28, sampleRate * numChannels * 2); writeUint16(32, numChannels * 2)
   writeUint16(34, 16); writeStr(36, 'data'); writeUint32(40, dataSize)
 
-  // Peak-normalize so quiet room recordings aren't inaudible in the exported WAV
-  let peak = 0
-  for (let c = 0; c < numChannels; c++) {
-    const data = decoded.getChannelData(c)
-    for (let s = 0; s < numSamples; s++) {
-      const abs = Math.abs(data[s])
-      if (abs > peak) peak = abs
-    }
-  }
-  const gain = peak > 0.001 ? 0.9 / peak : 1
-
   let offset = 44
   for (let s = 0; s < numSamples; s++) {
     for (let c = 0; c < numChannels; c++) {
-      const sample = Math.max(-1, Math.min(1, decoded.getChannelData(c)[s] * gain))
+      const sample = Math.max(-1, Math.min(1, decoded.getChannelData(c)[s]))
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
       offset += 2
     }
