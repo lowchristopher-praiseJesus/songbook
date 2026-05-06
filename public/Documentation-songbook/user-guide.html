@@ -804,6 +804,19 @@
       </div>
 
       <a class="nav-direct" href="#recording">Recording</a>
+
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-albums">
+          Albums <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-albums">
+          <a class="nav-item" href="#albums-overview">Overview</a>
+          <a class="nav-item" href="#albums-create">Creating an Album</a>
+          <a class="nav-item" href="#albums-publish">Publishing</a>
+          <a class="nav-item" href="#albums-manage">Managing Albums</a>
+        </div>
+      </div>
+
       <a class="nav-direct" href="#shortcuts">Tips & Shortcuts</a>
 
     </div>
@@ -1863,10 +1876,110 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 15. TIPS & SHORTCUTS                           -->
+      <!-- 15. ALBUMS                                     -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="albums">
+        <div class="section-number">15 — Albums</div>
+        <h2 class="section-title">Albums</h2>
+        <p>Once you have recorded songs in SongSheet, you can bundle them into a shareable <strong>Album</strong> — a curated playlist published to the cloud that anyone with the link can stream. Albums let you share a polished set of recordings (a worship set, a rehearsal demo, a home recital) with bandmates, family, or your congregation.</p>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Recordings first</strong>
+            Albums are built from your existing recordings. Make sure you've recorded at least one song (see <a href="#recording">Section 14 — Recording</a>) before creating an album.
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Free plan limit</strong>
+            The free plan allows <strong>one album</strong> at a time. Delete your existing album before creating a new one.
+          </div>
+        </div>
+
+        <div class="subsection" id="albums-overview">
+          <h3 class="subsection-title">Overview</h3>
+          <p>Albums are accessed from the <strong>Albums</strong> panel in the sidebar. Open it by clicking the Albums tab (disc icon) in the left sidebar. The panel shows all albums you've created on this device. From here you can create a new album or open an existing one.</p>
+        </div>
+
+        <div class="subsection" id="albums-create">
+          <h3 class="subsection-title">Creating an Album</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Open the Albums panel</strong>
+                <span>Click the Albums tab in the sidebar. Then click <span class="btn-replica">+ New Album</span> at the top of the panel.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Enter album details</strong>
+                <span>In the left column of the creator, fill in the <strong>Album title</strong> and <strong>Artist / group</strong> name. These will be shown to anyone who listens to your album.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Add a cover photo (optional)</strong>
+                <span>Click the cover thumbnail (the indigo square with a 🎵 icon) to open a file picker. Choose any image from your device. A preview appears immediately.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Select recordings</strong>
+                <span>The right column lists all recordings grouped by <strong>Collections</strong> or <strong>Songs</strong> (switch between the two tabs). Tick the checkbox next to each recording you want to include. Selected recordings appear in the <strong>Track Order</strong> list on the left.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Arrange the track order</strong>
+                <span>Drag the <strong>⠿</strong> handle on any track row in the Track Order list to reorder it. The number to the left reflects the final track position.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Remove a track</strong>
+                <span>Click the <strong>✕</strong> button on a track row to remove it from the album (the recording itself is not deleted).</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="albums-publish">
+          <h3 class="subsection-title">Publishing</h3>
+          <p>When you're happy with the track list, click <span class="btn-replica">Publish Album</span>. SongSheet will:</p>
+          <ol style="margin: 0.75rem 0 0.75rem 1.5rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            <li>Create the album record on the server with your title, artist, and cover.</li>
+            <li>Upload each audio track in order — a progress bar shows the current track and how many remain.</li>
+            <li>Save the album locally on your device so you can manage it later.</li>
+          </ol>
+          <p>After publishing, the album opens automatically in the Albums panel. You'll see a shareable link you can copy and send to anyone.</p>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Upload takes a moment</strong>
+              Uploading depends on the size of your recordings and your internet connection. Keep the browser tab open until the progress bar completes.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="albums-manage">
+          <h3 class="subsection-title">Managing Albums</h3>
+          <p>Once published, your album appears in the Albums panel. Click an album card to open the album detail view, where you can:</p>
+          <ul class="feature-list">
+            <li><strong>Copy share link</strong> — share a URL that anyone can open in their browser to stream the album.</li>
+            <li><strong>View tracks</strong> — see the complete track listing with durations.</li>
+            <li><strong>Delete album</strong> — permanently removes the album from the server and from your device. This frees up your free-plan slot for a new album.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 16. TIPS & SHORTCUTS                           -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="shortcuts">
-        <div class="section-number">15 — Tips & Shortcuts</div>
+        <div class="section-number">16 — Tips & Shortcuts</div>
         <h2 class="section-title">Tips & Keyboard Shortcuts</h2>
 
         <div class="subsection">
