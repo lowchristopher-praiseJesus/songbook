@@ -803,6 +803,19 @@
         </div>
       </div>
 
+      <div class="nav-section">
+        <button class="nav-section-toggle open" data-target="nav-conductor">
+          Follow the Conductor <span class="chevron">›</span>
+        </button>
+        <div class="nav-items open" id="nav-conductor">
+          <a class="nav-item" href="#conductor-overview">Overview</a>
+          <a class="nav-item" href="#conductor-setup">Setting Up a Broadcast</a>
+          <a class="nav-item" href="#conductor-broadcast">Running the Broadcast</a>
+          <a class="nav-item" href="#conductor-follow">Joining as a Follower</a>
+          <a class="nav-item" href="#conductor-scheduled">Scheduled Broadcasts</a>
+        </div>
+      </div>
+
       <a class="nav-direct" href="#recording">Recording</a>
 
       <div class="nav-section">
@@ -1781,10 +1794,172 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 14. RECORDING                                  -->
+      <!-- 14. FOLLOW THE CONDUCTOR                       -->
+      <!-- ══════════════════════════════════════════════ -->
+      <section class="section" id="conductor">
+        <div class="section-number">14 — Follow the Conductor</div>
+        <h2 class="section-title">Follow the Conductor</h2>
+        <p><strong>Follow the Conductor</strong> is a broadcast feature that lets one person — the <em>conductor</em> — control which song every follower sees, in real time. As the conductor navigates through a set list, each follower's screen switches to the same song automatically. It's ideal for leading a congregation, a choir, or a band where you want everyone on the same page without shouting "turn to song three."</p>
+        <p>Unlike a <a href="#live-session" style="color:var(--accent)">Live Session</a> (which is a collaborative editing workspace), Follow the Conductor is a one-way broadcast: the conductor drives, followers watch.</p>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Roles at a glance</strong>
+            <ul style="margin: 0.4rem 0 0 1.1rem; display: flex; flex-direction: column; gap: 0.25rem;">
+              <li><strong>Coordinator</strong> — creates the broadcast session and distributes the member link. May or may not be the same person as the conductor.</li>
+              <li><strong>Conductor (Director)</strong> — holds the secret conductor link and controls the live broadcast by navigating songs.</li>
+              <li><strong>Follower</strong> — opens the member link and has their song view driven by the conductor.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="subsection" id="conductor-overview">
+          <h3 class="subsection-title">Overview</h3>
+          <p>A broadcast is tied to a <strong>Collection</strong>. When you set one up, SongSheet generates two links:</p>
+          <ul class="feature-list">
+            <li><strong>Member link</strong> — share this publicly with your team. Anyone who opens it can import the songs and follow the live broadcast.</li>
+            <li><strong>Conductor link</strong> — keep this private. Whoever opens it gains director control over the broadcast.</li>
+          </ul>
+          <p>All active broadcasts are managed from the <strong>Broadcasts panel</strong>, accessible via the sidebar. The <strong>Conductor bar</strong> in the song header also shows live status and quick controls whenever a conductor-enabled collection is open.</p>
+        </div>
+
+        <div class="subsection" id="conductor-setup">
+          <h3 class="subsection-title">Setting Up a Broadcast</h3>
+          <p>Broadcasts are created through the Share flow for a collection.</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Open your collection</strong>
+                <span>Select the collection you want to broadcast in the sidebar.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Export → Share</strong>
+                <span>Click <span class="btn-replica">Export</span> then <span class="btn-replica">Share via link</span>. The Share modal opens.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Enable Conductor Broadcast</strong>
+                <span>Toggle <strong>Enable Conductor Broadcast</strong> on. Additional options appear below.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Configure options</strong>
+                <span>
+                  <ul style="margin: 0.35rem 0 0 1rem; display:flex; flex-direction:column; gap:0.25rem;">
+                    <li><strong>I'll be conducting this myself</strong> — checked by default. Leave it on if you (the coordinator) will also run the broadcast. Uncheck it if you're delegating the conductor role to someone else — you'll receive a private conductor link to forward to them.</li>
+                    <li><strong>Max followers</strong> — cap how many devices can follow at once (default 20).</li>
+                    <li><strong>Scheduled broadcast time</strong> — optional. Set a future date/time and followers will see a countdown timer instead of a "Waiting" message.</li>
+                  </ul>
+                </span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Create link</strong>
+                <span>Click <span class="btn-replica">Create link</span>. SongSheet uploads the set list and registers the broadcast session on the server. Two links are generated — copy and share the <strong>member link</strong> with your team. Keep the <strong>conductor link</strong> private (or forward it to whoever will conduct).</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <strong>Protect the conductor link</strong>
+              Anyone who opens the conductor link gains full broadcast control. Don't post it publicly — share it only with the person who will be conducting.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="conductor-broadcast">
+          <h3 class="subsection-title">Running the Broadcast (Conductor)</h3>
+          <p>Once the session is created, the conductor opens their collection and uses the <strong>Broadcasts panel</strong> (sidebar) or the <strong>Conductor bar</strong> (song header) to manage the broadcast.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Starting the broadcast</h4>
+          <p>Click <span class="btn-replica">▶ Start Broadcast</span> in the Broadcasts panel or the Conductor bar. The session goes live instantly — followers who are already waiting will start receiving updates immediately.</p>
+          <p>The Conductor bar turns red and shows a live follower count: <code style="background:var(--code-bg);color:var(--code-text);padding:1px 5px;border-radius:4px;">🔴 Broadcasting · 3 following</code></p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Navigating songs</h4>
+          <p>Simply click any song in your set list. SongSheet immediately sends the song to all followers — their screens switch to that song within seconds, with no action needed from them.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Pausing the broadcast</h4>
+          <p>Click <span class="btn-replica">⏹ Stop broadcasting</span> to pause. Followers keep the last song on their screen. You can restart at any time with <span class="btn-replica">▶ Start Broadcast</span> again.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Ending the session</h4>
+          <p>Click <span class="btn-replica">End session</span> (with confirmation) to permanently close the broadcast. Followers will see a <em>"Broadcast has ended"</em> message. The session cannot be restarted after this — you'd need to create a new broadcast.</p>
+
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Preview before going live</strong>
+              Before starting the broadcast, you can navigate to your opening song while the session is still in the Waiting phase. Followers will see a preview message showing which song you'll start on, so they know what to expect.
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection" id="conductor-follow">
+          <h3 class="subsection-title">Joining as a Follower</h3>
+          <p>Team members join using the <strong>member link</strong> shared by the coordinator.</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-body">
+                <strong>Open the member link</strong>
+                <span>Tap or click the link on your device. SongSheet opens in the browser and a <strong>Join broadcast</strong> modal appears.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Check the broadcast status</strong>
+                <span>The modal shows the current state — <strong>🟢 Live now · 4 following</strong>, <strong>⏳ Starts in 23 minutes</strong>, or <strong>Waiting to start</strong>.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Import &amp; follow</strong>
+                <span>Click <span class="btn-replica">Import &amp; follow live</span> (or <span class="btn-replica">Import &amp; wait for broadcast</span> if the broadcast hasn't started yet). The songs are added to your library and you are registered as a follower.</span>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-body">
+                <strong>Stay in the browser</strong>
+                <span>Once following, your song view updates automatically whenever the conductor switches songs. A green indicator <code style="background:var(--code-bg);color:var(--code-text);padding:1px 5px;border-radius:4px;">🟢 Following</code> appears in the Conductor bar. Keep the browser tab open — polling pauses when the tab is hidden and resumes when you switch back.</span>
+              </div>
+            </div>
+          </div>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Waiting for a broadcast</h4>
+          <p>If you join before the broadcast starts, a <strong>Waiting for broadcast</strong> banner appears across the top of your screen showing the collection name, the scheduled time (if set), and a countdown. If the conductor has already navigated to a song, a preview of the opening song is shown.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Songs not in your library</h4>
+          <p>If the conductor switches to a song you didn't import (for example, a song added to the set after you joined), you'll see a notification: <em>"Conductor switched to a song not in your library."</em> Ask the coordinator to reshare the updated member link and re-import.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">Stopping or leaving</h4>
+          <p>Click <span class="btn-replica">Stop</span> in the Conductor bar to stop following. Your songs remain in your library. You can rejoin at any time by opening the member link again and clicking <span class="btn-replica">Rejoin &amp; follow live</span>.</p>
+
+          <h4 style="font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">When the broadcast ends</h4>
+          <p>A <em>"Broadcast has ended"</em> message appears. Your imported songs stay in your library — click <span class="btn-replica">Forget broadcast</span> in the Broadcasts panel to remove the broadcast entry while keeping the songs.</p>
+        </div>
+
+        <div class="subsection" id="conductor-scheduled">
+          <h3 class="subsection-title">Scheduled Broadcasts</h3>
+          <p>Set a <strong>Scheduled broadcast time</strong> when creating the broadcast if you want followers to know when it will start in advance — useful for Sunday services or rehearsals at a fixed time.</p>
+          <ul class="feature-list">
+            <li>Followers who join early see a countdown to the scheduled time instead of a generic "Waiting" message.</li>
+            <li>Polling by followers automatically ramps up as the scheduled time approaches, then switches to live-mode polling once the conductor starts broadcasting.</li>
+            <li>The scheduled time is informational only — the conductor can start earlier or later by clicking <span class="btn-replica">▶ Start Broadcast</span> whenever they're ready.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════ -->
+      <!-- 15. RECORDING                                  -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="recording">
-        <div class="section-number">14 — Recording</div>
+        <div class="section-number">15 — Recording</div>
         <h2 class="section-title">Recording</h2>
         <p>SongSheet can record your singing or playing directly in the browser using your device's microphone. Recordings are saved per song and stored locally on your device — nothing is uploaded to any server.</p>
 
@@ -1876,10 +2051,10 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 15. ALBUMS                                     -->
+      <!-- 16. ALBUMS                                     -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="albums">
-        <div class="section-number">15 — Albums</div>
+        <div class="section-number">16 — Albums</div>
         <h2 class="section-title">Albums</h2>
         <p>Once you have recorded songs in SongSheet, you can bundle them into a shareable <strong>Album</strong> — a curated playlist published to the cloud that anyone with the link can stream. Albums let you share a polished set of recordings (a worship set, a rehearsal demo, a home recital) with bandmates, family, or your congregation.</p>
 
@@ -1887,7 +2062,7 @@
           <span class="callout-icon">💡</span>
           <div class="callout-body">
             <strong>Recordings first</strong>
-            Albums are built from your existing recordings. Make sure you've recorded at least one song (see <a href="#recording">Section 14 — Recording</a>) before creating an album.
+            Albums are built from your existing recordings. Make sure you've recorded at least one song (see <a href="#recording">Section 15 — Recording</a>) before creating an album.
           </div>
         </div>
 
@@ -1976,10 +2151,10 @@
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
-      <!-- 16. TIPS & SHORTCUTS                           -->
+      <!-- 17. TIPS & SHORTCUTS                           -->
       <!-- ══════════════════════════════════════════════ -->
       <section class="section" id="shortcuts">
-        <div class="section-number">16 — Tips & Shortcuts</div>
+        <div class="section-number">17 — Tips & Shortcuts</div>
         <h2 class="section-title">Tips & Keyboard Shortcuts</h2>
 
         <div class="subsection">
