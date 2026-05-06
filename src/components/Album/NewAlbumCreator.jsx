@@ -47,7 +47,7 @@ function SortableTrackRow({ track, index, onRemove }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-colors ${
+      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-colors select-none ${
         isDragging
           ? 'opacity-50 border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg'
           : 'border-transparent bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-900/25'
