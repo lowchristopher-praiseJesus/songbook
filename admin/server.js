@@ -205,8 +205,8 @@ async function buildStats(granularity) {
     for (const a of r2.albums) if (a.createdAt) events.push({ type: 'album',     createdAt: a.createdAt });
   }
   if (kv) {
-    for (const s of kv.sessions)   events.push({ type: 'session',   createdAt: s.createdAt });
-    for (const c of kv.conductors) events.push({ type: 'conductor', createdAt: c.createdAt });
+    for (const s of kv.sessions)   if (s.createdAt) events.push({ type: 'session',   createdAt: s.createdAt });
+    for (const c of kv.conductors) if (c.createdAt) events.push({ type: 'conductor', createdAt: c.createdAt });
   }
 
   return {
