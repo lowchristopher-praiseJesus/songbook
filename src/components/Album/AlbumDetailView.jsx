@@ -71,6 +71,14 @@ export function AlbumDetailView({ album }) {
           <p className="text-base text-gray-600 dark:text-gray-400 mb-2">{album.artist}</p>
         )}
         <p className="text-sm text-gray-400 dark:text-gray-500">{formatDate(album.createdAt)}</p>
+        <a
+          href={albumUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
+        >
+          Open Album ↗
+        </a>
       </div>
 
       {/* Track list */}
