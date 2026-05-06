@@ -23,6 +23,7 @@ export const useLibraryStore = create((set, get) => ({
   activeCollectionId: null,   // string | null — collection the user last navigated from
   albums: [],                 // [{albumCode, creatorToken, title, artist, createdAt, tracks}]
   activeAlbumCode: null,      // string | null
+  isCreatingNewAlbum: false,
 
   /**
    * Initialize from localStorage on app start.
@@ -337,7 +338,7 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null })
+    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */
@@ -351,6 +352,13 @@ export const useLibraryStore = create((set, get) => ({
 
   syncAlbums() {
     set({ albums: loadMyAlbums() })
+  },
+
+  setIsCreatingNewAlbum(val) {
+    set({
+      isCreatingNewAlbum: val,
+      ...(val ? { activeSongId: null, activeSong: null, activeAlbumCode: null, editingSongId: null, isCreatingNewSong: false } : {}),
+    })
   },
 
   /** Create a new empty collection with the given name. No-op if name is blank. */
