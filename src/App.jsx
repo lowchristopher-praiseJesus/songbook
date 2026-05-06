@@ -32,6 +32,7 @@ export default function App() {
   const collections = useLibraryStore(s => s.collections)
   const activeSong = useLibraryStore(s => s.activeSong)
   const index = useLibraryStore(s => s.index)
+  const setIsCreatingNewAlbum = useLibraryStore(s => s.setIsCreatingNewAlbum)
   const { toasts, addToast } = useToast()
   const [activeSession, setActiveSession] = useState(null) // { code, leaderToken } | null
   const initClient = useSessionStore(s => s.initClient)
@@ -283,6 +284,10 @@ export default function App() {
                 onClose={() => setSidebarOpen(false)}
                 onSongSelect={() => { if (window.innerWidth < 768) setSidebarOpen(false) }}
                 onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }}
+                onNewAlbum={() => {
+                  setIsCreatingNewAlbum(true)
+                  if (window.innerWidth < 768) setSidebarOpen(false)
+                }}
                 onStartSession={handleStartSession}
                 onJoinSession={handleJoinSession}
                 conductorSync={conductorSync}

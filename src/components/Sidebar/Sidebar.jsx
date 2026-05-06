@@ -19,7 +19,7 @@ import { LiveSessionModal } from '../Session/LiveSessionModal'
 import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
 import { AlbumsPanel } from '../Album/AlbumsPanel'
 
-export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync, onNewAlbum }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
@@ -287,7 +287,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
       {/* Albums tab panel */}
       {!trimmedQuery && viewMode === 'albums' && (
-        <AlbumsPanel onSelect={onSongSelect} />
+        <AlbumsPanel onSelect={onSongSelect} onNewAlbum={onNewAlbum} />
       )}
 
       {/* Song list */}
