@@ -1,4 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
+import {
+  DndContext,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { OPFSClient } from '../../lib/opfsClient'
 import { createAlbum, uploadTrack, saveAlbumLocally } from '../../lib/albumApi'
 import { useLibraryStore } from '../../store/libraryStore'
@@ -9,6 +26,54 @@ function formatDuration(ms) {
   if (!ms) return ''
   const s = Math.floor(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+function SortableTrackRow({ track, index, onRemove }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: track.recordingId })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-colors ${
+        isDragging
+          ? 'opacity-50 border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg'
+          : 'border-transparent bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-900/25'
+      }`}
+    >
+      <span
+        {...attributes}
+        {...listeners}
+        className="text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing text-base leading-none select-none touch-none"
+        aria-label="Drag to reorder"
+      >⠿</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-right tabular-nums shrink-0">{index + 1}</span>
+      <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 truncate">{track.name}</span>
+      {track.duration > 0 && (
+        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums shrink-0">
+          {formatDuration(track.duration)}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => onRemove(track.recordingId)}
+        className="text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-500 transition-colors shrink-0 leading-none"
+        aria-label={`Remove ${track.name}`}
+      >✕</button>
+    </div>
+  )
 }
 
 export function NewAlbumCreator() {
@@ -33,13 +98,18 @@ export function NewAlbumCreator() {
 
   // Track order
   const [orderedTracks, setOrderedTracks] = useState([])
-  const dragIdxRef = useRef(null)
-  const [dragIdx, setDragIdx] = useState(null)
 
   // Upload
   const [uploadPhase, setUploadPhase] = useState(null)  // null | 'uploading' | 'error'
   const [uploadProgress, setUploadProgress] = useState({ step: '', current: 0, total: 0 })
   const [uploadError, setUploadError] = useState(null)
+
+  // dnd-kit sensors (same config as CollectionGroup)
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   // OPFS client lifecycle
   useEffect(() => {
@@ -104,28 +174,13 @@ export function NewAlbumCreator() {
     setOrderedTracks(prev => prev.filter(t => t.recordingId !== recordingId))
   }
 
-  function handleDragStart(i) {
-    dragIdxRef.current = i
-    setDragIdx(i)
-  }
-
-  function handleDragOver(e, i) {
-    e.preventDefault()
-    const from = dragIdxRef.current
-    if (from === null || from === i) return
+  function handleDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
     setOrderedTracks(prev => {
-      const next = [...prev]
-      const [item] = next.splice(from, 1)
-      next.splice(i, 0, item)
-      return next
+      const oldIndex = prev.findIndex(t => t.recordingId === active.id)
+      const newIndex = prev.findIndex(t => t.recordingId === over.id)
+      return arrayMove(prev, oldIndex, newIndex)
     })
-    dragIdxRef.current = i
-    setDragIdx(i)
-  }
-
-  function handleDragEnd() {
-    dragIdxRef.current = null
-    setDragIdx(null)
   }
 
   // ── Publish ────────────────────────────────────────────────
@@ -184,6 +239,8 @@ export function NewAlbumCreator() {
       col,
       entries: (col.songIds ?? []).filter(id => id in bysong).map(id => bysong[id]),
     }))
+
+  const trackIds = orderedTracks.map(t => t.recordingId)
 
   // ── Render ─────────────────────────────────────────────────
   return (
@@ -266,37 +323,20 @@ export function NewAlbumCreator() {
                     Select recordings on the right →
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1.5 overflow-y-auto">
-                    {orderedTracks.map((t, i) => (
-                      <div
-                        key={t.recordingId}
-                        draggable
-                        onDragStart={() => handleDragStart(i)}
-                        onDragOver={e => handleDragOver(e, i)}
-                        onDragEnd={handleDragEnd}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-colors ${
-                          dragIdx === i
-                            ? 'opacity-50 border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                            : 'border-transparent bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-900/25'
-                        }`}
-                      >
-                        <span className="text-gray-300 dark:text-gray-600 cursor-grab text-base leading-none select-none">⠿</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-right tabular-nums shrink-0">{i + 1}</span>
-                        <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 truncate">{t.name}</span>
-                        {t.duration > 0 && (
-                          <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums shrink-0">
-                            {formatDuration(t.duration)}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeTrack(t.recordingId)}
-                          className="text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-500 transition-colors shrink-0 leading-none"
-                          aria-label={`Remove ${t.name}`}
-                        >✕</button>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={trackIds} strategy={verticalListSortingStrategy}>
+                      <div className="flex flex-col gap-1.5 overflow-y-auto">
+                        {orderedTracks.map((t, i) => (
+                          <SortableTrackRow
+                            key={t.recordingId}
+                            track={t}
+                            index={i}
+                            onRemove={removeTrack}
+                          />
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
 
