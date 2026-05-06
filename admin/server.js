@@ -109,6 +109,63 @@ async function fetchR2Stats() {
   return { shares, albums, totalBytes };
 }
 
+// ── KV fetching ────────────────────────────────────────────────────────────────
+async function listKVKeys(prefix) {
+  const keys = [];
+  let cursor;
+  do {
+    const qs = new URLSearchParams({ prefix });
+    if (cursor) qs.set('cursor', cursor);
+    const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/storage/kv/namespaces/${env.KV_NAMESPACE_ID}/keys?${qs}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${env.CF_API_TOKEN}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) throw new Error(`KV list failed: ${res.status}`);
+    const data = await res.json();
+    for (const k of data.result ?? []) keys.push(k.name);
+    cursor = data.result_info?.cursor ?? null;
+  } while (cursor);
+  return keys;
+}
+
+async function getKVValue(key) {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/storage/kv/namespaces/${env.KV_NAMESPACE_ID}/values/${encodeURIComponent(key)}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${env.CF_API_TOKEN}` },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+async function fetchKVStats() {
+  const [sessionKeys, conductorKeys] = await Promise.all([
+    listKVKeys('session:'),
+    listKVKeys('conductor:'),
+  ]);
+
+  const [sessionValues, conductorValues] = await Promise.all([
+    Promise.all(sessionKeys.map(getKVValue)),
+    Promise.all(conductorKeys.map(getKVValue)),
+  ]);
+
+  const sessions = sessionValues
+    .filter(Boolean)
+    .map(s => ({ createdAt: s.createdAt, expiresAt: s.expiresAt, closed: s.closed ?? false }));
+
+  const conductors = conductorValues
+    .filter(Boolean)
+    .map(c => {
+      const expiresMs = new Date(c.expiresAt).getTime();
+      const createdAt = new Date(expiresMs - CONDUCTOR_SESSION_DAYS * 86400000).toISOString();
+      return { createdAt, expiresAt: c.expiresAt, terminated: c.terminated ?? false };
+    });
+
+  return { sessions, conductors };
+}
+
 // ── HTTP server ────────────────────────────────────────────────────────────────
 const htmlFile = Bun.file(new URL('./index.html', import.meta.url).pathname);
 
@@ -122,17 +179,16 @@ const server = Bun.serve({
     }
     if (url.pathname === '/api/stats') {
       try {
-        const r2 = await fetchR2Stats();
+        const kv = await fetchKVStats();
         return Response.json({
-          totalShares: r2.shares.length,
-          totalAlbums: r2.albums.length,
-          totalBytes: r2.totalBytes,
-          sampleShare: r2.shares[0] ?? null,
-          sampleAlbum: r2.albums[0] ?? null,
+          totalSessions: kv.sessions.length,
+          totalConductors: kv.conductors.length,
+          sampleSession: kv.sessions[0] ?? null,
+          sampleConductor: kv.conductors[0] ?? null,
         });
       } catch (err) {
-        console.error('R2 error:', err);
-        return Response.json({ error: 'r2_unavailable' }, { status: 503 });
+        console.error('KV error:', err);
+        return Response.json({ error: 'kv_unavailable' }, { status: 503 });
       }
     }
     return new Response('Not found', { status: 404 });
