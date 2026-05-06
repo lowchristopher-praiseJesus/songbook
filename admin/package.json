@@ -1,0 +1,11 @@
+{
+  "name": "songbook-admin",
+  "type": "module",
+  "scripts": {
+    "start": "bun server.js",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0"
+  }
+}
