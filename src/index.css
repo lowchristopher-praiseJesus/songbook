@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Outside @layer so it overrides Tailwind utility text-size classes (e.g. text-sm) — prevents iOS auto-zoom on focus */
+/* !important required: class selector (.text-sm) has higher specificity than element selector — prevents iOS auto-zoom on focus */
 input, select, textarea {
-  font-size: 1rem;
+  font-size: 1rem !important;
 }
 
 :root {
