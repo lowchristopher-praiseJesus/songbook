@@ -196,8 +196,10 @@
       const res = await fetch(`/api/stats?granularity=${granularity}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const stats = await res.json();
-      if (stats.summary.r2Error) showError('R2 data unavailable — check R2 credentials in admin/.env');
-      if (stats.summary.kvError) showError('KV data unavailable — check CF credentials in admin/.env');
+      const errors = [];
+      if (stats.summary.r2Error) errors.push('R2 data unavailable — check R2 credentials in admin/.env');
+      if (stats.summary.kvError) errors.push('KV data unavailable — check CF credentials in admin/.env');
+      if (errors.length) showError(errors.join(' | '));
       renderStatCards(stats.summary);
       renderTimelineChart(stats.timeline);
       renderStorageChart(stats.summary);
