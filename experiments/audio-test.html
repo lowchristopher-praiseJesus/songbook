@@ -19,6 +19,11 @@
       aria-label="Toggle studio mode">
       Studio Mode
     </button>
+    <button id="btn-voice"
+      class="text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+      aria-label="Toggle voice mode">
+      Voice Mode
+    </button>
     <button id="btn-record"
       class="text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium focus:outline-none focus:ring-2 focus:ring-red-500"
       aria-label="Start recording">
@@ -108,33 +113,51 @@
 
     setPhase('idle')
 
-    // ── Studio Mode ──────────────────────────────────────────────────────────
+    // ── Capture mode ─────────────────────────────────────────────────────────
+    // 'default' | 'studio' | 'voice'
 
-    let studioMode = false
+    let captureMode = 'default'
 
-    function renderStudioBtn() {
-      const btn = document.getElementById('btn-studio')
-      if (studioMode) {
-        btn.textContent = 'Studio Mode ◆'
-        btn.className = 'text-xs px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-900/30 text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-      } else {
-        btn.textContent = 'Studio Mode'
-        btn.className = 'text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500'
-      }
+    function renderModeButtons() {
+      const studioBtn = document.getElementById('btn-studio')
+      const voiceBtn  = document.getElementById('btn-voice')
+      const activeStudio = captureMode === 'studio'
+      const activeVoice  = captureMode === 'voice'
+      studioBtn.textContent = activeStudio ? 'Studio Mode ◆' : 'Studio Mode'
+      studioBtn.className = activeStudio
+        ? 'text-xs px-3 py-1.5 rounded-lg border border-indigo-500 bg-indigo-900/30 text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+        : 'text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+      voiceBtn.textContent = activeVoice ? 'Voice Mode ◆' : 'Voice Mode'
+      voiceBtn.className = activeVoice
+        ? 'text-xs px-3 py-1.5 rounded-lg border border-green-500 bg-green-900/30 text-green-300 focus:outline-none focus:ring-2 focus:ring-green-500'
+        : 'text-xs px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500'
     }
 
     document.getElementById('btn-studio').addEventListener('click', () => {
-      studioMode = !studioMode
-      renderStudioBtn()
+      captureMode = captureMode === 'studio' ? 'default' : 'studio'
+      renderModeButtons()
     })
 
-    renderStudioBtn()
+    document.getElementById('btn-voice').addEventListener('click', () => {
+      captureMode = captureMode === 'voice' ? 'default' : 'voice'
+      renderModeButtons()
+    })
+
+    renderModeButtons()
 
     // ── Constants ────────────────────────────────────────────────────────────
 
     const STUDIO_CONSTRAINTS = {
       echoCancellation: false,
       noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 1,
+      sampleSize: 16,
+      latency: 0,
+    }
+    const VOICE_CONSTRAINTS = {
+      echoCancellation: false,
+      noiseSuppression: true,
       autoGainControl: false,
       channelCount: 1,
       sampleSize: 16,
@@ -156,14 +179,18 @@
     // ── Mic acquisition ──────────────────────────────────────────────────────
 
     async function acquireStream() {
-      const constraints = studioMode ? STUDIO_CONSTRAINTS : DEFAULT_CONSTRAINTS
+      const constraints = captureMode === 'studio' ? STUDIO_CONSTRAINTS
+                        : captureMode === 'voice'  ? VOICE_CONSTRAINTS
+                        : DEFAULT_CONSTRAINTS
       micStream = await navigator.mediaDevices.getUserMedia({ audio: constraints })
       const settings = micStream.getAudioTracks()[0]?.getSettings() ?? {}
       actualChannels = settings.channelCount ?? 1
       actualBitrate  = actualChannels >= 2 ? BITRATE_STEREO : BITRATE_MONO
+      const dspLabel = captureMode === 'studio' ? 'DSP off'
+                     : captureMode === 'voice'  ? 'DSP: noise suppress only'
+                     : 'DSP on'
       document.getElementById('settings-info').textContent =
-        `${actualChannels === 1 ? 'Mono' : 'Stereo'} · ${actualBitrate / 1000} kbps · ` +
-        `browser DSP ${studioMode ? 'off' : 'on'}`
+        `${actualChannels === 1 ? 'Mono' : 'Stereo'} · ${actualBitrate / 1000} kbps · ${dspLabel}`
       startVU(micStream)
     }
 
