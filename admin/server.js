@@ -168,6 +168,54 @@ async function fetchKVStats() {
   return { sessions, conductors };
 }
 
+// ── Stats aggregation ──────────────────────────────────────────────────────────
+async function buildStats(granularity) {
+  const [r2Result, kvResult] = await Promise.allSettled([
+    fetchR2Stats(),
+    fetchKVStats(),
+  ]);
+
+  const r2  = r2Result.status === 'fulfilled' ? r2Result.value : null;
+  const kv  = kvResult.status === 'fulfilled' ? kvResult.value : null;
+  const now = Date.now();
+
+  const summary = {
+    totalShares:      r2  ? r2.shares.length    : null,
+    activeShares:     r2  ? r2.shares.filter(s =>
+                              s.expiresAt && new Date(s.expiresAt).getTime() > now
+                            ).length : null,
+    totalAlbums:      r2  ? r2.albums.length     : null,
+    totalBytes:       r2  ? r2.totalBytes        : null,
+    r2FreeTierBytes:  R2_FREE_TIER_BYTES,
+    totalSessions:    kv  ? kv.sessions.length   : null,
+    activeSessions:   kv  ? kv.sessions.filter(s =>
+                              !s.closed && new Date(s.expiresAt).getTime() > now
+                            ).length : null,
+    totalConductors:  kv  ? kv.conductors.length : null,
+    activeConductors: kv  ? kv.conductors.filter(c =>
+                              !c.terminated && new Date(c.expiresAt).getTime() > now
+                            ).length : null,
+    r2Error:  r2Result.status === 'rejected',
+    kvError:  kvResult.status === 'rejected',
+  };
+
+  const events = [];
+  if (r2) {
+    for (const s of r2.shares) if (s.createdAt) events.push({ type: 'share',     createdAt: s.createdAt });
+    for (const a of r2.albums) if (a.createdAt) events.push({ type: 'album',     createdAt: a.createdAt });
+  }
+  if (kv) {
+    for (const s of kv.sessions)   events.push({ type: 'session',   createdAt: s.createdAt });
+    for (const c of kv.conductors) events.push({ type: 'conductor', createdAt: c.createdAt });
+  }
+
+  return {
+    summary,
+    timeline: buildTimeline(events, granularity),
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
 // ── HTTP server ────────────────────────────────────────────────────────────────
 const htmlFile = Bun.file(new URL('./index.html', import.meta.url).pathname);
 
@@ -180,17 +228,13 @@ const server = Bun.serve({
       return new Response(htmlFile, { headers: { 'Content-Type': 'text/html' } });
     }
     if (url.pathname === '/api/stats') {
+      const granularity = url.searchParams.get('granularity') === 'weekly' ? 'weekly' : 'monthly';
       try {
-        const kv = await fetchKVStats();
-        return Response.json({
-          totalSessions: kv.sessions.length,
-          totalConductors: kv.conductors.length,
-          sampleSession: kv.sessions[0] ?? null,
-          sampleConductor: kv.conductors[0] ?? null,
-        });
+        const stats = await buildStats(granularity);
+        return Response.json(stats);
       } catch (err) {
-        console.error('KV error:', err);
-        return Response.json({ error: 'kv_unavailable' }, { status: 503 });
+        console.error('Stats error:', err);
+        return Response.json({ error: 'internal_error' }, { status: 500 });
       }
     }
     return new Response('Not found', { status: 404 });
