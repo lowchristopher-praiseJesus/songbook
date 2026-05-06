@@ -9,14 +9,14 @@ export function formatBytes(bytes) {
 export function bucketDate(isoDate, granularity) {
   const d = new Date(isoDate);
   if (granularity === 'weekly') {
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
     const dayNum = date.getUTCDay() || 7;
     date.setUTCDate(date.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
     const weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
     return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
   }
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 export function buildTimeline(events, granularity = 'monthly') {
