@@ -159,9 +159,11 @@ async function fetchKVStats() {
     .filter(Boolean)
     .map(c => {
       const expiresMs = new Date(c.expiresAt).getTime();
+      if (Number.isNaN(expiresMs)) return null;
       const createdAt = new Date(expiresMs - CONDUCTOR_SESSION_DAYS * 86400000).toISOString();
       return { createdAt, expiresAt: c.expiresAt, terminated: c.terminated ?? false };
-    });
+    })
+    .filter(Boolean);
 
   return { sessions, conductors };
 }
