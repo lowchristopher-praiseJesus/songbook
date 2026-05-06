@@ -548,15 +548,23 @@
         ch.push(out)
       }
 
-      // Build gain envelope: instant attack (brick-wall), linear release
+      // Precompute per-sample gain needed (hard ceiling constraint)
+      const needed = new Float32Array(ns).fill(1.0)
+      for (let i = 0; i < ns; i++) {
+        let p = 0
+        for (let c = 0; c < nc; c++) { const a = Math.abs(ch[c][i]); if (a > p) p = a }
+        if (p > ceiling) needed[i] = ceiling / p
+      }
+
+      // Build gain envelope: look-ahead sets target early, release smooths recovery,
+      // needed[i] hard-caps gain so the current sample never slips past ceiling.
       let gain = 1.0
       const env = new Float32Array(ns)
       for (let i = 0; i < ns; i++) {
         const j = Math.min(i + lookAhead, ns - 1)
-        let peak = 0
-        for (let c = 0; c < nc; c++) { const a = Math.abs(ch[c][j]); if (a > peak) peak = a }
-        const target = peak > ceiling ? ceiling / peak : 1.0
+        const target = needed[j]
         gain = target < gain ? target : Math.min(1.0, gain + releaseRate)
+        gain = Math.min(gain, needed[i]) // hard cap
         env[i] = gain
       }
 
