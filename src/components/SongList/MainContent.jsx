@@ -16,6 +16,7 @@ import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 import metronomeIcon from '../../assets/metronome.png'
 import { AlbumDetailView } from '../Album/AlbumDetailView'
+import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -26,6 +27,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const editingSongId = useLibraryStore(s => s.editingSongId)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
+  const isCreatingNewAlbum = useLibraryStore(s => s.isCreatingNewAlbum)
   const viewMode = useLibraryStore(s => s.viewMode)
   const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
   const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
@@ -145,7 +147,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {activeAlbum
+      {isCreatingNewAlbum
+        ? <NewAlbumCreator />
+        : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
         : isCreatingNewSong
         ? <NewSongEditor />
