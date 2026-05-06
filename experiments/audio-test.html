@@ -50,7 +50,7 @@
   <p id="spinner" class="hidden text-gray-400 text-sm mb-4 animate-pulse">⏳ Processing both versions…</p>
 
   <!-- COMPARISON — visible when done -->
-  <div id="comparison" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+  <div id="comparison" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="bg-gray-800 rounded-xl p-4 flex flex-col gap-3">
       <h2 class="font-semibold text-sm text-gray-300">Current (v1)</h2>
       <p id="old-error" class="hidden text-xs text-red-400">Processing failed</p>
@@ -64,6 +64,13 @@
       <audio id="new-player" controls playsInline class="w-full hidden"></audio>
       <p id="new-stats" class="text-xs text-gray-500 leading-relaxed whitespace-pre-line"></p>
       <button id="btn-dl-new" class="hidden text-xs px-3 py-1.5 rounded-lg border border-indigo-700 text-indigo-300 hover:bg-indigo-900/20 self-start">↓ Download WAV</button>
+    </div>
+    <div class="bg-gray-800 rounded-xl p-4 flex flex-col gap-3">
+      <h2 class="font-semibold text-sm text-green-300">No compressor (v3)</h2>
+      <p id="v3-error" class="hidden text-xs text-red-400">Processing failed</p>
+      <audio id="v3-player" controls playsInline class="w-full hidden"></audio>
+      <p id="v3-stats" class="text-xs text-gray-500 leading-relaxed whitespace-pre-line"></p>
+      <button id="btn-dl-v3" class="hidden text-xs px-3 py-1.5 rounded-lg border border-green-700 text-green-300 hover:bg-green-900/20 self-start">↓ Download WAV</button>
     </div>
   </div>
   <button id="btn-again" class="hidden text-sm px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium" aria-label="Record again">
@@ -285,9 +292,10 @@
       const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' })
       const rawBuffer = await blob.arrayBuffer()
 
-      const [oldResult, newResult] = await Promise.allSettled([
+      const [oldResult, newResult, v3Result] = await Promise.allSettled([
         processOld(rawBuffer.slice(0)),
         processNew(rawBuffer.slice(0)),
+        processV3(rawBuffer.slice(0)),
       ])
 
       // Old chain
@@ -320,6 +328,22 @@
         show('btn-dl-new')
       } else {
         show('new-error')
+      }
+
+      // No-compressor chain
+      if (v3Result.status === 'fulfilled') {
+        const { wavBuffer, stats } = v3Result.value
+        const url = URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }))
+        const player = document.getElementById('v3-player')
+        player.src = url
+        show('v3-player')
+        document.getElementById('v3-stats').textContent =
+          `LUFS: ${stats.measuredLUFS} → ${stats.targetLUFS}\nNo compression`
+        const dlBtn = document.getElementById('btn-dl-v3')
+        dlBtn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = 'recording-v3.wav'; a.click() }
+        show('btn-dl-v3')
+      } else {
+        show('v3-error')
       }
 
       setPhase('done')
@@ -382,18 +406,22 @@
       // Revoke object URLs to free memory
       const oldSrc = document.getElementById('old-player').src
       const newSrc = document.getElementById('new-player').src
+      const v3Src  = document.getElementById('v3-player').src
       if (oldSrc) URL.revokeObjectURL(oldSrc)
       if (newSrc) URL.revokeObjectURL(newSrc)
+      if (v3Src)  URL.revokeObjectURL(v3Src)
 
       // Reset players and stats
       const oldPlayer = document.getElementById('old-player')
       const newPlayer = document.getElementById('new-player')
-      oldPlayer.src = ''; newPlayer.src = ''
-      hide('old-player'); hide('new-player')
-      hide('old-error'); hide('new-error')
+      const v3Player  = document.getElementById('v3-player')
+      oldPlayer.src = ''; newPlayer.src = ''; v3Player.src = ''
+      hide('old-player'); hide('new-player'); hide('v3-player')
+      hide('old-error');  hide('new-error');  hide('v3-error')
       document.getElementById('old-stats').textContent = ''
       document.getElementById('new-stats').textContent = ''
-      hide('btn-dl-old'); hide('btn-dl-new')
+      document.getElementById('v3-stats').textContent  = ''
+      hide('btn-dl-old'); hide('btn-dl-new'); hide('btn-dl-v3')
 
       recordedChunks = []
       resetTimer()
@@ -525,6 +553,37 @@
 
       const mean = gated2.reduce((a, b) => a + b, 0) / gated2.length
       return -0.691 + 10 * Math.log10(mean)
+    }
+
+    // ── processV3 — no compressor: HPF → LUFS normalise → limiter ───────────────
+
+    async function processV3(rawBuffer) {
+      const ctx = new AudioContext()
+      const decoded = await ctx.decodeAudioData(rawBuffer)
+      await ctx.close()
+
+      const sr  = decoded.sampleRate
+      const len = decoded.length
+      const nc  = decoded.numberOfChannels
+      const offline = new OfflineAudioContext(nc, len, sr)
+
+      const src = offline.createBufferSource()
+      src.buffer = decoded
+
+      const hpf = offline.createBiquadFilter()
+      hpf.type = 'highpass'; hpf.frequency.value = 80
+
+      src.connect(hpf).connect(offline.destination)
+      src.start()
+      const processed = await offline.startRendering()
+
+      const measuredLUFS = measureLUFS(processed)
+      const targetLUFS   = -14
+      const gain = Math.pow(10, (targetLUFS - measuredLUFS) / 20)
+
+      const limitedChannels = applyTruePeakLimiter(processed, gain, 0.891)
+      const wavBuffer = encodeWavFromChannels(limitedChannels, processed.sampleRate, true)
+      return { wavBuffer, stats: { measuredLUFS: +measuredLUFS.toFixed(1), targetLUFS } }
     }
 
     // ── True-peak limiter ────────────────────────────────────────────────────────
