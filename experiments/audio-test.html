@@ -281,8 +281,47 @@
       mediaRecorder.stop()
     }
 
-    // Stub — processAndShow fully implemented in Task 7
     async function processAndShow() {
+      const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' })
+      const rawBuffer = await blob.arrayBuffer()
+
+      const [oldResult, newResult] = await Promise.allSettled([
+        processOld(rawBuffer.slice(0)),
+        processNew(rawBuffer.slice(0)),
+      ])
+
+      // Old chain
+      if (oldResult.status === 'fulfilled') {
+        const { wavBuffer, stats } = oldResult.value
+        const url = URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }))
+        const player = document.getElementById('old-player')
+        player.src = url
+        show('old-player')
+        document.getElementById('old-stats').textContent =
+          `Peak-norm: ${stats.peakNorm}\nRatio: ${stats.ratio}:1 · Attack: ${stats.attackMs} ms`
+        const dlBtn = document.getElementById('btn-dl-old')
+        dlBtn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = 'recording-v1.wav'; a.click() }
+        show('btn-dl-old')
+      } else {
+        show('old-error')
+      }
+
+      // New chain
+      if (newResult.status === 'fulfilled') {
+        const { wavBuffer, stats } = newResult.value
+        const url = URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }))
+        const player = document.getElementById('new-player')
+        player.src = url
+        show('new-player')
+        document.getElementById('new-stats').textContent =
+          `LUFS: ${stats.measuredLUFS} → ${stats.targetLUFS}\nRatio: ${stats.ratio}:1 · Attack: ${stats.attackMs} ms`
+        const dlBtn = document.getElementById('btn-dl-new')
+        dlBtn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = 'recording-v2.wav'; a.click() }
+        show('btn-dl-new')
+      } else {
+        show('new-error')
+      }
+
       setPhase('done')
     }
 
@@ -337,10 +376,42 @@
       }
     })
 
-    // ── Wake lock (placeholder — fully implemented in Task 7) ────────────────
+    // ── Record again ─────────────────────────────────────────────────────────
 
-    async function acquireWakeLock() {}
-    function releaseWakeLock() {}
+    document.getElementById('btn-again').addEventListener('click', () => {
+      // Revoke object URLs to free memory
+      const oldSrc = document.getElementById('old-player').src
+      const newSrc = document.getElementById('new-player').src
+      if (oldSrc) URL.revokeObjectURL(oldSrc)
+      if (newSrc) URL.revokeObjectURL(newSrc)
+
+      // Reset players and stats
+      const oldPlayer = document.getElementById('old-player')
+      const newPlayer = document.getElementById('new-player')
+      oldPlayer.src = ''; newPlayer.src = ''
+      hide('old-player'); hide('new-player')
+      hide('old-error'); hide('new-error')
+      document.getElementById('old-stats').textContent = ''
+      document.getElementById('new-stats').textContent = ''
+      hide('btn-dl-old'); hide('btn-dl-new')
+
+      recordedChunks = []
+      resetTimer()
+      setPhase('idle')
+    })
+
+    // ── Wake lock ────────────────────────────────────────────────────────────
+
+    let wakeLock = null
+
+    async function acquireWakeLock() {
+      try { wakeLock = await navigator.wakeLock.request('screen') } catch (_) {}
+    }
+
+    function releaseWakeLock() {
+      wakeLock?.release()
+      wakeLock = null
+    }
 
     // ── WAV encoder ──────────────────────────────────────────────────────────
 
