@@ -8,6 +8,7 @@ export default defineWorkersConfig({
         miniflare: {
           bindings: { APP_ORIGIN: 'http://localhost:5173' },
           kvNamespaces: ['SESSION_KV'],
+          r2Buckets: ['R2_BUCKET'],
         },
       },
     },
