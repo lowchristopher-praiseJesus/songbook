@@ -24,6 +24,7 @@ export const useLibraryStore = create((set, get) => ({
   albums: [],                 // [{albumCode, creatorToken, title, artist, createdAt, tracks}]
   activeAlbumCode: null,      // string | null
   isCreatingNewAlbum: false,
+  editingAlbum: null,             // album object being edited, or null
 
   /**
    * Initialize from localStorage on app start.
@@ -354,9 +355,15 @@ export const useLibraryStore = create((set, get) => ({
     set({ albums: loadMyAlbums() })
   },
 
+  setEditingAlbum(album) {
+    // Sets edit mode without clearing activeAlbumCode — cancel returns to detail view
+    set({ editingAlbum: album, isCreatingNewAlbum: true })
+  },
+
   setIsCreatingNewAlbum(val) {
     set({
       isCreatingNewAlbum: val,
+      editingAlbum: null,
       ...(val ? { activeSongId: null, activeSong: null, activeAlbumCode: null, editingSongId: null, isCreatingNewSong: false } : {}),
     })
   },
