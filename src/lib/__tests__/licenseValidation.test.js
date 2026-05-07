@@ -1,141 +1,53 @@
 import { describe, it, expect } from 'vitest'
-import {
-  validateLicenseKey,
-  isLicenseExpired,
-  getLicenseStatus,
-  encodePayload,
-  computeChecksum,
-} from '../licenseValidation'
+import { isValidKeyFormat, getLicenseStatus } from '../licenseValidation'
 
-function makeKey({ expiresAt = 0, licenseType = 1 } = {}) {
-  const random = (Math.random() * 0x1fffff) | 0
-  const payload = encodePayload({ version: 0, expiresAt, licenseType, random })
-  const checksum = computeChecksum(payload)
-  return `SONGBOOK-${payload.slice(0, 4)}-${payload.slice(4, 8)}-${payload.slice(8, 12)}-${checksum}`
-}
+const VALID_FORMAT = 'SONGBOOK-AAAA-BBBB-CCCC-DDDD'
+const INVALID_FORMAT = 'SONGBOOK-AAAA-BBBB-CCCC'
 
-describe('validateLicenseKey', () => {
-  it('accepts a valid key with no expiry', () => {
-    const key = makeKey()
-    const result = validateLicenseKey(key)
-    expect(result.valid).toBe(true)
-    expect(result.payload.expiresAt).toBe(0)
-    expect(result.payload.licenseType).toBe(1)
+describe('isValidKeyFormat', () => {
+  it('returns true for a correctly formatted key', () => {
+    expect(isValidKeyFormat(VALID_FORMAT)).toBe(true)
   })
 
-  it('accepts a valid key with future expiry', () => {
-    const future = Math.floor(Date.now() / 1000) + 86400 * 365
-    const key = makeKey({ expiresAt: future })
-    const result = validateLicenseKey(key)
-    expect(result.valid).toBe(true)
-    expect(result.payload.expiresAt).toBe(future)
+  it('returns true for lowercase input', () => {
+    expect(isValidKeyFormat(VALID_FORMAT.toLowerCase())).toBe(true)
   })
 
-  it('rejects empty string', () => {
-    const result = validateLicenseKey('')
-    expect(result.valid).toBe(false)
-    expect(result.error).toBeDefined()
+  it('returns true for input with surrounding whitespace', () => {
+    expect(isValidKeyFormat(`  ${VALID_FORMAT}  `)).toBe(true)
   })
 
-  it('rejects null/undefined', () => {
-    expect(validateLicenseKey(null).valid).toBe(false)
-    expect(validateLicenseKey(undefined).valid).toBe(false)
+  it('returns false for missing segment', () => {
+    expect(isValidKeyFormat(INVALID_FORMAT)).toBe(false)
   })
 
-  it('rejects wrong format', () => {
-    expect(validateLicenseKey('BLAH').valid).toBe(false)
-    expect(validateLicenseKey('SONGBOOK-AAAA-AAAA-AAAA').valid).toBe(false) // missing last segment
-    expect(validateLicenseKey('SONGBOOK-AAAA-BBBB-CCCC-DDDD-EEEE').valid).toBe(false)
+  it('returns false for null', () => {
+    expect(isValidKeyFormat(null)).toBe(false)
   })
 
-  it('rejects bad checksum', () => {
-    const key = makeKey()
-    // Flip the last character to break checksum
-    const chars = key.split('')
-    const lastChar = chars[chars.length - 1]
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    const different = alphabet[(alphabet.indexOf(lastChar) + 1) % alphabet.length]
-    chars[chars.length - 1] = different
-    const badKey = chars.join('')
-    const result = validateLicenseKey(badKey)
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('Invalid')
+  it('returns false for empty string', () => {
+    expect(isValidKeyFormat('')).toBe(false)
   })
 
-  it('rejects tampered payload segment', () => {
-    const key = makeKey()
-    const segments = key.split('-')
-    // Tamper with expiry by changing a character in second segment
-    const seg2Chars = segments[2].split('')
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    const orig = seg2Chars[0]
-    const different = alphabet[(alphabet.indexOf(orig) + 1) % alphabet.length]
-    seg2Chars[0] = different
-    segments[2] = seg2Chars.join('')
-    const badKey = segments.join('-')
-    expect(validateLicenseKey(badKey).valid).toBe(false)
-  })
-
-  it('handles lowercase input', () => {
-    const key = makeKey().toLowerCase()
-    expect(validateLicenseKey(key).valid).toBe(true)
-  })
-
-  it('handles input with extra whitespace', () => {
-    const key = makeKey()
-    expect(validateLicenseKey(`  ${key}  `).valid).toBe(true)
-  })
-
-  it('rejects key with wrong prefix', () => {
-    const key = makeKey().replace('SONGBOOK', 'XONGBOOK')
-    expect(validateLicenseKey(key).valid).toBe(false)
-  })
-})
-
-describe('isLicenseExpired', () => {
-  it('returns false for expiresAt=0 (no expiry)', () => {
-    expect(isLicenseExpired({ expiresAt: 0 })).toBe(false)
-  })
-
-  it('returns false for future timestamp', () => {
-    const future = Math.floor(Date.now() / 1000) + 86400
-    expect(isLicenseExpired({ expiresAt: future })).toBe(false)
-  })
-
-  it('returns true for past timestamp', () => {
-    const past = Math.floor(Date.now() / 1000) - 86400
-    expect(isLicenseExpired({ expiresAt: past })).toBe(true)
-  })
-
-  it('returns false for null payload', () => {
-    expect(isLicenseExpired(null)).toBe(false)
+  it('returns false for wrong prefix', () => {
+    expect(isValidKeyFormat('XONGBOOK-AAAA-BBBB-CCCC-DDDD')).toBe(false)
   })
 })
 
 describe('getLicenseStatus', () => {
-  it('returns missing for empty key', () => {
-    expect(getLicenseStatus('')).toBe('missing')
+  it('returns missing for null', () => {
     expect(getLicenseStatus(null)).toBe('missing')
   })
 
-  it('returns invalid for bad key', () => {
-    expect(getLicenseStatus('SONGBOOK-AAAA-AAAA-AAAA')).toBe('invalid')
+  it('returns missing for empty string', () => {
+    expect(getLicenseStatus('')).toBe('missing')
   })
 
-  it('returns valid for good key with no expiry', () => {
-    const key = makeKey()
-    expect(getLicenseStatus(key)).toBe('valid')
+  it('returns invalid_format for malformed key', () => {
+    expect(getLicenseStatus(INVALID_FORMAT)).toBe('invalid_format')
   })
 
-  it('returns expired for valid key with past expiry', () => {
-    const past = Math.floor(Date.now() / 1000) - 86400
-    const key = makeKey({ expiresAt: past })
-    expect(getLicenseStatus(key)).toBe('expired')
-  })
-
-  it('returns valid for key with future expiry', () => {
-    const future = Math.floor(Date.now() / 1000) + 86400 * 365
-    const key = makeKey({ expiresAt: future })
-    expect(getLicenseStatus(key)).toBe('valid')
+  it('returns unchecked for correctly formatted key (checksum not verified client-side)', () => {
+    expect(getLicenseStatus(VALID_FORMAT)).toBe('unchecked')
   })
 })
