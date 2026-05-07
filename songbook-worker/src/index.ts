@@ -5,6 +5,7 @@ import walkieShare from './routes/walkieShare';
 import session from './routes/session';
 import conductor from './routes/conductor';
 import album from './routes/album';
+import license from './routes/license';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -25,7 +26,7 @@ app.use('*', async (c, next) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
         'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token, X-License-Token',
         'Access-Control-Max-Age': '86400',
       },
     });
@@ -45,5 +46,6 @@ app.route('/walkie-shares', walkieShare);
 app.route('/session', session);
 app.route('/conductor', conductor);
 app.route('/album', album);
+app.route('/license', license);
 
 export default app;
