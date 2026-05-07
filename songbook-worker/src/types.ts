@@ -3,4 +3,6 @@ export interface Env {
   SESSION_KV: KVNamespace;
   APP_ORIGIN: string;
   WALKIE_ORIGIN: string;
+  LICENSE_SECRET: string;
+  LICENSE_TOKEN_SECRET: string;
 }

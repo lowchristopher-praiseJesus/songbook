@@ -6,7 +6,11 @@ export default defineWorkersConfig({
       workers: {
         wrangler: { configPath: './wrangler.toml' },
         miniflare: {
-          bindings: { APP_ORIGIN: 'http://localhost:5173' },
+          bindings: {
+            APP_ORIGIN: 'http://localhost:5173',
+            LICENSE_SECRET: 'test-license-secret',
+            LICENSE_TOKEN_SECRET: 'test-token-secret',
+          },
           kvNamespaces: ['SESSION_KV'],
           r2Buckets: ['R2_BUCKET'],
         },
