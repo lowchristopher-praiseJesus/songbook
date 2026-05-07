@@ -27,3 +27,4 @@ admin/.env
 .worktrees/
 scripts/secrets
 docs/security-vulnerabilities.md
+docs/
