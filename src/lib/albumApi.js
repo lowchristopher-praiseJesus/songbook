@@ -90,3 +90,44 @@ export function removeAlbumLocally(albumCode) {
   const updated = loadMyAlbums().filter(a => a.albumCode !== albumCode)
   localStorage.setItem(ALBUMS_KEY, JSON.stringify(updated))
 }
+
+/**
+ * Update album metadata (title, artist, tracks) on the worker.
+ * @param {{ albumCode: string, creatorToken: string, title: string, artist: string, tracks: Array }} opts
+ */
+export async function updateAlbumMeta({ albumCode, creatorToken, title, artist, tracks }) {
+  const res = await fetch(`${WORKER_URL}/album/${albumCode}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Creator-Token': creatorToken },
+    body: JSON.stringify({ title, artist, tracks }),
+  })
+  if (!res.ok) throw Object.assign(new Error('update_failed'), { code: 'update_failed' })
+}
+
+/**
+ * Replace the cover image for an existing album.
+ * @param {string} albumCode
+ * @param {File} coverFile
+ * @param {string} creatorToken
+ */
+export async function updateAlbumCover(albumCode, coverFile, creatorToken) {
+  const buf = await coverFile.arrayBuffer()
+  const res = await fetch(`${WORKER_URL}/album/${albumCode}/cover`, {
+    method: 'POST',
+    headers: { 'Content-Type': coverFile.type || 'image/jpeg', 'X-Creator-Token': creatorToken },
+    body: buf,
+  })
+  if (!res.ok) throw Object.assign(new Error('cover_update_failed'), { code: 'cover_update_failed' })
+}
+
+/**
+ * Update the locally stored album entry by albumCode.
+ * @param {{ albumCode: string, title: string, artist: string, tracks: Array }} opts
+ */
+export function updateAlbumLocally({ albumCode, title, artist, tracks }) {
+  const existing = loadMyAlbums()
+  const updated = existing.map(a =>
+    a.albumCode === albumCode ? { ...a, title, artist, tracks } : a
+  )
+  localStorage.setItem(ALBUMS_KEY, JSON.stringify(updated))
+}
