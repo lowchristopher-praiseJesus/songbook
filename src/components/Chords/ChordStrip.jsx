@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { chordFingering, resolveChordKey } from '../../lib/chords/chordFingering'
+import { chordFingering } from '../../lib/chords/chordFingering'
 import { ChordDiagramSVG } from './ChordDiagramSVG'
 
 /**
  * Extract unique chords from transposed sections.
- * Deduplicates by resolved chord key — slash chords that fall back to their root
- * are treated as the same chord as the plain root (e.g., C/G and C both → C).
+ * Deduplicates by chord name — slash chords (G/B) are kept separate from their
+ * root (G) so each gets its own labelled diagram, matching the original behaviour.
  */
 function extractUniqueChords(sections) {
   const seen = new Set()
@@ -14,10 +14,11 @@ function extractUniqueChords(sections) {
   for (const section of sections) {
     for (const line of section.lines) {
       for (const { chord } of (line.chords ?? [])) {
-        const key = resolveChordKey(chord)
-        if (!key || seen.has(key)) continue
-        seen.add(key)
-        result.push({ name: key, fingering: chordFingering(chord) })
+        if (seen.has(chord)) continue
+        const fingering = chordFingering(chord)
+        if (!fingering) continue
+        seen.add(chord)
+        result.push({ name: chord, fingering })
       }
     }
   }

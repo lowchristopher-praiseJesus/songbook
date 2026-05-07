@@ -24,9 +24,9 @@ describe('ChordStrip', () => {
 
   it('shows chord diagrams when open=true', () => {
     render(<ChordStrip sections={sections} open onToggle={() => {}} />)
-    // G, Am, Cmaj7 — three unique chords (G/B deduplicates to G via resolveChordKey)
+    // G, Am, G/B, Cmaj7 — four unique chord names (G/B shown separately from G)
     const diagrams = document.querySelectorAll('[data-chord]')
-    expect(diagrams).toHaveLength(3)
+    expect(diagrams).toHaveLength(4)
   })
 
   it('hides chord diagrams when open=false', () => {

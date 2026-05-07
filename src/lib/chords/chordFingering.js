@@ -1,7 +1,7 @@
 import fingerings from './chordFingerings.json'
 
 const ROOT_ALIAS = {
-  'G#': 'Ab', 'C#': 'Db', 'Gb': 'F#', 'D#': 'Eb', 'A#': 'Bb',
+  'G#': 'Ab', 'C#': 'Db', 'F#': 'Gb', 'D#': 'Eb', 'A#': 'Bb',
 }
 
 const SUFFIX_ALIAS = {
