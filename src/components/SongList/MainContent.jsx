@@ -195,7 +195,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {/* Floating font-size + auto-scroll controls */}
-      {activeSong && (
+      {activeSong && !isCreatingNewAlbum && !activeAlbum && (
         <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20 pointer-events-auto items-center"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           {speedMode ? (

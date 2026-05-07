@@ -18,6 +18,7 @@ import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
 import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
 import { AlbumsPanel } from '../Album/AlbumsPanel'
+import { AlbumCard } from '../Album/AlbumCard'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync, onNewAlbum }) {
   const [query, setQuery] = useState('')
@@ -34,6 +35,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const fileInputRef = useRef()
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
+  const albums = useLibraryStore(s => s.albums)
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleExportMode = useLibraryStore(s => s.toggleExportMode)
@@ -112,6 +114,12 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     ? index.filter(e =>
         e.title.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
         (e.artist ?? '').toLowerCase().includes(trimmedQuery.toLowerCase())
+      )
+    : []
+  const filteredAlbums = trimmedQuery
+    ? albums.filter(a =>
+        a.title.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+        (a.artist ?? '').toLowerCase().includes(trimmedQuery.toLowerCase())
       )
     : []
 
@@ -238,7 +246,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <div className="p-3 pb-0 border-b border-gray-200 dark:border-gray-700">
         <input
           type="text"
-          placeholder="Search songs..."
+          placeholder={viewMode === 'albums' ? 'Search albums...' : 'Search songs...'}
           value={query}
           onChange={e => setQuery(e.target.value)}
           className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
@@ -286,12 +294,23 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       </div>
 
       {/* Albums tab panel */}
-      {!trimmedQuery && viewMode === 'albums' && (
-        <AlbumsPanel onSelect={onSongSelect} onNewAlbum={onNewAlbum} />
+      {viewMode === 'albums' && (
+        trimmedQuery ? (
+          <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
+            {filteredAlbums.length > 0
+              ? filteredAlbums.map(album => (
+                  <AlbumCard key={album.albumCode} album={album} onSelect={onSongSelect} />
+                ))
+              : <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">No matches</li>
+            }
+          </ul>
+        ) : (
+          <AlbumsPanel onSelect={onSongSelect} onNewAlbum={onNewAlbum} />
+        )
       )}
 
       {/* Song list */}
-      {(trimmedQuery || viewMode !== 'albums') && (
+      {viewMode !== 'albums' && (
       <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
         {trimmedQuery ? (
           <>
