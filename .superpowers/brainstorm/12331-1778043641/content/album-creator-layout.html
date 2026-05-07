@@ -1,0 +1,204 @@
+<h2>Album Creator — Layout Approach</h2>
+<p class="subtitle">When "New Album" is clicked, what should the main content area look like? Pick the layout that feels right.</p>
+
+<div class="cards">
+
+  <!-- Option A: Single scroll -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:16px;border-radius:8px;min-height:320px;display:flex;gap:10px;">
+      <!-- Sidebar strip -->
+      <div style="width:90px;background:#e9ecef;border-radius:6px;padding:8px;font-size:9px;color:#666;">
+        <div style="background:#dee2e6;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-weight:600;">Albums</div>
+        <div style="background:#c5cbf9;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-size:8px;">My Album</div>
+        <div style="border:1px dashed #6c757d;border-radius:3px;padding:4px 6px;font-size:8px;color:#6c757d;">+ New Album</div>
+      </div>
+      <!-- Main area: single column form -->
+      <div style="flex:1;background:white;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;color:#333;border-bottom:1px solid #eee;padding-bottom:6px;">New Album</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div style="width:48px;height:48px;background:#c5cbf9;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">🎵</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+            <div style="background:#f1f3f5;border-radius:3px;height:18px;width:100%;"></div>
+            <div style="background:#f1f3f5;border-radius:3px;height:18px;width:80%;"></div>
+          </div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Tracks</div>
+        <div style="display:flex;gap:4px;margin-bottom:2px;">
+          <div style="background:#c5cbf9;border-radius:3px;padding:2px 8px;font-size:8px;">Collections</div>
+          <div style="background:#f1f3f5;border-radius:3px;padding:2px 8px;font-size:8px;color:#666;">Songs</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:4px 6px;">
+            <input type="checkbox" checked disabled style="width:10px;height:10px;" />
+            <span style="font-size:8px;flex:1;">Amazing Grace</span>
+            <span style="font-size:7px;color:#888;">3:12</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:4px 6px;">
+            <input type="checkbox" checked disabled style="width:10px;height:10px;" />
+            <span style="font-size:8px;flex:1;">El Shaddai</span>
+            <span style="font-size:7px;color:#888;">4:05</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:4px 6px;">
+            <input type="checkbox" disabled style="width:10px;height:10px;" />
+            <span style="font-size:8px;flex:1;color:#aaa;">Great Is Thy Faithfulness</span>
+          </div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Track Order</div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="display:flex;align-items:center;gap:4px;background:#eef0ff;border-radius:3px;padding:3px 6px;">
+            <span style="font-size:8px;color:#6c757d;width:10px;">1</span>
+            <span style="font-size:8px;flex:1;">Amazing Grace</span>
+            <span style="font-size:9px;color:#aaa;cursor:pointer;">↑↓</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;background:#eef0ff;border-radius:3px;padding:3px 6px;">
+            <span style="font-size:8px;color:#6c757d;width:10px;">2</span>
+            <span style="font-size:8px;flex:1;">El Shaddai</span>
+            <span style="font-size:9px;color:#aaa;cursor:pointer;">↑↓</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:6px;padding-top:4px;border-top:1px solid #eee;">
+          <div style="font-size:8px;padding:4px 10px;border-radius:4px;border:1px solid #dee2e6;color:#666;">Cancel</div>
+          <div style="font-size:8px;padding:4px 10px;border-radius:4px;background:#6366f1;color:white;">Publish Album</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Single Scrollable Page</h3>
+      <p>All fields stacked in one column: metadata → track picker → track order → Publish. Simple, works great on mobile too.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Two-column -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:16px;border-radius:8px;min-height:320px;display:flex;gap:10px;">
+      <!-- Sidebar -->
+      <div style="width:90px;background:#e9ecef;border-radius:6px;padding:8px;font-size:9px;color:#666;">
+        <div style="background:#dee2e6;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-weight:600;">Albums</div>
+        <div style="background:#c5cbf9;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-size:8px;">My Album</div>
+        <div style="border:1px dashed #6c757d;border-radius:3px;padding:4px 6px;font-size:8px;color:#6c757d;">+ New Album</div>
+      </div>
+      <!-- Main area: two columns -->
+      <div style="flex:1;background:white;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden;">
+        <div style="font-size:11px;font-weight:700;color:#333;border-bottom:1px solid #eee;padding-bottom:6px;">New Album</div>
+        <div style="display:flex;gap:10px;flex:1;min-height:0;">
+          <!-- Left: metadata + order -->
+          <div style="width:45%;display:flex;flex-direction:column;gap:8px;overflow:hidden;">
+            <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Album Details</div>
+            <div style="width:56px;height:56px;background:#c5cbf9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;">🎵</div>
+            <div style="background:#f1f3f5;border-radius:3px;height:18px;width:100%;"></div>
+            <div style="background:#f1f3f5;border-radius:3px;height:18px;width:80%;"></div>
+            <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;">Track Order</div>
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1;">
+              <div style="display:flex;align-items:center;gap:4px;background:#eef0ff;border-radius:3px;padding:3px 5px;">
+                <span style="font-size:7px;color:#6c757d;width:9px;">1</span>
+                <span style="font-size:7.5px;flex:1;">Amazing Grace</span>
+                <span style="font-size:9px;color:#aaa;">↑↓</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;background:#eef0ff;border-radius:3px;padding:3px 5px;">
+                <span style="font-size:7px;color:#6c757d;width:9px;">2</span>
+                <span style="font-size:7.5px;flex:1;">El Shaddai</span>
+                <span style="font-size:9px;color:#aaa;">↑↓</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;padding-top:6px;border-top:1px solid #eee;">
+              <div style="font-size:8px;padding:5px 10px;border-radius:4px;background:#6366f1;color:white;text-align:center;">Publish Album</div>
+              <div style="font-size:8px;padding:3px 10px;border-radius:4px;border:1px solid #dee2e6;color:#666;text-align:center;">Cancel</div>
+            </div>
+          </div>
+          <!-- Right: track picker -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
+            <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Select Recordings</div>
+            <div style="display:flex;gap:4px;margin-bottom:2px;">
+              <div style="background:#c5cbf9;border-radius:3px;padding:2px 8px;font-size:8px;">Collections</div>
+              <div style="background:#f1f3f5;border-radius:3px;padding:2px 8px;font-size:8px;color:#666;">Songs</div>
+            </div>
+            <div style="font-size:8px;font-weight:600;color:#6366f1;margin-bottom:2px;">Sunday Service</div>
+            <div style="display:flex;flex-direction:column;gap:2px;overflow:auto;flex:1;">
+              <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:3px 5px;">
+                <input type="checkbox" checked disabled style="width:9px;height:9px;" />
+                <span style="font-size:7.5px;flex:1;">Amazing Grace</span>
+                <span style="font-size:7px;color:#888;">3:12</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:3px 5px;">
+                <input type="checkbox" checked disabled style="width:9px;height:9px;" />
+                <span style="font-size:7.5px;flex:1;">El Shaddai</span>
+                <span style="font-size:7px;color:#888;">4:05</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:3px 5px;">
+                <input type="checkbox" disabled style="width:9px;height:9px;" />
+                <span style="font-size:7.5px;flex:1;color:#aaa;">How Great Thou Art</span>
+              </div>
+              <div style="font-size:8px;font-weight:600;color:#6366f1;margin:4px 0 2px;">Youth Camp</div>
+              <div style="display:flex;align-items:center;gap:4px;background:#f8f9fa;border-radius:3px;padding:3px 5px;">
+                <input type="checkbox" disabled style="width:9px;height:9px;" />
+                <span style="font-size:7.5px;flex:1;color:#aaa;">Oceans</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Two Columns</h3>
+      <p>Left: album details + track order + Publish. Right: recording picker. Both visible at once — great on wide screens, collapses to single column on mobile.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Stepped inline -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:16px;border-radius:8px;min-height:320px;display:flex;gap:10px;">
+      <!-- Sidebar -->
+      <div style="width:90px;background:#e9ecef;border-radius:6px;padding:8px;font-size:9px;color:#666;">
+        <div style="background:#dee2e6;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-weight:600;">Albums</div>
+        <div style="background:#c5cbf9;border-radius:3px;padding:4px 6px;margin-bottom:4px;font-size:8px;">My Album</div>
+        <div style="border:1px dashed #6c757d;border-radius:3px;padding:4px 6px;font-size:8px;color:#6c757d;">+ New Album</div>
+      </div>
+      <!-- Main area: stepped -->
+      <div style="flex:1;background:white;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden;">
+        <!-- Step indicator -->
+        <div style="display:flex;align-items:center;gap:0;border-bottom:1px solid #eee;padding-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:16px;height:16px;border-radius:50%;background:#6366f1;color:white;font-size:7px;display:flex;align-items:center;justify-content:center;font-weight:700;">1</div>
+            <span style="font-size:8px;font-weight:600;color:#6366f1;">Details</span>
+          </div>
+          <div style="flex:1;height:1px;background:#dee2e6;margin:0 6px;"></div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:16px;height:16px;border-radius:50%;background:#dee2e6;color:#aaa;font-size:7px;display:flex;align-items:center;justify-content:center;">2</div>
+            <span style="font-size:8px;color:#aaa;">Tracks</span>
+          </div>
+          <div style="flex:1;height:1px;background:#dee2e6;margin:0 6px;"></div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:16px;height:16px;border-radius:50%;background:#dee2e6;color:#aaa;font-size:7px;display:flex;align-items:center;justify-content:center;">3</div>
+            <span style="font-size:8px;color:#aaa;">Order</span>
+          </div>
+          <div style="flex:1;height:1px;background:#dee2e6;margin:0 6px;"></div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:16px;height:16px;border-radius:50%;background:#dee2e6;color:#aaa;font-size:7px;display:flex;align-items:center;justify-content:center;">4</div>
+            <span style="font-size:8px;color:#aaa;">Publish</span>
+          </div>
+        </div>
+        <!-- Step 1 content -->
+        <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
+          <div style="font-size:10px;font-weight:600;color:#444;">Step 1: Album Details</div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="width:60px;height:60px;background:#c5cbf9;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;">🎵</div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+              <div style="background:#f1f3f5;border-radius:4px;height:22px;width:100%;"></div>
+              <div style="background:#f1f3f5;border-radius:4px;height:22px;width:75%;"></div>
+            </div>
+          </div>
+          <div style="font-size:8px;color:#888;margin-top:4px;">After completing each step, click Next to proceed.</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:1px solid #eee;">
+          <div style="font-size:8px;padding:4px 10px;border-radius:4px;border:1px solid #dee2e6;color:#666;">Cancel</div>
+          <div style="font-size:8px;padding:4px 10px;border-radius:4px;background:#6366f1;color:white;">Next →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Step-by-Step Inline</h3>
+      <p>Step indicator at the top, one step at a time. Mirrors the current modal experience but lives in the main content area. Familiar flow, less cognitive load per step.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,372 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]: 🎵 SongSheet
+      - generic [ref=e7]:
+        - link "User guide" [ref=e8] [cursor=pointer]:
+          - /url: /Documentation-songbook/user-guide.html
+          - text: "?"
+        - button "Settings" [ref=e9] [cursor=pointer]: ⚙️
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - generic [ref=e12]:
+          - textbox "Search songs..." [ref=e13]
+          - generic [ref=e14]:
+            - button "Collections" [ref=e15] [cursor=pointer]
+            - button "All Songs" [ref=e16] [cursor=pointer]
+        - list [ref=e17]:
+          - listitem [ref=e18]:
+            - button "+ New Collection" [ref=e19] [cursor=pointer]
+          - listitem [ref=e20]:
+            - generic [ref=e21]:
+              - button "› CNY 2026 5" [ref=e22] [cursor=pointer]:
+                - generic [ref=e23]: ›
+                - generic [ref=e24]: CNY 2026
+                - generic [ref=e25]: "5"
+              - button "Add songs to CNY 2026" [ref=e26] [cursor=pointer]: +
+              - button "Duplicate collection CNY 2026" [ref=e27] [cursor=pointer]: ⧉
+              - button "Rename collection CNY 2026" [ref=e28] [cursor=pointer]: ✏️
+              - button "Delete collection CNY 2026" [ref=e29] [cursor=pointer]: 🗑
+        - generic [ref=e30]:
+          - button "+ Import" [ref=e31] [cursor=pointer]
+          - button "Export songs" [ref=e32] [cursor=pointer]: Export
+          - button "Search UG" [ref=e33] [cursor=pointer]
+          - button "🎙 Live Session" [ref=e34] [cursor=pointer]
+      - main [ref=e35]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - heading "Holy And Anointed One" [level=1] [ref=e39]
+            - paragraph [ref=e40]: Vineyard Music
+            - generic [ref=e41]:
+              - generic "Transpose controls" [ref=e42]:
+                - combobox "Select key" [ref=e43] [cursor=pointer]:
+                  - option "Ab"
+                  - option "A"
+                  - option "Bb"
+                  - option "B"
+                  - option "C"
+                  - option "Db"
+                  - option "D"
+                  - option "Eb"
+                  - option "E"
+                  - option "F"
+                  - option "F#"
+                  - option "G" [selected]
+              - generic "Capo controls" [ref=e44]:
+                - generic [ref=e45]: Capo
+                - button "Decrease capo" [disabled] [ref=e46]: −
+                - generic [ref=e47]: "0"
+                - button "Increase capo" [ref=e48] [cursor=pointer]: +
+              - button "Edit" [ref=e49] [cursor=pointer]
+              - button "Hide annotations" [ref=e50] [cursor=pointer]: 💬
+              - button "Start recording" [ref=e51] [cursor=pointer]: 🎙 Rec
+              - button "Recordings" [ref=e52] [cursor=pointer]: 🎵 Recordings
+              - button "⛶ Performance" [ref=e53] [cursor=pointer]
+          - generic [ref=e54]:
+            - button "Chords ▴" [expanded] [ref=e55] [cursor=pointer]
+            - generic [ref=e56]:
+              - generic [ref=e58]: G
+              - generic [ref=e61]: Bm7
+              - generic [ref=e64]: C
+              - generic [ref=e67]: D
+              - generic [ref=e69]:
+                - generic [ref=e70]: C/B
+                - img [ref=e71]
+              - generic [ref=e73]: Am7
+              - generic [ref=e76]: Em7
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - heading "Verse" [level=3] [ref=e81]
+              - generic [ref=e82]:
+                - generic [ref=e84]:
+                  - generic [ref=e85]:
+                    - generic [ref=e86]:
+                      - generic [ref=e87]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e88]:
+                      - generic [ref=e89]: Bm7
+                      - text: s
+                    - text: us,
+                  - generic [ref=e92]: C
+                  - generic [ref=e93]:
+                    - generic [ref=e94]:
+                      - generic [ref=e95]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e96]:
+                      - generic [ref=e97]: D
+                      - text: s
+                    - text: us
+                    - generic [ref=e98]:
+                      - generic [ref=e99]: C
+                      - text: ","
+                - generic [ref=e101]:
+                  - generic [ref=e102]:
+                    - generic [ref=e103]:
+                      - generic [ref=e104]: G
+                      - text: H
+                    - text: oly
+                  - generic [ref=e105]:
+                    - generic [ref=e106]:
+                      - generic [ref=e107]: D
+                      - text: a
+                    - text: nd
+                  - generic [ref=e108]:
+                    - text: Ano
+                    - generic [ref=e109]:
+                      - generic [ref=e110]: C
+                      - text: i
+                    - text: "n"
+                    - generic [ref=e111]:
+                      - generic [ref=e112]: C/B
+                      - text: t
+                    - text: ed
+                  - generic [ref=e113]:
+                    - generic [ref=e114]:
+                      - generic [ref=e115]: Am7
+                      - text: O
+                    - text: ne,
+                - generic [ref=e117]:
+                  - generic [ref=e118]:
+                    - generic [ref=e119]:
+                      - generic [ref=e120]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e121]:
+                      - generic [ref=e122]: D
+                      - text: s
+                    - text: us
+                  - generic [ref=e125]: G
+                - generic [ref=e128]:
+                  - generic [ref=e129]:
+                    - generic [ref=e130]:
+                      - generic [ref=e131]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e132]:
+                      - generic [ref=e133]: D
+                      - text: s
+                    - text: us
+                    - generic [ref=e134]:
+                      - generic [ref=e135]: C
+                      - text: ","
+                  - generic [ref=e136]:
+                    - generic [ref=e137]:
+                      - generic [ref=e138]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e139]:
+                      - generic [ref=e140]: D
+                      - text: s
+                    - text: us
+                    - generic [ref=e141]:
+                      - generic [ref=e142]: C
+                      - text: ","
+                - generic [ref=e144]:
+                  - generic [ref=e145]:
+                    - generic [ref=e146]:
+                      - generic [ref=e147]: G
+                      - text: R
+                    - text: isen
+                  - generic [ref=e148]:
+                    - generic [ref=e149]:
+                      - generic [ref=e150]: D
+                      - text: a
+                    - text: nd
+                  - generic [ref=e151]:
+                    - text: Exa
+                    - generic [ref=e152]:
+                      - generic [ref=e153]: C
+                      - text: l
+                    - text: t
+                    - generic [ref=e154]:
+                      - generic [ref=e155]: C/B
+                      - text: e
+                    - text: d
+                  - generic [ref=e156]:
+                    - text: O
+                    - generic [ref=e157]:
+                      - generic [ref=e158]: Am7
+                      - text: "n"
+                    - text: e,
+                - generic [ref=e160]:
+                  - generic [ref=e161]:
+                    - generic [ref=e162]:
+                      - generic [ref=e163]: G
+                      - text: J
+                    - text: e-
+                    - generic [ref=e164]:
+                      - generic [ref=e165]: D
+                      - text: s
+                    - text: us
+                  - generic [ref=e168]: G
+            - generic [ref=e171]:
+              - heading "Chorus" [level=3] [ref=e172]
+              - generic [ref=e173]:
+                - generic [ref=e175]:
+                  - generic [ref=e176]: Your
+                  - generic [ref=e177]: name
+                  - generic [ref=e178]: is
+                  - generic [ref=e179]: like
+                  - generic [ref=e180]:
+                    - generic [ref=e181]:
+                      - generic [ref=e182]: C
+                      - text: h
+                    - text: oney
+                  - generic [ref=e183]: "on"
+                  - generic [ref=e184]: my
+                  - generic [ref=e185]:
+                    - generic [ref=e186]:
+                      - generic [ref=e187]: G
+                      - text: l
+                    - text: ips,
+                - generic [ref=e189]:
+                  - generic [ref=e190]: You
+                  - generic [ref=e191]: Spirit
+                  - generic [ref=e192]: like
+                  - generic [ref=e193]:
+                    - generic [ref=e194]:
+                      - generic [ref=e195]: C
+                      - text: w
+                    - text: ater
+                  - generic [ref=e196]: to
+                  - generic [ref=e197]: my
+                  - generic [ref=e198]:
+                    - generic [ref=e199]:
+                      - generic [ref=e200]: G
+                      - text: s
+                    - text: oul,
+                - generic [ref=e202]:
+                  - generic [ref=e203]: Your
+                  - generic [ref=e204]: word
+                  - generic [ref=e205]: is
+                  - generic [ref=e206]: a
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - generic [ref=e209]: C
+                      - text: l
+                    - text: amp
+                  - generic [ref=e210]: unto
+                  - generic [ref=e211]: my
+                  - generic [ref=e212]:
+                    - generic [ref=e213]:
+                      - generic [ref=e214]: Em7
+                      - text: f
+                    - text: eet,
+                - generic [ref=e216]:
+                  - generic [ref=e217]: Jesus
+                  - generic [ref=e218]: I
+                  - generic [ref=e219]:
+                    - generic [ref=e220]:
+                      - generic [ref=e221]: C
+                      - text: l
+                    - text: ove
+                  - generic [ref=e222]: You,
+                  - generic [ref=e223]: I
+                  - generic [ref=e224]: love
+                  - generic [ref=e225]:
+                    - generic [ref=e226]:
+                      - generic [ref=e227]: D
+                      - text: "Y"
+                    - text: ou.
+            - generic [ref=e230]:
+              - heading "Bridge" [level=3] [ref=e231]
+              - generic [ref=e232]:
+                - generic [ref=e234]:
+                  - generic [ref=e235]: Jesus
+                  - generic [ref=e236]: I
+                  - generic [ref=e237]:
+                    - generic [ref=e238]:
+                      - generic [ref=e239]: C
+                      - text: l
+                    - text: ove
+                  - generic [ref=e240]: you,
+                  - generic [ref=e241]: I
+                  - generic [ref=e242]:
+                    - generic [ref=e243]:
+                      - generic [ref=e244]: G
+                      - text: l
+                    - text: ove
+                  - generic [ref=e245]: you,
+                  - generic [ref=e246]: I
+                  - generic [ref=e247]:
+                    - generic [ref=e248]:
+                      - generic [ref=e249]: D
+                      - text: l
+                    - text: ove
+                  - generic [ref=e250]: you
+                - generic [ref=e252]:
+                  - generic [ref=e253]: Jesus
+                  - generic [ref=e254]: I
+                  - generic [ref=e255]:
+                    - generic [ref=e256]:
+                      - generic [ref=e257]: C
+                      - text: l
+                    - text: ove
+                  - generic [ref=e258]: you,
+                  - generic [ref=e259]: I
+                  - generic [ref=e260]:
+                    - generic [ref=e261]:
+                      - generic [ref=e262]: G
+                      - text: l
+                    - text: ove
+                  - generic [ref=e263]: you,
+                  - generic [ref=e264]: I
+                  - generic [ref=e265]:
+                    - generic [ref=e266]:
+                      - generic [ref=e267]: D
+                      - text: l
+                    - text: ove
+                  - generic [ref=e268]: you
+                - generic [ref=e270]:
+                  - generic [ref=e271]: Jesus
+                  - generic [ref=e272]: I
+                  - generic [ref=e273]:
+                    - generic [ref=e274]:
+                      - generic [ref=e275]: C
+                      - text: l
+                    - text: ove
+                  - generic [ref=e276]: you,
+                  - generic [ref=e277]: I
+                  - generic [ref=e278]:
+                    - generic [ref=e279]:
+                      - generic [ref=e280]: G
+                      - text: l
+                    - text: ove
+                  - generic [ref=e281]: you,
+                  - generic [ref=e282]: I
+                  - generic [ref=e283]:
+                    - generic [ref=e284]:
+                      - generic [ref=e285]: D
+                      - text: l
+                    - text: ove
+                  - generic [ref=e286]: you
+                - generic [ref=e288]:
+                  - generic [ref=e289]: More
+                  - generic [ref=e290]: than
+                  - generic [ref=e291]:
+                    - text: any
+                    - generic [ref=e292]:
+                      - generic [ref=e293]: C
+                      - text: t
+                    - text: hing,
+                  - generic [ref=e294]:
+                    - generic [ref=e295]:
+                      - generic [ref=e296]: G
+                      - text: m
+                    - text: ore
+                  - generic [ref=e297]: than
+                  - generic [ref=e298]:
+                    - text: any
+                    - generic [ref=e299]:
+                      - generic [ref=e300]: D
+                      - text: t
+                    - text: hing.
+        - generic [ref=e301]:
+          - button "Fit song to screen" [ref=e302] [cursor=pointer]: ⤢
+          - button "Increase font size" [ref=e303] [cursor=pointer]: +
+          - button "Decrease font size" [ref=e304] [cursor=pointer]: −
+          - button "Start auto-scroll" [ref=e305] [cursor=pointer]: ▶
+          - button "Enable metronome flash" [ref=e306] [cursor=pointer]
+  - status

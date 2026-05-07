@@ -1,0 +1,98 @@
+<h2>Track Reordering — Interaction Style</h2>
+<p class="subtitle">Once recordings are selected, how should the user reorder them in the track list?</p>
+
+<div class="cards">
+
+  <!-- Option A: Up/Down buttons -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:20px;border-radius:8px;display:flex;justify-content:center;">
+      <div style="width:220px;background:white;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Track Order</div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">1</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">Amazing Grace</span>
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;opacity:.4;pointer-events:none;">▲</button>
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▼</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">2</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">El Shaddai</span>
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▲</button>
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▼</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">3</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">Great Is Thy Faithfulness</span>
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▲</button>
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▼</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">4</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">How Great Thou Art</span>
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <button style="width:20px;height:18px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:3px;font-size:9px;cursor:pointer;color:#666;line-height:1;display:flex;align-items:center;justify-content:center;">▲</button>
+            <button style="width:20px;height:18px;border:1px solid #6c757d;background:#f1f3f5;border-radius:3px;font-size:9px;cursor:pointer;color:#999;opacity:.4;pointer-events:none;line-height:1;display:flex;align-items:center;justify-content:center;">▼</button>
+          </div>
+        </div>
+
+        <div style="font-size:8px;color:#aaa;text-align:center;margin-top:4px;">▲/▼ move track up or down</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Up / Down Buttons</h3>
+      <p>Each track row has ▲ / ▼ buttons. Simple, works perfectly on touch. First track's ▲ and last track's ▼ are disabled.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Drag handles -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:20px;border-radius:8px;display:flex;justify-content:center;">
+      <div style="width:220px;background:white;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Track Order <span style="font-weight:400;color:#aaa;text-transform:none;letter-spacing:0;">(drag to reorder)</span></div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:13px;color:#bbb;cursor:grab;line-height:1;margin-right:2px;">⠿</span>
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">1</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">Amazing Grace</span>
+          <span style="font-size:8px;color:#aaa;">3:12</span>
+        </div>
+
+        <!-- Dragging state - track 3 being dragged between 1 and 2 -->
+        <div style="border:2px dashed #6366f1;border-radius:6px;height:32px;background:#eef0ff44;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:8px;color:#6366f1;opacity:.6;">← drop here</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;">
+          <span style="font-size:13px;color:#bbb;cursor:grab;line-height:1;margin-right:2px;">⠿</span>
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">2</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">El Shaddai</span>
+          <span style="font-size:8px;color:#aaa;">4:05</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;background:#eef0ff;border-radius:6px;padding:6px 8px;opacity:.5;box-shadow:0 4px 12px rgba(99,102,241,.25);transform:rotate(1.5deg);">
+          <span style="font-size:13px;color:#bbb;cursor:grabbing;line-height:1;margin-right:2px;">⠿</span>
+          <span style="font-size:9px;color:#999;width:14px;text-align:center;">3</span>
+          <span style="font-size:10px;flex:1;font-weight:500;">Great Is Thy Faithfulness</span>
+          <span style="font-size:8px;color:#aaa;">5:30</span>
+        </div>
+
+        <div style="font-size:8px;color:#aaa;text-align:center;margin-top:4px;">grab ⠿ handle and drag</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Drag Handles</h3>
+      <p>Each track has a ⠿ grip icon on the left. Drag it to reposition. More fluid and visual — but more complex to implement, and drag-on-mobile can be finicky.</p>
+    </div>
+  </div>
+
+</div>

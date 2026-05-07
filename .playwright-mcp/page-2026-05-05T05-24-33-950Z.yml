@@ -1,0 +1,71 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]: 🎵 SongSheet
+      - generic [ref=e7]:
+        - link "User guide" [ref=e8] [cursor=pointer]:
+          - /url: /Documentation-songbook/user-guide.html
+          - text: "?"
+        - button "Settings" [ref=e9] [cursor=pointer]: ⚙️
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - generic [ref=e12]:
+          - textbox "Search songs..." [ref=e13]
+          - generic [ref=e14]:
+            - button "Collections" [active] [ref=e15] [cursor=pointer]
+            - button "All Songs" [ref=e16] [cursor=pointer]
+            - button "Albums" [ref=e17] [cursor=pointer]
+        - list [ref=e264]:
+          - listitem [ref=e265]:
+            - button "+ New Collection" [ref=e266] [cursor=pointer]
+          - listitem [ref=e267]:
+            - generic [ref=e268]:
+              - button "› CNY 2026 5" [ref=e269] [cursor=pointer]:
+                - generic [ref=e270]: ›
+                - generic [ref=e271]: CNY 2026
+                - generic [ref=e272]: "5"
+              - button "Add songs to CNY 2026" [ref=e273] [cursor=pointer]: +
+              - button "Duplicate collection CNY 2026" [ref=e274] [cursor=pointer]: ⧉
+              - button "Rename collection CNY 2026" [ref=e275] [cursor=pointer]: ✏️
+              - button "Delete collection CNY 2026" [ref=e276] [cursor=pointer]: 🗑
+        - generic [ref=e27]:
+          - button "+ Import" [ref=e28] [cursor=pointer]
+          - button "Export songs" [ref=e29] [cursor=pointer]: Export
+          - button "Search UG" [ref=e30] [cursor=pointer]
+          - button "🎙 Live Session" [ref=e31] [cursor=pointer]
+      - main [ref=e32]:
+        - generic [ref=e236]:
+          - generic [ref=e237]:
+            - heading "Sunday Service — May 4, 2026" [level=1] [ref=e238]
+            - paragraph [ref=e239]: SMTB Judah
+            - paragraph [ref=e240]: May 4, 2026 at 4:30 PM
+          - generic [ref=e241]:
+            - heading "3 Songs" [level=2] [ref=e242]
+            - list [ref=e243]:
+              - listitem [ref=e244]:
+                - generic [ref=e245]: "1"
+                - generic [ref=e246]: We Fall Down
+                - generic [ref=e247]: 3:07
+              - listitem [ref=e248]:
+                - generic [ref=e249]: "2"
+                - generic [ref=e250]: Great Is Thy Faithfulness
+                - generic [ref=e251]: 4:03
+              - listitem [ref=e252]:
+                - generic [ref=e253]: "3"
+                - generic [ref=e254]: El Shaddai
+                - generic [ref=e255]: 5:12
+          - generic [ref=e256]:
+            - heading "Share Link" [level=2] [ref=e257]
+            - generic [ref=e258]:
+              - textbox [ref=e259]: https://localhost:5174/?album=test-abc-123
+              - button "Copy" [ref=e260] [cursor=pointer]
+              - link "Open ↗" [ref=e261] [cursor=pointer]:
+                - /url: https://localhost:5174/?album=test-abc-123
+          - button "Delete Album" [ref=e263] [cursor=pointer]
+        - generic [ref=e230]:
+          - button "Fit song to screen" [ref=e231] [cursor=pointer]: ⤢
+          - button "Increase font size" [ref=e232] [cursor=pointer]: +
+          - button "Decrease font size" [ref=e233] [cursor=pointer]: −
+          - button "Start auto-scroll" [ref=e234] [cursor=pointer]: ▶
+          - button "Enable metronome flash" [ref=e235] [cursor=pointer]
+  - status
