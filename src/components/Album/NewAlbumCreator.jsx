@@ -106,6 +106,7 @@ export function NewAlbumCreator({ album = null }) {
       name: t.title,
       duration: t.duration,
       isExisting: true,
+      recordingId: t.trackId,
     })) ?? []
   )
 
