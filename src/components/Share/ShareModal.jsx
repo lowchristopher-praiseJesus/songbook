@@ -10,7 +10,7 @@ import { useLibraryStore } from '../../store/libraryStore';
 import { useLicense } from '../../contexts/LicenseContext';
 
 export function ShareModal({ isOpen, songs, collectionName, collectionId, onClose }) {
-  const { isLicensed, licenseStatus } = useLicense();
+  const { isLicensed, licenseStatus, licenseToken } = useLicense();
   const [step, setStep] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
@@ -80,7 +80,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
 
       if (conductorEnabled) {
         try {
-          await createConductorSession({ conductorCode, directorToken, maxFollowers })
+          await createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken })
         } catch (err) {
           console.error('[ShareModal] conductor session creation failed:', err)
           setErrorMessage('Conductor session could not be created. The share link was not saved.')
