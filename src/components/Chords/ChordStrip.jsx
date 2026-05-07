@@ -1,39 +1,23 @@
 import { useMemo } from 'react'
-import { chordToSprite } from '../../lib/chords/chordSprite'
-import { slashChordImage } from '../../lib/chords/slashChordImages'
-import { ChordDiagram, SlashChordDiagram } from './ChordDiagram'
+import { chordFingering, resolveChordKey } from '../../lib/chords/chordFingering'
+import { ChordDiagramSVG } from './ChordDiagramSVG'
 
 /**
  * Extract unique chords from transposed sections.
- * Slash chords with a known fingering image are returned as { name, kind:'slash', imgSrc }.
- * All others are looked up in the sprite sheet as { name, kind:'sprite', sprite }.
- * Deduplicates by full chord name; unrecognised slash chords fall back to their root.
+ * Deduplicates by resolved chord key — slash chords that fall back to their root
+ * are treated as the same chord as the plain root (e.g., C/G and C both → C).
  */
 function extractUniqueChords(sections) {
-  const seenFull  = new Set()
-  const seenRoots = new Set()
-  const result    = []
+  const seen = new Set()
+  const result = []
 
   for (const section of sections) {
     for (const line of section.lines) {
       for (const { chord } of (line.chords ?? [])) {
-        if (seenFull.has(chord)) continue
-        seenFull.add(chord)
-
-        if (chord.includes('/')) {
-          const imgSrc = slashChordImage(chord)
-          if (imgSrc) {
-            result.push({ name: chord, kind: 'slash', imgSrc })
-            continue
-          }
-        }
-
-        // Regular chord or slash chord without a dedicated image → show root via sprite
-        const root = chord.includes('/') ? chord.slice(0, chord.indexOf('/')) : chord
-        if (seenRoots.has(root)) continue
-        seenRoots.add(root)
-        const sprite = chordToSprite(root)
-        if (sprite) result.push({ name: root, kind: 'sprite', sprite })
+        const key = resolveChordKey(chord)
+        if (!key || seen.has(key)) continue
+        seen.add(key)
+        result.push({ name: key, fingering: chordFingering(chord) })
       }
     }
   }
@@ -42,7 +26,7 @@ function extractUniqueChords(sections) {
 }
 
 /**
- * Collapsible, horizontally-scrollable strip of chord diagrams.
+ * Collapsible strip of chord diagrams above the song body.
  *
  * @param {{ sections: object[], open: boolean, onToggle: () => void }} props
  */
@@ -69,10 +53,7 @@ export function ChordStrip({ sections, open, onToggle }) {
           {chords.map(item => (
             <div key={item.name} data-chord={item.name}>
               <span className="sr-only">{item.name}</span>
-              {item.kind === 'slash'
-                ? <SlashChordDiagram imgSrc={item.imgSrc} name={item.name} />
-                : <ChordDiagram sprite={item.sprite} />
-              }
+              <ChordDiagramSVG fingering={item.fingering} name={item.name} />
             </div>
           ))}
         </div>

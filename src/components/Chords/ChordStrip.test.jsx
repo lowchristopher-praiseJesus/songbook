@@ -24,9 +24,9 @@ describe('ChordStrip', () => {
 
   it('shows chord diagrams when open=true', () => {
     render(<ChordStrip sections={sections} open onToggle={() => {}} />)
-    // G, Am, G/B (slash diagram), Cmaj7 — four unique chords
+    // G, Am, Cmaj7 — three unique chords (G/B deduplicates to G via resolveChordKey)
     const diagrams = document.querySelectorAll('[data-chord]')
-    expect(diagrams).toHaveLength(4)
+    expect(diagrams).toHaveLength(3)
   })
 
   it('hides chord diagrams when open=false', () => {
@@ -42,19 +42,19 @@ describe('ChordStrip', () => {
     expect(onToggle).toHaveBeenCalledOnce()
   })
 
-  it('skips chords not in the sprite map', () => {
+  it('skips chords not in the fingering map', () => {
     const withUnknown = [{ label: '', lines: [
-      { type: 'lyric', content: 'x', chords: [{ chord: 'Cadd9', position: 0 }] },
-      { type: 'lyric', content: 'y', chords: [{ chord: 'G',     position: 0 }] },
+      { type: 'lyric', content: 'x', chords: [{ chord: 'Xmaj99', position: 0 }] },
+      { type: 'lyric', content: 'y', chords: [{ chord: 'G',      position: 0 }] },
     ]}]
     render(<ChordStrip sections={withUnknown} open onToggle={() => {}} />)
     const diagrams = document.querySelectorAll('[data-chord]')
-    expect(diagrams).toHaveLength(1) // only G
+    expect(diagrams).toHaveLength(1) // only G — Xmaj99 has no fingering
   })
 
   it('returns null when no mappable chords exist', () => {
     const empty = [{ label: '', lines: [
-      { type: 'lyric', content: 'x', chords: [{ chord: 'Cadd9', position: 0 }] },
+      { type: 'lyric', content: 'x', chords: [{ chord: 'Xmaj99', position: 0 }] },
     ]}]
     const { container } = render(<ChordStrip sections={empty} open onToggle={() => {}} />)
     expect(container.firstChild).toBeNull()
