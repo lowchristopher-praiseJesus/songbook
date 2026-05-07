@@ -7,11 +7,17 @@ import {
   countActiveFollowers, isConductorExpired, isConductorTerminated,
 } from '../lib/conductor';
 import type { ConductorData } from '../lib/conductor';
+import { verifyLicenseToken } from '../lib/licenseToken';
 
 const conductor = new Hono<{ Bindings: Env }>();
 
 // POST /conductor/create
 conductor.post('/create', async (c) => {
+  const licenseToken = c.req.header('X-License-Token');
+  if (!await verifyLicenseToken(licenseToken, c.env.LICENSE_TOKEN_SECRET)) {
+    return c.json({ error: 'license_required' }, 403);
+  }
+
   let body: { conductorCode?: unknown; directorToken?: unknown; maxFollowers?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
 

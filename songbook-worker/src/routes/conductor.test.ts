@@ -5,9 +5,80 @@ import { isConductorExpired } from '../lib/conductor';
 const ORIGIN = 'http://localhost:5173';
 const h = { 'Content-Type': 'application/json', 'Origin': ORIGIN };
 
+// ── License token helper ──────────────────────────────────────────────────────
+function makeLicenseKey(): string {
+  const { createHash } = require('node:crypto');
+  const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bitsToChar = (v: number) => ALPHA[v & 0x1f];
+  const bits = new Array(60).fill(0);
+  const wb = (s: number, c: number, v: number) => {
+    for (let i = c - 1; i >= 0; i--) { bits[s + i] = v & 1; v >>= 1; }
+  };
+  wb(0, 4, 0); wb(4, 31, 0); wb(35, 4, 1); wb(39, 21, 55);
+  let payload = '';
+  for (let i = 0; i < 12; i++) {
+    let v = 0; for (let b = 0; b < 5; b++) v = (v << 1) | bits[i * 5 + b];
+    payload += bitsToChar(v);
+  }
+  const hash = createHash('md5').update('test-license-secret' + payload).digest('hex');
+  let hbits = 0;
+  for (let i = 0; i < 5; i++) hbits = (hbits << 4) | parseInt(hash[i], 16);
+  let ck = '';
+  for (let i = 0; i < 4; i++) ck += bitsToChar((hbits >> (15 - i * 5)) & 0x1f);
+  return `SONGBOOK-${payload.slice(0, 4)}-${payload.slice(4, 8)}-${payload.slice(8, 12)}-${ck}`;
+}
+
+let _cachedToken: string | null = null;
+async function getLicenseToken(): Promise<string> {
+  if (!_cachedToken) {
+    const res = await SELF.fetch('http://localhost/license/validate', {
+      method: 'POST', headers: h, body: JSON.stringify({ key: makeLicenseKey() }),
+    });
+    const data = await res.json() as { token: string };
+    _cachedToken = data.token;
+  }
+  return _cachedToken;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('POST /conductor/create — license enforcement', () => {
+  it('returns 403 when X-License-Token header is absent', async () => {
+    const res = await SELF.fetch('http://localhost/conductor/create', {
+      method: 'POST', headers: h,
+      body: JSON.stringify({ conductorCode: 'NOLIC1', directorToken: 'tok', maxFollowers: 5 }),
+    });
+    expect(res.status).toBe(403);
+    const data = await res.json() as { error: string };
+    expect(data.error).toBe('license_required');
+  });
+
+  it('returns 403 when X-License-Token is invalid', async () => {
+    const res = await SELF.fetch('http://localhost/conductor/create', {
+      method: 'POST',
+      headers: { ...h, 'X-License-Token': 'garbage.token' },
+      body: JSON.stringify({ conductorCode: 'NOLIC2', directorToken: 'tok', maxFollowers: 5 }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('creates the session when a valid token is provided', async () => {
+    const token = await getLicenseToken();
+    const res = await SELF.fetch('http://localhost/conductor/create', {
+      method: 'POST',
+      headers: { ...h, 'X-License-Token': token },
+      body: JSON.stringify({ conductorCode: 'LIC001', directorToken: 'tok', maxFollowers: 5 }),
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json() as { ok: boolean };
+    expect(data.ok).toBe(true);
+  });
+});
+
 async function createConductor(body = {}) {
+  const token = await getLicenseToken();
   return SELF.fetch('http://localhost/conductor/create', {
-    method: 'POST', headers: h,
+    method: 'POST',
+    headers: { ...h, 'X-License-Token': token },
     body: JSON.stringify({ conductorCode: 'AABBCC', directorToken: 'tok-1', maxFollowers: 5, ...body }),
   });
 }
