@@ -48,8 +48,15 @@ for (const root of Object.keys(chords)) {
   const appRoot = ROOT_KEY_MAP[root] ?? root
 
   for (const chordDef of chords[root]) {
-    const appSuffix = SUFFIX_MAP[chordDef.suffix]
-    if (appSuffix === undefined) continue
+    // Slash chord suffixes (/B, /F#, /C#, …) are kept as-is; regular suffixes go through SUFFIX_MAP
+    let appSuffix
+    if (chordDef.suffix.startsWith('/')) {
+      appSuffix = chordDef.suffix
+    } else {
+      appSuffix = SUFFIX_MAP[chordDef.suffix]
+      if (appSuffix === undefined) continue
+    }
+
     if (!chordDef.positions?.length) continue
 
     const chordName = `${appRoot}${appSuffix}`
