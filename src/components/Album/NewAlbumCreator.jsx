@@ -201,42 +201,108 @@ export function NewAlbumCreator({ album = null }) {
 
     const client = clientRef.current
     const effectiveTitle = title.trim() || 'Untitled Album'
-    const trackMeta = orderedTracks.map(t => ({
-      trackId: uuidv4(),
-      title: t.name,
-      duration: t.duration,
-      mimeType: t.mimeType,
-      songId: t.songId,
-      recordingId: t.recordingId,
-    }))
-    setUploadProgress({ step: 'Creating album…', current: 0, total: trackMeta.length })
 
-    try {
-      const { albumCode, creatorToken } = await createAlbum({
-        title: effectiveTitle,
-        artist: artist.trim(),
-        coverFile: coverFile ?? null,
-        tracks: trackMeta.map(({ trackId, title: t, duration, mimeType }) => ({ trackId, title: t, duration, mimeType })),
-      })
+    if (isEditing) {
+      // ── Edit: upload only new tracks, then PATCH meta ────────
+      const newTracks = orderedTracks.filter(t => !t.isExisting)
+      const newTrackMeta = newTracks.map(t => ({
+        trackId: uuidv4(),
+        title: t.name,
+        duration: t.duration,
+        mimeType: t.mimeType,
+        songId: t.songId,
+        recordingId: t.recordingId,
+      }))
 
-      for (let i = 0; i < trackMeta.length; i++) {
-        const { trackId, title: tTitle, mimeType, songId, recordingId } = trackMeta[i]
-        setUploadProgress({ step: `Uploading "${tTitle}"…`, current: i + 1, total: trackMeta.length })
-        const buffer = await client.send('read-audio', { songId, recordingId })
-        await uploadTrack(albumCode, trackId, buffer, mimeType, creatorToken)
+      const totalSteps = newTrackMeta.length + (coverFile ? 1 : 0)
+      setUploadProgress({ step: 'Preparing…', current: 0, total: totalSteps })
+
+      try {
+        for (let i = 0; i < newTrackMeta.length; i++) {
+          const { trackId, title: tTitle, mimeType, songId, recordingId } = newTrackMeta[i]
+          setUploadProgress({ step: `Uploading "${tTitle}"…`, current: i + 1, total: totalSteps })
+          const buffer = await client.send('read-audio', { songId, recordingId })
+          await uploadTrack(album.albumCode, trackId, buffer, mimeType, album.creatorToken)
+        }
+
+        if (coverFile) {
+          setUploadProgress({ step: 'Updating cover…', current: newTrackMeta.length + 1, total: totalSteps })
+          await updateAlbumCover(album.albumCode, coverFile, album.creatorToken)
+        }
+
+        // Build final tracks array preserving original trackIds for existing tracks
+        let newIdx = 0
+        const finalTracks = orderedTracks.map(t => {
+          if (t.isExisting) {
+            return { trackId: t.trackId, title: t.name, duration: t.duration }
+          }
+          const m = newTrackMeta[newIdx++]
+          return { trackId: m.trackId, title: m.title, duration: m.duration }
+        })
+
+        await updateAlbumMeta({
+          albumCode: album.albumCode,
+          creatorToken: album.creatorToken,
+          title: effectiveTitle,
+          artist: artist.trim(),
+          tracks: finalTracks,
+        })
+
+        updateAlbumLocally({
+          albumCode: album.albumCode,
+          title: effectiveTitle,
+          artist: artist.trim(),
+          tracks: finalTracks,
+        })
+
+        syncAlbums()
+        setActiveAlbumCode(album.albumCode)
+        setIsCreatingNewAlbum(false)
+      } catch (err) {
+        console.error('[NewAlbumCreator] update error', err)
+        setUploadError(err.message)
+        setUploadPhase('error')
       }
 
-      saveAlbumLocally({
-        albumCode, creatorToken, title: effectiveTitle, artist: artist.trim(),
-        tracks: trackMeta.map(({ trackId, title: t, duration }) => ({ trackId, title: t, duration })),
-      })
-      syncAlbums()
-      setActiveAlbumCode(albumCode)
-      setIsCreatingNewAlbum(false)
-    } catch (err) {
-      console.error('[NewAlbumCreator] upload error', err)
-      setUploadError(err.message)
-      setUploadPhase('error')
+    } else {
+      // ── Create: original publish flow ────────────────────────
+      const trackMeta = orderedTracks.map(t => ({
+        trackId: uuidv4(),
+        title: t.name,
+        duration: t.duration,
+        mimeType: t.mimeType,
+        songId: t.songId,
+        recordingId: t.recordingId,
+      }))
+      setUploadProgress({ step: 'Creating album…', current: 0, total: trackMeta.length })
+
+      try {
+        const { albumCode, creatorToken } = await createAlbum({
+          title: effectiveTitle,
+          artist: artist.trim(),
+          coverFile: coverFile ?? null,
+          tracks: trackMeta.map(({ trackId, title: t, duration, mimeType }) => ({ trackId, title: t, duration, mimeType })),
+        })
+
+        for (let i = 0; i < trackMeta.length; i++) {
+          const { trackId, title: tTitle, mimeType, songId, recordingId } = trackMeta[i]
+          setUploadProgress({ step: `Uploading "${tTitle}"…`, current: i + 1, total: trackMeta.length })
+          const buffer = await client.send('read-audio', { songId, recordingId })
+          await uploadTrack(albumCode, trackId, buffer, mimeType, creatorToken)
+        }
+
+        saveAlbumLocally({
+          albumCode, creatorToken, title: effectiveTitle, artist: artist.trim(),
+          tracks: trackMeta.map(({ trackId, title: t, duration }) => ({ trackId, title: t, duration })),
+        })
+        syncAlbums()
+        setActiveAlbumCode(albumCode)
+        setIsCreatingNewAlbum(false)
+      } catch (err) {
+        console.error('[NewAlbumCreator] upload error', err)
+        setUploadError(err.message)
+        setUploadPhase('error')
+      }
     }
   }
 
