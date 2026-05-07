@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { OPFSClient } from '../../lib/opfsClient'
-import { createAlbum, uploadTrack, saveAlbumLocally } from '../../lib/albumApi'
+import { createAlbum, uploadTrack, saveAlbumLocally, updateAlbumMeta, updateAlbumCover, updateAlbumLocally, albumCoverUrl } from '../../lib/albumApi'
 import { useLibraryStore } from '../../store/libraryStore'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -76,7 +76,8 @@ function SortableTrackRow({ track, index, onRemove }) {
   )
 }
 
-export function NewAlbumCreator() {
+export function NewAlbumCreator({ album = null }) {
+  const isEditing = album !== null
   const setIsCreatingNewAlbum = useLibraryStore(s => s.setIsCreatingNewAlbum)
   const setActiveAlbumCode = useLibraryStore(s => s.setActiveAlbumCode)
   const syncAlbums = useLibraryStore(s => s.syncAlbums)
@@ -84,10 +85,12 @@ export function NewAlbumCreator() {
   const collections = useLibraryStore(s => s.collections)
 
   // Metadata
-  const [title, setTitle] = useState('')
-  const [artist, setArtist] = useState('')
+  const [title, setTitle] = useState(album?.title ?? '')
+  const [artist, setArtist] = useState(album?.artist ?? '')
   const [coverFile, setCoverFile] = useState(null)
-  const [coverPreview, setCoverPreview] = useState(null)
+  const [coverPreview, setCoverPreview] = useState(
+    album?.hasCover ? albumCoverUrl(album.albumCode) : null
+  )
   const fileInputRef = useRef(null)
 
   // Recording picker
@@ -97,7 +100,14 @@ export function NewAlbumCreator() {
   const clientRef = useRef(null)
 
   // Track order
-  const [orderedTracks, setOrderedTracks] = useState([])
+  const [orderedTracks, setOrderedTracks] = useState(
+    album?.tracks?.map(t => ({
+      trackId: t.trackId,
+      name: t.title,
+      duration: t.duration,
+      isExisting: true,
+    })) ?? []
+  )
 
   // Upload
   const [uploadPhase, setUploadPhase] = useState(null)  // null | 'uploading' | 'error'
@@ -247,7 +257,9 @@ export function NewAlbumCreator() {
     <div className="flex-1 overflow-hidden flex flex-col">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 shrink-0">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">New Album</h1>
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          {isEditing ? 'Edit Album' : 'New Album'}
+        </h1>
         <p className="text-sm text-gray-400 dark:text-gray-500 hidden sm:block">Select recordings, then publish.</p>
       </div>
 
@@ -356,7 +368,7 @@ export function NewAlbumCreator() {
                   onClick={handlePublish}
                   className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Publish Album
+                  {isEditing ? 'Re-publish' : 'Publish Album'}
                 </button>
                 <button
                   type="button"
