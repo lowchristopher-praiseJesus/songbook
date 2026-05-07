@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   validateLicenseWithServer,
@@ -24,7 +24,9 @@ export function LicenseProvider({ children }) {
   )
   const [validating, setValidating] = useState(false)
 
+  const validateGenRef = useRef(0)
   const validateKey = useCallback(async (key) => {
+    const gen = ++validateGenRef.current
     if (!key) {
       setLicenseToken(null)
       clearLicenseToken()
@@ -35,24 +37,30 @@ export function LicenseProvider({ children }) {
     setLicenseStatus('pending')
     try {
       const { token } = await validateLicenseWithServer(key)
+      if (gen !== validateGenRef.current) return
       saveLicenseToken(token)
       setLicenseToken(token)
       setLicenseStatus('valid')
     } catch (err) {
+      if (gen !== validateGenRef.current) return
       clearLicenseToken()
       setLicenseToken(null)
       setLicenseStatus(err.code === 'expired' ? 'expired' : 'invalid')
     } finally {
-      setValidating(false)
+      if (gen === validateGenRef.current) setValidating(false)
     }
   }, [])
 
+  const mountValidationRan = useRef(false)
   // On mount: re-validate if we have a key but the stored token is missing or expired.
   useEffect(() => {
-    if (licenseKey && isTokenExpired(licenseToken)) {
-      validateKey(licenseKey)
+    if (!mountValidationRan.current) {
+      mountValidationRan.current = true
+      if (licenseKey && isTokenExpired(licenseToken)) {
+        validateKey(licenseKey)
+      }
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [licenseKey, licenseToken, validateKey])
 
   const setLicenseKey = useCallback((key) => {
     setLicenseKeyRaw(key)
