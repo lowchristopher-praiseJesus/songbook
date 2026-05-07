@@ -12,7 +12,7 @@ function makeToken(expOffsetSeconds) {
   const exp = Math.floor(Date.now() / 1000) + expOffsetSeconds
   const payload = btoa(JSON.stringify({ sub: 'KEY', iat: 0, exp }))
     .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-  return `${payload}.fakesig`
+  return `fakeheader.${payload}.fakesig`
 }
 
 describe('localStorage helpers', () => {

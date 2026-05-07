@@ -43,7 +43,7 @@ export function clearLicenseToken() {
 export function isTokenExpired(token) {
   if (!token) return true
   try {
-    const [payloadB64] = token.split('.')
+    const [, payloadB64] = token.split('.')
     const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
     const { exp } = JSON.parse(json)
     return !exp || Date.now() / 1000 >= exp
