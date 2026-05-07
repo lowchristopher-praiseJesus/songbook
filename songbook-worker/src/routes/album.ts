@@ -16,7 +16,7 @@ const album = new Hono<{ Bindings: Env }>();
 // Albums are public — always allow any origin on all album responses.
 const PUBLIC_CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Creator-Token',
 };
 
@@ -101,6 +101,36 @@ album.post('/:code/track/:trackId', async (c) => {
   }
 
   await putAlbumTrack(c.env.R2_BUCKET, code, trackId, body, mimeType);
+  return new Response(JSON.stringify({ ok: true }), {
+    headers: { 'Content-Type': 'application/json', ...PUBLIC_CORS },
+  });
+});
+
+// PATCH /album/:code — update metadata (title, artist, tracks)
+album.patch('/:code', async (c) => {
+  const { code } = c.req.param();
+  const creatorToken = c.req.header('X-Creator-Token');
+
+  const meta = await getAlbumMetaRaw(c.env.R2_BUCKET, code);
+  if (!meta) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: PUBLIC_CORS });
+  if (meta.creatorToken !== creatorToken) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: PUBLIC_CORS });
+  }
+
+  let body: { title?: string; artist?: string; tracks?: AlbumMeta['tracks'] };
+  try {
+    body = await c.req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'invalid_body' }), { status: 400, headers: PUBLIC_CORS });
+  }
+
+  const updated: AlbumMeta = {
+    ...meta,
+    ...(body.title !== undefined ? { title: body.title } : {}),
+    ...(body.artist !== undefined ? { artist: body.artist } : {}),
+    ...(body.tracks !== undefined ? { tracks: body.tracks } : {}),
+  };
+  await putAlbumMeta(c.env.R2_BUCKET, code, updated);
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json', ...PUBLIC_CORS },
   });
