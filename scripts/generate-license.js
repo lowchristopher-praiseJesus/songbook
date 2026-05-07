@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 import { createHash, randomBytes } from 'node:crypto'
 
-const SECRET = process.env.LICENSE_SECRET || 'songsheet-conductor-2026-v1'
+const SECRET = process.env.LICENSE_SECRET
+if (!SECRET) {
+  console.error('Error: LICENSE_SECRET environment variable is required')
+  console.error('Usage: LICENSE_SECRET=<secret> node scripts/generate-license.js')
+  process.exit(1)
+}
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 function bitsToChar(bits) {
