@@ -28,7 +28,7 @@ function formatDuration(ms) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-function SortableTrackRow({ track, index, onRemove }) {
+function SortableTrackRow({ track, index, onRemove, onRename }) {
   const {
     attributes,
     listeners,
@@ -38,10 +38,29 @@ function SortableTrackRow({ track, index, onRemove }) {
     isDragging,
   } = useSortable({ id: track.recordingId })
 
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const inputRef = useRef(null)
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
+
+  function startEditing() {
+    setEditName(track.name)
+    setEditing(true)
+  }
+
+  function commitRename() {
+    const trimmed = editName.trim()
+    if (trimmed && trimmed !== track.name) onRename(track.recordingId, trimmed)
+    setEditing(false)
+  }
+
+  useEffect(() => {
+    if (editing && inputRef.current) inputRef.current.select()
+  }, [editing])
 
   return (
     <div
@@ -60,7 +79,25 @@ function SortableTrackRow({ track, index, onRemove }) {
         aria-label="Drag to reorder"
       >⠿</span>
       <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-right tabular-nums shrink-0">{index + 1}</span>
-      <span className="flex-1 text-sm text-gray-800 dark:text-gray-200 truncate">{track.name}</span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={editName}
+          onChange={e => setEditName(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commitRename()
+            if (e.key === 'Escape') setEditing(false)
+          }}
+          className="flex-1 text-sm text-gray-800 dark:text-gray-200 bg-transparent border-b border-indigo-400 dark:border-indigo-500 focus:outline-none min-w-0"
+        />
+      ) : (
+        <span
+          className="flex-1 text-sm text-gray-800 dark:text-gray-200 truncate cursor-text hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          onClick={startEditing}
+          title="Click to rename"
+        >{track.name}</span>
+      )}
       {track.duration > 0 && (
         <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums shrink-0">
           {formatDuration(track.duration)}
@@ -183,6 +220,10 @@ export function NewAlbumCreator({ album = null }) {
   // ── Track order handlers ───────────────────────────────────
   function removeTrack(recordingId) {
     setOrderedTracks(prev => prev.filter(t => t.recordingId !== recordingId))
+  }
+
+  function renameTrack(recordingId, newName) {
+    setOrderedTracks(prev => prev.map(t => t.recordingId === recordingId ? { ...t, name: newName } : t))
   }
 
   function handleDragEnd({ active, over }) {
@@ -412,6 +453,7 @@ export function NewAlbumCreator({ album = null }) {
                             track={t}
                             index={i}
                             onRemove={removeTrack}
+                            onRename={renameTrack}
                           />
                         ))}
                       </div>
