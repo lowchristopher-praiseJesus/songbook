@@ -25,3 +25,5 @@ admin/.env
 *.sln
 *.sw?
 .worktrees/
+scripts/secrets
+docs/security-vulnerabilities.md
