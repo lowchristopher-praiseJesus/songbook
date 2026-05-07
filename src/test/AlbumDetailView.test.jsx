@@ -6,6 +6,7 @@ vi.mock('../store/libraryStore', () => ({
   useLibraryStore: (sel) => sel({
     setActiveAlbumCode: vi.fn(),
     syncAlbums: vi.fn(),
+    setEditingAlbum: vi.fn(),
   }),
 }))
 
@@ -33,5 +34,10 @@ describe('AlbumDetailView', () => {
   it('renders album title', () => {
     render(<AlbumDetailView album={album} />)
     expect(screen.getByText('Sunday Worship')).toBeDefined()
+  })
+
+  it('renders Edit Album button', () => {
+    render(<AlbumDetailView album={album} />)
+    expect(screen.getByRole('button', { name: /edit album/i })).toBeDefined()
   })
 })

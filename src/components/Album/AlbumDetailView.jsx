@@ -23,6 +23,7 @@ function formatDuration(ms) {
 export function AlbumDetailView({ album }) {
   const setActiveAlbumCode = useLibraryStore(s => s.setActiveAlbumCode)
   const syncAlbums = useLibraryStore(s => s.syncAlbums)
+  const setEditingAlbum = useLibraryStore(s => s.setEditingAlbum)
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -79,6 +80,15 @@ export function AlbumDetailView({ album }) {
         >
           Open Album ↗
         </a>
+        <button
+          type="button"
+          onClick={() => setEditingAlbum(album)}
+          className="mt-2 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg border border-indigo-500
+            text-indigo-600 dark:text-indigo-400 text-sm font-semibold
+            hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+        >
+          Edit Album
+        </button>
       </div>
 
       {/* Track list */}

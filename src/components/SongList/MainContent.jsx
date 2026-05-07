@@ -28,6 +28,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
   const isCreatingNewAlbum = useLibraryStore(s => s.isCreatingNewAlbum)
+  const editingAlbum = useLibraryStore(s => s.editingAlbum)
   const viewMode = useLibraryStore(s => s.viewMode)
   const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
   const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
@@ -148,7 +149,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {isCreatingNewAlbum
-        ? <NewAlbumCreator />
+        ? <NewAlbumCreator album={editingAlbum} />
         : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
         : isCreatingNewSong
