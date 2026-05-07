@@ -69,7 +69,7 @@ export async function verifyLicenseToken(
     const payload: TokenPayload = JSON.parse(
       new TextDecoder().decode(fromBase64Url(payloadStr)),
     );
-    return payload.exp > Date.now() / 1000;
+    return typeof payload.exp === 'number' && payload.exp > Date.now() / 1000;
   } catch {
     return false;
   }
