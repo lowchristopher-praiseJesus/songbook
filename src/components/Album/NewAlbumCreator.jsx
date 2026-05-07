@@ -320,7 +320,8 @@ export function NewAlbumCreator() {
                 </p>
                 {orderedTracks.length === 0 ? (
                   <div className="flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-400 dark:text-gray-500 py-8 text-center px-3">
-                    Select recordings on the right →
+                    <span className="hidden md:inline">Select recordings on the right →</span>
+                    <span className="md:hidden">Tap a recording below to add it</span>
                   </div>
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
