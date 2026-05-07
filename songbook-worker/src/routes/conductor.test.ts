@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { SELF, env } from 'cloudflare:test';
 import { isConductorExpired } from '../lib/conductor';
 
@@ -42,6 +42,8 @@ async function getLicenseToken(): Promise<string> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('POST /conductor/create — license enforcement', () => {
+  beforeEach(() => { _cachedToken = null; });
+
   it('returns 403 when X-License-Token header is absent', async () => {
     const res = await SELF.fetch('http://localhost/conductor/create', {
       method: 'POST', headers: h,
