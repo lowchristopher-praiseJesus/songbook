@@ -60,3 +60,51 @@ describe('PATCH /album/:code', () => {
     expect(meta.artist).toBe('Band');
   });
 });
+
+describe('POST /album/:code/cover', () => {
+  it('accepts a cover image and returns ok', async () => {
+    const { albumCode, creatorToken } = await createAlbum();
+    const imageBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]); // PNG magic bytes
+    const res = await SELF.fetch(`${BASE}/album/${albumCode}/cover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/png', 'X-Creator-Token': creatorToken },
+      body: imageBytes,
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { ok: boolean };
+    expect(body.ok).toBe(true);
+  });
+
+  it('sets hasCover:true on the album metadata', async () => {
+    const { albumCode, creatorToken } = await createAlbum();
+    const imageBytes = new Uint8Array([0xff, 0xd8, 0xff]); // JPEG magic bytes
+    await SELF.fetch(`${BASE}/album/${albumCode}/cover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg', 'X-Creator-Token': creatorToken },
+      body: imageBytes,
+    });
+    const meta = await (await SELF.fetch(`${BASE}/album/${albumCode}`)).json() as { hasCover: boolean; coverExt: string };
+    expect(meta.hasCover).toBe(true);
+    expect(meta.coverExt).toBe('jpg');
+  });
+
+  it('returns 403 with wrong token', async () => {
+    const { albumCode } = await createAlbum();
+    const res = await SELF.fetch(`${BASE}/album/${albumCode}/cover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg', 'X-Creator-Token': 'bad-token' },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 when body is empty', async () => {
+    const { albumCode, creatorToken } = await createAlbum();
+    const res = await SELF.fetch(`${BASE}/album/${albumCode}/cover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg', 'X-Creator-Token': creatorToken },
+      body: new Uint8Array([]),
+    });
+    expect(res.status).toBe(400);
+  });
+});

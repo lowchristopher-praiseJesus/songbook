@@ -136,6 +136,31 @@ album.patch('/:code', async (c) => {
   });
 });
 
+// POST /album/:code/cover — replace cover image
+album.post('/:code/cover', async (c) => {
+  const { code } = c.req.param();
+  const creatorToken = c.req.header('X-Creator-Token');
+
+  const meta = await getAlbumMetaRaw(c.env.R2_BUCKET, code);
+  if (!meta) return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: PUBLIC_CORS });
+  if (meta.creatorToken !== creatorToken) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: PUBLIC_CORS });
+  }
+
+  const mime = c.req.header('Content-Type') ?? 'image/jpeg';
+  const ext = mime.includes('png') ? 'png' : 'jpg';
+  const buf = await c.req.arrayBuffer();
+  if (buf.byteLength === 0) {
+    return new Response(JSON.stringify({ error: 'no_body' }), { status: 400, headers: PUBLIC_CORS });
+  }
+
+  await putAlbumCover(c.env.R2_BUCKET, code, ext, buf, mime);
+  await putAlbumMeta(c.env.R2_BUCKET, code, { ...meta, hasCover: true, coverExt: ext });
+  return new Response(JSON.stringify({ ok: true }), {
+    headers: { 'Content-Type': 'application/json', ...PUBLIC_CORS },
+  });
+});
+
 // GET /album/:code — return public metadata (creatorToken stripped)
 album.get('/:code', async (c) => {
   const meta = await getAlbumMetaRaw(c.env.R2_BUCKET, c.req.param('code'));
