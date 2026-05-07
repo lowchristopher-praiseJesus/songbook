@@ -28,3 +28,4 @@ admin/.env
 scripts/secrets
 docs/security-vulnerabilities.md
 docs/
+admin/
