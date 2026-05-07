@@ -33,3 +33,4 @@ experiments/
 .playwright-mcp/
 .superpowers/
 tools/
+.wrangler/
