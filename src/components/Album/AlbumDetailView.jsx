@@ -134,16 +134,6 @@ export function AlbumDetailView({ album }) {
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
-          <a
-            href={albumUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 px-3 py-2 text-xs rounded-lg border border-indigo-500
-              text-indigo-600 dark:text-indigo-400
-              hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-          >
-            Open ↗
-          </a>
         </div>
         <div className="mt-4">
           <canvas
