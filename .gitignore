@@ -29,3 +29,6 @@ scripts/secrets
 docs/security-vulnerabilities.md
 docs/
 admin/
+experiments/
+.playwright-mcp/
+.superpowers/
