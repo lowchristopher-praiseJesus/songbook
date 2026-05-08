@@ -139,3 +139,20 @@ describe('POST /album — cover size guard', () => {
     expect(body.error).toBe('cover_too_large');
   });
 });
+
+describe('POST /album/:code/track/:trackId — size guard', () => {
+  it('returns 413 when track body exceeds 50 MB', async () => {
+    const { albumCode, creatorToken } = await createAlbum();
+    const res = await SELF.fetch(`${BASE}/album/${albumCode}/track/track-1`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'audio/webm',
+        'X-Creator-Token': creatorToken,
+      },
+      body: new Uint8Array(50 * 1024 * 1024 + 1),
+    });
+    expect(res.status).toBe(413);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('track_too_large');
+  });
+});

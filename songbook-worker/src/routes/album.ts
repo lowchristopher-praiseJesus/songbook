@@ -98,7 +98,14 @@ album.post('/:code/track/:trackId', async (c) => {
   }
 
   const mimeType = c.req.header('Content-Type') ?? 'audio/webm';
+  const len = Number(c.req.header('Content-Length') ?? 0);
+  if (len > 50 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: 'track_too_large' }), { status: 413, headers: PUBLIC_CORS });
+  }
   const body = await c.req.arrayBuffer();
+  if (body.byteLength > 50 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: 'track_too_large' }), { status: 413, headers: PUBLIC_CORS });
+  }
   if (body.byteLength === 0) {
     return new Response(JSON.stringify({ error: 'no_body' }), { status: 400, headers: PUBLIC_CORS });
   }
