@@ -271,3 +271,53 @@ describe('POST /session/:code/close', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('POST /session/:code/op — rawText guard', () => {
+  it('returns 400 when add_song rawText exceeds 100 000 chars', async () => {
+    const { code } = await (await createSession({ name: 'T' })).json() as { code: string };
+    const res = await SELF.fetch(`http://localhost/session/${code}/op`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        type: 'add_song',
+        songId: 'big',
+        song: { meta: { title: 'Big', keyIndex: 0, usesFlats: false }, rawText: 'x'.repeat(100_001) },
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('rawText_too_large');
+  });
+
+  it('returns 400 when update_song rawText exceeds 100 000 chars', async () => {
+    const song = { id: 's1', meta: { title: 'S', keyIndex: 0, usesFlats: false }, rawText: 'ok' };
+    const { code } = await (await createSession({ name: 'T', songs: [song] })).json() as { code: string };
+
+    const res = await SELF.fetch(`http://localhost/session/${code}/op`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        type: 'update_song',
+        songId: 's1',
+        song: { meta: { title: 'S', keyIndex: 0, usesFlats: false }, rawText: 'x'.repeat(100_001) },
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('rawText_too_large');
+  });
+
+  it('still accepts a song whose rawText is exactly 100 000 chars', async () => {
+    const { code } = await (await createSession({ name: 'T' })).json() as { code: string };
+    const res = await SELF.fetch(`http://localhost/session/${code}/op`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        type: 'add_song',
+        songId: 'max',
+        song: { meta: { title: 'Max', keyIndex: 0, usesFlats: false }, rawText: 'x'.repeat(100_000) },
+      }),
+    });
+    expect(res.status).toBe(200);
+  });
+});

@@ -73,6 +73,14 @@ session.post('/:code/op', async (c) => {
   let op: Op;
   try { op = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
 
+  if (
+    (op.type === 'add_song' || op.type === 'update_song') &&
+    typeof op.song?.rawText === 'string' &&
+    op.song.rawText.length > 100_000
+  ) {
+    return c.json({ error: 'rawText_too_large' }, 400);
+  }
+
   const updated = applyOp(sess, op);
   await putSession(c.env.SESSION_KV, updated);
   return c.json({ version: updated.version, applied: updated.version !== sess.version });
