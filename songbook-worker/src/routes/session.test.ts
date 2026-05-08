@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { env, SELF } from 'cloudflare:test';
 
 const ORIGIN = 'http://localhost:5173';
-const headers = { 'Content-Type': 'application/json', 'Origin': ORIGIN };
+const headers = { 'Content-Type': 'application/json', 'Origin': ORIGIN, 'X-Turnstile-Token': 'test-token' };
 
 async function createSession(body = {}) {
   return SELF.fetch('http://localhost/session/create', {
@@ -13,6 +13,17 @@ async function createSession(body = {}) {
 }
 
 describe('POST /session/create', () => {
+  it('returns 403 when X-Turnstile-Token header is missing', async () => {
+    const res = await SELF.fetch('http://localhost/session/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': ORIGIN },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(403);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('turnstile_failed');
+  });
+
   it('creates a session and returns code + urls', async () => {
     const res = await createSession({ name: 'Sunday Service' });
     expect(res.status).toBe(200);

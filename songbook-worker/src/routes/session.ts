@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types';
+import { verifyTurnstile } from '../middleware/turnstile';
 import {
   generateCode, getSession, putSession, stripExpiredLocks,
   isSessionDead, applyOp,
@@ -9,7 +10,7 @@ import type { SessionData, Op } from '../lib/session';
 const session = new Hono<{ Bindings: Env }>();
 
 // POST /session/create
-session.post('/create', async (c) => {
+session.post('/create', verifyTurnstile, async (c) => {
   let body: { name?: string; songs?: Array<{ id: string; meta: unknown; rawText: string }> };
   try { body = await c.req.json(); } catch { body = {}; }
 
