@@ -3,6 +3,7 @@ import { TransposeControl } from './TransposeControl'
 import { RecorderButton } from '../Recorder/RecorderButton'
 import { RecordingTimer } from '../Recorder/RecordingTimer'
 import { NamingDialog } from '../Recorder/NamingDialog'
+import { RecordingErrorDialog } from '../Recorder/RecordingErrorDialog'
 import { RecordingsPanel } from '../Recorder/RecordingsPanel'
 import { useRecording } from '../../hooks/useRecording'
 import { checkRecorderSupport } from '../../lib/recorderFeatureDetect'
@@ -131,15 +132,23 @@ export function SongHeader({
               onPause={recording.pauseRecording}
               onResume={recording.resumeRecording}
             />
-            <button
-              type="button"
-              onClick={() => setPanelOpen(true)}
-              aria-label="Recordings"
-              title="View recordings"
-              className="text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              🎵 Recordings
-            </button>
+            <div className="relative inline-flex">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(true)}
+                aria-label={recording.hasRecordings ? 'Recordings available' : 'Recordings'}
+                title={recording.hasRecordings ? 'View recordings - this song has recordings' : 'View recordings'}
+                className="text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                🎵 Recordings
+              </button>
+              {recording.hasRecordings && (
+                <span
+                  className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
           </>
         )}
 
@@ -170,10 +179,17 @@ export function SongHeader({
         onCancel={recording.cancelNaming}
       />
 
+      <RecordingErrorDialog
+        isOpen={recording.status === 'error' && !!recording.error}
+        message={recording.error}
+        onClose={recording.dismissError}
+      />
+
       <RecordingsPanel
         isOpen={panelOpen}
         songId={songId}
         onClose={() => setPanelOpen(false)}
+        onRecordingsChange={recording.handleRecordingsChange}
       />
     </div>
   )

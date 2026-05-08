@@ -18,7 +18,7 @@ function formatDate(iso) {
   })
 }
 
-export function RecordingsPanel({ isOpen, songId, onClose }) {
+export function RecordingsPanel({ isOpen, songId, onClose, onRecordingsChange }) {
   const [recordings, setRecordings] = useState([])
   const [loading, setLoading] = useState(true)
   const [quota, setQuota] = useState(null)
@@ -40,12 +40,13 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
         clientRef.current.send('storage-quota'),
       ])
       setRecordings(recs)
+      onRecordingsChange?.(recs.length)
       setQuota(q)
       setRecordingsBytes(recs.reduce((sum, r) => sum + (r.size ?? 0), 0))
     } finally {
       setLoading(false)
     }
-  }, [isOpen, songId])
+  }, [isOpen, songId, onRecordingsChange])
 
   useEffect(() => {
     if (!isOpen) return
@@ -73,7 +74,9 @@ export function RecordingsPanel({ isOpen, songId, onClose }) {
         const wavBuffer = await blobToWav(blob)
         playBlob = new Blob([wavBuffer], { type: 'audio/wav' })
         mimeType = 'audio/wav'
-      } catch {}
+      } catch {
+        // Some browsers cannot decode a recorded container in AudioContext; play the raw recording instead.
+      }
       const url = URL.createObjectURL(playBlob)
       objectUrlsRef.current.push(url)
       setPlayingSrc({ recordingId: rec.recordingId, url, mimeType, durationMs: rec.duration })

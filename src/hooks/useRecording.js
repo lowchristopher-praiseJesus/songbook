@@ -4,6 +4,29 @@ import { OPFSClient } from '../lib/opfsClient'
 
 const TIMER_INTERVAL_MS = 200
 
+export function recordingErrorMessage(err) {
+  const name = err?.name ?? ''
+  const message = err?.message ?? String(err ?? '')
+
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+    return 'Microphone access was blocked. Enable microphone permission for this site in your browser settings, then try recording again.'
+  }
+
+  if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+    return 'No microphone was found. Connect a microphone or choose a device with microphone access, then try again.'
+  }
+
+  if (name === 'NotReadableError' || name === 'TrackStartError') {
+    return 'The microphone is already in use or could not be started. Close other apps using the microphone, then try again.'
+  }
+
+  if (name === 'SecurityError') {
+    return 'Recording is blocked by this browser. Open SongSheet over HTTPS and allow microphone access for this site.'
+  }
+
+  return message || 'Recording could not start. Check microphone access and try again.'
+}
+
 function defaultName(songTitle) {
   const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   return `${songTitle} — ${date}`
@@ -15,6 +38,7 @@ export function useRecording({ songId, songTitle }) {
   const [pendingName, setPendingName] = useState('')
   const [error, setError] = useState(null)
   const [channels, setChannels] = useState(null)
+  const [recordingCount, setRecordingCount] = useState(0)
 
   const recorderRef = useRef(null)
   const clientRef = useRef(null)
@@ -32,6 +56,40 @@ export function useRecording({ songId, songTitle }) {
       client.terminate()
       clientRef.current = null
     }
+  }, [])
+
+  const refreshRecordingCount = useCallback(async () => {
+    if (!songId || !clientRef.current) {
+      setRecordingCount(0)
+      return
+    }
+
+    try {
+      const recs = await clientRef.current.send('list-recordings', { songId })
+      setRecordingCount(Array.isArray(recs) ? recs.length : 0)
+    } catch {
+      setRecordingCount(0)
+    }
+  }, [songId])
+
+  useEffect(() => {
+    if (!songId || !clientRef.current) return
+
+    let cancelled = false
+    async function loadRecordingCount() {
+      try {
+        const recs = await clientRef.current.send('list-recordings', { songId })
+        if (!cancelled) setRecordingCount(Array.isArray(recs) ? recs.length : 0)
+      } catch {
+        if (!cancelled) setRecordingCount(0)
+      }
+    }
+    loadRecordingCount()
+    return () => { cancelled = true }
+  }, [songId])
+
+  const handleRecordingsChange = useCallback((count) => {
+    setRecordingCount(Math.max(0, count))
   }, [])
 
   function startTimer() {
@@ -69,9 +127,10 @@ export function useRecording({ songId, songTitle }) {
       startTimer()
     } catch (err) {
       setStatus('error')
-      setError(err.message ?? String(err))
+      setError(recordingErrorMessage(err))
+      recorderRef.current = null
     }
-  }, [songId])
+  }, [])
 
   const pauseRecording = useCallback(() => {
     recorderRef.current?.pause()
@@ -118,6 +177,7 @@ export function useRecording({ songId, songTitle }) {
       recordingId: recordingIdRef.current,
       meta,
     })
+    setRecordingCount(count => Math.max(count, 1))
     resetTimer()
     setElapsedMs(0)
     setPendingName('')
@@ -134,5 +194,28 @@ export function useRecording({ songId, songTitle }) {
     setStatus('idle')
   }, [])
 
-  return { status, elapsedMs, pendingName, error, channels, startRecording, pauseRecording, resumeRecording, stopRecording, saveRecording, cancelNaming }
+  const dismissError = useCallback(() => {
+    setError(null)
+    setChannels(null)
+    setStatus('idle')
+  }, [])
+
+  return {
+    status,
+    elapsedMs,
+    pendingName,
+    error,
+    channels,
+    recordingCount,
+    hasRecordings: recordingCount > 0,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+    saveRecording,
+    cancelNaming,
+    dismissError,
+    refreshRecordingCount,
+    handleRecordingsChange,
+  }
 }

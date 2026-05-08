@@ -33,12 +33,17 @@ vi.mock('../../../hooks/useRecording', () => ({
     elapsedMs: 0,
     pendingName: '',
     error: null,
+    recordingCount: 0,
+    hasRecordings: false,
     startRecording: vi.fn(),
     pauseRecording: vi.fn(),
     resumeRecording: vi.fn(),
     stopRecording: vi.fn(),
     saveRecording: vi.fn(),
     cancelNaming: vi.fn(),
+    dismissError: vi.fn(),
+    refreshRecordingCount: vi.fn(),
+    handleRecordingsChange: vi.fn(),
   })),
 }))
 

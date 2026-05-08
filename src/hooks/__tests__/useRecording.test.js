@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useRecording } from '../useRecording'
+import { recordingErrorMessage, useRecording } from '../useRecording'
 
 vi.mock('../../lib/audioRecorder', () => ({
   AudioRecorder: vi.fn().mockImplementation(() => ({
@@ -40,6 +40,11 @@ describe('useRecording', () => {
 
   it('starts in idle state', () => {
     expect(hook.result.current.status).toBe('idle')
+  })
+
+  it('starts with no recordings indicator', () => {
+    expect(hook.result.current.hasRecordings).toBe(false)
+    expect(hook.result.current.recordingCount).toBe(0)
   })
 
   it('elapsedMs is 0 initially', () => {
@@ -98,6 +103,23 @@ describe('useRecording', () => {
     expect(hook.result.current.status).toBe('idle')
   })
 
+  it('saveRecording() turns on the recordings indicator', async () => {
+    await act(async () => { await hook.result.current.startRecording() })
+    await act(async () => { await hook.result.current.stopRecording() })
+    await act(async () => { await hook.result.current.saveRecording('My Name') })
+    expect(hook.result.current.hasRecordings).toBe(true)
+  })
+
+  it('handleRecordingsChange() updates the recordings indicator from the panel', () => {
+    act(() => { hook.result.current.handleRecordingsChange(3) })
+    expect(hook.result.current.recordingCount).toBe(3)
+    expect(hook.result.current.hasRecordings).toBe(true)
+
+    act(() => { hook.result.current.handleRecordingsChange(0) })
+    expect(hook.result.current.recordingCount).toBe(0)
+    expect(hook.result.current.hasRecordings).toBe(false)
+  })
+
   it('cancelNaming() transitions back to idle without saving', async () => {
     await act(async () => { await hook.result.current.startRecording() })
     await act(async () => { await hook.result.current.stopRecording() })
@@ -119,5 +141,44 @@ describe('useRecording', () => {
     await act(async () => { await errHook.result.current.startRecording() })
     expect(errHook.result.current.status).toBe('error')
     expect(errHook.result.current.error).toContain('Permission denied')
+  })
+
+  it('shows a friendly message when microphone permission is denied', async () => {
+    const { AudioRecorder } = await import('../../lib/audioRecorder')
+    const denied = new DOMException('Permission denied', 'NotAllowedError')
+    AudioRecorder.mockImplementationOnce(() => ({
+      start: vi.fn().mockRejectedValue(denied),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      stop: vi.fn().mockResolvedValue([]),
+      mimeType: null,
+      state: 'inactive',
+    }))
+    const errHook = renderHook(() => useRecording({ songId: 'song-abc', songTitle: 'Test' }))
+    await act(async () => { await errHook.result.current.startRecording() })
+    expect(errHook.result.current.error).toMatch(/Microphone access was blocked/i)
+  })
+
+  it('dismissError() clears the visible error and returns to idle', async () => {
+    const { AudioRecorder } = await import('../../lib/audioRecorder')
+    AudioRecorder.mockImplementationOnce(() => ({
+      start: vi.fn().mockRejectedValue(new DOMException('Permission denied', 'NotAllowedError')),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      stop: vi.fn().mockResolvedValue([]),
+      mimeType: null,
+      state: 'inactive',
+    }))
+    const errHook = renderHook(() => useRecording({ songId: 'song-abc', songTitle: 'Test' }))
+    await act(async () => { await errHook.result.current.startRecording() })
+    act(() => { errHook.result.current.dismissError() })
+    expect(errHook.result.current.status).toBe('idle')
+    expect(errHook.result.current.error).toBeNull()
+  })
+
+  it('classifies common recording startup failures', () => {
+    expect(recordingErrorMessage(new DOMException('', 'NotFoundError'))).toMatch(/No microphone/i)
+    expect(recordingErrorMessage(new DOMException('', 'NotReadableError'))).toMatch(/already in use/i)
+    expect(recordingErrorMessage(new DOMException('', 'SecurityError'))).toMatch(/HTTPS/i)
   })
 })

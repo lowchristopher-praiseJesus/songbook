@@ -19,8 +19,8 @@ vi.mock('../../../lib/opfsClient', () => ({
 }))
 
 beforeEach(() => {
-  global.URL.createObjectURL = vi.fn(() => 'blob:http://localhost/fake')
-  global.URL.revokeObjectURL = vi.fn()
+  globalThis.URL.createObjectURL = vi.fn(() => 'blob:http://localhost/fake')
+  globalThis.URL.revokeObjectURL = vi.fn()
   window.HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined)
   window.HTMLMediaElement.prototype.pause = vi.fn()
 })
@@ -43,9 +43,15 @@ describe('RecordingsPanel', () => {
     await waitFor(() => expect(screen.getByText('First Take')).toBeInTheDocument())
   })
 
+  it('reports the current recording count after loading', async () => {
+    const onRecordingsChange = vi.fn()
+    render(<RecordingsPanel {...baseProps} onRecordingsChange={onRecordingsChange} />)
+    await waitFor(() => expect(onRecordingsChange).toHaveBeenCalledWith(1))
+  })
+
   it('shows storage quota', async () => {
     render(<RecordingsPanel {...baseProps} />)
-    await waitFor(() => expect(screen.getByText(/storage/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/10.0 MB available/i)).toBeInTheDocument())
   })
 
   it('shows a delete button for each recording', async () => {
