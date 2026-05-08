@@ -58,4 +58,24 @@ describe('verifyTurnstile middleware', () => {
     const body = await res.json() as { error: string };
     expect(body.error).toBe('turnstile_failed');
   });
+
+  it('returns 403 when siteverify throws a network error', async () => {
+    fetchMock
+      .get(SITEVERIFY_URL)
+      .intercept({ path: '/turnstile/v0/siteverify', method: 'POST' })
+      .replyWithError('network error');
+
+    const res = await SELF.fetch('http://localhost/share/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/zip',
+        'Origin': ORIGIN,
+        'X-Turnstile-Token': 'test-token',
+      },
+      body: new ArrayBuffer(1),
+    });
+    expect(res.status).toBe(403);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('turnstile_failed');
+  });
 });
