@@ -42,6 +42,43 @@ describe('POST /session/create', () => {
     const state = await stateRes.json() as { name: string };
     expect(state.name.length).toBeGreaterThan(0);
   });
+
+  it('silently drops songs whose rawText exceeds 100 000 chars', async () => {
+    const smallSong = {
+      id: 'small', meta: { title: 'Small', keyIndex: 0, usesFlats: false }, rawText: 'ok',
+    };
+    const bigSong = {
+      id: 'big', meta: { title: 'Big', keyIndex: 0, usesFlats: false },
+      rawText: 'x'.repeat(100_001),
+    };
+    const res = await createSession({ name: 'T', songs: [smallSong, bigSong] });
+    expect(res.status).toBe(200);
+
+    const { code } = await res.json() as { code: string };
+    const state = await (
+      await SELF.fetch(`http://localhost/session/${code}/state`, { headers: { Origin: ORIGIN } })
+    ).json() as { setList: string[] };
+
+    expect(state.setList).toContain('small');
+    expect(state.setList).not.toContain('big');
+  });
+
+  it('caps the set list at 50 songs on create', async () => {
+    const songs = Array.from({ length: 51 }, (_, i) => ({
+      id: `song-${i}`,
+      meta: { title: `Song ${i}`, keyIndex: 0, usesFlats: false },
+      rawText: 'lyrics',
+    }));
+    const res = await createSession({ name: 'T', songs });
+    expect(res.status).toBe(200);
+
+    const { code } = await res.json() as { code: string };
+    const state = await (
+      await SELF.fetch(`http://localhost/session/${code}/state`, { headers: { Origin: ORIGIN } })
+    ).json() as { setList: string[] };
+
+    expect(state.setList).toHaveLength(50);
+  });
 });
 
 describe('GET /session/:code/state', () => {

@@ -24,7 +24,8 @@ session.post('/create', async (c) => {
 
   if (Array.isArray(body.songs)) {
     for (const s of body.songs) {
-      if (s.id && s.meta && typeof s.rawText === 'string') {
+      if (setList.length >= 50) break;
+      if (s.id && s.meta && typeof s.rawText === 'string' && s.rawText.length <= 100_000) {
         songs[s.id] = { meta: s.meta as SessionData['songs'][string]['meta'], rawText: s.rawText };
         setList.push(s.id);
       }
