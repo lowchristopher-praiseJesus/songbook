@@ -296,6 +296,7 @@ export default function App() {
             </>
           )}
         </div>
+        <div id="turnstile-widget" style={{ display: 'none' }} />
       </div>
       <ToastContainer toasts={toasts} />
       {settingsOpen && (
