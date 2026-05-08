@@ -9,6 +9,8 @@ import type { SessionData, Op } from '../lib/session';
 
 const session = new Hono<{ Bindings: Env }>();
 
+const SESSION_CODE_RE = /^[A-Z2-9]{6}$/;
+
 // POST /session/create
 session.post('/create', verifyTurnstile, async (c) => {
   let body: { name?: string; songs?: Array<{ id: string; meta: unknown; rawText: string }> };
@@ -55,6 +57,7 @@ session.post('/create', verifyTurnstile, async (c) => {
 // GET /session/:code/state
 session.get('/:code/state', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const raw = await getSession(c.env.SESSION_KV, code);
   if (!raw) return c.json({ error: 'not_found' }, 404);
   if (isSessionDead(raw)) return c.json({ error: 'expired' }, 410);
@@ -67,6 +70,7 @@ session.get('/:code/state', async (c) => {
 // POST /session/:code/op
 session.post('/:code/op', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const sess = await getSession(c.env.SESSION_KV, code);
   if (!sess) return c.json({ error: 'not_found' }, 404);
   if (isSessionDead(sess)) return c.json({ error: 'gone' }, 410);
@@ -90,6 +94,7 @@ session.post('/:code/op', async (c) => {
 // POST /session/:code/lock/:songId
 session.post('/:code/lock/:songId', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const songId = c.req.param('songId');
 
   let clientId: string;
@@ -133,6 +138,7 @@ session.post('/:code/lock/:songId', async (c) => {
 // POST /session/:code/heartbeat/:songId
 session.post('/:code/heartbeat/:songId', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const songId = c.req.param('songId');
 
   let clientId: string;
@@ -166,6 +172,7 @@ session.post('/:code/heartbeat/:songId', async (c) => {
 // DELETE /session/:code/lock/:songId
 session.delete('/:code/lock/:songId', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return new Response(null, { status: 204 });
   const songId = c.req.param('songId');
 
   let clientId: string;
@@ -194,6 +201,7 @@ session.delete('/:code/lock/:songId', async (c) => {
 // POST /session/:code/close
 session.post('/:code/close', async (c) => {
   const code = c.req.param('code');
+  if (!SESSION_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const token = c.req.header('X-Leader-Token');
 
   const sess = await getSession(c.env.SESSION_KV, code);

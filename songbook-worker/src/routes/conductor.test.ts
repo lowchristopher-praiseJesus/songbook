@@ -137,7 +137,7 @@ describe('GET /conductor/:code/status', () => {
 
   it('returns 410 for an expired session', async () => {
     const expiredData = JSON.stringify({
-      conductorCode: 'EXPRD1',
+      conductorCode: 'EXPRD2',
       directorToken: 'tok',
       maxFollowers: 5,
       live: false,
@@ -146,8 +146,8 @@ describe('GET /conductor/:code/status', () => {
       followers: {},
       expiresAt: new Date(Date.now() - 1000).toISOString(),
     });
-    await env.SESSION_KV.put('conductor:EXPRD1', expiredData);
-    const res = await SELF.fetch('http://localhost/conductor/EXPRD1/status', { headers: h });
+    await env.SESSION_KV.put('conductor:EXPRD2', expiredData);
+    const res = await SELF.fetch('http://localhost/conductor/EXPRD2/status', { headers: h });
     expect(res.status).toBe(410);
   });
 });

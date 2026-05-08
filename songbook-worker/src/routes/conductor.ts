@@ -12,6 +12,8 @@ import { verifyTurnstile } from '../middleware/turnstile';
 
 const conductor = new Hono<{ Bindings: Env }>();
 
+const CONDUCTOR_CODE_RE = /^[A-Z2-9]{6}$/;
+
 // POST /conductor/create
 conductor.post('/create', verifyTurnstile, async (c) => {
   const licenseToken = c.req.header('X-License-Token');
@@ -54,6 +56,7 @@ conductor.post('/create', verifyTurnstile, async (c) => {
 // GET /conductor/:code/status
 conductor.get('/:code/status', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
   if (isConductorExpired(data) || isConductorTerminated(data)) return c.json({ error: 'expired' }, 410);
@@ -78,6 +81,7 @@ function requireDirector(data: ConductorData, token: string | undefined): boolea
 // POST /conductor/:code/start
 conductor.post('/:code/start', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
@@ -91,6 +95,7 @@ conductor.post('/:code/start', async (c) => {
 // POST /conductor/:code/current
 conductor.post('/:code/current', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
@@ -109,6 +114,7 @@ conductor.post('/:code/current', async (c) => {
 // POST /conductor/:code/stop
 conductor.post('/:code/stop', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
@@ -122,6 +128,7 @@ conductor.post('/:code/stop', async (c) => {
 // POST /conductor/:code/end
 conductor.post('/:code/end', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ ok: true }); // invalid = already gone
   const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ ok: true }); // idempotent: already gone
@@ -134,6 +141,7 @@ conductor.post('/:code/end', async (c) => {
 // POST /conductor/:code/preview
 conductor.post('/:code/preview', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   const token = getConductorToken(c);
   const data = await getConductor(c.env.SESSION_KV, code);
   if (!data) return c.json({ error: 'not_found' }, 404);
@@ -151,6 +159,7 @@ conductor.post('/:code/preview', async (c) => {
 // POST /conductor/:code/join
 conductor.post('/:code/join', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   let body: { clientId?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
   if (typeof body.clientId !== 'string' || !body.clientId)
@@ -178,6 +187,7 @@ conductor.post('/:code/join', async (c) => {
 // POST /conductor/:code/heartbeat
 conductor.post('/:code/heartbeat', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return c.json({ error: 'not_found' }, 404);
   let body: { clientId?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
   if (typeof body.clientId !== 'string') return c.json({ error: 'missing_client_id' }, 400);
@@ -200,6 +210,7 @@ conductor.post('/:code/heartbeat', async (c) => {
 // DELETE /conductor/:code/join
 conductor.delete('/:code/join', async (c) => {
   const code = c.req.param('code');
+  if (!CONDUCTOR_CODE_RE.test(code)) return new Response(null, { status: 204 });
   let body: { clientId?: unknown };
   try { body = await c.req.json(); } catch { body = {}; }
 

@@ -14,6 +14,8 @@ import { verifyTurnstile } from '../middleware/turnstile';
 
 const album = new Hono<{ Bindings: Env }>();
 
+const TRACK_ID_RE = /^[a-zA-Z0-9_-]+$/;
+
 // Albums are public — always allow any origin on all album responses.
 const PUBLIC_CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +92,9 @@ album.post('/', verifyTurnstile, async (c) => {
 // POST /album/:code/track/:trackId — upload one audio track
 album.post('/:code/track/:trackId', async (c) => {
   const { code, trackId } = c.req.param();
+  if (!TRACK_ID_RE.test(trackId)) {
+    return new Response(JSON.stringify({ error: 'invalid_track_id' }), { status: 400, headers: PUBLIC_CORS });
+  }
   const creatorToken = c.req.header('X-Creator-Token');
 
   const meta = await getAlbumMetaRaw(c.env.R2_BUCKET, code);
@@ -215,6 +220,9 @@ album.get('/:code/cover', async (c) => {
 // GET /album/:code/track/:trackId — stream audio
 album.get('/:code/track/:trackId', async (c) => {
   const { code, trackId } = c.req.param();
+  if (!TRACK_ID_RE.test(trackId)) {
+    return new Response(JSON.stringify({ error: 'invalid_track_id' }), { status: 400, headers: PUBLIC_CORS });
+  }
   const obj = await getAlbumTrack(c.env.R2_BUCKET, code, trackId);
   if (!obj) {
     return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers: PUBLIC_CORS });
