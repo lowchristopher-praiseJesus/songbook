@@ -11,7 +11,11 @@ async function createAlbum() {
     artist: 'Original Artist',
     tracks: [{ trackId: 'track-1', title: 'Song One', duration: 120000, mimeType: 'audio/webm' }],
   }));
-  const res = await SELF.fetch(`${BASE}/album`, { method: 'POST', body: form });
+  const res = await SELF.fetch(`${BASE}/album`, {
+    method: 'POST',
+    headers: { 'X-Turnstile-Token': 'test-token' },
+    body: form,
+  });
   return res.json() as Promise<{ albumCode: string; creatorToken: string }>;
 }
 
@@ -133,7 +137,11 @@ describe('POST /album — cover size guard', () => {
     const bigCover = new Blob([new Uint8Array(5 * 1024 * 1024 + 1)], { type: 'image/jpeg' });
     form.append('cover', bigCover, 'cover.jpg');
 
-    const res = await SELF.fetch(`${BASE}/album`, { method: 'POST', body: form });
+    const res = await SELF.fetch(`${BASE}/album`, {
+      method: 'POST',
+      headers: { 'X-Turnstile-Token': 'test-token' },
+      body: form,
+    });
     expect(res.status).toBe(413);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('cover_too_large');
@@ -154,5 +162,16 @@ describe('POST /album/:code/track/:trackId — size guard', () => {
     expect(res.status).toBe(413);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('track_too_large');
+  });
+});
+
+describe('POST /album — Turnstile guard', () => {
+  it('returns 403 when X-Turnstile-Token header is missing', async () => {
+    const form = new FormData();
+    form.append('meta', JSON.stringify({ title: 'T', artist: '', tracks: [] }));
+    const res = await SELF.fetch(`${BASE}/album`, { method: 'POST', body: form });
+    expect(res.status).toBe(403);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('turnstile_failed');
   });
 });

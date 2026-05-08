@@ -10,6 +10,7 @@ import {
   putAlbumMeta,
   putAlbumTrack,
 } from '../lib/r2';
+import { verifyTurnstile } from '../middleware/turnstile';
 
 const album = new Hono<{ Bindings: Env }>();
 
@@ -25,7 +26,7 @@ album.options('*', (c) =>
 );
 
 // POST /album — create album (metadata + optional cover)
-album.post('/', async (c) => {
+album.post('/', verifyTurnstile, async (c) => {
   let formData: FormData;
   try {
     formData = await c.req.formData();
