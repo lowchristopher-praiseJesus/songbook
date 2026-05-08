@@ -4,6 +4,9 @@ import { ShareModal } from '../components/Share/ShareModal';
 import { useLibraryStore } from '../store/libraryStore';
 import { LicenseContext } from '../contexts/LicenseContext';
 
+vi.mock('../hooks/useTurnstile', () => ({
+  default: () => ({ getToken: async () => 'mock-token' }),
+}));
 vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));

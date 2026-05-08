@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { NewAlbumCreator } from '../components/Album/NewAlbumCreator'
 
+vi.mock('../hooks/useTurnstile', () => ({
+  default: () => ({ getToken: async () => 'mock-token' }),
+}))
+
 vi.mock('../store/libraryStore', () => ({
   useLibraryStore: (sel) => sel({
     setIsCreatingNewAlbum: vi.fn(),

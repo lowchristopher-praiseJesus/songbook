@@ -8,9 +8,11 @@ import { createConductorSession } from '../../lib/conductorApi';
 import { v4 as uuidv4 } from 'uuid';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useLicense } from '../../contexts/LicenseContext';
+import useTurnstile from '../../hooks/useTurnstile';
 
 export function ShareModal({ isOpen, songs, collectionName, collectionId, onClose }) {
   const { isLicensed, licenseStatus, licenseToken } = useLicense();
+  const { getToken } = useTurnstile();
   const [step, setStep] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
@@ -63,7 +65,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
 
       let result
       try {
-        result = await uploadShare(blob, expiresInDays)
+        const shareToken = await getToken();
+        result = await uploadShare(blob, expiresInDays, shareToken)
       } catch (err) {
         console.error('[ShareModal] upload failed:', err)
         setErrorMessage('Upload failed. Please check your connection and try again.')
@@ -80,7 +83,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
 
       if (conductorEnabled) {
         try {
-          await createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken })
+          const conductorToken = await getToken();
+          await createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken, turnstileToken: conductorToken })
         } catch (err) {
           console.error('[ShareModal] conductor session creation failed:', err)
           setErrorMessage('Conductor session could not be created. The share link was not saved.')

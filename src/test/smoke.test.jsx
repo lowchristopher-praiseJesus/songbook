@@ -3,6 +3,10 @@ import { render } from '@testing-library/react'
 import { LiveSessionModal } from '../components/Session/LiveSessionModal'
 import { EditLockWarning } from '../components/Session/EditLockWarning'
 
+vi.mock('../hooks/useTurnstile', () => ({
+  default: () => ({ getToken: async () => 'mock-token' }),
+}))
+
 // Mock sessionApi to avoid network calls
 vi.mock('../lib/sessionApi', () => ({
   createSession: vi.fn(),

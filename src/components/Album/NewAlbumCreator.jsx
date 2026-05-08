@@ -20,6 +20,7 @@ import { OPFSClient } from '../../lib/opfsClient'
 import { createAlbum, uploadTrack, saveAlbumLocally, updateAlbumMeta, updateAlbumCover, updateAlbumLocally, albumCoverUrl } from '../../lib/albumApi'
 import { useLibraryStore } from '../../store/libraryStore'
 import { v4 as uuidv4 } from 'uuid'
+import useTurnstile from '../../hooks/useTurnstile'
 
 // Duration stored as milliseconds in album recordings
 function formatDuration(ms) {
@@ -115,6 +116,7 @@ function SortableTrackRow({ track, index, onRemove, onRename }) {
 
 export function NewAlbumCreator({ album = null }) {
   const isEditing = album !== null
+  const { getToken } = useTurnstile()
   const setIsCreatingNewAlbum = useLibraryStore(s => s.setIsCreatingNewAlbum)
   const setActiveAlbumCode = useLibraryStore(s => s.setActiveAlbumCode)
   const syncAlbums = useLibraryStore(s => s.syncAlbums)
@@ -319,11 +321,13 @@ export function NewAlbumCreator({ album = null }) {
       setUploadProgress({ step: 'Creating album…', current: 0, total: trackMeta.length })
 
       try {
+        const albumToken = await getToken();
         const { albumCode, creatorToken } = await createAlbum({
           title: effectiveTitle,
           artist: artist.trim(),
           coverFile: coverFile ?? null,
           tracks: trackMeta.map(({ trackId, title: t, duration, mimeType }) => ({ trackId, title: t, duration, mimeType })),
+          turnstileToken: albumToken,
         })
 
         for (let i = 0; i < trackMeta.length; i++) {

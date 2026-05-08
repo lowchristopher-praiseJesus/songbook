@@ -15,6 +15,9 @@ function renderLicensed(ui) {
   )
 }
 
+vi.mock('../../../hooks/useTurnstile', () => ({
+  default: () => ({ getToken: async () => 'mock-token' }),
+}))
 vi.mock('../../../lib/shareApi.js', () => ({
   uploadShare: vi.fn().mockResolvedValue({
     shareUrl: 'https://app/?share=XYZ',

@@ -6,6 +6,10 @@ const mockSetIsCreatingNewAlbum = vi.fn()
 const mockSetActiveAlbumCode = vi.fn()
 const mockSyncAlbums = vi.fn()
 
+vi.mock('../hooks/useTurnstile', () => ({
+  default: () => ({ getToken: async () => 'mock-token' }),
+}));
+
 vi.mock('../store/libraryStore', () => ({
   useLibraryStore: (sel) => sel({
     setIsCreatingNewAlbum: mockSetIsCreatingNewAlbum,
