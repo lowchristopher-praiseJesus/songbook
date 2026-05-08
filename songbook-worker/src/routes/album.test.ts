@@ -108,3 +108,17 @@ describe('POST /album/:code/cover', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('POST /album — cover size guard', () => {
+  it('returns 413 when cover blob exceeds 5 MB during album creation', async () => {
+    const form = new FormData();
+    form.append('meta', JSON.stringify({ title: 'T', artist: '', tracks: [] }));
+    const bigCover = new Blob([new Uint8Array(5 * 1024 * 1024 + 1)], { type: 'image/jpeg' });
+    form.append('cover', bigCover, 'cover.jpg');
+
+    const res = await SELF.fetch(`${BASE}/album`, { method: 'POST', body: form });
+    expect(res.status).toBe(413);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('cover_too_large');
+  });
+});

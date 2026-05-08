@@ -57,6 +57,9 @@ album.post('/', async (c) => {
   if (coverFile !== null && typeof coverFile === 'object' && 'arrayBuffer' in coverFile) {
     const blob = coverFile as Blob;
     if (blob.size > 0) {
+      if (blob.size > 5 * 1024 * 1024) {
+        return c.json({ error: 'cover_too_large' }, 413);
+      }
       const mime = blob.type || 'image/jpeg';
       coverExt = mime.includes('png') ? 'png' : 'jpg';
       const buf = await blob.arrayBuffer();
