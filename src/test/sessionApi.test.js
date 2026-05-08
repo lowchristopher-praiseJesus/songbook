@@ -16,11 +16,11 @@ function mockFetch(status, body) {
 describe('createSession', () => {
   it('returns code and urls on success', async () => {
     mockFetch(200, { code: 'ABC123', leaderToken: 'tok', memberUrl: 'http://x?session=ABC123', leaderUrl: 'http://x?session=ABC123&token=tok', expiresAt: '...' })
-    const result = await createSession({ name: 'Test' })
+    const result = await createSession({ name: 'Test', turnstileToken: 'sess-token' })
     expect(result.code).toBe('ABC123')
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/session/create'),
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ 'X-Turnstile-Token': 'sess-token' }) })
     )
   })
 

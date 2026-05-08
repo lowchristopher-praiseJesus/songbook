@@ -3,10 +3,10 @@ if (!WORKER_URL && import.meta.env.DEV) {
   console.warn('VITE_WORKER_URL is not set. Create .env.local with VITE_WORKER_URL=https://...')
 }
 
-export async function createSession({ name = '', songs = [] } = {}) {
+export async function createSession({ name = '', songs = [], turnstileToken } = {}) {
   const res = await fetch(`${WORKER_URL}/session/create`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Turnstile-Token': turnstileToken },
     body: JSON.stringify({ name, songs }),
   })
   if (!res.ok) throw Object.assign(new Error('create_failed'), { code: 'create_failed' })

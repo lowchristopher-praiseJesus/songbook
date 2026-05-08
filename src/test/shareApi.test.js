@@ -15,7 +15,7 @@ describe('uploadShare', () => {
     fetch.mockResolvedValue({ ok: true, json: async () => mockResult });
 
     const blob = new Blob(['zip-data'], { type: 'application/zip' });
-    const result = await uploadShare(blob, 14);
+    const result = await uploadShare(blob, 14, 'test-turnstile-token');
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/share/upload'),
@@ -24,6 +24,7 @@ describe('uploadShare', () => {
         headers: expect.objectContaining({
           'Content-Type': 'application/zip',
           'X-Expires-In-Days': '14',
+          'X-Turnstile-Token': 'test-turnstile-token',
         }),
         body: blob,
       }),
@@ -33,7 +34,7 @@ describe('uploadShare', () => {
 
   it('uses 7 as default expiresInDays', async () => {
     fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
-    await uploadShare(new Blob(['x']));
+    await uploadShare(new Blob(['x']), undefined, 'tok');
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({

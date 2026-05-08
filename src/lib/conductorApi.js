@@ -3,12 +3,13 @@ function workerUrl() {
   return import.meta.env.VITE_WORKER_URL
 }
 
-export async function createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken }) {
+export async function createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken, turnstileToken }) {
   const res = await fetch(`${workerUrl()}/conductor/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(licenseToken ? { 'X-License-Token': licenseToken } : {}),
+      'X-Turnstile-Token': turnstileToken,
     },
     body: JSON.stringify({ conductorCode, directorToken, maxFollowers }),
   })

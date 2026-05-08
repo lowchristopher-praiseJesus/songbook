@@ -4,12 +4,12 @@ const WORKER_URL = import.meta.env.VITE_WORKER_URL
  * Create an album on the worker. Returns { albumCode, creatorToken }.
  * @param {{ title: string, artist: string, tracks: Array<{trackId,title,duration,mimeType}>, coverFile?: File|null }} opts
  */
-export async function createAlbum({ title, artist, tracks, coverFile }) {
+export async function createAlbum({ title, artist, tracks, coverFile, turnstileToken }) {
   const form = new FormData()
   form.append('meta', JSON.stringify({ title, artist, tracks }))
   if (coverFile) form.append('cover', coverFile)
 
-  const res = await fetch(`${WORKER_URL}/album`, { method: 'POST', body: form })
+  const res = await fetch(`${WORKER_URL}/album`, { method: 'POST', headers: { 'X-Turnstile-Token': turnstileToken }, body: form })
   if (!res.ok) throw Object.assign(new Error('create_failed'), { code: 'create_failed' })
   return res.json()
 }

@@ -3,12 +3,13 @@ if (!WORKER_URL && import.meta.env.DEV) {
   console.warn('VITE_WORKER_URL is not set. Create .env.local with VITE_WORKER_URL=https://...');
 }
 
-export async function uploadShare(blob, expiresInDays = 7) {
+export async function uploadShare(blob, expiresInDays = 7, turnstileToken) {
   const res = await fetch(`${WORKER_URL}/share/upload`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/zip',
       'X-Expires-In-Days': String(expiresInDays),
+      'X-Turnstile-Token': turnstileToken,
     },
     body: blob,
   });
