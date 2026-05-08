@@ -10,6 +10,7 @@ export default defineWorkersConfig({
             APP_ORIGIN: 'http://localhost:5173',
             LICENSE_SECRET: 'test-license-secret',
             LICENSE_TOKEN_SECRET: 'test-token-secret',
+            TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
           },
           kvNamespaces: ['SESSION_KV'],
           r2Buckets: ['R2_BUCKET'],

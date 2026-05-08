@@ -5,4 +5,5 @@ export interface Env {
   WALKIE_ORIGIN: string;
   LICENSE_SECRET: string;
   LICENSE_TOKEN_SECRET: string;
+  TURNSTILE_SECRET_KEY: string;
 }
