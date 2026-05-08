@@ -8,11 +8,12 @@ import {
 } from '../lib/conductor';
 import type { ConductorData } from '../lib/conductor';
 import { verifyLicenseToken } from '../lib/licenseToken';
+import { verifyTurnstile } from '../middleware/turnstile';
 
 const conductor = new Hono<{ Bindings: Env }>();
 
 // POST /conductor/create
-conductor.post('/create', async (c) => {
+conductor.post('/create', verifyTurnstile, async (c) => {
   const licenseToken = c.req.header('X-License-Token');
   if (!await verifyLicenseToken(licenseToken, c.env.LICENSE_TOKEN_SECRET)) {
     return c.json({ error: 'license_required' }, 403);

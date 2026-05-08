@@ -3,7 +3,7 @@ import { SELF, env } from 'cloudflare:test';
 import { isConductorExpired } from '../lib/conductor';
 
 const ORIGIN = 'http://localhost:5173';
-const h = { 'Content-Type': 'application/json', 'Origin': ORIGIN };
+const h = { 'Content-Type': 'application/json', 'Origin': ORIGIN, 'X-Turnstile-Token': 'test-token' };
 
 // ── License token helper ──────────────────────────────────────────────────────
 function makeLicenseKey(): string {
@@ -43,6 +43,17 @@ async function getLicenseToken(): Promise<string> {
 
 describe('POST /conductor/create — license enforcement', () => {
   beforeEach(() => { _cachedToken = null; });
+
+  it('returns 403 when X-Turnstile-Token header is missing', async () => {
+    const res = await SELF.fetch('http://localhost/conductor/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': ORIGIN },
+      body: JSON.stringify({ conductorCode: 'NOTKN1', directorToken: 'tok', maxFollowers: 5 }),
+    });
+    expect(res.status).toBe(403);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('turnstile_failed');
+  });
 
   it('returns 403 when X-License-Token header is absent', async () => {
     const res = await SELF.fetch('http://localhost/conductor/create', {
