@@ -19,13 +19,8 @@ conductor.post('/create', verifyTurnstile, async (c) => {
     return c.json({ error: 'license_required' }, 403);
   }
 
-  let body: { conductorCode?: unknown; directorToken?: unknown; maxFollowers?: unknown };
-  try { body = await c.req.json(); } catch { return c.json({ error: 'invalid_json' }, 400); }
-
-  if (typeof body.conductorCode !== 'string' || !body.conductorCode)
-    return c.json({ error: 'missing_conductor_code' }, 400);
-  if (typeof body.directorToken !== 'string' || !body.directorToken)
-    return c.json({ error: 'missing_director_token' }, 400);
+  let body: { maxFollowers?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
 
   if (typeof body.maxFollowers === 'number' && body.maxFollowers > CONDUCTOR.MAX_FOLLOWERS)
     return c.json({ error: 'max_followers_exceeded' }, 400);
@@ -34,12 +29,16 @@ conductor.post('/create', verifyTurnstile, async (c) => {
     ? body.maxFollowers
     : CONDUCTOR.MAX_FOLLOWERS;
 
+  const conductorCode = Array.from(crypto.getRandomValues(new Uint8Array(6)))
+    .map(b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('');
+  const directorToken = crypto.randomUUID();
+
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CONDUCTOR.SESSION_DAYS * 24 * 60 * 60 * 1000);
 
   const data: ConductorData = {
-    conductorCode: body.conductorCode,
-    directorToken: body.directorToken,
+    conductorCode,
+    directorToken,
     maxFollowers,
     live: false,
     currentSbpId: null,
@@ -49,7 +48,7 @@ conductor.post('/create', verifyTurnstile, async (c) => {
   };
 
   await putConductor(c.env.SESSION_KV, data);
-  return c.json({ ok: true });
+  return c.json({ ok: true, conductorCode, directorToken });
 });
 
 // GET /conductor/:code/status

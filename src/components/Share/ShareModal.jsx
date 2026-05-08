@@ -5,7 +5,6 @@ import { Button } from '../UI/Button';
 import { uploadShare } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
-import { v4 as uuidv4 } from 'uuid';
 import { useLibraryStore } from '../../store/libraryStore';
 import { useLicense } from '../../contexts/LicenseContext';
 import useTurnstile from '../../hooks/useTurnstile';
@@ -56,9 +55,17 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       let directorToken = null
 
       if (conductorEnabled) {
-        conductorCode = Array.from(crypto.getRandomValues(new Uint8Array(6)))
-          .map(b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join('')
-        directorToken = uuidv4()
+        try {
+          const conductorToken = await getToken();
+          const conductorResult = await createConductorSession({ maxFollowers, licenseToken, turnstileToken: conductorToken })
+          conductorCode = conductorResult.conductorCode
+          directorToken = conductorResult.directorToken
+        } catch (err) {
+          console.error('[ShareModal] conductor session creation failed:', err)
+          setErrorMessage('Conductor session could not be created. The share link was not saved.')
+          setStep('error')
+          return
+        }
       }
 
       const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, conductorCode)
@@ -82,15 +89,6 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       })
 
       if (conductorEnabled) {
-        try {
-          const conductorToken = await getToken();
-          await createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken, turnstileToken: conductorToken })
-        } catch (err) {
-          console.error('[ShareModal] conductor session creation failed:', err)
-          setErrorMessage('Conductor session could not be created. The share link was not saved.')
-          setStep('error')
-          return
-        }
         const memberUrl = broadcastTime
           ? `${result.shareUrl}&bt=${encodeURIComponent(new Date(broadcastTime).toISOString())}`
           : result.shareUrl

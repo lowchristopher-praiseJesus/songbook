@@ -3,7 +3,7 @@ function workerUrl() {
   return import.meta.env.VITE_WORKER_URL
 }
 
-export async function createConductorSession({ conductorCode, directorToken, maxFollowers, licenseToken, turnstileToken }) {
+export async function createConductorSession({ maxFollowers, licenseToken, turnstileToken }) {
   const res = await fetch(`${workerUrl()}/conductor/create`, {
     method: 'POST',
     headers: {
@@ -11,7 +11,7 @@ export async function createConductorSession({ conductorCode, directorToken, max
       ...(licenseToken ? { 'X-License-Token': licenseToken } : {}),
       'X-Turnstile-Token': turnstileToken,
     },
-    body: JSON.stringify({ conductorCode, directorToken, maxFollowers }),
+    body: JSON.stringify({ maxFollowers }),
   })
   if (res.status === 403) throw Object.assign(new Error('license_required'), { code: 'license_required' })
   if (!res.ok) throw Object.assign(new Error('create_failed'), { code: 'create_failed' })
