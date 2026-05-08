@@ -109,6 +109,23 @@ describe('POST /album/:code/cover', () => {
   });
 });
 
+describe('POST /album/:code/cover — size guard', () => {
+  it('returns 413 when cover body exceeds 5 MB', async () => {
+    const { albumCode, creatorToken } = await createAlbum();
+    const res = await SELF.fetch(`${BASE}/album/${albumCode}/cover`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'X-Creator-Token': creatorToken,
+      },
+      body: new Uint8Array(5 * 1024 * 1024 + 1),
+    });
+    expect(res.status).toBe(413);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('cover_too_large');
+  });
+});
+
 describe('POST /album — cover size guard', () => {
   it('returns 413 when cover blob exceeds 5 MB during album creation', async () => {
     const form = new FormData();

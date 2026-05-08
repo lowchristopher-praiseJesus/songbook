@@ -152,7 +152,14 @@ album.post('/:code/cover', async (c) => {
 
   const mime = c.req.header('Content-Type') ?? 'image/jpeg';
   const ext = mime.includes('png') ? 'png' : 'jpg';
+  const len = Number(c.req.header('Content-Length') ?? 0);
+  if (len > 5 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: 'cover_too_large' }), { status: 413, headers: PUBLIC_CORS });
+  }
   const buf = await c.req.arrayBuffer();
+  if (buf.byteLength > 5 * 1024 * 1024) {
+    return new Response(JSON.stringify({ error: 'cover_too_large' }), { status: 413, headers: PUBLIC_CORS });
+  }
   if (buf.byteLength === 0) {
     return new Response(JSON.stringify({ error: 'no_body' }), { status: 400, headers: PUBLIC_CORS });
   }
