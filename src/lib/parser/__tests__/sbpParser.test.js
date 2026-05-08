@@ -239,6 +239,26 @@ describe('parseSbpFile', () => {
     expect(typeof songs[0].meta.sbpId).toBe('number')
   })
 
+  async function makeLargeSbp() {
+    const zip = new JSZip()
+    const json = JSON.stringify({
+      songs: [{
+        Id: 1, name: 'Big', author: '', key: 0,
+        Capo: 0, TempoInt: 0, timeSig: '', Copyright: '', KeyShift: 0,
+        content: 'x'.repeat(5_000_001),
+      }],
+      sets: [], folders: [],
+    })
+    zip.file('dataFile.txt', `1.0\n${json}`)
+    zip.file('dataFile.hash', 'abc')
+    return zip.generateAsync({ type: 'arraybuffer' })
+  }
+
+  it('rejects when decompressed dataFile.txt exceeds 5 MB', async () => {
+    const buf = await makeLargeSbp()
+    await expect(parseSbpFile(buf)).rejects.toThrow('share file too large after decompression')
+  })
+
   it('KeyShift + set Capo: real-world case where content is already in sounding key', async () => {
     // Mirrors "That's The Power" in CNY 2026: key=1 (Db), KeyShift=9 → sounding Bb (10).
     // Content already has Bb-key chords (Gm, Ebmaj7). Set entry Capo=3 shifts display

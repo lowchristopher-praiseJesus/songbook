@@ -61,6 +61,7 @@ export async function parseSbpFile(arrayBuffer) {
   if (!dataFile) throw new Error('dataFile.txt not found in .sbp archive')
 
   const text = await dataFile.async('string')
+  if (text.length > 5_000_000) throw new Error('share file too large after decompression')
   const newlineIdx = text.indexOf('\n')
   const jsonText = newlineIdx >= 0 ? text.slice(newlineIdx + 1) : text
 
