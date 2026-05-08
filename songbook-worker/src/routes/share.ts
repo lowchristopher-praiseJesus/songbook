@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import type { Env } from '../types';
 import { putShare, getShareIfValid } from '../lib/r2';
+import { verifyTurnstile } from '../middleware/turnstile';
 
 const share = new Hono<{ Bindings: Env }>();
 
-share.post('/upload', async (c) => {
+share.post('/upload', verifyTurnstile, async (c) => {
   const rawDays = Number(c.req.header('X-Expires-In-Days') ?? '7');
   const expiresInDays = isNaN(rawDays) ? 7 : Math.min(30, Math.max(1, rawDays));
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);

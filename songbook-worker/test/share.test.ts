@@ -52,7 +52,7 @@ describe('POST /share/upload', () => {
     const res = await SELF.fetch('http://example.com/share/upload', {
       method: 'POST',
       body: new Uint8Array([1, 2, 3]),
-      headers: { 'X-Expires-In-Days': '7', Origin: ORIGIN },
+      headers: { 'X-Expires-In-Days': '7', Origin: ORIGIN, 'X-Turnstile-Token': 'test-token' },
     });
     expect(res.status).toBe(200);
 
@@ -72,7 +72,7 @@ describe('POST /share/upload', () => {
     const res = await SELF.fetch('http://example.com/share/upload', {
       method: 'POST',
       body: new Uint8Array([1]),
-      headers: { 'X-Expires-In-Days': '999', Origin: ORIGIN },
+      headers: { 'X-Expires-In-Days': '999', Origin: ORIGIN, 'X-Turnstile-Token': 'test-token' },
     });
     const { expiresAt } = (await res.json()) as { expiresAt: string };
     const diffDays =
@@ -84,7 +84,7 @@ describe('POST /share/upload', () => {
     const res = await SELF.fetch('http://example.com/share/upload', {
       method: 'POST',
       body: new Uint8Array([]),
-      headers: { Origin: ORIGIN },
+      headers: { Origin: ORIGIN, 'X-Turnstile-Token': 'test-token' },
     });
     expect(res.status).toBe(400);
   });
