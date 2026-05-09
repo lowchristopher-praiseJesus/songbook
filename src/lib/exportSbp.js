@@ -69,7 +69,7 @@ function songToSbpJson(song, stripAppSyntax = false) {
     // Transpose content from the original guitar key to the user's current key.
     const newGuitarKey = meta.keyIndex ?? 0
     const newCapo      = meta.capo ?? (hasSbpRoundTrip ? (meta.sbpSongCapo ?? 0) : 0)
-    keyField      = ((newGuitarKey + newCapo) % 12 + 12) % 12
+    keyField      = ((newGuitarKey + newCapo + 3) % 12 + 12) % 12  // SBP uses A-based index (0=A); +3 converts from C-based
     keyShiftField = 0
     songCapoField = newCapo
     const originalGuitarKey = hasSbpRoundTrip ? (meta.sbpBaselineKeyIndex ?? 0) : newGuitarKey

@@ -91,14 +91,14 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
 
   it('calculates sounding key as (keyIndex + capo) % 12', async () => {
     const { json } = await parseZip([mockSong])
-    // keyIndex 1 (Db) + capo 2 = 3 (Eb)
-    expect(json.songs[0].key).toBe(3)
+    // keyIndex 1 (Db) + capo 2 = 3 (Eb); +3 for A-based index = 6
+    expect(json.songs[0].key).toBe(6)
   })
 
   it('sounding key wraps around correctly — B + 1 semitone = C', async () => {
     const song = { meta: { ...mockSong.meta, keyIndex: 11, capo: 1 }, rawText: '' }
     const { json } = await parseZip([song])
-    expect(json.songs[0].key).toBe(0) // (11 + 1) % 12 = 0
+    expect(json.songs[0].key).toBe(3) // (11 + 1 + 3) % 12 = 3
   })
 
   it('handles empty songs array with valid structure', async () => {
@@ -113,7 +113,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     const { json } = await parseZip([mockSong, song2])
     expect(json.songs).toHaveLength(2)
     expect(json.songs[1].name).toBe('Song Two')
-    expect(json.songs[1].key).toBe(7)
+    expect(json.songs[1].key).toBe(10)
   })
 
   it('includes lyricsOnly:true in ZIP JSON when flag is true', async () => {
@@ -257,7 +257,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     it('falls back to (keyIndex + capo) formula for songs without sbpXxx fields', async () => {
       // Manually-created song (no import provenance) — existing behaviour.
       const { json } = await parseZip([mockSong])
-      expect(json.songs[0].key).toBe(3)    // keyIndex 1 + capo 2 = 3 (Eb)
+      expect(json.songs[0].key).toBe(6)    // keyIndex 1 + capo 2 + 3 (A-based) = 6
       expect(json.songs[0].KeyShift).toBe(0)
     })
   })
@@ -290,7 +290,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     it('exports sounding key directly (key = guitarKey + capo, KeyShift = 0)', async () => {
       const { json } = await downloadZip([sbpSong])
       const s = json.songs[0]
-      expect(s.key).toBe(7)        // G (no capo) = sounding key
+      expect(s.key).toBe(10)       // G (no capo) = sounding key; +3 A-based = 10
       expect(s.KeyShift).toBe(0)
       expect(s.Capo).toBe(0)
       expect(s.content).toBe('[Gm]hello [Ebmaj7]world')  // no transpose needed
@@ -301,7 +301,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       const transposed = { ...sbpSong, meta: { ...sbpSong.meta, keyIndex: 9 } }
       const { json } = await downloadZip([transposed])
       const s = json.songs[0]
-      expect(s.key).toBe(9)        // A = new sounding key
+      expect(s.key).toBe(0)        // A = new sounding key; +3 A-based = 12 % 12 = 0
       expect(s.KeyShift).toBe(0)
       expect(s.content).toBe('[Am]hello [Fmaj7]world')   // Gm+2=Am, Ebmaj7+2=Fmaj7
     })
@@ -311,7 +311,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       const withCapo = { ...sbpSong, meta: { ...sbpSong.meta, keyIndex: 2, capo: 1 } }
       const { json } = await downloadZip([withCapo])
       const s = json.songs[0]
-      expect(s.key).toBe(3)        // Eb = D + capo 1
+      expect(s.key).toBe(6)        // Eb = D + capo 1; +3 A-based = 6
       expect(s.Capo).toBe(1)
       expect(s.KeyShift).toBe(0)
     })

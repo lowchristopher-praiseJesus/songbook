@@ -37,7 +37,7 @@ function detectGuitarKey(content, soundingKeyIdx, explicitCapo) {
 
   let bestKey = soundingKeyIdx, bestScore = -1
 
-  for (let capo = 0; capo <= 5; capo++) {
+  for (let capo = 0; capo <= 6; capo++) {
     const k = (soundingKeyIdx - capo + 12) % 12
     const diatonic = new Set(MAJOR_SCALE.map(d => (k + d) % 12))
     const score = freq.reduce((s, f, i) => s + (diatonic.has(i) ? f : 0), 0)
