@@ -32,6 +32,10 @@ function stripStrumTokens(content) {
   return content.replace(/\{strum:[^}]*\}/g, '')
 }
 
+function stripAppSyntaxTokens(content) {
+  return stripStrumTokens(stripNoteTokens(content))
+}
+
 /**
  * Convert one internal song object back to the SBP JSON shape, including all
  * metadata fields SongBook Pro expects to find on import.
@@ -66,7 +70,7 @@ function songToSbpJson(song, stripAppSyntax = false) {
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
     songCapoField  = currentCapo
-    content        = meta.sbpOriginalContent
+    content        = stripAppSyntax ? stripAppSyntaxTokens(meta.sbpOriginalContent) : meta.sbpOriginalContent
   } else {
     // SBP download path (stripAppSyntax=true) OR in-app-created songs:
     // Export the sounding key directly so SBP displays the correct key label.
@@ -82,7 +86,7 @@ function songToSbpJson(song, stripAppSyntax = false) {
     const transposedContent = contentDelta === 0 ? baseContent
       : baseContent.replace(/\[([^\]]+)\]/g, (_, c) =>
           '[' + transposeChord(c, contentDelta, meta.usesFlats ?? false) + ']')
-    content = stripAppSyntax ? stripStrumTokens(transposedContent) : transposedContent
+    content = stripAppSyntax ? stripAppSyntaxTokens(transposedContent) : transposedContent
   }
 
   // Preserve the original sbpId so that conductor sync can match songs by Id

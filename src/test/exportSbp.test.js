@@ -129,7 +129,7 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.lyricsOnly).toBeUndefined()
   })
 
-  it('preserves {note:} lines in exported content', async () => {
+  it('preserves {note:} lines when stripAppSyntax=false (Share via link)', async () => {
     const songWithNotes = {
       meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
       rawText: '{c: Verse}\n{note: sing twice}\nHello world\n{note: softly}',
@@ -139,6 +139,20 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.songs[0].content).toContain('{note: softly}')
     expect(json.songs[0].content).toContain('Hello world')
     expect(json.songs[0].content).toContain('{c: Verse}')
+  })
+
+  it('strips {note:} lines when stripAppSyntax=true (SBP download)', async () => {
+    const songWithNotes = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
+      rawText: '{c: Verse}\n{note: sing twice}\nHello world\n{note: softly}',
+    }
+    const buf = await buildSbpZip([songWithNotes], null, false, null, true).generateAsync({ type: 'uint8array' })
+    const zip = await JSZip.loadAsync(buf)
+    const text = await zip.file('dataFile.txt').async('string')
+    const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+    expect(json.songs[0].content).not.toContain('{note:')
+    expect(json.songs[0].content).toContain('{c: Verse}')
+    expect(json.songs[0].content).toContain('Hello world')
   })
 
   it('strips {strum:} tokens when stripAppSyntax=true (SBP download)', async () => {
