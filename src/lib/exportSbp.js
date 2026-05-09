@@ -25,6 +25,12 @@ function stripNoteTokens(content) {
   return content.replace(/\{note:[^}]*\}[^\n]*\n?/g, '')
 }
 
+function stripStrumTokens(content) {
+  // {strum: ///} is inline after a chord token — remove just the annotation,
+  // leaving the chord intact. SBP does not recognise this syntax.
+  return content.replace(/\{strum:[^}]*\}/g, '')
+}
+
 /**
  * Convert one internal song object back to the SBP JSON shape, including all
  * metadata fields SongBook Pro expects to find on import.
@@ -36,7 +42,7 @@ function stripNoteTokens(content) {
  *   2. No sbpXxx fields (song created in-app) — use (keyIndex + capo) as the
  *      sounding key and write rawText as content.
  */
-function songToSbpJson(song) {
+function songToSbpJson(song, stripAppSyntax = false) {
   const { meta, rawText } = song
   const name = meta.title ?? 'Untitled'
   const author = meta.artist ?? ''
@@ -55,12 +61,12 @@ function songToSbpJson(song) {
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
     songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
-    content        = meta.sbpOriginalContent ?? rawText ?? ''
+    content        = stripAppSyntax ? stripStrumTokens(meta.sbpOriginalContent ?? rawText ?? '') : (meta.sbpOriginalContent ?? rawText ?? '')
   } else {
     keyField       = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
     keyShiftField  = 0
     songCapoField  = meta.capo ?? 0
-    content        = rawText ?? ''
+    content        = stripAppSyntax ? stripStrumTokens(rawText ?? '') : (rawText ?? '')
   }
 
   // Preserve the original sbpId so that conductor sync can match songs by Id
@@ -120,8 +126,8 @@ function songToSbpJson(song) {
  * Build a JSZip instance containing the SBP archive for the given songs.
  * Exported for testing (generate as 'uint8array' to avoid jsdom Blob limits).
  */
-export function buildSbpZip(songs, collectionName = null, lyricsOnly = false, conductorCode = null) {
-  const sbpSongs = songs.map(songToSbpJson)
+export function buildSbpZip(songs, collectionName = null, lyricsOnly = false, conductorCode = null, stripAppSyntax = false) {
+  const sbpSongs = songs.map(s => songToSbpJson(s, stripAppSyntax))
 
   let sets = []
   if (collectionName && songs.length > 0) {
@@ -187,8 +193,8 @@ export function safeFilename(title) {
  *   dataFile.txt  — "1.0\n" + JSON of {songs, sets, folders}
  *   dataFile.hash — MD5 of dataFile.txt bytes
  */
-export async function exportSongsAsSbp(songs, collectionName = null, lyricsOnly = false, conductorCode = null) {
-  return buildSbpZip(songs, collectionName, lyricsOnly, conductorCode).generateAsync({ type: 'blob', compression: 'DEFLATE' })
+export async function exportSongsAsSbp(songs, collectionName = null, lyricsOnly = false, conductorCode = null, stripAppSyntax = false) {
+  return buildSbpZip(songs, collectionName, lyricsOnly, conductorCode, stripAppSyntax).generateAsync({ type: 'blob', compression: 'DEFLATE' })
 }
 
 /**

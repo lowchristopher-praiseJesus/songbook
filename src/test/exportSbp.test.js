@@ -141,6 +141,31 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.songs[0].content).toContain('{c: Verse}')
   })
 
+  it('strips {strum:} tokens when stripAppSyntax=true (SBP download)', async () => {
+    const songWithStrum = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
+      rawText: '[G]{strum: ///} some lyrics\n[Dm]{strum: v^v} more lyrics',
+    }
+    const buf = await buildSbpZip([songWithStrum], null, false, null, true).generateAsync({ type: 'uint8array' })
+    const zip = await (await import('jszip')).default.loadAsync(buf)
+    const text = await zip.file('dataFile.txt').async('string')
+    const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+    expect(json.songs[0].content).not.toContain('{strum:')
+    expect(json.songs[0].content).toContain('[G]')
+    expect(json.songs[0].content).toContain('[Dm]')
+    expect(json.songs[0].content).toContain('some lyrics')
+  })
+
+  it('preserves {strum:} tokens when stripAppSyntax=false (Share via link)', async () => {
+    const songWithStrum = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
+      rawText: '[G]{strum: ///} some lyrics',
+    }
+    const { json } = await parseZip([songWithStrum])
+    expect(json.songs[0].content).toContain('{strum: ///}')
+    expect(json.songs[0].content).toContain('[G]')
+  })
+
   it('maps meta.annotation to NotesText', async () => {
     const songWithAnnotation = {
       meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0, annotation: 'sing joyfully' },

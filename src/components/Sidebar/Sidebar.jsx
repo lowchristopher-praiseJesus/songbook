@@ -208,7 +208,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         ? safeFilename(songs[0].meta?.title) + '.sbp'
         : safeFilename(collectionName) + '.sbp'
 
-      const blob = await exportSongsAsSbp(songs, collectionName, false)
+      const blob = await exportSongsAsSbp(songs, collectionName, false, null, true)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
