@@ -43,4 +43,28 @@ describe('SBP round-trip with real CNY 2026 fixture', () => {
       expect(expEntry.keyOfset, `${origSong.name} set keyOfset`).toBe(origEntry.keyOfset)
     }
   })
+
+  it('preserves key/KeyShift/Capo/content on the SBP download path', async () => {
+    const origBytes = fs.readFileSync('/Volumes/HomeX/Chris/Documents/songbook/CNY 2026 (2-28-2026).sbp')
+    const origBuf = new Uint8Array(origBytes).buffer
+    const { songs, collectionName } = await parseSbpFile(origBuf)
+
+    const exported = await buildSbpZip(songs, collectionName, false, null, true).generateAsync({ type: 'uint8array' })
+    const expZip = await JSZip.loadAsync(exported)
+    const expText = await expZip.file('dataFile.txt').async('string')
+    const expJson = JSON.parse(expText.slice(expText.indexOf('\n') + 1))
+
+    const origZip = await JSZip.loadAsync(origBuf)
+    const origText = await origZip.file('dataFile.txt').async('string')
+    const origJson = JSON.parse(origText.slice(origText.indexOf('\n') + 1))
+
+    for (const origSong of origJson.songs) {
+      const expSong = expJson.songs.find(s => s.name === origSong.name)
+      expect(expSong, origSong.name).toBeDefined()
+      expect(expSong.key,      `${origSong.name} key`).toBe(origSong.key)
+      expect(expSong.KeyShift, `${origSong.name} KeyShift`).toBe(origSong.KeyShift)
+      expect(expSong.Capo,     `${origSong.name} Capo`).toBe(origSong.Capo)
+      expect(expSong.content,  `${origSong.name} content`).toBe(origSong.content)
+    }
+  })
 })

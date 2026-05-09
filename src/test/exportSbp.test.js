@@ -287,13 +287,13 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       return { json }
     }
 
-    it('exports sounding key directly (key = guitarKey + capo, KeyShift = 0)', async () => {
+    it('preserves original SBP key fields when the imported song is unchanged', async () => {
       const { json } = await downloadZip([sbpSong])
       const s = json.songs[0]
-      expect(s.key).toBe(10)       // G (no capo) = sounding key; +3 A-based = 10
-      expect(s.KeyShift).toBe(0)
+      expect(s.key).toBe(1)
+      expect(s.KeyShift).toBe(9)
       expect(s.Capo).toBe(0)
-      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')  // no transpose needed
+      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')
     })
 
     it('transposes content when user moved guitar key up', async () => {

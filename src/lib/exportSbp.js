@@ -50,29 +50,33 @@ function songToSbpJson(song, stripAppSyntax = false) {
   const subTitle = meta.subTitle ?? ''
 
   const hasSbpRoundTrip = typeof meta.sbpKey === 'number'
+  const baselineKeyIndex = meta.sbpBaselineKeyIndex ?? meta.keyIndex ?? 0
+  const currentKeyIndex = meta.keyIndex ?? baselineKeyIndex
+  const currentCapo = meta.capo ?? meta.sbpSongCapo ?? 0
+  const originalCapo = meta.sbpSongCapo ?? currentCapo
+  const keyDelta = ((currentKeyIndex - baselineKeyIndex) % 12 + 12) % 12
+  const hasUserKeyChange = keyDelta !== 0 || currentCapo !== originalCapo
+  const canPreserveSbpFields = hasSbpRoundTrip && meta.sbpOriginalContent != null
 
   let keyField, keyShiftField, songCapoField, content
-  if (hasSbpRoundTrip && !stripAppSyntax) {
-    // Share-via-link path: preserve original content verbatim and fold any
-    // user transpose delta into KeyShift so the receiving app can still detect
-    // the original guitar key correctly (appKeyIndex handles key display).
-    const baseline = meta.sbpBaselineKeyIndex ?? 0
-    const delta = (((meta.keyIndex ?? baseline) - baseline) % 12 + 12) % 12
-    const adjustedDelta = delta > 6 ? delta - 12 : delta  // keep signed within ±6
+  if (canPreserveSbpFields && (!stripAppSyntax || !hasUserKeyChange)) {
+    // Preserve original SBP content/metadata for unchanged SBP imports. For
+    // share exports with an explicit transpose, fold that delta into KeyShift.
+    const adjustedDelta = keyDelta > 6 ? keyDelta - 12 : keyDelta
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
-    songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
-    content        = meta.sbpOriginalContent ?? rawText ?? ''
+    songCapoField  = currentCapo
+    content        = meta.sbpOriginalContent
   } else {
     // SBP download path (stripAppSyntax=true) OR in-app-created songs:
     // Export the sounding key directly so SBP displays the correct key label.
     // Transpose content from the original guitar key to the user's current key.
-    const newGuitarKey = meta.keyIndex ?? 0
-    const newCapo      = meta.capo ?? (hasSbpRoundTrip ? (meta.sbpSongCapo ?? 0) : 0)
+    const newGuitarKey = currentKeyIndex
+    const newCapo      = currentCapo
     keyField      = ((newGuitarKey + newCapo + 3) % 12 + 12) % 12  // SBP uses A-based index (0=A); +3 converts from C-based
     keyShiftField = 0
     songCapoField = newCapo
-    const originalGuitarKey = hasSbpRoundTrip ? (meta.sbpBaselineKeyIndex ?? 0) : newGuitarKey
+    const originalGuitarKey = hasSbpRoundTrip ? baselineKeyIndex : newGuitarKey
     const contentDelta      = ((newGuitarKey - originalGuitarKey) % 12 + 12) % 12
     const baseContent       = (hasSbpRoundTrip ? meta.sbpOriginalContent : null) ?? rawText ?? ''
     const transposedContent = contentDelta === 0 ? baseContent
