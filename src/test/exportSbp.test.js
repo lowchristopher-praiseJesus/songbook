@@ -261,6 +261,61 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       expect(json.songs[0].KeyShift).toBe(0)
     })
   })
+
+  describe('SBP download (stripAppSyntax=true) key export', () => {
+    // When downloading as .sbp, SBP reads the `key` field directly as the
+    // displayed key — it does NOT add KeyShift to it. So we must write
+    // sounding key (guitarKey + capo) into `key` and set KeyShift=0,
+    // transposing content to match the user's current guitar key.
+    const sbpSong = {
+      meta: {
+        title: 'Test', artist: '',
+        keyIndex: 7, capo: 0,          // G, no capo
+        sbpKey: 1, sbpKeyShift: 9, sbpSongCapo: 0,
+        sbpSetCapo: 0, sbpKeyOfset: 0,
+        sbpOriginalContent: '[Gm]hello [Ebmaj7]world',
+        sbpBaselineKeyIndex: 7,
+      },
+      rawText: '[Em]hello [Cmaj7]world',
+    }
+
+    async function downloadZip(songs) {
+      const buf = await buildSbpZip(songs, null, false, null, true).generateAsync({ type: 'uint8array' })
+      const zip = await JSZip.loadAsync(buf)
+      const text = await zip.file('dataFile.txt').async('string')
+      const json = JSON.parse(text.slice(text.indexOf('\n') + 1))
+      return { json }
+    }
+
+    it('exports sounding key directly (key = guitarKey + capo, KeyShift = 0)', async () => {
+      const { json } = await downloadZip([sbpSong])
+      const s = json.songs[0]
+      expect(s.key).toBe(7)        // G (no capo) = sounding key
+      expect(s.KeyShift).toBe(0)
+      expect(s.Capo).toBe(0)
+      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')  // no transpose needed
+    })
+
+    it('transposes content when user moved guitar key up', async () => {
+      // User transposed G → A (keyIndex=9, capo=0): delta=+2
+      const transposed = { ...sbpSong, meta: { ...sbpSong.meta, keyIndex: 9 } }
+      const { json } = await downloadZip([transposed])
+      const s = json.songs[0]
+      expect(s.key).toBe(9)        // A = new sounding key
+      expect(s.KeyShift).toBe(0)
+      expect(s.content).toBe('[Am]hello [Fmaj7]world')   // Gm+2=Am, Ebmaj7+2=Fmaj7
+    })
+
+    it('reflects user-set capo in exported Capo field', async () => {
+      // User: keyIndex=2 (D), capo=1 → sounding key = Eb(3)
+      const withCapo = { ...sbpSong, meta: { ...sbpSong.meta, keyIndex: 2, capo: 1 } }
+      const { json } = await downloadZip([withCapo])
+      const s = json.songs[0]
+      expect(s.key).toBe(3)        // Eb = D + capo 1
+      expect(s.Capo).toBe(1)
+      expect(s.KeyShift).toBe(0)
+    })
+  })
 })
 
 describe('conductorCode round-trip', () => {

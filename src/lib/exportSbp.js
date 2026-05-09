@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
 import SparkMD5 from 'spark-md5'
+import { transposeChord } from './parser/chordUtils'
 
 /**
  * Generate the DeepSearch string SongBook Pro embeds in each song for full-text search.
@@ -51,22 +52,33 @@ function songToSbpJson(song, stripAppSyntax = false) {
   const hasSbpRoundTrip = typeof meta.sbpKey === 'number'
 
   let keyField, keyShiftField, songCapoField, content
-  if (hasSbpRoundTrip) {
-    // User's transpose delta = how far keyIndex has moved from baseline.
-    // Fold it into KeyShift so SBP applies it as a live transpose while
-    // the original content stays untouched (no-op when delta=0).
+  if (hasSbpRoundTrip && !stripAppSyntax) {
+    // Share-via-link path: preserve original content verbatim and fold any
+    // user transpose delta into KeyShift so the receiving app can still detect
+    // the original guitar key correctly (appKeyIndex handles key display).
     const baseline = meta.sbpBaselineKeyIndex ?? 0
     const delta = (((meta.keyIndex ?? baseline) - baseline) % 12 + 12) % 12
     const adjustedDelta = delta > 6 ? delta - 12 : delta  // keep signed within ±6
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
     songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
-    content        = stripAppSyntax ? stripStrumTokens(meta.sbpOriginalContent ?? rawText ?? '') : (meta.sbpOriginalContent ?? rawText ?? '')
+    content        = meta.sbpOriginalContent ?? rawText ?? ''
   } else {
-    keyField       = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
-    keyShiftField  = 0
-    songCapoField  = meta.capo ?? 0
-    content        = stripAppSyntax ? stripStrumTokens(rawText ?? '') : (rawText ?? '')
+    // SBP download path (stripAppSyntax=true) OR in-app-created songs:
+    // Export the sounding key directly so SBP displays the correct key label.
+    // Transpose content from the original guitar key to the user's current key.
+    const newGuitarKey = meta.keyIndex ?? 0
+    const newCapo      = meta.capo ?? (hasSbpRoundTrip ? (meta.sbpSongCapo ?? 0) : 0)
+    keyField      = ((newGuitarKey + newCapo) % 12 + 12) % 12
+    keyShiftField = 0
+    songCapoField = newCapo
+    const originalGuitarKey = hasSbpRoundTrip ? (meta.sbpBaselineKeyIndex ?? 0) : newGuitarKey
+    const contentDelta      = ((newGuitarKey - originalGuitarKey) % 12 + 12) % 12
+    const baseContent       = (hasSbpRoundTrip ? meta.sbpOriginalContent : null) ?? rawText ?? ''
+    const transposedContent = contentDelta === 0 ? baseContent
+      : baseContent.replace(/\[([^\]]+)\]/g, (_, c) =>
+          '[' + transposeChord(c, contentDelta, meta.usesFlats ?? false) + ']')
+    content = stripAppSyntax ? stripStrumTokens(transposedContent) : transposedContent
   }
 
   // Preserve the original sbpId so that conductor sync can match songs by Id
