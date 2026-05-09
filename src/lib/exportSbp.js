@@ -99,6 +99,7 @@ function songToSbpJson(song) {
     DeepSearch: buildDeepSearch(name, author, subTitle),
     Copyright: meta.copyright ?? '',
     NotesText: meta.annotation ?? '',
+    appKeyIndex: meta.keyIndex ?? 0,
     Zoom: 1.0,
     SectionOrder: '',
     SongNumber: 0,

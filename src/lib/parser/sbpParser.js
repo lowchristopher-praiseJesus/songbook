@@ -126,7 +126,12 @@ function songFromJson(s, setEntry = null) {
 
   let keyIndex, usesFlats
 
-  if (setCapo > 0 && songKeyShift === 0 && keyOfset === 0 && songCapo === 0) {
+  // appKeyIndex is written by this app's exporter to preserve the user's explicit key
+  // choice across a share round-trip, bypassing chord-content heuristics.
+  if (typeof s.appKeyIndex === 'number') {
+    keyIndex = ((s.appKeyIndex % 12) + 12) % 12
+    usesFlats = FLAT_KEY_INDICES.has(keyIndex)
+  } else if (setCapo > 0 && songKeyShift === 0 && keyOfset === 0 && songCapo === 0) {
     // Simple set-capo-only case with no other pitch shifts: guitar key = sounding − setCapo
     keyIndex = (soundingKeyIdx - setCapo + 12) % 12
     usesFlats = FLAT_KEY_INDICES.has(keyIndex)
@@ -162,6 +167,7 @@ function songFromJson(s, setEntry = null) {
       tempo: s.TempoInt > 0 ? s.TempoInt : undefined,
       timeSignature: s.timeSig || undefined,
       copyright: s.Copyright || undefined,
+      annotation: s.NotesText || undefined,
       ccli: s.ccli ?? undefined,
       subTitle: s.subTitle || undefined,
       // Original SBP fields preserved verbatim so exportSbp can reproduce
