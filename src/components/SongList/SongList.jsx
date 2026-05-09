@@ -19,7 +19,7 @@ export function SongList({
   isFit = false,
   containerRef,
 }) {
-  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id)
+  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)

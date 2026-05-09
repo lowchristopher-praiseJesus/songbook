@@ -4,6 +4,7 @@ import {
   saveSong, loadSong, deleteSong as deleteFromStorage,
   loadIndex, saveIndex, getLastSongId, setLastSongId, clearLastSongId,
   loadCollections, saveCollections, getViewMode, saveViewMode,
+  getTransposeState, setTransposeState,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
 import { loadMyAlbums } from '../lib/albumApi'
@@ -300,6 +301,16 @@ export const useLibraryStore = create((set, get) => ({
     }
 
     saveSong(updatedSong)
+
+    // If the editor saved a new capo, keep the transpose state in sync so that
+    // loadSongsWithTranspose (used by Share/export) sees the updated value.
+    // Only update when capo actually changed — don't clobber a widget-set value
+    // if the user just edited lyrics without touching the capo field.
+    const newCapo = meta.capo ?? 0
+    if (newCapo !== (song.meta.capo ?? 0)) {
+      const ts = getTransposeState(id)
+      setTransposeState(id, { delta: ts?.delta ?? 0, capo: newCapo })
+    }
 
     const newIndex = get().index.map(e =>
       e.id === id
