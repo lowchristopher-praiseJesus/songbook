@@ -129,13 +129,14 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.lyricsOnly).toBeUndefined()
   })
 
-  it('strips {note:} lines from exported content', async () => {
+  it('preserves {note:} lines in exported content', async () => {
     const songWithNotes = {
       meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0 },
       rawText: '{c: Verse}\n{note: sing twice}\nHello world\n{note: softly}',
     }
     const { json } = await parseZip([songWithNotes])
-    expect(json.songs[0].content).not.toContain('{note:')
+    expect(json.songs[0].content).toContain('{note: sing twice}')
+    expect(json.songs[0].content).toContain('{note: softly}')
     expect(json.songs[0].content).toContain('Hello world')
     expect(json.songs[0].content).toContain('{c: Verse}')
   })

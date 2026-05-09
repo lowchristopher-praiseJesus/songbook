@@ -55,12 +55,12 @@ function songToSbpJson(song) {
     keyField       = meta.sbpKey
     keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
     songCapoField  = meta.capo ?? meta.sbpSongCapo ?? 0
-    content        = stripNoteTokens(meta.sbpOriginalContent ?? rawText ?? '')
+    content        = meta.sbpOriginalContent ?? rawText ?? ''
   } else {
     keyField       = ((meta.keyIndex ?? 0) + (meta.capo ?? 0)) % 12
     keyShiftField  = 0
     songCapoField  = meta.capo ?? 0
-    content        = stripNoteTokens(rawText ?? '')
+    content        = rawText ?? ''
   }
 
   // Preserve the original sbpId so that conductor sync can match songs by Id
