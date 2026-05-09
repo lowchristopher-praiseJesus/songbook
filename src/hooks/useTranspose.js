@@ -1,43 +1,47 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { transposeSections } from '../lib/parser/chordUtils'
-import { getTransposeState, setTransposeState } from '../lib/storage'
+import { setTransposeState } from '../lib/storage'
 
 export function useTranspose(sections, usesFlats, songId, defaultCapo = 0) {
-  // Always-current ref so the save effect never captures a stale songId
-  const songIdRef = useRef(songId)
-  songIdRef.current = songId
+  const [state, setState] = useState({
+    songId,
+    defaultCapo,
+    delta: 0,
+    capo: defaultCapo,
+  })
 
-  const [delta, setDelta] = useState(0)
-  const [capo, setCapo] = useState(0)
+  const stateMatchesSong = state.songId === songId && state.defaultCapo === defaultCapo
+  const delta = stateMatchesSong ? state.delta : 0
+  const capo = stateMatchesSong ? state.capo : defaultCapo
 
-  // Load persisted transpose state whenever the active song changes
+  // Start each newly selected song from its saved metadata. Transpose/capo
+  // changes are still persisted for export, but reopening a song should not
+  // make the header key drift away from the editor's saved key.
   useEffect(() => {
-    if (!songId) { setDelta(0); setCapo(0); return }
-    const saved = getTransposeState(songId)
-    setDelta(saved?.delta ?? 0)
-    setCapo(saved?.capo ?? defaultCapo)
-  }, [songId])
+    if (!songId) return
+    setTransposeState(songId, { delta, capo })
+  }, [songId, delta, capo])
 
-  // Persist whenever delta or capo change due to user interaction.
-  // Intentionally omits songId from deps — songIdRef.current is always current,
-  // and we only want to fire on actual value changes (not on song switch).
-  useEffect(() => {
-    const id = songIdRef.current
-    if (!id) return
-    setTransposeState(id, { delta, capo })
-  }, [delta, capo]) // eslint-disable-line react-hooks/exhaustive-deps
+  const updateState = useCallback((updater) => {
+    setState(prev => {
+      const current = prev.songId === songId && prev.defaultCapo === defaultCapo
+        ? prev
+        : { songId, defaultCapo, delta: 0, capo: defaultCapo }
+      return { ...current, ...updater(current) }
+    })
+  }, [songId, defaultCapo])
 
   const transposedSections = useMemo(
     () => transposeSections(sections ?? [], delta - capo, usesFlats ?? false),
     [sections, delta, capo, usesFlats]
   )
 
-  const transposeUp   = useCallback(() => setDelta(d => d + 1), [])
-  const transposeDown = useCallback(() => setDelta(d => d - 1), [])
-  const reset         = useCallback(() => setDelta(0), [])
-  const transposeTo   = useCallback((newDelta) => setDelta(newDelta), [])
-  const capoUp        = useCallback(() => setCapo(c => Math.min(c + 1, 7)), [])
-  const capoDown      = useCallback(() => setCapo(c => Math.max(c - 1, 0)), [])
+  const transposeUp   = useCallback(() => updateState(s => ({ delta: s.delta + 1 })), [updateState])
+  const transposeDown = useCallback(() => updateState(s => ({ delta: s.delta - 1 })), [updateState])
+  const reset         = useCallback(() => updateState(() => ({ delta: 0 })), [updateState])
+  const transposeTo   = useCallback((newDelta) => updateState(() => ({ delta: newDelta })), [updateState])
+  const capoUp        = useCallback(() => updateState(s => ({ capo: Math.min(s.capo + 1, 7) })), [updateState])
+  const capoDown      = useCallback(() => updateState(s => ({ capo: Math.max(s.capo - 1, 0) })), [updateState])
 
   return { delta, capo, transposedSections, transposeUp, transposeDown, reset, transposeTo, capoUp, capoDown }
 }
