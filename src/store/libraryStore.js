@@ -282,10 +282,20 @@ export const useLibraryStore = create((set, get) => ({
     const usesFlats = FLAT_KEY_NAMES.has(meta.key)
     const sections = parseContent(rawText)
 
+    const rawTextChanged = rawText !== song.rawText
+
     const updatedSong = {
       ...song,
       rawText,
-      meta: { ...song.meta, ...meta, keyIndex, usesFlats },
+      meta: {
+        ...song.meta,
+        ...meta,
+        keyIndex,
+        usesFlats,
+        // If the user edited the content, discard the cached original SBP content so
+        // exportSbp falls back to rawText rather than silently shipping the old version.
+        ...(rawTextChanged ? { sbpOriginalContent: null } : {}),
+      },
       sections,
     }
 
