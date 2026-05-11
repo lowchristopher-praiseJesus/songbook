@@ -21,6 +21,7 @@ import { useMetronome } from './hooks/useMetronome'
 import { ConductorBar } from './components/Conductor/ConductorBar'
 import { ConductorJoinModal } from './components/Conductor/ConductorJoinModal'
 import { BroadcastWaitingBanner } from './components/Conductor/BroadcastWaitingBanner'
+import { RecordingIndicator } from './components/Recorder/RecordingIndicator'
 
 export default function App() {
   const init = useLibraryStore(s => s.init)
@@ -228,6 +229,7 @@ export default function App() {
               ☰
             </button>
             <span className="font-bold text-lg select-none">🎵 SongSheet</span>
+            <RecordingIndicator />
           </div>
           <div className="flex items-center gap-1">
             {conductorCollection && <ConductorBar sync={conductorSync} />}
