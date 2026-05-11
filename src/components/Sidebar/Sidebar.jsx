@@ -122,6 +122,9 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         (a.artist ?? '').toLowerCase().includes(trimmedQuery.toLowerCase())
       )
     : []
+  const filteredCollectionGroups = trimmedQuery
+    ? buildGroups(index, collections.filter(c => c.name.toLowerCase().includes(trimmedQuery.toLowerCase())))
+    : []
 
   const groups = !trimmedQuery ? buildGroups(index, collections) : []
 
@@ -246,7 +249,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <div className="p-3 pb-0 border-b border-gray-200 dark:border-gray-700">
         <input
           type="text"
-          placeholder={viewMode === 'albums' ? 'Search albums...' : 'Search songs...'}
+          placeholder={viewMode === 'albums' ? 'Search albums...' : viewMode === 'collections' ? 'Search collections...' : 'Search songs...'}
           value={query}
           onChange={e => setQuery(e.target.value)}
           className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
@@ -313,16 +316,48 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       {viewMode !== 'albums' && (
       <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
         {trimmedQuery ? (
-          <>
-            {filtered.map(entry => (
-              <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
-            ))}
-            {filtered.length === 0 && (
-              <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                No matches
-              </li>
-            )}
-          </>
+          viewMode === 'collections' ? (
+            <>
+              {filteredCollectionGroups.map(group => (
+                <CollectionGroup
+                  key={group.id}
+                  group={group}
+                  onSelect={onSongSelect}
+                  onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
+                  onDuplicate={id => {
+                    setCreatingCollection(false)
+                    setDuplicatingCollectionId(id)
+                    setDuplicateDraft('Copy of ' + group.name)
+                  }}
+                  onGroupCheckboxChange={(val) => {
+                    if (val === null) {
+                      setExportSourceName(null)
+                      setExportSourceCollectionId(null)
+                    } else {
+                      setExportSourceName(val.name)
+                      setExportSourceCollectionId(val.id)
+                    }
+                  }}
+                />
+              ))}
+              {filteredCollectionGroups.length === 0 && (
+                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                  No matches
+                </li>
+              )}
+            </>
+          ) : (
+            <>
+              {filtered.map(entry => (
+                <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
+              ))}
+              {filtered.length === 0 && (
+                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                  No matches
+                </li>
+              )}
+            </>
+          )
         ) : viewMode === 'allSongs' ? (
           <>
             <li>
