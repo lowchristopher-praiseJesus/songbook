@@ -1,5 +1,6 @@
 export { RecorderButton } from './RecorderButton'
 export { RecordingTimer } from './RecordingTimer'
+export { RecordingIndicator } from './RecordingIndicator'
 export { NamingDialog } from './NamingDialog'
 export { AudioPlayer } from './AudioPlayer'
 export { RecordingsPanel } from './RecordingsPanel'
