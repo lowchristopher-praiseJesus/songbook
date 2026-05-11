@@ -247,15 +247,27 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       `}>
       {/* Search */}
       <div className="p-3 pb-0 border-b border-gray-200 dark:border-gray-700">
-        <input
-          type="text"
-          placeholder={viewMode === 'albums' ? 'Search albums...' : viewMode === 'collections' ? 'Search collections...' : 'Search songs...'}
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-            focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
-        />
+        <div className="relative mb-3">
+          <input
+            type="text"
+            placeholder={viewMode === 'albums' ? 'Search albums...' : viewMode === 'collections' ? 'Search collections...' : 'Search songs...'}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+              focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-7"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         {/* View mode toggle — hidden while search is active */}
         {!trimmedQuery && (
           <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-0.5 mb-3">
