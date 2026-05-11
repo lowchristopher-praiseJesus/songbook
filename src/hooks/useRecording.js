@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { AudioRecorder } from '../lib/audioRecorder'
 import { OPFSClient } from '../lib/opfsClient'
+import { useRecordingStore } from '../store/recordingStore'
 
 const TIMER_INTERVAL_MS = 200
 
@@ -48,6 +49,7 @@ export function useRecording({ songId, songTitle }) {
   const timerRef = useRef(null)
   const startTimeRef = useRef(null)
   const pausedElapsedRef = useRef(0)
+  const statusRef = useRef('idle')
 
   useEffect(() => {
     const client = OPFSClient.create()
@@ -87,6 +89,21 @@ export function useRecording({ songId, songTitle }) {
     loadRecordingCount()
     return () => { cancelled = true }
   }, [songId])
+
+  useEffect(() => {
+    statusRef.current = status
+    useRecordingStore.getState().setRecordingState(status, elapsedMs)
+  }, [status, elapsedMs])
+
+  useEffect(() => {
+    return () => {
+      if (statusRef.current === 'recording' || statusRef.current === 'paused') {
+        recorderRef.current?.stop()
+        clearInterval(timerRef.current)
+      }
+      useRecordingStore.getState().setRecordingState('idle', 0)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRecordingsChange = useCallback((count) => {
     setRecordingCount(Math.max(0, count))

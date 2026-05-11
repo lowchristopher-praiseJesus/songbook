@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { recordingErrorMessage, useRecording } from '../useRecording'
+import { useRecordingStore } from '../../store/recordingStore'
 
 vi.mock('../../lib/audioRecorder', () => ({
   AudioRecorder: vi.fn().mockImplementation(() => ({
@@ -30,6 +31,7 @@ describe('useRecording', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
+    useRecordingStore.setState({ status: 'idle', elapsedMs: 0 })
     hook = renderHook(() => useRecording({ songId: 'song-abc', songTitle: 'Amazing Grace' }))
   })
 
@@ -180,5 +182,31 @@ describe('useRecording', () => {
     expect(recordingErrorMessage(new DOMException('', 'NotFoundError'))).toMatch(/No microphone/i)
     expect(recordingErrorMessage(new DOMException('', 'NotReadableError'))).toMatch(/already in use/i)
     expect(recordingErrorMessage(new DOMException('', 'SecurityError'))).toMatch(/HTTPS/i)
+  })
+
+  it('syncs status to recordingStore when recording starts', async () => {
+    expect(useRecordingStore.getState().status).toBe('idle')
+    await act(async () => { await hook.result.current.startRecording() })
+    expect(useRecordingStore.getState().status).toBe('recording')
+  })
+
+  it('stops recorder and resets store when unmounted during recording', async () => {
+    const { AudioRecorder } = await import('../../lib/audioRecorder')
+    const mockStop = vi.fn().mockResolvedValue([])
+    AudioRecorder.mockImplementationOnce(() => ({
+      start: vi.fn().mockResolvedValue(undefined),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      stop: mockStop,
+      mimeType: 'audio/webm',
+      channels: 1,
+      state: 'inactive',
+    }))
+    const cleanupHook = renderHook(() => useRecording({ songId: 'song-abc', songTitle: 'Test' }))
+    await act(async () => { await cleanupHook.result.current.startRecording() })
+    expect(cleanupHook.result.current.status).toBe('recording')
+    cleanupHook.unmount()
+    expect(mockStop).toHaveBeenCalled()
+    expect(useRecordingStore.getState().status).toBe('idle')
   })
 })
