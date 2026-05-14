@@ -63,12 +63,10 @@ function songToSbpJson(song, stripAppSyntax = false) {
   const canPreserveSbpFields = hasSbpRoundTrip && meta.sbpOriginalContent != null
 
   let keyField, keyShiftField, songCapoField, content
-  if (canPreserveSbpFields && (!stripAppSyntax || !hasUserKeyChange)) {
-    // Preserve original SBP content/metadata for unchanged SBP imports. For
-    // share exports with an explicit transpose, fold that delta into KeyShift.
-    const adjustedDelta = keyDelta > 6 ? keyDelta - 12 : keyDelta
+  if (canPreserveSbpFields && !hasUserKeyChange) {
+    // Preserve original SBP content/metadata byte-for-byte when nothing changed.
     keyField       = meta.sbpKey
-    keyShiftField  = (meta.sbpKeyShift ?? 0) + adjustedDelta
+    keyShiftField  = meta.sbpKeyShift ?? 0
     songCapoField  = currentCapo
     content        = stripAppSyntax ? stripAppSyntaxTokens(meta.sbpOriginalContent) : meta.sbpOriginalContent
   } else {
@@ -80,9 +78,13 @@ function songToSbpJson(song, stripAppSyntax = false) {
     keyField      = ((newGuitarKey + newCapo + 3) % 12 + 12) % 12  // SBP uses A-based index (0=A); +3 converts from C-based
     keyShiftField = 0
     songCapoField = newCapo
-    const originalGuitarKey = hasSbpRoundTrip ? baselineKeyIndex : newGuitarKey
+    // Use sbpOriginalContent as base only when it exists — rawText has already been
+    // transposed to the current guitar key by loadSongsWithTranspose, so when
+    // sbpOriginalContent is null (user edited the content) the delta must be 0.
+    const hasSbpContent    = hasSbpRoundTrip && meta.sbpOriginalContent != null
+    const originalGuitarKey = hasSbpContent ? baselineKeyIndex : newGuitarKey
     const contentDelta      = ((newGuitarKey - originalGuitarKey) % 12 + 12) % 12
-    const baseContent       = (hasSbpRoundTrip ? meta.sbpOriginalContent : null) ?? rawText ?? ''
+    const baseContent       = hasSbpContent ? meta.sbpOriginalContent : (rawText ?? '')
     const transposedContent = contentDelta === 0 ? baseContent
       : baseContent.replace(/\[([^\]]+)\]/g, (_, c) =>
           '[' + transposeChord(c, contentDelta, meta.usesFlats ?? false) + ']')

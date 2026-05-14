@@ -230,17 +230,18 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       expect(entry.keyOfset).toBe(0)
     })
 
-    it('folds user transpose delta into KeyShift (leaves original content untouched)', async () => {
+    it('bakes transpose into content when key has changed (share and recipient see correct chords)', async () => {
       // User transposed up 2: meta.keyIndex = 9 (baseline 7 + 2).
+      // Share must export the transposed chords so the recipient sees Am, not Gm.
       const transposed = {
         ...sbpSong,
         meta: { ...sbpSong.meta, keyIndex: 9 },
       }
       const { json } = await parseZip([transposed])
       const s = json.songs[0]
-      expect(s.key).toBe(1)                  // original key never moves
-      expect(s.KeyShift).toBe(9 + 2)         // 11 = base KS + user delta
-      expect(s.content).toBe('[Gm]hello [Ebmaj7]world')
+      expect(s.key).toBe(0)                            // A sounding key (SBP A-based: (9+0+3)%12=0)
+      expect(s.KeyShift).toBe(0)                       // no live-transpose needed; content is baked
+      expect(s.content).toBe('[Am]hello [Fmaj7]world') // Gm+2=Am, Ebmaj7+2=Fmaj7
     })
 
     it('preserves keyOfset for songs that originally had set-level pitch shift', async () => {
@@ -273,6 +274,33 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       const { json } = await parseZip([mockSong])
       expect(json.songs[0].key).toBe(6)    // keyIndex 1 + capo 2 + 3 (A-based) = 6
       expect(json.songs[0].KeyShift).toBe(0)
+    })
+
+    it('does not double-transpose when user edited content and key changed', async () => {
+      // User edited the song in the editor: changed key to D (2) and rewrote
+      // the chords so rawText is already in D. sbpOriginalContent is null.
+      // loadSongsWithTranspose then applies a widget delta of +2 (to F#=8).
+      // The exported content must be F#-key chords, not D-key chords
+      // transposed a further +2 (which would land in Ab — wrong).
+      const editedWithDelta = {
+        meta: {
+          title: 'Edited Song', artist: '',
+          keyIndex: 8,              // D(2) + widget delta(2) applied by loadSongsWithTranspose
+          capo: 0,
+          sbpKey: 1,                // original SBP fields preserved
+          sbpKeyShift: 9,
+          sbpSongCapo: 0,
+          sbpOriginalContent: null, // user edited content → cleared
+          sbpBaselineKeyIndex: 7,   // original G
+        },
+        rawText: '[F#m]bye [Dmaj7]world',  // already at keyIndex 8 (F#)
+      }
+      const { json } = await parseZip([editedWithDelta])
+      const s = json.songs[0]
+      // Content must export unchanged — rawText is already at the current guitar key.
+      expect(s.content).toBe('[F#m]bye [Dmaj7]world')
+      expect(s.KeyShift).toBe(0)
+      expect(s.key).toBe((8 + 0 + 3) % 12) // F# sounding key A-based
     })
   })
 
