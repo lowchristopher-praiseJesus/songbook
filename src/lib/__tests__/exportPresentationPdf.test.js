@@ -127,13 +127,16 @@ describe('exportPresentationPdf', () => {
     expect(xValues).toContain(700)
   })
 
-  it('does not use two-column layout for a short song', () => {
-    // 2 sections at font 32 ≈ 204pt < 405pt threshold → single col
+  it('scales up font beyond desiredFont for a short song (stretch to fill)', () => {
+    // Stretch-to-fill: a 2-section song has lots of room above desiredFont=32.
+    // The algorithm finds the largest font that fills the slide — at maxCols=2 this
+    // lands around 68pt in two-column layout (each section in its own column).
+    // Verify that a render x-value larger than the page centre (480) appears, meaning
+    // content is placed, or simply that the maximum setFontSize exceeds 32*1.8=57.6.
     const song = makeLongSong(2)
     exportPresentationPdf([song], mockBg, { desiredFont: 32 })
-    const xValues = mockDoc.text.mock.calls.map(c => c[1])
-    expect(xValues).not.toContain(260)
-    expect(xValues).not.toContain(700)
+    const sizes = mockDoc.setFontSize.mock.calls.map(c => c[0])
+    expect(Math.max(...sizes)).toBeGreaterThan(57.6)  // rendered at a font above 32
   })
 
   it('uses two columns for a single-section song with many lyric lines', () => {
@@ -235,32 +238,34 @@ describe('exportPresentationPdf', () => {
       expect(sizes).toContain(50.4) // consistent title rendered for both songs
     })
 
-    it('ignores desiredFont and starts from MAX_FONT=32 when optimizedFont is true', () => {
-      // A short song with optimizedFont:true and desiredFont:10 must still reach font 32.
+    it('ignores desiredFont and scales well above it when optimizedFont is true', () => {
+      // With FILL_FONT_MAX, a short song with optimizedFont:true and desiredFont:10 must
+      // reach a font much larger than 32 (old MAX_FONT). setFontSize should be called with
+      // values far exceeding 57.6 (=32*1.8); 10*1.8=18 must never appear.
       const short = makeLongSong(2)
       exportPresentationPdf([short], mockBg, { optimizedFont: true, desiredFont: 10 })
       const sizes = mockDoc.setFontSize.mock.calls.map(c => c[0])
-      expect(sizes).toContain(57.6)   // title at 32*1.8
+      expect(Math.max(...sizes)).toBeGreaterThan(57.6)
       expect(sizes).not.toContain(18) // title at 10*1.8 must not appear
     })
   })
 
   describe('optimizedFont single-col preference', () => {
-    it('uses single-col for a borderline song when font loss is within 4pt', () => {
-      // 4 sections at font 32 → 407pt > TWO_COL_THRESHOLD (405pt), so 2-col at font 32.
-      // Single-col fits at font 28 (361pt ≤ contentH 364pt). Gap = 4 ≤ DELTA → prefer 1-col.
+    it('uses 2-col for a medium song where 1-col gives a significantly smaller font', () => {
+      // With FILL_FONT_MAX, a 4-section song fits at ≈50pt in 2-col but only ≈31pt in 1-col.
+      // Gap ≈ 19pt >> DELTA(4) → 2-col wins.
       exportPresentationPdf([makeLongSong(4)], mockBg, { optimizedFont: true })
-      const xValues = mockDoc.text.mock.calls.map(c => c[1])
-      expect(xValues).not.toContain(260)
-      expect(xValues).not.toContain(700)
-    })
-
-    it('keeps 2-col for a long song where single-col requires a much smaller font', () => {
-      // 8 sections: 2-col fits at font 28, single-col requires font 13. Gap = 15 > DELTA → 2-col.
-      exportPresentationPdf([makeLongSong(8)], mockBg, { optimizedFont: true })
       const xValues = mockDoc.text.mock.calls.map(c => c[1])
       expect(xValues).toContain(260)
       expect(xValues).toContain(700)
+    })
+
+    it('uses 3-col for a long song where 2-col requires a much smaller font', () => {
+      // 8 sections: 3-col fits at ≈36pt, 2-col at ≈28pt. Gap ≈ 8pt > DELTA(4) → 3-col wins.
+      exportPresentationPdf([makeLongSong(8)], mockBg, { optimizedFont: true })
+      const xValues = mockDoc.text.mock.calls.map(c => c[1])
+      expect(xValues).not.toContain(260)
+      expect(xValues).not.toContain(700)
     })
 
     it('non-optimized mode is unaffected: 4-section song at desiredFont=32 still uses 2-col', () => {
@@ -286,12 +291,13 @@ describe('exportPresentationPdf', () => {
       expect(xValues).not.toContain(700)
     })
 
-    it('still uses 2-col when 2-col fits, even with maxCols=3', () => {
-      // 8 sections at font 28: 2-col fits (4 per col, 361pt ≤ 364pt ✓).
+    it('uses 3-col for a long song when it produces a meaningfully larger font than 2-col', () => {
+      // 8 sections with maxCols=3: stretch-to-fill finds 3-col at ≈36pt, 2-col at ≈28pt.
+      // Gap ≈ 8pt > DELTA(4) → 3-col wins over 2-col.
       exportPresentationPdf([makeLongSong(8)], mockBg, { desiredFont: 28, maxCols: 3 })
       const xValues = mockDoc.text.mock.calls.map(c => c[1])
-      expect(xValues).toContain(260)
-      expect(xValues).toContain(700)
+      expect(xValues).not.toContain(260)
+      expect(xValues).not.toContain(700)
     })
 
     it('uses 3-col in optimized mode for a very long song (12 sections)', () => {
@@ -302,12 +308,12 @@ describe('exportPresentationPdf', () => {
       expect(xValues).not.toContain(700)
     })
 
-    it('prefers 2-col over 3-col in optimized mode when font loss is within DELTA', () => {
-      // 8 sections: 3-col at font 32, 2-col at font 28. Gap = 4 ≤ DELTA → prefer 2-col.
+    it('uses 3-col in optimized mode for an 8-section song since gap to 2-col exceeds DELTA', () => {
+      // With FILL_FONT_MAX, 8 sections: 3-col at ≈36pt, 2-col at ≈28pt. Gap ≈ 8pt > DELTA(4) → 3-col.
       exportPresentationPdf([makeLongSong(8)], mockBg, { optimizedFont: true })
       const xValues = mockDoc.text.mock.calls.map(c => c[1])
-      expect(xValues).toContain(260)
-      expect(xValues).toContain(700)
+      expect(xValues).not.toContain(260)
+      expect(xValues).not.toContain(700)
     })
   })
 

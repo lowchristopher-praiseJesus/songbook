@@ -7,7 +7,7 @@ const MARGIN_TOP = 50
 const MARGIN_BOTTOM = 40
 const MAX_W = PAGE_W - MARGIN_X * 2            // 840 pt
 const USABLE_H = PAGE_H - MARGIN_TOP - MARGIN_BOTTOM  // 450 pt
-const MAX_FONT = 32
+const FILL_FONT_MAX = 120
 const MIN_FONT = 8
 const COL_GAP = 40
 const COL_W = (MAX_W - COL_GAP) / 2                      // 400 pt per column
@@ -409,18 +409,18 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
  *   - Sections in three columns when two-column overflows (requires maxCols=3)
  *
  * Font modes:
- *   Default — globalFont = min over all songs of findBestFont(song, desiredFont).
- *             Every song renders at the same font → zero variation across pages.
- *   optimizedFont — each song independently maximises its font size starting from
- *             MAX_FONT=32, so longer songs shrink while shorter songs stay large.
- *             desiredFont and maxCols are ignored; columns are chosen automatically.
+ *   Default — each song independently maximises its font starting from FILL_FONT_MAX,
+ *             floored by the global minimum derived from desiredFont + maxCols so no
+ *             song ever renders smaller than desiredFont would require.
+ *   optimizedFont — same stretch-to-fill behaviour but columns are chosen automatically
+ *             (up to 3); desiredFont and maxCols are ignored.
  *
  * @param {Array<{ meta: { title: string, artist: string|null }, sections: Section[] }>} songs
  * @param {HTMLImageElement} bgImage  Pre-loaded image element drawn full-bleed behind each page
  * @param {{ desiredFont?: number, maxCols?: number, annotationsVisible?: boolean, optimizedFont?: boolean }} [options]
- *   desiredFont    — target font size (8–32); ignored when optimizedFont is true. Default 20.
+ *   desiredFont    — minimum font size floor (8–120). Default 20.
  *   maxCols        — maximum columns per page (1, 2, or 3); ignored when optimizedFont is true. Default 2.
- *   optimizedFont  — when true, each song uses the largest font that fits on one page. Default false.
+ *   optimizedFont  — when true, columns are also chosen automatically (up to 3). Default false.
  */
 export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true, optimizedFont = false } = {}) {
   if (!songs.length) return
@@ -428,49 +428,80 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
 
   // Determine per-song fonts.
-  // Optimized mode: each song maximises independently from MAX_FONT, columns auto.
-  //   Prefer single-column when the font reduction required to stay in one column is
-  //   small (≤ PREFER_SINGLE_COL_DELTA pt). Only use two columns for genuinely long
-  //   songs where two-col gives a meaningfully larger font.
-  // Default mode: single global font = min over all songs, honouring desiredFont + maxCols.
+  // Both modes start from FILL_FONT_MAX and scale down — songs with few lines get
+  // large fonts that fill the slide; songs with many lines shrink as needed.
+  // Optimized mode: columns chosen automatically (up to 3); column preference biased
+  //   toward fewer columns when the font sacrifice is small (≤ PREFER_SINGLE_COL_DELTA pt).
+  // Default mode: per-song optimal font, floored by the global minimum that keeps all
+  //   songs ≥ desiredFont (so no song renders smaller than desiredFont requires).
   const PREFER_SINGLE_COL_DELTA = 4
 
-  const songFonts = optimizedFont
-    ? songs.map(song => {
-        // Find the largest font allowing up to 3 columns, then prefer fewer columns
-        // when the font sacrifice is small (≤ PREFER_SINGLE_COL_DELTA pt).
-        const { font: maxFont, cols: maxCols3 } = findBestFontConstrained(doc, song, MAX_FONT, 3, annotationsVisible)
+  let songFonts
 
-        if (maxCols3 === 1) return maxFont  // already single-col — no trade-off
+  if (optimizedFont) {
+    songFonts = songs.map(song => {
+      // Find the largest font allowing up to 3 columns, then prefer fewer columns
+      // when the font sacrifice is small (≤ PREFER_SINGLE_COL_DELTA pt).
+      const { font: maxFont, cols: maxCols3 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 3, annotationsVisible)
 
-        if (maxCols3 === 3) {
-          // Try 2-col: prefer over 3-col when font loss is small
-          const { font: twoFont, cols: twoCols } = findBestFontConstrained(doc, song, MAX_FONT, 2, annotationsVisible)
-          if (twoFont >= maxFont - PREFER_SINGLE_COL_DELTA) {
-            if (twoCols === 1) return twoFont  // 2-col search returned single-col
-            const { font: oneFont } = findBestFontConstrained(doc, song, MAX_FONT, 1, annotationsVisible)
-            return oneFont >= twoFont - PREFER_SINGLE_COL_DELTA ? oneFont : twoFont
-          }
-          return maxFont  // 3-col wins
+      if (maxCols3 === 1) return maxFont  // already single-col — no trade-off
+
+      if (maxCols3 === 3) {
+        // Try 2-col: prefer over 3-col when font loss is small
+        const { font: twoFont, cols: twoCols } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible)
+        if (twoFont >= maxFont - PREFER_SINGLE_COL_DELTA) {
+          if (twoCols === 1) return twoFont  // 2-col search returned single-col
+          const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+          return oneFont >= twoFont - PREFER_SINGLE_COL_DELTA ? oneFont : twoFont
         }
+        return maxFont  // 3-col wins
+      }
 
-        // maxCols3 === 2: check if 1-col is close enough
-        const { font: oneFont } = findBestFontConstrained(doc, song, MAX_FONT, 1, annotationsVisible)
-        return oneFont >= maxFont - PREFER_SINGLE_COL_DELTA ? oneFont : maxFont
-      })
-    : (() => {
-        const globalFont = songs.reduce((min, song) => {
-          const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
-          return Math.min(min, font)
-        }, desiredFont)
-        return songs.map(() => globalFont)
-      })()
+      // maxCols3 === 2: check if 1-col is close enough
+      const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+      return oneFont >= maxFont - PREFER_SINGLE_COL_DELTA ? oneFont : maxFont
+    })
+  } else {
+    // Non-optimized mode: each song independently finds the largest font that fits
+    // within maxCols, starting from FILL_FONT_MAX. desiredFont acts as a minimum
+    // floor — no song renders smaller than what desiredFont would produce.
+    const globalFont = songs.reduce((min, song) => {
+      const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
+      return Math.min(min, font)
+    }, desiredFont)
+    songFonts = songs.map(song => {
+      const { font: fMax, cols: cMax } = findBestFontConstrained(doc, song, FILL_FONT_MAX, maxCols, annotationsVisible)
+
+      let chosen = fMax
+      if (cMax === 1) {
+        chosen = fMax
+      } else if (cMax >= 3 && maxCols >= 3) {
+        const { font: f2, cols: c2 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible)
+        if (f2 >= fMax - PREFER_SINGLE_COL_DELTA) {
+          if (c2 === 1) {
+            chosen = f2
+          } else {
+            const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+            chosen = f1 >= f2 - PREFER_SINGLE_COL_DELTA ? f1 : f2
+          }
+        } else {
+          chosen = fMax
+        }
+      } else {
+        // cMax === 2: prefer 1-col when font sacrifice is small
+        const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+        chosen = f1 >= fMax - PREFER_SINGLE_COL_DELTA ? f1 : fMax
+      }
+
+      return Math.max(chosen, globalFont)
+    })
+  }
 
   const effectiveMaxCols = optimizedFont ? 3 : maxCols
 
-  // In optimized mode use the smallest body font as the common title base so that
-  // all slides share the same title size regardless of lyric length.
-  const titleBase = optimizedFont ? Math.min(...songFonts) : null
+  // Use the smallest body font across all songs as the shared title base so that
+  // all slides have a consistent title size regardless of lyric length.
+  const titleBase = Math.min(...songFonts)
 
   songs.forEach((song, i) => {
     if (i > 0) doc.addPage()
@@ -479,7 +510,7 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
 
     const sections = song.sections ?? []
     const songFont = songFonts[i]
-    const headerFont = titleBase ?? songFont
+    const headerFont = titleBase
     const startY = renderHeader(doc, song, headerFont, annotationsVisible)
 
     const totalH = measureSections(doc, sections, songFont, MAX_W, annotationsVisible)
