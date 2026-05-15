@@ -11,9 +11,9 @@ const FONTS = [
 
 const STYLES = [
   { value: 'normal',     label: 'Normal' },
-  { value: 'bold',       label: 'Bold'   },
+  { value: 'bold',       label: 'Bold' },
   { value: 'italic',     label: 'Italic' },
-  { value: 'bolditalic', label: 'B+I'    },
+  { value: 'bolditalic', label: 'B+I' },
 ]
 
 const COMPONENT_ROWS = [
@@ -132,7 +132,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
               return (
                 <div
                   key={key}
-                  className="grid items-center gap-x-2 bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5"
+                  className="grid items-start gap-x-2 bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5"
                   style={{ gridTemplateColumns: '7rem 1fr 3.5rem 2rem' }}
                 >
                   {/* Label */}
