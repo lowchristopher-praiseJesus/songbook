@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { FONT_OPTIONS } from '../../hooks/useDisplaySettings'
 
 const PALETTE = ['#374151', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#9ca3af']
@@ -38,8 +38,6 @@ function SummaryDot({ color }) {
 }
 
 function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, fontSize, onFontSizeChange, updateElement, open, onToggle }) {
-  const colorInputRef = useRef(null)
-
   const currentColor = elSettings.color
   const currentFont = elSettings.font
   const currentSize = isOffset
@@ -143,29 +141,28 @@ function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, 
                   onClick={() => updateElement(elementKey, { color: c })}
                 />
               ))}
-              {/* Custom swatch — rainbow gradient, opens native color picker */}
-              <button
-                type="button"
+              {/* Custom swatch — label wrapper ensures mobile browsers open native picker on direct tap */}
+              <label
                 title="Custom color"
-                onClick={() => colorInputRef.current?.click()}
-                className="rounded-full border border-gray-300 focus:outline-none"
+                aria-label="Custom color"
+                className="rounded-full border border-gray-300 cursor-pointer"
                 style={{
+                  display: 'inline-block',
                   width: 22,
                   height: 22,
                   background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
                   boxShadow: !PALETTE.includes(currentColor) ? `0 0 0 1px white, 0 0 0 3px ${currentColor}` : undefined,
                 }}
-                aria-label="Custom color"
-              />
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={currentColor}
-                onChange={handleCustomColor}
-                className="sr-only"
-                tabIndex={-1}
-                aria-hidden="true"
-              />
+              >
+                <input
+                  type="color"
+                  value={currentColor}
+                  onChange={handleCustomColor}
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+              </label>
             </div>
           </div>
         </div>
