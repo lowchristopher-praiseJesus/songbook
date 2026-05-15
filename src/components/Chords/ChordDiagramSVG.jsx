@@ -41,10 +41,10 @@ export function ChordDiagramSVG({ fingering, name }) {
             <g key={i}>
               <line x1={cx - 4} y1="14" x2={cx + 4} y2="20"
                 strokeWidth="1.5" strokeLinecap="round"
-                className="stroke-gray-500 dark:stroke-gray-500" />
+                className="stroke-gray-500 dark:stroke-gray-300" />
               <line x1={cx + 4} y1="14" x2={cx - 4} y2="20"
                 strokeWidth="1.5" strokeLinecap="round"
-                className="stroke-gray-500 dark:stroke-gray-500" />
+                className="stroke-gray-500 dark:stroke-gray-300" />
             </g>
           )
         }
@@ -65,7 +65,7 @@ export function ChordDiagramSVG({ fingering, name }) {
         : <>
             <line x1="14" y1="26" x2="69" y2="26"
               strokeWidth="1"
-              className="stroke-gray-500 dark:stroke-gray-500" />
+              className="stroke-gray-500 dark:stroke-gray-300" />
             <text x="72" y="38" fontSize="7"
               fontFamily="system-ui, sans-serif"
               className="fill-gray-500 dark:fill-gray-400">
@@ -78,14 +78,14 @@ export function ChordDiagramSVG({ fingering, name }) {
       {STRINGS_X.map(x => (
         <line key={x} x1={x} y1="26" x2={x} y2="98"
           strokeWidth="1"
-          className="stroke-gray-500 dark:stroke-gray-500" />
+          className="stroke-gray-500 dark:stroke-gray-300" />
       ))}
 
       {/* Fret lines (horizontal) */}
       {FRET_Y.map(y => (
         <line key={y} x1="14" y1={y} x2="69" y2={y}
           strokeWidth="0.75"
-          className="stroke-gray-300 dark:stroke-gray-700" />
+          className="stroke-gray-300 dark:stroke-gray-500" />
       ))}
 
       {/* Barre bars */}
