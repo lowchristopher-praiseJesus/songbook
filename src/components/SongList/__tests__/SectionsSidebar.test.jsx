@@ -87,7 +87,7 @@ describe('SectionsSidebar — open', () => {
     expect(onSectionClick).toHaveBeenCalledWith(3)
   })
 
-  it('calls onToggle when the hide button is clicked', () => {
+  it('calls onToggle when the SECTIONS tab is clicked', () => {
     const onToggle = vi.fn()
     render(
       <SectionsSidebar
