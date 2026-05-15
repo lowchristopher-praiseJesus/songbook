@@ -253,6 +253,17 @@ export async function exportPrintPdf(songs, {
   function renderChordRow(chords, lyric) {
     setColor(doc, comp.chords.color)
     const x0 = colX()
+
+    // Minimum gap between consecutive chords: one space in the chord font.
+    doc.setFont(comp.chords.fontFamily, comp.chords.fontStyle)
+    doc.setFontSize(comp.chords.fontSize)
+    const spaceW = doc.getStringUnitWidth(' ') * comp.chords.fontSize / doc.internal.scaleFactor
+
+    // Track the right edge of the last-drawn chord so we can push subsequent
+    // chords right when they'd overlap (e.g. trailing [G] [Bm] [A] where the
+    // source spaces are narrower than the chord glyphs).
+    let lastRight = x0 - spaceW  // initialised so the first chord lands at x0
+
     for (const { chord, position, strum } of chords) {
       // Measure the lyric prefix in the LYRIC font so the chord x-offset
       // matches where that character actually falls in the rendered lyric.
@@ -261,10 +272,17 @@ export async function exportPrintPdf(songs, {
       const prefix = lyric.slice(0, position)
       const xOff = doc.getStringUnitWidth(prefix) * comp.lyrics.fontSize / doc.internal.scaleFactor
 
+      // Ensure at least one chord-font space gap from the previous chord's
+      // right edge (handles overlap when source spaces are very narrow).
+      const cx = Math.max(x0 + xOff, lastRight + spaceW)
+
       // Render the chord name (with strum if present) in the chord font.
       doc.setFont(comp.chords.fontFamily, comp.chords.fontStyle)
       doc.setFontSize(comp.chords.fontSize)
-      doc.text(chord + (strum || ''), x0 + xOff, y)
+      const label = chord + (strum || '')
+      doc.text(label, cx, y)
+
+      lastRight = cx + doc.getStringUnitWidth(label) * comp.chords.fontSize / doc.internal.scaleFactor
     }
     y += chordLineH
   }
@@ -304,7 +322,7 @@ export async function exportPrintPdf(songs, {
     doc.setFont(comp.lyrics.fontFamily, comp.lyrics.fontStyle)
     doc.setFontSize(comp.lyrics.fontSize)
     setColor(doc, comp.lyrics.color)
-    const wrapped = doc.splitTextToSize(text, colWidth)
+    const wrapped = doc.splitTextToSize(text.trimEnd(), colWidth)
     for (let i = 0; i < wrapped.length; i++) {
       advance(lyricLineH)
       doc.text(wrapped[i], colX(), y)
