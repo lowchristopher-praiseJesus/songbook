@@ -9,6 +9,13 @@ const FONTS = [
   { value: 'courier',   label: 'Mono' },
 ]
 
+const STYLES = [
+  { value: 'normal',     label: 'Normal' },
+  { value: 'bold',       label: 'Bold'   },
+  { value: 'italic',     label: 'Italic' },
+  { value: 'bolditalic', label: 'B+I'    },
+]
+
 const COMPONENT_ROWS = [
   { key: 'title',        label: 'Song Title',     sizeRange: [8, 32] },
   { key: 'lyrics',       label: 'Lyrics',          sizeRange: [6, 24] },
@@ -113,7 +120,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
           {/* Header row */}
           <div className="grid gap-x-2 mb-1 px-2" style={{ gridTemplateColumns: '7rem 1fr 3.5rem 2rem' }}>
             <span className="text-xs text-gray-400"></span>
-            <span className="text-xs text-gray-400">Font</span>
+            <span className="text-xs text-gray-400">Font · Style</span>
             <span className="text-xs text-gray-400 text-center">Size</span>
             <span className="text-xs text-gray-400 text-center">Color</span>
           </div>
@@ -131,18 +138,32 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
                   {/* Label */}
                   <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{label}</span>
 
-                  {/* Font family toggle */}
-                  <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
-                    {FONTS.map(f => (
-                      <button
-                        key={f.value}
-                        type="button"
-                        onClick={() => setCompField(key, 'fontFamily', f.value)}
-                        className={toggleBtn(c.fontFamily === f.value)}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
+                  {/* Font family + style toggles (stacked) */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
+                      {FONTS.map(f => (
+                        <button
+                          key={f.value}
+                          type="button"
+                          onClick={() => setCompField(key, 'fontFamily', f.value)}
+                          className={toggleBtn(c.fontFamily === f.value)}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
+                      {STYLES.map(s => (
+                        <button
+                          key={s.value}
+                          type="button"
+                          onClick={() => setCompField(key, 'fontStyle', s.value)}
+                          className={toggleBtn(c.fontStyle === s.value)}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Font size input */}
