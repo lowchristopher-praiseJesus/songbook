@@ -18,6 +18,7 @@ export function SongList({
   onEdit,
   isFit = false,
   containerRef,
+  sectionRefs,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
 
@@ -64,6 +65,7 @@ export function SongList({
           fitMode={isFit && fitFontSize !== null}
           fitColumns={fitColumns}
           annotationsVisible={annotationsVisible}
+          sectionRefs={sectionRefs}
         />
       </div>
       {isFit && (
