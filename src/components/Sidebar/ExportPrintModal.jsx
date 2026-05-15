@@ -9,11 +9,11 @@ const FONTS = [
   { value: 'courier',   label: 'Mono' },
 ]
 
-const STYLES = [
+const STYLE_OPTIONS = [
   { value: 'normal',     label: 'Normal' },
   { value: 'bold',       label: 'Bold' },
   { value: 'italic',     label: 'Italic' },
-  { value: 'bolditalic', label: 'B+I' },
+  { value: 'bolditalic', label: 'Bold+Italic' },
 ]
 
 const COMPONENT_ROWS = [
@@ -118,9 +118,10 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
           </p>
 
           {/* Header row */}
-          <div className="grid gap-x-2 mb-1 px-2" style={{ gridTemplateColumns: '7rem 1fr 3.5rem 2rem' }}>
+          <div className="grid gap-x-2 mb-1 px-2" style={{ gridTemplateColumns: '7rem 1fr 90px 3.5rem 2rem' }}>
             <span className="text-xs text-gray-400"></span>
-            <span className="text-xs text-gray-400">Font · Style</span>
+            <span className="text-xs text-gray-400">Font</span>
+            <span className="text-xs text-gray-400">Style</span>
             <span className="text-xs text-gray-400 text-center">Size</span>
             <span className="text-xs text-gray-400 text-center">Color</span>
           </div>
@@ -132,39 +133,38 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
               return (
                 <div
                   key={key}
-                  className="grid items-start gap-x-2 bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5"
-                  style={{ gridTemplateColumns: '7rem 1fr 3.5rem 2rem' }}
+                  className="grid items-center gap-x-2 bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5"
+                  style={{ gridTemplateColumns: '7rem 1fr 90px 3.5rem 2rem' }}
                 >
                   {/* Label */}
                   <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{label}</span>
 
-                  {/* Font family + style toggles (stacked) */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
-                      {FONTS.map(f => (
-                        <button
-                          key={f.value}
-                          type="button"
-                          onClick={() => setCompField(key, 'fontFamily', f.value)}
-                          className={toggleBtn(c.fontFamily === f.value)}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
-                      {STYLES.map(s => (
-                        <button
-                          key={s.value}
-                          type="button"
-                          onClick={() => setCompField(key, 'fontStyle', s.value)}
-                          className={toggleBtn(c.fontStyle === s.value)}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Font family dropdown */}
+                  <select
+                    value={c.fontFamily}
+                    onChange={e => setCompField(key, 'fontFamily', e.target.value)}
+                    className="w-full px-1.5 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {FONTS.map(f => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+
+                  {/* Style dropdown — fixed width so all rows are the same */}
+                  <select
+                    value={c.fontStyle}
+                    onChange={e => setCompField(key, 'fontStyle', e.target.value)}
+                    style={{ width: 90 }}
+                    className="px-1.5 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {STYLE_OPTIONS.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
 
                   {/* Font size input */}
                   <input
