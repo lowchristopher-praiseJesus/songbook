@@ -1,3 +1,5 @@
+import React from 'react'
+
 function ChordedLine({ line, fontSize, fitMode }) {
   const text = line.content
   const chords = line.chords ?? []
@@ -100,7 +102,10 @@ function ChordedLine({ line, fontSize, fitMode }) {
   )
 }
 
-function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, annotationsVisible = true }) {
+const SongSection = React.forwardRef(function SongSection(
+  { section, fontSize, performanceMode, lyricsOnly, fitMode, annotationsVisible = true },
+  ref
+) {
   const lines = section.lines
 
   // Pre-compute which chord-only lines will be absorbed into a following lyric line
@@ -117,7 +122,7 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
   }
 
   return (
-    <div className="mb-8" data-section>
+    <div ref={ref} className="mb-8" data-section>
       {section.label && (
         <h3 className="mb-3">
           <span
@@ -212,9 +217,9 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
       </div>
     </div>
   )
-}
+})
 
-export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns, annotationsVisible = true }) {
+export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns, annotationsVisible = true, sectionRefs }) {
   if (!sections?.length) return null
   return (
     <div
@@ -224,6 +229,7 @@ export function SongBody({ sections, fontSize = 16, performanceMode = false, lyr
       {sections.map((section, i) => (
         <SongSection
           key={i}
+          ref={sectionRefs?.[i]}
           section={section}
           fontSize={fontSize}
           performanceMode={performanceMode}

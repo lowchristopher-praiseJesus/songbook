@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { createRef } from 'react'
 import { render, screen, getDefaultNormalizer } from '@testing-library/react'
 import { SongBody } from '../SongBody'
 
@@ -109,5 +110,31 @@ describe('SongBody section heading badge', () => {
     expect(badge.style.border).toContain('2px solid')
     expect(badge.style.borderRadius).toBe('6px')
     expect(badge.style.padding).toBe('2px 10px')
+  })
+})
+
+describe('SongBody sectionRefs', () => {
+  it('attaches sectionRefs to section root divs', () => {
+    const ref0 = createRef()
+    const ref1 = createRef()
+    render(
+      <SongBody
+        sections={[
+          { label: 'Intro', lines: [] },
+          { label: 'Verse 1', lines: [] },
+        ]}
+        sectionRefs={[ref0, ref1]}
+      />
+    )
+    expect(ref0.current).not.toBeNull()
+    expect(ref1.current).not.toBeNull()
+    expect(ref0.current).toHaveAttribute('data-section')
+    expect(ref1.current).toHaveAttribute('data-section')
+  })
+
+  it('renders without error when sectionRefs is omitted', () => {
+    expect(() =>
+      render(<SongBody sections={[{ label: 'Intro', lines: [] }]} />)
+    ).not.toThrow()
   })
 })
