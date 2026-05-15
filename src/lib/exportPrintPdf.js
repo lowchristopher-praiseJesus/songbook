@@ -218,12 +218,16 @@ export async function exportPrintPdf(songs, {
   }
 
   function renderSectionLabel(label, annotation) {
-    y += comp.lyrics.fontSize * 0.4
+    const prePad = comp.lyrics.fontSize * 0.4
+    // Reserve pre-padding + label + at least one chord/lyric row so the
+    // section header is never orphaned at the bottom of a column or page.
+    advance(prePad + labelLineH + chordLineH + lyricLineH)
+    if (y > MARGIN + 2) y += prePad
+
     const upperLabel = label.toUpperCase()
     doc.setFont(comp.sectionLabel.fontFamily, comp.sectionLabel.fontStyle)
     doc.setFontSize(comp.sectionLabel.fontSize)
     setColor(doc, comp.sectionLabel.color)
-    advance(labelLineH)
     doc.text(upperLabel, colX(), y)
 
     if (annotation) {
