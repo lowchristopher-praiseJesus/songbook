@@ -7,24 +7,25 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label="Show sections panel"
-        className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10
-          bg-indigo-500 text-white rounded-r-md cursor-pointer border-0"
-        style={{
-          writingMode: 'vertical-rl',
-          textOrientation: 'mixed',
-          fontSize: '9px',
-          fontWeight: 700,
-          letterSpacing: '1px',
-          textTransform: 'uppercase',
-          padding: '10px 4px',
-        }}
-      >
-        {panelLabel}
-      </button>
+      <div className="hidden md:flex flex-col justify-center flex-shrink-0">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label="Show sections panel"
+          className="bg-indigo-500 text-white rounded-r-md cursor-pointer border-0"
+          style={{
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            padding: '10px 4px',
+          }}
+        >
+          {panelLabel}
+        </button>
+      </div>
     )
   }
 

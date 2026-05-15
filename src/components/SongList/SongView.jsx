@@ -55,7 +55,7 @@ export function SongView({
   }, [])
 
   return (
-    <div className="flex h-full relative">
+    <div className="flex h-full overflow-hidden">
       <SectionsSidebar
         sections={song.sections ?? []}
         activeIndex={activeIndex}
@@ -63,7 +63,7 @@ export function SongView({
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSectionClick={handleSectionClick}
       />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden" ref={containerRef}>
         <SongList
           song={song}
           onPerformanceMode={onPerformanceMode}

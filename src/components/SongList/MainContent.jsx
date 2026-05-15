@@ -159,7 +159,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         : !activeSong
           ? <EmptyState onFileChange={handleFileInput} />
           : <div
-              ref={containerRef}
               key={activeSongId}
               className={`h-full overflow-x-hidden
                 ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
