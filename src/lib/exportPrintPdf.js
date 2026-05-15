@@ -192,11 +192,14 @@ export async function exportPrintPdf(songs, {
     doc.setFontSize(comp.title.fontSize)
     const wrapped = doc.splitTextToSize(title, colWidth)
 
-    // Reserve space: optional top padding + ascent + one titleLineH per wrapped line.
+    // Reserve title + at least one content line so the title is never orphaned
+    // at the bottom of a column with its song continuing on the next.
     const topPad = y > MARGIN + 2 ? TITLE_TOP_PAD : 0
-    advance(topPad + titleAscent + titleLineH * wrapped.length)
+    advance(topPad + titleAscent + titleLineH * wrapped.length + lyricLineH)
 
-    y += topPad + titleAscent  // descend to text baseline
+    // Recheck topPad: if advance moved us to a new column, y reset to MARGIN.
+    const actualTopPad = y > MARGIN + 2 ? TITLE_TOP_PAD : 0
+    y += actualTopPad + titleAscent
 
     setColor(doc, comp.title.color)
     for (const line of wrapped) {
