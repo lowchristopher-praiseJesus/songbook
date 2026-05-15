@@ -34,9 +34,12 @@ export function SongHeader({
 
   return (
     <div ref={headerRef} className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
-      <h1 className="text-2xl font-bold leading-tight">{meta.title}</h1>
+      <h1
+        className="font-bold leading-tight"
+        style={{ fontFamily: 'var(--title-font)', fontSize: 'var(--title-size)', color: 'var(--title-color-active)' }}
+      >{meta.title}</h1>
       {meta.artist && (
-        <p className="text-gray-500 dark:text-gray-400 mt-0.5">{meta.artist}</p>
+        <p className="mt-0.5" style={{ fontFamily: 'var(--artist-font)', fontSize: 'var(--artist-size)', color: 'var(--artist-color-active)' }}>{meta.artist}</p>
       )}
       {annotationsVisible && meta.annotation && (
         <p className="text-sm italic text-gray-400 dark:text-gray-500 mt-0.5">{meta.annotation}</p>

@@ -8,12 +8,16 @@ input, select, textarea {
 }
 
 :root {
+  --title-color-active: var(--title-color, #111827);
+  --artist-color-active: var(--artist-color, #6b7280);
   --lyrics-color-active: var(--lyrics-color, #374151);
   --chord-color-active: var(--chord-color, #6366f1);
   --section-color-active: var(--section-color, #6366f1);
   --annotation-color-active: var(--annotation-color, #9ca3af);
 }
 .dark {
+  --title-color-active: var(--title-color-dark, #f9fafb);
+  --artist-color-active: var(--artist-color-dark, #9ca3af);
   --lyrics-color-active: var(--lyrics-color-dark, #d1d5db);
   --chord-color-active: var(--chord-color-dark, #818cf8);
   --section-color-active: var(--section-color-dark, #818cf8);

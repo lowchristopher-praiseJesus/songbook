@@ -12,6 +12,8 @@ const FONT_MAP = {
 export const FONT_OPTIONS = Object.keys(FONT_MAP)
 
 const DEFAULTS = {
+  title:       { font: 'System Default', size: 24, color: '#111827' },
+  artist:      { font: 'System Default', size: 16, color: '#6b7280' },
   lyrics:      { font: 'System Default', color: '#374151' },
   chords:      { font: 'Menlo', sizeOffset: -3, color: '#6366f1' },
   sections:    { font: 'System Default', size: 12, color: '#6366f1' },
@@ -19,6 +21,8 @@ const DEFAULTS = {
 }
 
 const KEYS = {
+  title:       'songsheet_display_title',
+  artist:      'songsheet_display_artist',
   lyrics:      'songsheet_display_lyrics',
   chords:      'songsheet_display_chords',
   sections:    'songsheet_display_sections',
@@ -68,7 +72,17 @@ function resolveFont(name) {
 
 function applyToDOM(settings) {
   const el = document.documentElement
-  const { lyrics, chords, sections, annotations } = settings
+  const { title, artist, lyrics, chords, sections, annotations } = settings
+
+  el.style.setProperty('--title-font', resolveFont(title.font))
+  el.style.setProperty('--title-size', `${title.size}px`)
+  el.style.setProperty('--title-color', title.color)
+  el.style.setProperty('--title-color-dark', lightenColor(title.color))
+
+  el.style.setProperty('--artist-font', resolveFont(artist.font))
+  el.style.setProperty('--artist-size', `${artist.size}px`)
+  el.style.setProperty('--artist-color', artist.color)
+  el.style.setProperty('--artist-color-dark', lightenColor(artist.color))
 
   el.style.setProperty('--lyrics-font', resolveFont(lyrics.font))
   el.style.setProperty('--lyrics-color', lyrics.color)

@@ -4,6 +4,8 @@ import { FONT_OPTIONS } from '../../hooks/useDisplaySettings'
 const PALETTE = ['#374151', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#9ca3af']
 
 const ELEMENTS = [
+  { key: 'title',       label: 'Song Title',  hasAbsoluteSize: true },
+  { key: 'artist',      label: 'Artist',      hasAbsoluteSize: true },
   { key: 'lyrics',      label: 'Lyrics',      hasAbsoluteSize: false },
   { key: 'chords',      label: 'Chords',      hasAbsoluteSize: false, isOffset: true },
   { key: 'sections',    label: 'Sections',    hasAbsoluteSize: true },
