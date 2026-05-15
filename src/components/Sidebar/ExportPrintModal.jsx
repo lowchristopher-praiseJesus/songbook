@@ -118,7 +118,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
           </p>
 
           {/* Header row */}
-          <div className="grid gap-x-2 mb-1 px-2" style={{ gridTemplateColumns: '7rem 1fr 90px 3.5rem 2rem' }}>
+          <div className="grid gap-x-2 mb-1 px-2" style={{ gridTemplateColumns: '7rem 1fr 90px 2rem 2rem' }}>
             <span className="text-xs text-gray-400"></span>
             <span className="text-xs text-gray-400">Font</span>
             <span className="text-xs text-gray-400">Style</span>
@@ -134,7 +134,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
                 <div
                   key={key}
                   className="grid items-center gap-x-2 bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1.5"
-                  style={{ gridTemplateColumns: '7rem 1fr 90px 3.5rem 2rem' }}
+                  style={{ gridTemplateColumns: '7rem 1fr 90px 2rem 2rem' }}
                 >
                   {/* Label */}
                   <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{label}</span>
@@ -180,7 +180,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
                       const clamped = Math.min(maxSz, Math.max(minSz, Number(e.target.value) || minSz))
                       setCompField(key, 'fontSize', clamped)
                     }}
-                    className="w-full px-1.5 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600
+                    className="w-full px-0.5 py-0.5 text-xs rounded border border-gray-300 dark:border-gray-600
                       bg-white dark:bg-gray-800 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
 
