@@ -102,11 +102,11 @@ function setColor(doc, hex) {
  *   numCols?:    number,
  *   pageSize?:   'a4' | 'letter',
  *   components?: {
- *     title?:        { fontFamily?: string, fontSize?: number, color?: string },
- *     lyrics?:       { fontFamily?: string, fontSize?: number, color?: string },
- *     chords?:       { fontFamily?: string, fontSize?: number, color?: string },
- *     sectionLabel?: { fontFamily?: string, fontSize?: number, color?: string },
- *     annotation?:   { fontFamily?: string, fontSize?: number, color?: string },
+ *     title?:        { fontFamily?: string, fontSize?: number, color?: string, fontStyle?: 'normal' | 'bold' | 'italic' | 'bolditalic' },
+ *     lyrics?:       { fontFamily?: string, fontSize?: number, color?: string, fontStyle?: 'normal' | 'bold' | 'italic' | 'bolditalic' },
+ *     chords?:       { fontFamily?: string, fontSize?: number, color?: string, fontStyle?: 'normal' | 'bold' | 'italic' | 'bolditalic' },
+ *     sectionLabel?: { fontFamily?: string, fontSize?: number, color?: string, fontStyle?: 'normal' | 'bold' | 'italic' | 'bolditalic' },
+ *     annotation?:   { fontFamily?: string, fontSize?: number, color?: string, fontStyle?: 'normal' | 'bold' | 'italic' | 'bolditalic' },
  *   }
  * }} [options]
  */
