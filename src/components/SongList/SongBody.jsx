@@ -119,11 +119,20 @@ function SongSection({ section, fontSize, performanceMode, lyricsOnly, fitMode, 
   return (
     <div className="mb-8" data-section>
       {section.label && (
-        <h3
-          className="font-semibold uppercase tracking-widest mb-3"
-          style={{ fontFamily: 'var(--section-font)', fontSize: 'var(--section-size)', color: 'var(--section-color-active)' }}
-        >
-          {section.label}
+        <h3 className="mb-3">
+          <span
+            className="inline-block font-semibold uppercase tracking-widest"
+            style={{
+              fontFamily: 'var(--section-font)',
+              fontSize: 'var(--section-size)',
+              color: 'var(--section-color-active)',
+              border: '2px solid var(--section-color-active)',
+              borderRadius: '6px',
+              padding: '2px 10px',
+            }}
+          >
+            {section.label}
+          </span>
           {annotationsVisible && section.annotation && (
             <span
               className="ml-2 font-normal normal-case tracking-normal italic"
