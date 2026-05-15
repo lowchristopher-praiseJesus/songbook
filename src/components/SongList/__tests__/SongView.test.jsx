@@ -11,6 +11,7 @@ const mockObserve = vi.fn()
 const mockDisconnect = vi.fn()
 
 beforeEach(() => {
+  localStorage.clear()
   vi.stubGlobal('IntersectionObserver', vi.fn(() => ({
     observe: mockObserve,
     unobserve: vi.fn(),
