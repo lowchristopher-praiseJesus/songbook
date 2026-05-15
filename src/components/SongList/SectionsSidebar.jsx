@@ -3,6 +3,8 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
     .map((s, i) => ({ label: s.label, index: i }))
     .filter(({ label }) => label)
 
+  const panelLabel = 'SECTIONS'
+
   if (!open) {
     return (
       <button
@@ -21,7 +23,7 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
           padding: '10px 4px',
         }}
       >
-        SECTIONS
+        {panelLabel}
       </button>
     )
   }
@@ -32,7 +34,7 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
       bg-gray-50 dark:bg-gray-900">
       <div className="px-2 pt-3 pb-2 text-[9px] uppercase tracking-[2px]
         text-gray-400 dark:text-gray-600">
-        SECTIONS
+        {panelLabel}
       </div>
       <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
         {labelledSections.map(({ label, index }) => (
@@ -40,11 +42,11 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
             key={index}
             type="button"
             onClick={() => onSectionClick(index)}
-            className={`w-full text-left text-[10px] font-medium px-2 py-1
-              rounded-full transition-colors
+            className={`w-full text-left text-[10px] font-medium px-2 py-1 rounded-full
+              transition-colors flex items-center gap-1.5
               ${activeIndex === index
                 ? 'bg-indigo-500 text-white'
-                : 'flex items-center gap-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
           >
             {activeIndex !== index && (
