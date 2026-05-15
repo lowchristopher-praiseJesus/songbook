@@ -17,7 +17,9 @@ export function SongView({
 }) {
   const [sidebarOpen, setSidebarOpen] = useLocalStorage('songsheet_sections_panel_open', false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [bodyOffset, setBodyOffset] = useState(0)
   const sectionRefs = useRef([])
+  const headerRef = useRef(null)
 
   // Re-create refs array whenever the song changes
   const sectionsLen = song.sections?.length ?? 0
@@ -28,6 +30,26 @@ export function SongView({
   useEffect(() => {
     setActiveIndex(0)
   }, [song.id])
+
+  // Measure the header+chords area height so the sidebar can align with the song body
+  useEffect(() => {
+    const header = headerRef.current
+    const container = containerRef?.current
+    if (!header || !container) return
+
+    const measure = () => {
+      const hRect = header.getBoundingClientRect()
+      const cRect = container.getBoundingClientRect()
+      // Static layout offset: how far below the container top the body starts.
+      // Adding container.scrollTop removes the scroll component from getBoundingClientRect.
+      setBodyOffset(Math.max(0, hRect.bottom + container.scrollTop - cRect.top))
+    }
+
+    measure()
+    const obs = new ResizeObserver(measure)
+    obs.observe(header)
+    return () => obs.disconnect()
+  }, [song.id, containerRef])
 
   // IntersectionObserver: highlight the topmost visible section
   useEffect(() => {
@@ -62,6 +84,7 @@ export function SongView({
         open={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSectionClick={handleSectionClick}
+        topOffset={bodyOffset}
       />
       <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden" ref={containerRef}>
         <SongList
@@ -76,6 +99,7 @@ export function SongView({
           isFit={isFit}
           containerRef={containerRef}
           sectionRefs={sectionRefs.current}
+          headerRef={headerRef}
         />
       </div>
     </div>

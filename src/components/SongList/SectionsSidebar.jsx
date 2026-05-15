@@ -1,11 +1,11 @@
-export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSectionClick }) {
+export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSectionClick, topOffset = 0 }) {
   const labelledSections = sections
     .map((s, i) => ({ label: s.label, index: i }))
     .filter(({ label }) => label)
 
   return (
-    <div className="hidden md:flex flex-row flex-shrink-0">
-      <div className="flex flex-col justify-center">
+    <div className="hidden md:flex flex-row flex-shrink-0" style={{ paddingTop: topOffset }}>
+      <div className="flex flex-col justify-start">
         <button
           type="button"
           onClick={onToggle}

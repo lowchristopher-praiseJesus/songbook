@@ -17,6 +17,11 @@ beforeEach(() => {
     unobserve: vi.fn(),
     disconnect: mockDisconnect,
   })))
+  vi.stubGlobal('ResizeObserver', vi.fn(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  })))
   mockObserve.mockClear()
   mockDisconnect.mockClear()
 })

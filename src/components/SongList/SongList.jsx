@@ -19,6 +19,7 @@ export function SongList({
   isFit = false,
   containerRef,
   sectionRefs,
+  headerRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
 
@@ -39,24 +40,26 @@ export function SongList({
       className="max-w-2xl mx-auto px-4 py-6 w-full relative"
       style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
     >
-      <SongHeader
-        meta={song.meta}
-        transpose={transpose}
-        lyricsOnly={lyricsOnly}
-        onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
-        onExportPdf={() => exportLyricsPdf(song.meta, song.sections, annotationsVisible)}
-        onEdit={onEdit}
-        annotationsVisible={annotationsVisible}
-        onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
-        songId={song.id}
-      />
-      {!lyricsOnly && (
-        <ChordStrip
-          sections={transpose.transposedSections}
-          open={chordsOpen}
-          onToggle={onChordsToggle}
+      <div ref={headerRef}>
+        <SongHeader
+          meta={song.meta}
+          transpose={transpose}
+          lyricsOnly={lyricsOnly}
+          onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
+          onExportPdf={() => exportLyricsPdf(song.meta, song.sections, annotationsVisible)}
+          onEdit={onEdit}
+          annotationsVisible={annotationsVisible}
+          onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
+          songId={song.id}
         />
-      )}
+        {!lyricsOnly && (
+          <ChordStrip
+            sections={transpose.transposedSections}
+            open={chordsOpen}
+            onToggle={onChordsToggle}
+          />
+        )}
+      </div>
       <div ref={bodyRef}>
         <SongBody
           sections={transpose.transposedSections}
