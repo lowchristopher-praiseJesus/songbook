@@ -62,11 +62,11 @@ const TITLE_TOP_PAD = 4  // pt of breathing room above a song title (no rule)
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_COMPONENTS = {
-  title:        { fontFamily: 'helvetica', fontSize: 12, color: '#000000' },
-  lyrics:       { fontFamily: 'helvetica', fontSize: 10, color: '#1a1a1a' },
-  chords:       { fontFamily: 'courier',   fontSize: 9,  color: '#1a5fa8' },
-  sectionLabel: { fontFamily: 'helvetica', fontSize: 8,  color: '#555555' },
-  annotation:   { fontFamily: 'helvetica', fontSize: 8,  color: '#888888' },
+  title:        { fontFamily: 'helvetica', fontSize: 12, color: '#000000', fontStyle: 'bold'   },
+  lyrics:       { fontFamily: 'helvetica', fontSize: 10, color: '#1a1a1a', fontStyle: 'normal' },
+  chords:       { fontFamily: 'helvetica', fontSize: 9,  color: '#1a5fa8', fontStyle: 'normal' },
+  sectionLabel: { fontFamily: 'helvetica', fontSize: 8,  color: '#555555', fontStyle: 'bold'   },
+  annotation:   { fontFamily: 'helvetica', fontSize: 8,  color: '#888888', fontStyle: 'italic' },
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +188,7 @@ export async function exportPrintPdf(songs, {
   // ---------------------------------------------------------------------------
 
   function renderTitle(title) {
-    doc.setFont(comp.title.fontFamily, 'bold')
+    doc.setFont(comp.title.fontFamily, comp.title.fontStyle)
     doc.setFontSize(comp.title.fontSize)
     const wrapped = doc.splitTextToSize(title, colWidth)
 
@@ -206,7 +206,7 @@ export async function exportPrintPdf(songs, {
   }
 
   function renderAnnotation(text) {
-    doc.setFont(comp.annotation.fontFamily, 'italic')
+    doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
     doc.setFontSize(comp.annotation.fontSize)
     setColor(doc, comp.annotation.color)
     const wrapped = doc.splitTextToSize(text, colWidth)
@@ -220,7 +220,7 @@ export async function exportPrintPdf(songs, {
   function renderSectionLabel(label, annotation) {
     y += comp.lyrics.fontSize * 0.4
     const upperLabel = label.toUpperCase()
-    doc.setFont(comp.sectionLabel.fontFamily, 'bold')
+    doc.setFont(comp.sectionLabel.fontFamily, comp.sectionLabel.fontStyle)
     doc.setFontSize(comp.sectionLabel.fontSize)
     setColor(doc, comp.sectionLabel.color)
     advance(labelLineH)
@@ -231,7 +231,7 @@ export async function exportPrintPdf(songs, {
       const annotX = colX() + labelW + 6
       const annotW = colWidth - labelW - 6
       if (annotW > 15) {
-        doc.setFont(comp.annotation.fontFamily, 'italic')
+        doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
         doc.setFontSize(comp.annotation.fontSize)
         setColor(doc, comp.annotation.color)
         doc.text(annotation, annotX, y)
@@ -249,13 +249,13 @@ export async function exportPrintPdf(songs, {
     for (const { chord, position, strum } of chords) {
       // Measure the lyric prefix in the LYRIC font so the chord x-offset
       // matches where that character actually falls in the rendered lyric.
-      doc.setFont(comp.lyrics.fontFamily, 'normal')
+      doc.setFont(comp.lyrics.fontFamily, comp.lyrics.fontStyle)
       doc.setFontSize(comp.lyrics.fontSize)
       const prefix = lyric.slice(0, position)
       const xOff = doc.getStringUnitWidth(prefix) * comp.lyrics.fontSize / doc.internal.scaleFactor
 
       // Render the chord name (with strum if present) in the chord font.
-      doc.setFont(comp.chords.fontFamily, 'normal')
+      doc.setFont(comp.chords.fontFamily, comp.chords.fontStyle)
       doc.setFontSize(comp.chords.fontSize)
       doc.text(chord + (strum || ''), x0 + xOff, y)
     }
@@ -265,7 +265,7 @@ export async function exportPrintPdf(songs, {
   // Render a pure chord line (type === 'chord'): no paired lyric, so space
   // chords using their character-position values and the chord font's char width.
   function renderPureChordRow(chords, annotation) {
-    doc.setFont(comp.chords.fontFamily, 'normal')
+    doc.setFont(comp.chords.fontFamily, comp.chords.fontStyle)
     doc.setFontSize(comp.chords.fontSize)
     setColor(doc, comp.chords.color)
     const x0 = colX()
@@ -283,7 +283,7 @@ export async function exportPrintPdf(songs, {
       const annotX = maxRight + 6
       const annotW = x0 + colWidth - maxRight - 6
       if (annotW > 15) {
-        doc.setFont(comp.annotation.fontFamily, 'italic')
+        doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
         doc.setFontSize(comp.annotation.fontSize)
         setColor(doc, comp.annotation.color)
         doc.text(annotation, annotX, y)
@@ -294,7 +294,7 @@ export async function exportPrintPdf(songs, {
   }
 
   function renderLyricLine(text, annotation) {
-    doc.setFont(comp.lyrics.fontFamily, 'normal')
+    doc.setFont(comp.lyrics.fontFamily, comp.lyrics.fontStyle)
     doc.setFontSize(comp.lyrics.fontSize)
     setColor(doc, comp.lyrics.color)
     const wrapped = doc.splitTextToSize(text, colWidth)
@@ -306,7 +306,7 @@ export async function exportPrintPdf(songs, {
         const annotX = colX() + lyricW + 6
         const annotW = colWidth - lyricW - 6
         if (annotW > 15) {
-          doc.setFont(comp.annotation.fontFamily, 'italic')
+          doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
           doc.setFontSize(comp.annotation.fontSize)
           setColor(doc, comp.annotation.color)
           doc.text(annotation, annotX, y)
@@ -321,7 +321,7 @@ export async function exportPrintPdf(songs, {
   // ---------------------------------------------------------------------------
 
   function renderPdfTitle(title) {
-    doc.setFont(comp.title.fontFamily, 'bold')
+    doc.setFont(comp.title.fontFamily, comp.title.fontStyle)
     doc.setFontSize(comp.title.fontSize)
     const wrapped = doc.splitTextToSize(title, colWidth)
 

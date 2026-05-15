@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { exportPrintPdf, containsCJK, songsHaveCJK } from '../exportPrintPdf'
+import { exportPrintPdf, containsCJK, songsHaveCJK, DEFAULT_COMPONENTS } from '../exportPrintPdf'
 
 // ---------------------------------------------------------------------------
 // jsPDF mock
@@ -110,6 +110,49 @@ describe('songsHaveCJK', () => {
 
   it('returns false for empty song list', () => {
     expect(songsHaveCJK([])).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// DEFAULT_COMPONENTS
+// ---------------------------------------------------------------------------
+describe('DEFAULT_COMPONENTS', () => {
+  const validStyles = ['normal', 'bold', 'italic', 'bolditalic']
+
+  it('has a valid fontStyle for every component', () => {
+    for (const [key, value] of Object.entries(DEFAULT_COMPONENTS)) {
+      expect(validStyles, `${key} should have a valid fontStyle`).toContain(value.fontStyle)
+    }
+  })
+
+  it('defaults chords fontFamily to helvetica', () => {
+    expect(DEFAULT_COMPONENTS.chords.fontFamily).toBe('helvetica')
+  })
+
+  it('defaults title fontStyle to bold', () => {
+    expect(DEFAULT_COMPONENTS.title.fontStyle).toBe('bold')
+  })
+
+  it('defaults annotation fontStyle to italic', () => {
+    expect(DEFAULT_COMPONENTS.annotation.fontStyle).toBe('italic')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// exportPrintPdf — font style option
+// ---------------------------------------------------------------------------
+describe('exportPrintPdf font style', () => {
+  it('uses a custom fontStyle from the components option for lyrics', async () => {
+    await exportPrintPdf([latinSong], { components: { lyrics: { fontStyle: 'italic' } } })
+    const calls = mockDoc.setFont.mock.calls
+    expect(calls).toContainEqual(['helvetica', 'italic'])
+  })
+
+  it('uses a custom fontStyle from the components option for title', async () => {
+    // 'bolditalic' is not the default for any component, so this uniquely
+    // proves the title renderer is reading fontStyle rather than hardcoding
+    await exportPrintPdf([latinSong], { components: { title: { fontStyle: 'bolditalic' } } })
+    expect(mockDoc.setFont).toHaveBeenCalledWith('helvetica', 'bolditalic')
   })
 })
 
