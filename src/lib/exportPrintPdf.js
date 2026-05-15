@@ -115,6 +115,7 @@ export async function exportPrintPdf(songs, {
   pageSize   = 'a4',
   components = {},
   pdfTitle   = '',
+  hideChords = false,
 } = {}) {
   if (!songs.length) return
 
@@ -388,13 +389,15 @@ export async function exportPrintPdf(songs, {
         }
 
         if (line.type === 'chord') {
-          advance(chordLineH)
-          renderPureChordRow(line.chords ?? [], line.annotation)
+          if (!hideChords) {
+            advance(chordLineH)
+            renderPureChordRow(line.chords ?? [], line.annotation)
+          }
           continue
         }
 
         // Lyric line — may have inline chords to render above
-        if ((line.chords ?? []).length > 0) {
+        if (!hideChords && (line.chords ?? []).length > 0) {
           advance(chordLineH + lyricLineH)
           renderChordRow(line.chords, line.content ?? '')
         }

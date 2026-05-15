@@ -35,6 +35,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
   const [numCols,     setNumCols]     = useState(2)
   const [pageSize,    setPageSize]    = useState('a4')
   const [components,  setComponents]  = useState(initComponents)
+  const [hideChords,  setHideChords]  = useState(false)
   const [exporting,   setExporting]   = useState(false)
 
   function setCompField(key, field, value) {
@@ -47,7 +48,7 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
   async function handleExport() {
     setExporting(true)
     try {
-      await exportPrintPdf(songs, { numCols, pageSize, components, pdfTitle: pdfTitle.trim() })
+      await exportPrintPdf(songs, { numCols, pageSize, components, pdfTitle: pdfTitle.trim(), hideChords })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
@@ -110,6 +111,17 @@ export function ExportPrintModal({ isOpen, songs, onClose, onAddToast }) {
             ))}
           </div>
         </div>
+
+        {/* Remove chords */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={hideChords}
+            onChange={e => setHideChords(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">Remove all chords</span>
+        </label>
 
         {/* Per-component settings */}
         <div>
