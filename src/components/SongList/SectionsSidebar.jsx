@@ -25,7 +25,7 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
         </button>
       </div>
       {open && (
-        <div className="flex flex-col w-[90px]
+        <div className="flex flex-col w-[140px]
           border-r border-gray-200 dark:border-gray-700
           bg-gray-50 dark:bg-gray-900">
           <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
@@ -34,7 +34,7 @@ export function SectionsSidebar({ sections, activeIndex, open, onToggle, onSecti
                 key={index}
                 type="button"
                 onClick={() => onSectionClick(index)}
-                className={`w-full text-left text-[10px] font-medium px-2 py-1 rounded-full
+                className={`w-full text-left text-[13px] font-medium px-2 py-1.5 rounded-full
                   transition-colors flex items-center gap-1.5
                   ${activeIndex === index
                     ? 'bg-indigo-500 text-white'
