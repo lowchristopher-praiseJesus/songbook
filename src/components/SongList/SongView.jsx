@@ -27,10 +27,6 @@ export function SongView({
 
   useEffect(() => {
     setActiveIndex(0)
-    sectionRefs.current = Array.from(
-      { length: song.sections?.length ?? 0 },
-      () => createRef()
-    )
   }, [song.id])
 
   // IntersectionObserver: highlight the topmost visible section
@@ -64,7 +60,7 @@ export function SongView({
         sections={song.sections ?? []}
         activeIndex={activeIndex}
         open={sidebarOpen}
-        onToggle={() => setSidebarOpen(o => !o)}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSectionClick={handleSectionClick}
       />
       <div className="flex-1 min-w-0">
