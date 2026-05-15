@@ -46,9 +46,9 @@ vi.mock('../../../hooks/useAutoScroll', () => ({
   useAutoScroll: vi.fn(() => ({ isScrolling: false, start: vi.fn(), stop: vi.fn() })),
 }))
 
-// Stub SongList to avoid deep rendering
-vi.mock('../SongList', () => ({
-  SongList: vi.fn(({ isFit }) => <div data-testid="song-list" data-is-fit={String(isFit)} />),
+// Stub SongView to avoid deep rendering
+vi.mock('../SongView', () => ({
+  SongView: vi.fn(({ isFit }) => <div data-testid="song-list" data-is-fit={String(isFit)} />),
 }))
 
 vi.mock('../PerformanceMode/PerformanceModal', () => ({
