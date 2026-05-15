@@ -48,7 +48,7 @@ vi.mock('../../../hooks/useAutoScroll', () => ({
 
 // Stub SongView to avoid deep rendering
 vi.mock('../SongView', () => ({
-  SongView: vi.fn(({ isFit }) => <div data-testid="song-list" data-is-fit={String(isFit)} />),
+  SongView: vi.fn(({ isFit }) => <div data-testid="song-view" data-is-fit={String(isFit)} />),
 }))
 
 vi.mock('../PerformanceMode/PerformanceModal', () => ({
@@ -83,7 +83,7 @@ describe('MainContent maximize button', () => {
     expect(btn.className).not.toMatch(/indigo/)
   })
 
-  it('toggles isFit on click and passes it to SongList', () => {
+  it('toggles isFit on click and passes it to SongView', () => {
     render(
       <MainContent
         onAddToast={vi.fn()}
@@ -95,7 +95,7 @@ describe('MainContent maximize button', () => {
     )
     const btn = screen.getByLabelText('Fit song to screen')
     fireEvent.click(btn)
-    expect(screen.getByTestId('song-list').dataset.isFit).toBe('true')
+    expect(screen.getByTestId('song-view').dataset.isFit).toBe('true')
   })
 
   it('disables the + font button while fit mode is active', () => {
