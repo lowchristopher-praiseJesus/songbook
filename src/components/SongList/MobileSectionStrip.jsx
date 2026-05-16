@@ -23,6 +23,8 @@ export function MobileSectionStrip({ sections, activeIndex, onSectionClick }) {
         ref={stripRef}
         className="flex overflow-x-auto px-3 py-2 gap-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        onTouchStart={e => e.stopPropagation()}
+        onTouchEnd={e => e.stopPropagation()}
       >
         {labelledSections.map(({ label, index }) => (
           <button
