@@ -54,14 +54,19 @@ export function SongView({
   // IntersectionObserver: highlight the topmost visible section
   useEffect(() => {
     const elements = sectionRefs.current.map(r => r.current).filter(Boolean)
+    const visibleSet = new Set()
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const intersecting = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (intersecting.length > 0) {
-          const idx = elements.indexOf(intersecting[0].target)
+        for (const entry of entries) {
+          if (entry.isIntersecting) visibleSet.add(entry.target)
+          else visibleSet.delete(entry.target)
+        }
+        const sorted = [...visibleSet].sort(
+          (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+        )
+        if (sorted.length > 0) {
+          const idx = elements.indexOf(sorted[0])
           if (idx !== -1) setActiveIndex(idx)
         }
       },
