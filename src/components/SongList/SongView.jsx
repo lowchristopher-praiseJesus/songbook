@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, createRef } from 'react'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { SongList } from './SongList'
 import { SectionsSidebar } from './SectionsSidebar'
+import { MobileSectionStrip } from './MobileSectionStrip'
 
 export function SongView({
   song,
@@ -91,21 +92,28 @@ export function SongView({
         onSectionClick={handleSectionClick}
         topOffset={bodyOffset}
       />
-      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden" ref={containerRef}>
-        <SongList
-          song={song}
-          onPerformanceMode={onPerformanceMode}
-          lyricsOnly={lyricsOnly}
-          fontSize={fontSize}
-          onFontSizeChange={onFontSizeChange}
-          chordsOpen={chordsOpen}
-          onChordsToggle={onChordsToggle}
-          onEdit={onEdit}
-          isFit={isFit}
-          containerRef={containerRef}
-          sectionRefs={sectionRefs.current}
-          headerRef={headerRef}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <MobileSectionStrip
+          sections={song.sections ?? []}
+          activeIndex={activeIndex}
+          onSectionClick={handleSectionClick}
         />
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" ref={containerRef}>
+          <SongList
+            song={song}
+            onPerformanceMode={onPerformanceMode}
+            lyricsOnly={lyricsOnly}
+            fontSize={fontSize}
+            onFontSizeChange={onFontSizeChange}
+            chordsOpen={chordsOpen}
+            onChordsToggle={onChordsToggle}
+            onEdit={onEdit}
+            isFit={isFit}
+            containerRef={containerRef}
+            sectionRefs={sectionRefs.current}
+            headerRef={headerRef}
+          />
+        </div>
       </div>
     </div>
   )
