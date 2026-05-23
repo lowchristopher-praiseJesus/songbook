@@ -39,6 +39,8 @@ export default function App() {
   const initClient = useSessionStore(s => s.initClient)
   const clearSession = useSessionStore(s => s.clearSession)
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+  const [autoClosingSidebar, setAutoClosingSidebar] = useState(false)
+  const autoCloseTimerRef = useRef(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
   const [sessionLyricsOnly, setSessionLyricsOnly] = useState(false)
@@ -55,6 +57,7 @@ export default function App() {
   const [broadcastTimeFromUrl, setBroadcastTimeFromUrl] = useState(null)
 
   useEffect(() => { init() }, [init])
+  useEffect(() => () => clearTimeout(autoCloseTimerRef.current), [])
 
   // Listen for open-settings custom event (e.g. from ShareModal license prompt)
   useEffect(() => {
@@ -135,6 +138,13 @@ export default function App() {
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
       setSidebarOpen(true)
+      if (window.innerWidth < 768) {
+        setAutoClosingSidebar(true)
+        autoCloseTimerRef.current = setTimeout(() => {
+          setSidebarOpen(false)
+          setAutoClosingSidebar(false)
+        }, 2500)
+      }
       if (newSongIds.length > 0) {
         setViewMode('collections')
         setExpandedCollectionId(collectionId)
@@ -293,6 +303,7 @@ export default function App() {
                 onStartSession={handleStartSession}
                 onJoinSession={handleJoinSession}
                 conductorSync={conductorSync}
+                isAutoClosing={autoClosingSidebar}
               />
               <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
             </>
