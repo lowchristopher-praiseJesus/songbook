@@ -91,7 +91,7 @@ export const useLibraryStore = create((set, get) => ({
    * If collectionSource is also provided, looks for an existing collection with
    * that source tag first and adds to it rather than creating a duplicate.
    */
-  addSongs(songs, collectionName = null, collectionSource = null) {
+  addSongs(songs, collectionName = null, collectionSource = null, shareCode = null) {
     const currentIndex = [...get().index]
     const currentCollections = [...get().collections]
     const newSongIds = []
@@ -142,6 +142,7 @@ export const useLibraryStore = create((set, get) => ({
           createdAt: new Date().toISOString(),
           songIds: newSongIds,
           ...(collectionSource ? { source: collectionSource } : {}),
+          ...(shareCode ? { shareCode } : {}),
         }
         currentCollections.push(newCollection)
         resultCollectionId = newCollection.id

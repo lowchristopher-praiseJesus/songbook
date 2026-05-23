@@ -279,3 +279,19 @@ describe('duplicateCollection', () => {
     expect(useLibraryStore.getState().collections).toHaveLength(2)
   })
 })
+
+describe('addSongs shareCode', () => {
+  it('stores shareCode on the new collection when provided', () => {
+    const song = { meta: { title: 'How Great Thou Art', artist: '' }, rawText: '', sections: [] }
+    useLibraryStore.getState().addSongs([song], 'Easter Set', null, 'abc123')
+    const { collections } = useLibraryStore.getState()
+    expect(collections[0].shareCode).toBe('abc123')
+  })
+
+  it('does not set shareCode on collection when not provided', () => {
+    const song = { meta: { title: 'Amazing Grace', artist: '' }, rawText: '', sections: [] }
+    useLibraryStore.getState().addSongs([song], 'Sunday Set')
+    const { collections } = useLibraryStore.getState()
+    expect(collections[0].shareCode).toBeUndefined()
+  })
+})
