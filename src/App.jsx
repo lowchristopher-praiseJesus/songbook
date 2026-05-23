@@ -96,7 +96,7 @@ export default function App() {
 
     fetchShare(shareCode)
       .then(buf => parseSbpFile(buf))
-      .then(parsed => setShareSongs(parsed))
+      .then(parsed => setShareSongs({ ...parsed, shareCode }))
       .catch(err => {
         if (err.code === 'expired') {
           addToast('This share link has expired.', 'error')
@@ -133,7 +133,7 @@ export default function App() {
   function handleShareImport() {
     if (shareSongs) {
       const name = shareSongs.collectionName || 'Shared Songs'
-      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name)
+      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name, null, shareSongs.shareCode)
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
@@ -177,6 +177,17 @@ export default function App() {
   }
 
   function handleShareCancel() {
+    setShareSongs(null)
+    clearShareParam()
+  }
+
+  function handleShareGoToCollection(collectionId) {
+    const collection = collections.find(c => c.id === collectionId)
+    if (collection && collection.songIds.length > 0) {
+      setViewMode('collections')
+      setExpandedCollectionId(collectionId)
+      selectSong(collection.songIds[0], collectionId)
+    }
     setShareSongs(null)
     clearShareParam()
   }
@@ -335,11 +346,13 @@ export default function App() {
       ) : (
         <ImportConfirmModal
           isOpen={shareSongs !== null}
+          shareCode={shareSongs?.shareCode ?? null}
           songs={shareSongs?.songs ?? []}
           collectionName={shareSongs?.collectionName ?? null}
           lyricsOnly={shareSongs?.lyricsOnly ?? false}
           onImport={handleShareImport}
           onCancel={handleShareCancel}
+          onGoToCollection={handleShareGoToCollection}
         />
       )}
       </LicenseProvider>

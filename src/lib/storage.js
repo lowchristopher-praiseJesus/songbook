@@ -72,6 +72,14 @@ export function setTransposeState(songId, state) {
   localStorage.setItem(TRANSPOSE_PREFIX + songId, JSON.stringify(state))
 }
 
+/**
+ * Load all collections from localStorage.
+ * Collection shape: { id, name, createdAt, songIds, source?,
+ *   shareCode?,        ← opaque share token the collection was imported from
+ *   conductorCode?, conductorRole?, conductorDirectorToken?, conductorToken?,
+ *   conductorShareCode?, conductorBroadcastTime?, conductorCreatedAt?,
+ *   conductorExpiresAt?, conductorEnded? }
+ */
 export function loadCollections() {
   const raw = localStorage.getItem(COLLECTIONS_KEY)
   if (raw === null) return []
