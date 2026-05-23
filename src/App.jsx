@@ -148,7 +148,7 @@ export default function App() {
       if (newSongIds.length > 0) {
         setViewMode('collections')
         setExpandedCollectionId(collectionId)
-        selectSong(newSongIds[0])
+        selectSong(newSongIds[0], collectionId)
       }
     }
     setShareSongs(null)
@@ -207,7 +207,7 @@ export default function App() {
     if (newSongIds.length > 0) {
       setViewMode('collections')
       setExpandedCollectionId(collectionId)
-      selectSong(newSongIds[0])
+      selectSong(newSongIds[0], collectionId)
     }
     setShareSongs(null)
     clearShareParam()

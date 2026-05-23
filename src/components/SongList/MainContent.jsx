@@ -15,6 +15,7 @@ import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 import metronomeIcon from '../../assets/metronome.png'
+import swipeIcon from '../../assets/swipe.png'
 import { AlbumDetailView } from '../Album/AlbumDetailView'
 import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 
@@ -59,6 +60,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
   const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
   const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
+  const inCollection = !!activeSong && !!activeCollectionId
+    && !performanceSections && !editingSongId && !isCreatingNewSong
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
@@ -191,6 +194,23 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
             animate-[fadeInOut_1.2s_ease-in-out_forwards] z-40 whitespace-nowrap max-w-xs truncate"
         >
           {swipeHint.direction === 'left' ? '→ ' : '← '}{swipeHint.title}
+        </div>
+      )}
+
+      {/* Collection swipe indicator (mobile only) */}
+      {inCollection && (prevEntry || nextEntry) && (
+        <div className="pointer-events-none md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
+          <img
+            src={swipeIcon}
+            alt="Swipe to navigate"
+            className="w-12 h-12 object-contain animate-swipe-gesture [mix-blend-mode:multiply] dark:invert dark:[mix-blend-mode:screen]"
+          />
+        </div>
+      )}
+      {inCollection && navOrder.length > 1 && (
+        <div className="pointer-events-none md:hidden fixed bottom-4 left-4 z-20
+          text-xs text-gray-400 dark:text-gray-500 font-mono tabular-nums select-none">
+          {currentIdx + 1} / {navOrder.length}
         </div>
       )}
 
