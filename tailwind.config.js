@@ -19,11 +19,16 @@ export default {
           '0%':   { opacity: '0', transform: 'translateX(-48px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
+        drain: {
+          '0%':   { width: '100%' },
+          '100%': { width: '0%' },
+        },
       },
       animation: {
         'fadeInOut':      'fadeInOut 1.2s ease-in-out forwards',
         'slideFromRight': 'slideFromRight 0.4s ease-out both',
         'slideFromLeft':  'slideFromLeft 0.4s ease-out both',
+        'drain':          'drain 2.5s linear forwards',
       },
     },
   },
