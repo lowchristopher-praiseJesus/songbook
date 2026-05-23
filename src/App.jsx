@@ -188,6 +188,7 @@ export default function App() {
       setExpandedCollectionId(collectionId)
       selectSong(collection.songIds[0], collectionId)
     }
+    setSidebarOpen(true)
     setShareSongs(null)
     clearShareParam()
   }
