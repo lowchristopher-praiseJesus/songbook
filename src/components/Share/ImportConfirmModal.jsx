@@ -1,7 +1,37 @@
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
+import { useLibraryStore } from '../../store/libraryStore';
 
-export function ImportConfirmModal({ isOpen, songs, collectionName, lyricsOnly = false, onImport, onCancel }) {
+export function ImportConfirmModal({ isOpen, shareCode = null, songs, collectionName, lyricsOnly = false, onImport, onCancel, onGoToCollection }) {
+  const collections = useLibraryStore(s => s.collections)
+
+  const existingCollection = shareCode
+    ? collections.find(c => c.shareCode === shareCode)
+    : null
+  const isDuplicate = !!existingCollection
+
+  if (isOpen && isDuplicate) {
+    return (
+      <Modal isOpen={isOpen} title="Already imported" onClose={onCancel}>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          You've already imported this collection:{' '}
+          <span className="font-medium text-gray-800 dark:text-gray-200">
+            {existingCollection.name}
+          </span>
+        </p>
+        <div className="flex flex-col gap-2">
+          <Button variant="primary" onClick={() => onGoToCollection(existingCollection.id)}>
+            View collection
+          </Button>
+          <Button variant="secondary" onClick={onImport}>
+            Import again
+          </Button>
+          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        </div>
+      </Modal>
+    )
+  }
+
   const displayName = collectionName || 'Shared Songs'
   return (
     <Modal isOpen={isOpen} title="Shared Songbook" onClose={onCancel}>
@@ -28,5 +58,5 @@ export function ImportConfirmModal({ isOpen, songs, collectionName, lyricsOnly =
         <Button variant="primary" onClick={onImport}>Import All</Button>
       </div>
     </Modal>
-  );
+  )
 }
