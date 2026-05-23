@@ -210,7 +210,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       {/* Collection swipe indicator (mobile only) — fades after 5s, dismissed on first swipe */}
       {inCollection && swipeHintVisible && (prevEntry || nextEntry) && (
         <div
-          key={activeSongId}
           className="pointer-events-none md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-swipe-fade-out"
           onAnimationEnd={() => setSwipeHintVisible(false)}
         >
