@@ -39,6 +39,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const [duplicateState, setDuplicateState] = useState(null)
   const [swipeHint, setSwipeHint] = useState(null)    // { title, direction: 'left'|'right' }
   const [swipeDir, setSwipeDir] = useState(null)      // 'left' | 'right' | null
+  const [swipeHintVisible, setSwipeHintVisible] = useState(
+    () => !localStorage.getItem('songsheet_swipe_hint_seen')
+  )
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
@@ -76,11 +79,17 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSongId])
 
+  function dismissSwipeHint() {
+    localStorage.setItem('songsheet_swipe_hint_seen', '1')
+    setSwipeHintVisible(false)
+  }
+
   const goNext = useCallback(() => {
     if (!nextEntry) return
     setSwipeDir('left')
     selectSong(nextEntry.id)
     showHint(nextEntry.title, 'left')
+    dismissSwipeHint()
   }, [nextEntry, selectSong])
 
   const goPrev = useCallback(() => {
@@ -88,6 +97,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     setSwipeDir('right')
     selectSong(prevEntry.id)
     showHint(prevEntry.title, 'right')
+    dismissSwipeHint()
   }, [prevEntry, selectSong])
 
   const { onTouchStart, onTouchEnd } = useSwipeNavigation({
@@ -197,9 +207,13 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {/* Collection swipe indicator (mobile only) */}
-      {inCollection && (prevEntry || nextEntry) && (
-        <div className="pointer-events-none md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
+      {/* Collection swipe indicator (mobile only) — fades after 5s, dismissed on first swipe */}
+      {inCollection && swipeHintVisible && (prevEntry || nextEntry) && (
+        <div
+          key={activeSongId}
+          className="pointer-events-none md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-swipe-fade-out"
+          onAnimationEnd={() => setSwipeHintVisible(false)}
+        >
           <img
             src={swipeIcon}
             alt="Swipe to navigate"

@@ -31,6 +31,11 @@ export default {
           '80%':  { transform: 'translateX(0)',    opacity: '0.45' },
           '100%': { transform: 'translateX(0)',    opacity: '0.45' },
         },
+        swipeFadeOut: {
+          '0%':   { opacity: '1' },
+          '75%':  { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
       },
       animation: {
         'fadeInOut':      'fadeInOut 1.2s ease-in-out forwards',
@@ -38,6 +43,7 @@ export default {
         'slideFromLeft':  'slideFromLeft 0.4s ease-out both',
         'drain':          'drain 2.5s linear forwards',
         'swipe-gesture':  'swipeGesture 2.4s ease-in-out infinite',
+        'swipe-fade-out': 'swipeFadeOut 5s ease-in-out forwards',
       },
     },
   },
