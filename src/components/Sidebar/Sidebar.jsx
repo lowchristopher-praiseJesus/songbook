@@ -20,7 +20,7 @@ import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
 import { AlbumsPanel } from '../Album/AlbumsPanel'
 import { AlbumCard } from '../Album/AlbumCard'
 
-export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync, onNewAlbum }) {
+export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync, onNewAlbum, isAutoClosing = false }) {
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
@@ -594,6 +594,12 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           <Button variant="ghost" onClick={() => resolveDuplicate('skip')}>Skip</Button>
         </div>
       </Modal>
+
+      {isAutoClosing && (
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div data-testid="auto-close-bar" className="h-full bg-indigo-500 animate-drain" />
+        </div>
+      )}
     </aside>
 
       {/* Filename modal */}
