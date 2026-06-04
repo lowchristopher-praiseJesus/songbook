@@ -13,6 +13,8 @@ vi.mock('../../../store/libraryStore', () => ({
       selectedSongIds: new Set(),
       toggleGroupSelection: vi.fn(),
       expandedCollectionId: mockExpandedCollectionId,
+      collections: [],
+      applyShareRefresh: vi.fn(),
     }),
 }))
 

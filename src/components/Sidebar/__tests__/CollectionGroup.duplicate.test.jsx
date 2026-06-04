@@ -14,6 +14,8 @@ vi.mock('../../../store/libraryStore', () => ({
       selectedSongIds: new Set(),
       toggleGroupSelection: vi.fn(),
       expandedCollectionId: null,
+      collections: [],
+      applyShareRefresh: vi.fn(),
     }),
 }))
 

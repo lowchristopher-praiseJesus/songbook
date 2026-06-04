@@ -350,6 +350,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                       setExportSourceCollectionId(val.id)
                     }
                   }}
+                  onAddToast={onAddToast}
                 />
               ))}
               {filteredCollectionGroups.length === 0 && (
@@ -463,6 +464,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                       setExportSourceCollectionId(val.id)
                     }
                   }}
+                  onAddToast={onAddToast}
                 />
                 {duplicatingCollectionId === group.id && (
                   <li>

@@ -17,6 +17,11 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
 import { SongListItem } from './SongListItem'
+import { checkShareVersion, fetchShare } from '../../lib/shareApi'
+import { parseSbpFile } from '../../lib/parser/sbpParser'
+import { mergeSharedCollection } from '../../lib/mergeSharedCollection'
+import { loadSong } from '../../lib/storage'
+import { ConflictPickerModal } from '../Share/ConflictPickerModal'
 
 function SortableSongListItem({ entry, onSelect, collectionId }) {
   const {
@@ -47,7 +52,7 @@ function SortableSongListItem({ entry, onSelect, collectionId }) {
   )
 }
 
-export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDuplicate = () => {}, onGroupCheckboxChange = () => {} }) {
+export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDuplicate = () => {}, onGroupCheckboxChange = () => {}, onAddToast = () => {} }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(group.name)
@@ -60,6 +65,11 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
   const expandedCollectionId = useLibraryStore(s => s.expandedCollectionId)
+  const [linkExpired, setLinkExpired] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [pendingRefresh, setPendingRefresh] = useState(null)
+  const collection = useLibraryStore(s => s.collections.find(c => c.id === group.id))
+  const applyShareRefresh = useLibraryStore(s => s.applyShareRefresh)
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -125,6 +135,64 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
     const newIndex = groupIds.indexOf(over.id)
     setCollectionSongs(group.id, arrayMove(groupIds, oldIndex, newIndex))
   }, [groupIds, group.id, setCollectionSongs])
+
+  const handleCheckUpdates = useCallback(async (e) => {
+    e.stopPropagation()
+    if (!collection?.shareCode || refreshing) return
+    setRefreshing(true)
+    try {
+      const { version } = await checkShareVersion(collection.shareCode)
+      if (version <= (collection.lastVersion ?? 1)) {
+        onAddToast('Already up to date.', 'info')
+        return
+      }
+      const buf = await fetchShare(collection.shareCode)
+      const { songs: serverSongs } = await parseSbpFile(buf)
+      const localSongs = collection.songIds.map(id => loadSong(id)).filter(Boolean)
+      const mergeResult = mergeSharedCollection(collection, localSongs, serverSongs)
+
+      if (mergeResult.conflicts.length === 0) {
+        applyShareRefresh(collection.id, {
+          patches: mergeResult.autoApplied,
+          newSongs: mergeResult.newSongs,
+          removed: mergeResult.removed,
+          serverSbpIdOrder: mergeResult.serverSbpIdOrder,
+          newVersion: version,
+        })
+        const changed = mergeResult.autoApplied.length
+        const added = mergeResult.newSongs.length
+        const removedCount = mergeResult.removed.length
+        const parts = []
+        if (changed) parts.push(`${changed} song${changed !== 1 ? 's' : ''} changed`)
+        if (added) parts.push(`${added} added`)
+        if (removedCount) parts.push(`${removedCount} removed`)
+        onAddToast(parts.length ? `Updated — ${parts.join(', ')}` : 'Already up to date.', 'success')
+      } else {
+        setPendingRefresh({ ...mergeResult, newVersion: version })
+      }
+    } catch (err) {
+      if (err.code === 'expired') {
+        setLinkExpired(true)
+        return
+      }
+      onAddToast('Could not check for updates. Please try again.', 'error')
+    } finally {
+      setRefreshing(false)
+    }
+  }, [collection, refreshing, onAddToast, applyShareRefresh])
+
+  function handleConflictApply(resolvedPatches) {
+    if (!pendingRefresh) return
+    applyShareRefresh(collection.id, {
+      patches: [...pendingRefresh.autoApplied, ...resolvedPatches],
+      newSongs: pendingRefresh.newSongs,
+      removed: pendingRefresh.removed,
+      serverSbpIdOrder: pendingRefresh.serverSbpIdOrder,
+      newVersion: pendingRefresh.newVersion,
+    })
+    setPendingRefresh(null)
+    onAddToast('Updated — conflicts resolved.', 'success')
+  }
 
   const isSpecial = group.id === '__uncategorized__'
 
@@ -224,6 +292,27 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
                 🗑
               </button>
             )}
+            {collection?.shareCode && !isSpecial && !linkExpired && (
+              <button
+                type="button"
+                aria-label="Check for updates"
+                title="Check for updates"
+                onClick={handleCheckUpdates}
+                disabled={refreshing}
+                className="ml-1 p-1 rounded shrink-0 text-xs
+                  [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
+                  focus:opacity-100 transition-opacity
+                  hover:bg-gray-200 dark:hover:bg-gray-600 text-indigo-500 dark:text-indigo-400
+                  disabled:opacity-40"
+              >
+                {refreshing ? '…' : '↻'}
+              </button>
+            )}
+            {collection?.shareCode && !isSpecial && linkExpired && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                Link expired
+              </span>
+            )}
           </>
         )}
       </div>
@@ -245,6 +334,13 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
             </SortableContext>
           </DndContext>
         )
+      )}
+      {pendingRefresh && (
+        <ConflictPickerModal
+          conflicts={pendingRefresh.conflicts}
+          onApply={handleConflictApply}
+          onCancel={() => setPendingRefresh(null)}
+        />
       )}
     </li>
   )
