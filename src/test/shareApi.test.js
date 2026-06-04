@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { uploadShare, fetchShare } from '../lib/shareApi';
+import { uploadShare, fetchShare, checkShareVersion, updateShare } from '../lib/shareApi';
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
@@ -72,5 +72,71 @@ describe('fetchShare', () => {
   it('throws with code network_error on other failure', async () => {
     fetch.mockResolvedValue({ status: 500, ok: false });
     await expect(fetchShare('abc')).rejects.toMatchObject({ code: 'network_error' });
+  });
+});
+
+describe('checkShareVersion', () => {
+  it('returns { version } from X-Share-Version header on 200', async () => {
+    fetch.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: { get: (h) => h === 'X-Share-Version' ? '3' : null },
+      text: async () => '',
+    });
+    const result = await checkShareVersion('abc-123');
+    expect(result).toEqual({ version: 3 });
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/share/abc-123'),
+      expect.objectContaining({ method: 'HEAD' }),
+    );
+  });
+
+  it('throws with code expired on 410', async () => {
+    fetch.mockResolvedValue({ status: 410, ok: false, headers: { get: () => null } });
+    await expect(checkShareVersion('abc')).rejects.toMatchObject({ code: 'expired' });
+  });
+
+  it('throws with code not_found on 404', async () => {
+    fetch.mockResolvedValue({ status: 404, ok: false, headers: { get: () => null } });
+    await expect(checkShareVersion('abc')).rejects.toMatchObject({ code: 'not_found' });
+  });
+
+  it('defaults to version 1 when X-Share-Version header is absent', async () => {
+    fetch.mockResolvedValue({ status: 200, ok: true, headers: { get: () => null }, text: async () => '' });
+    const result = await checkShareVersion('abc-123');
+    expect(result).toEqual({ version: 1 });
+  });
+});
+
+describe('updateShare', () => {
+  it('PUTs blob to /share/{shareCode} and returns { version, updatedAt }', async () => {
+    const mockResult = { version: 2, updatedAt: '2026-06-04T10:00:00.000Z' };
+    fetch.mockResolvedValue({ ok: true, json: async () => mockResult });
+    const blob = new Blob(['zip'], { type: 'application/zip' });
+    const result = await updateShare('abc-123', blob);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/share/abc-123'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({ 'Content-Type': 'application/zip' }),
+        body: blob,
+      }),
+    );
+    expect(result).toEqual(mockResult);
+  });
+
+  it('throws with code update_failed on non-ok response', async () => {
+    fetch.mockResolvedValue({ ok: false });
+    await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'update_failed' });
+  });
+
+  it('throws with code not_found on 404', async () => {
+    fetch.mockResolvedValue({ status: 404, ok: false });
+    await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'not_found' });
+  });
+
+  it('throws with code expired on 410', async () => {
+    fetch.mockResolvedValue({ status: 410, ok: false });
+    await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'expired' });
   });
 });

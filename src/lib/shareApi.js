@@ -28,3 +28,24 @@ export async function fetchShare(shareCode) {
   if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });
   return res.arrayBuffer();
 }
+
+export async function checkShareVersion(shareCode) {
+  const res = await fetch(`${WORKER_URL}/share/${shareCode}`, { method: 'HEAD' });
+  if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
+  if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
+  if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  const version = Number(res.headers.get('X-Share-Version') ?? 1);
+  return { version };
+}
+
+export async function updateShare(shareCode, blob) {
+  const res = await fetch(`${WORKER_URL}/share/${shareCode}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/zip' },
+    body: blob,
+  });
+  if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
+  if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
+  if (!res.ok) throw Object.assign(new Error('update_failed'), { code: 'update_failed' });
+  return res.json();
+}
