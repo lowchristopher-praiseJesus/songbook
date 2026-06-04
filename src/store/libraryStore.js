@@ -116,7 +116,7 @@ export const useLibraryStore = create((set, get) => ({
             keyIndex: song.meta.keyIndex ?? 0,
             key:      song.meta.key ?? '',
             capo:     song.meta.capo ?? 0,
-            tempo:    song.meta.tempo ?? 0,
+            tempo:    song.meta.tempo,  // preserve undefined — must match buildBaseline exactly
           },
         }
       }
