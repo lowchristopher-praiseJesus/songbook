@@ -517,11 +517,18 @@ export const useLibraryStore = create((set, get) => ({
     newIndex.sort((a, b) => a.title.localeCompare(b.title))
     saveIndex(newIndex)
 
-    // Build new songIds: server order first, then manually-added songs
+    // Build new songIds: server order first, then unordered new songs, then manually-added songs
     const allSongIds = [...collection.songIds, ...addedIds].filter(id => !removed.includes(id))
+
+    // Cache song objects to avoid repeated localStorage reads
+    const songCache = new Map()
+    for (const id of allSongIds) {
+      songCache.set(id, loadSong(id))
+    }
+
     const sbpIdToLocalId = new Map()
     for (const id of allSongIds) {
-      const s = loadSong(id)
+      const s = songCache.get(id)
       if (s?.meta?.sbpId) sbpIdToLocalId.set(s.meta.sbpId, id)
     }
 
@@ -529,12 +536,18 @@ export const useLibraryStore = create((set, get) => ({
       .map(sbpId => sbpIdToLocalId.get(sbpId))
       .filter(Boolean)
 
+    const orderedSet = new Set(orderedIds)
+
     const manualIds = allSongIds.filter(id => {
-      const s = loadSong(id)
-      return !s?.meta?.sharedBaseline
+      const s = songCache.get(id)
+      return !s?.meta?.sharedBaseline && !orderedSet.has(id)
     })
 
-    const newSongIds = [...new Set([...orderedIds, ...manualIds])]
+    // Newly-added songs from server that aren't in orderedIds
+    // (can happen if serverSbpIdOrder is empty or doesn't include all new songs)
+    const unorderedNewIds = addedIds.filter(id => !orderedSet.has(id))
+
+    const newSongIds = [...new Set([...orderedIds, ...unorderedNewIds, ...manualIds])]
 
     const newCollections = state.collections.map(c =>
       c.id === collectionId

@@ -28,7 +28,7 @@ vi.mock('../lib/storage', () => ({
 }));
 vi.mock('../lib/albumApi', () => ({ loadMyAlbums: vi.fn(() => []) }));
 
-import { saveSong, saveCollections } from '../lib/storage';
+import { saveSong, saveCollections, loadSong } from '../lib/storage';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -132,5 +132,43 @@ describe('applyShareRefresh', () => {
     const { applyShareRefresh } = useLibraryStore.getState();
     applyShareRefresh('C1', { patches: [], newSongs: [], removed: [], serverSbpIdOrder: [], newVersion: 5 });
     expect(useLibraryStore.getState().collections[0].lastVersion).toBe(5);
+  });
+
+  it('includes new songs in collection even when serverSbpIdOrder is empty', () => {
+    useLibraryStore.setState({
+      index: [],
+      collections: [{ id: 'C1', name: 'S', createdAt: '', songIds: [], shareCode: 'x', lastVersion: 1 }],
+      activeSongId: null,
+      activeSong: null,
+    });
+    // Arrange loadSong to return the new song when asked
+    loadSong.mockImplementation(id => {
+      if (id === 'NEW1') return {
+        id: 'NEW1',
+        rawText: 'content',
+        meta: { title: 'New Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 0,
+                sbpId: 'S_NEW',
+                sharedBaseline: { rawText: 'content', keyIndex: 0, key: 'C', capo: 0, tempo: 0 } },
+        sections: [],
+      };
+      return null;
+    });
+    const { applyShareRefresh } = useLibraryStore.getState();
+    applyShareRefresh('C1', {
+      patches: [],
+      newSongs: [{
+        id: 'NEW1',
+        rawText: 'content',
+        meta: { title: 'New Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 0,
+                sbpId: 'S_NEW',
+                sharedBaseline: { rawText: 'content', keyIndex: 0, key: 'C', capo: 0, tempo: 0 } },
+        sections: [],
+      }],
+      removed: [],
+      serverSbpIdOrder: [],  // Empty — new song's sbpId not listed
+      newVersion: 2,
+    });
+    const col = useLibraryStore.getState().collections[0];
+    expect(col.songIds).toContain('NEW1');
   });
 });
