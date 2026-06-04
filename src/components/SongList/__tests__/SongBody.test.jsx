@@ -84,10 +84,10 @@ describe('SongBody inline strum rendering', () => {
 
   it('renders chord+strum inline in a standalone chord line', () => {
     const { container } = render(<SongBody sections={standaloneSections} />)
-    // E/// at pos 0 (5 chars), A at pos 6 (pad 1 space), G at pos 12 (pad 4 spaces)
+    // E/// at pos 0 (4 chars), cursor→4; A at pos 6, gap=2; cursor→7; G at pos 12, gap=5
     // The chord line div is aria-hidden, so query directly
     const chordDiv = container.querySelector('[aria-hidden="true"]')
-    expect(chordDiv?.textContent).toBe('E///  A     G ')
+    expect(chordDiv?.textContent).toBe('E///  A     G')
   })
 
   it('renders chord+strum inline above lyrics in a lyric line', () => {

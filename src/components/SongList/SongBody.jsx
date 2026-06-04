@@ -159,25 +159,32 @@ const SongSection = React.forwardRef(function SongSection(
             // If this chord line will be absorbed into a following lyric, skip it —
             // chords will be merged into the lyric line below.
             if (absorbedChordLines.has(i)) return null
-            // Standalone chord line (e.g. instrumental break with no lyric below)
+            // Standalone chord line (e.g. instrumental break with no lyric below).
+            // Render each chord as an inline-block span with minWidth (same coefficient
+            // as ChordedLine) so proportional fonts never cause adjacent chords to overlap.
             const chords = line.chords ?? []
-            let lineStr = ''
-            for (const { chord, position, strum } of chords) {
-              while (lineStr.length < position) lineStr += ' '
-              lineStr += chord + (strum || '')
-              lineStr += ' '
+            const sorted = [...chords].sort((a, b) => a.position - b.position)
+            const parts = []
+            let cursor = 0
+            for (let ci = 0; ci < sorted.length; ci++) {
+              const { chord, position, strum } = sorted[ci]
+              const chordText = chord + (strum || '')
+              const gap = position - cursor
+              if (gap > 0) parts.push(<span key={`g${ci}`} style={{ whiteSpace: 'pre' }}>{' '.repeat(gap)}</span>)
+              parts.push(<span key={`ch${ci}`} style={{ display: 'inline-block', minWidth: `${chordText.length * 0.7 + 0.3}em` }}>{chordText}</span>)
+              cursor = position + chordText.length
             }
             return (
               <div
                 key={i}
-                className="font-bold leading-none mb-1 whitespace-pre"
+                className="font-bold leading-none mb-1"
                 style={fitMode
                   ? { fontSize: 'max(12px, calc(var(--fit-fs, 16px) + var(--chord-size-offset, -3px)))', fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
                   : { fontSize: 'max(12px, calc(var(--lyrics-size, 16px) + var(--chord-size-offset, -3px)))', fontFamily: 'var(--chord-font)', color: 'var(--chord-color-active)' }
                 }
                 aria-hidden="true"
               >
-                {lineStr}
+                {parts}
               </div>
             )
           }
