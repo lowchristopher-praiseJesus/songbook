@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ShareModal } from '../components/Share/ShareModal';
 import { useLibraryStore } from '../store/libraryStore';
@@ -7,14 +7,14 @@ import { LicenseContext } from '../contexts/LicenseContext';
 vi.mock('../hooks/useTurnstile', () => ({
   default: () => ({ getToken: async () => 'mock-token' }),
 }));
-vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn() }));
+vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn(), updateShare: vi.fn() }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));
 vi.mock('../lib/conductorApi', () => ({
   createConductorSession: vi.fn().mockResolvedValue({}),
 }));
 
-import { uploadShare } from '../lib/shareApi';
+import { uploadShare, updateShare } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';
 
 const songs = [{ meta: { title: 'El Shaddai' }, id: '1' }];
@@ -157,3 +157,60 @@ describe('ShareModal — self-direct conductor path', () => {
     expect(col.conductorDirectorToken).toBeTruthy()
   })
 })
+
+describe('ShareModal — update mode', () => {
+  beforeEach(() => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+      }],
+    });
+  });
+
+  it('shows "Push Update" button when collection has shareCode', () => {
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    expect(screen.getByRole('button', { name: /push update/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^create link$/i })).not.toBeInTheDocument();
+  });
+
+  it('shows live link banner with version info', () => {
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    expect(screen.getByText(/live link exists/i)).toBeInTheDocument();
+    expect(screen.getByText(/v1/i)).toBeInTheDocument();
+  });
+
+  it('calls updateShare on "Push Update" click and shows success screen', async () => {
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalledWith('abc-123', expect.any(Blob)));
+    await waitFor(() => expect(screen.getByText(/link updated/i)).toBeInTheDocument());
+  });
+
+  it('"New link" button triggers create flow and shows done step with new URL', async () => {
+    uploadShare.mockResolvedValue({
+      shareCode: 'new-code',
+      shareUrl: 'http://app?share=new-code',
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+    });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new link/i }));
+    await waitFor(() => expect(uploadShare).toHaveBeenCalled());
+    expect(await screen.findByDisplayValue('http://app?share=new-code')).toBeInTheDocument();
+  });
+});

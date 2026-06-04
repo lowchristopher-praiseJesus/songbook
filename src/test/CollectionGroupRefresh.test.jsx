@@ -114,3 +114,29 @@ it('shows expired label and hides button when link is expired', async () => {
   await waitFor(() => expect(screen.getByText(/link expired/i)).toBeInTheDocument());
   expect(screen.queryByLabelText(/check for updates/i)).not.toBeInTheDocument();
 });
+
+it('opens ConflictPickerModal when refresh has conflicts', async () => {
+  checkShareVersion.mockResolvedValue({ version: 2 });
+  fetchShare.mockResolvedValue(new ArrayBuffer(4));
+  parseSbpFile.mockResolvedValue({ songs: [] });
+  mergeSharedCollection.mockReturnValue({
+    autoApplied: [],
+    conflicts: [{
+      localId: 'L1',
+      songTitle: 'El Shaddai',
+      fields: [{ key: 'keyIndex', label: 'Key', mine: 4, theirs: 2 }],
+      _autoMetaUpdates: {},
+      _autoRawText: undefined,
+      _newBaseline: { rawText: '', keyIndex: 2, key: 'D', capo: 0, tempo: 120 },
+    }],
+    newSongs: [],
+    removed: [],
+    serverSbpIdOrder: [],
+  });
+  render(<CollectionGroup group={group} onSelect={() => {}} onAddToast={() => {}} />);
+  fireEvent.click(screen.getByLabelText(/check for updates/i));
+  // ConflictPickerModal should appear with the conflict
+  await waitFor(() => expect(screen.getByText('El Shaddai')).toBeInTheDocument());
+  expect(screen.getByText('Key')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument();
+});

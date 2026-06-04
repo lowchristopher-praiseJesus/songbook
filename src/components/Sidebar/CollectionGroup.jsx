@@ -182,7 +182,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
   }, [collection, refreshing, onAddToast, applyShareRefresh])
 
   function handleConflictApply(resolvedPatches) {
-    if (!pendingRefresh) return
+    if (!pendingRefresh || !collection) return
     applyShareRefresh(collection.id, {
       patches: [...pendingRefresh.autoApplied, ...resolvedPatches],
       newSongs: pendingRefresh.newSongs,

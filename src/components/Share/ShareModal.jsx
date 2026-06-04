@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
-import { uploadShare } from '../../lib/shareApi';
+import { uploadShare, updateShare } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -36,6 +36,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const directorQrRef = useRef(null)
   const updateCollection = useLibraryStore(s => s.updateCollection)
   const backfillSongSbpId = useLibraryStore(s => s.backfillSongSbpId)
+  const collections = useLibraryStore(s => s.collections)
+  const collection = collectionId ? collections.find(c => c.id === collectionId) : null
+  const isUpdateMode = !!collection?.shareCode
+  const existingShareUrl = isUpdateMode
+    ? `${import.meta.env.VITE_WORKER_URL ?? ''}/share/${collection.shareCode}`
+    : ''
 
   // Render QR code once the done step is visible and canvas is in the DOM
   useEffect(() => {
@@ -119,6 +125,22 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     }
   }
 
+  async function handlePushUpdate() {
+    if (!collection) return
+    setStep('uploading')
+    setErrorMessage('')
+    try {
+      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, null)
+      const result = await updateShare(collection.shareCode, blob)
+      setExpiresAt(result.updatedAt ?? new Date().toISOString())
+      setStep('update-done')
+    } catch (err) {
+      console.error('[ShareModal] push update failed:', err)
+      setErrorMessage('Update failed. Please check your connection and try again.')
+      setStep('error')
+    }
+  }
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -183,6 +205,30 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     <Modal isOpen={isOpen} title="Share via link" onClose={handleClose}>
       {step === 'idle' && (
         <div className="space-y-4">
+          {isUpdateMode && (
+            <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-3 py-2 mb-3">
+              <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">🔗 Live link exists</p>
+              <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                Created {Math.round((Date.now() - new Date(collection.createdAt).getTime()) / 86_400_000)} days ago · v{collection.lastVersion ?? 1}
+              </p>
+            </div>
+          )}
+          {isUpdateMode && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Current share URL</p>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={existingShareUrl}
+                  className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+                />
+                <Button variant="secondary" onClick={() => {
+                  navigator.clipboard.writeText(existingShareUrl).catch(() => {})
+                }}>Copy</Button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">New link creates a separate URL and does not update this one</p>
+            </div>
+          )}
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {songs.length} song{songs.length !== 1 ? 's' : ''} will be shared.
           </p>
@@ -313,7 +359,18 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
           ) : null}
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleCreateLink}>Create link</Button>
+            {isUpdateMode ? (
+              <>
+                <Button variant="secondary" onClick={handleCreateLink} aria-label="New link">
+                  New link
+                </Button>
+                <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update">
+                  Push Update
+                </Button>
+              </>
+            ) : (
+              <Button variant="primary" onClick={handleCreateLink}>Create link</Button>
+            )}
           </div>
         </div>
       )}
@@ -371,6 +428,17 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             </p>
           )}
 
+          <div className="flex justify-end">
+            <Button variant="ghost" onClick={handleClose}>Done</Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'update-done' && (
+        <div className="space-y-4">
+          <p className="text-sm text-green-600 dark:text-green-400">
+            ✓ Link updated. Recipients can now tap "Check for updates" to see your changes.
+          </p>
           <div className="flex justify-end">
             <Button variant="ghost" onClick={handleClose}>Done</Button>
           </div>
