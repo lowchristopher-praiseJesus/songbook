@@ -133,7 +133,7 @@ export default function App() {
   function handleShareImport() {
     if (shareSongs) {
       const name = shareSongs.collectionName || 'Shared Songs'
-      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name, null, shareSongs.shareCode)
+      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name, null, shareSongs.shareCode, 1)
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
