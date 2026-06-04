@@ -142,7 +142,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
     setRefreshing(true)
     try {
       const { version } = await checkShareVersion(collection.shareCode)
-      if (version <= (collection.lastVersion ?? 1)) {
+      if (version < (collection.lastVersion ?? 1)) {
         onAddToast('Already up to date.', 'info')
         return
       }

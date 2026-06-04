@@ -75,8 +75,9 @@ it('does not render Check for updates button when collection has no shareCode', 
   expect(screen.queryByLabelText(/check for updates/i)).not.toBeInTheDocument();
 });
 
-it('shows "Already up to date" toast when version matches', async () => {
-  checkShareVersion.mockResolvedValue({ version: 1 });
+it('shows "Already up to date" toast when server version is strictly older', async () => {
+  // version(0) < lastVersion(1) → bail early without fetching
+  checkShareVersion.mockResolvedValue({ version: 0 });
   const onAddToast = vi.fn();
   render(<CollectionGroup group={group} onSelect={() => {}} onAddToast={onAddToast} />);
   fireEvent.click(screen.getByLabelText(/check for updates/i));
