@@ -138,10 +138,22 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
 
   const handleCheckUpdates = useCallback(async (e) => {
     e.stopPropagation()
+    // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
+    console.log('[ShareRefresh:click] ' + JSON.stringify({
+      shareCode: collection?.shareCode ? String(collection.shareCode).slice(0, 8) : null,
+      refreshing,
+      localVersion: collection?.lastVersion ?? null,
+    }))
     if (!collection?.shareCode || refreshing) return
     setRefreshing(true)
     try {
       const { version } = await checkShareVersion(collection.shareCode)
+      // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
+      console.log('[ShareRefresh:version] ' + JSON.stringify({
+        serverVersion: version,
+        localVersion: collection.lastVersion ?? 1,
+        willSkipAsUpToDate: version < (collection.lastVersion ?? 1),
+      }))
       if (version < (collection.lastVersion ?? 1)) {
         onAddToast('Already up to date.', 'info')
         return
