@@ -42,7 +42,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const collection = collectionId ? collections.find(c => c.id === collectionId) : null
   const isUpdateMode = !!collection?.shareCode
   const existingShareUrl = isUpdateMode
-    ? `${import.meta.env.VITE_WORKER_URL ?? ''}/share/${collection.shareCode}`
+    ? `${window.location.origin}/?share=${collection.shareCode}`
     : ''
 
   // Render QR code once the done step is visible and canvas is in the DOM
