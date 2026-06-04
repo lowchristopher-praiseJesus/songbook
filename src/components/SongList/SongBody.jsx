@@ -12,6 +12,21 @@ function ChordedLine({ line, fontSize, fitMode }) {
   // Build a position → chord object lookup (includes strum).
   const chordAt = new Map(chords.map((c) => [c.position, c]))
 
+  // A chord label is absolute-positioned, so it only needs reserved width (minWidth)
+  // to avoid colliding with the NEXT chord. When the next chord is far enough away that
+  // the intervening lyric text already provides room, reserving width would instead
+  // split a word (e.g. "belo[Em]ved" → "belo  ved"). So reserve only when the chord
+  // label is wider than the gap of lyric text before the next chord.
+  const LYRIC_CHAR_EM = 0.5 // approximate width of one proportional lyric character
+  const sortedPositions = chords.map((c) => c.position).sort((a, b) => a - b)
+  function chordNeedsWidth(position, chordText) {
+    const next = sortedPositions.find((p) => p > position)
+    if (next === undefined) return false // nothing to the right to collide with
+    const gapEm = (next - position) * LYRIC_CHAR_EM
+    const chordEm = chordText.length * 0.7 + 0.3
+    return chordEm > gapEm
+  }
+
   // Segment the text into word-groups (non-space runs) and spaces.
   // Each word-group is wrapped in white-space:nowrap so that inline-block
   // chord anchors inside a word never create a spurious line-break point
@@ -72,10 +87,12 @@ function ChordedLine({ line, fontSize, fitMode }) {
                     className="relative inline-block"
                     style={{
                       paddingTop: '1.3em',
-                      // The chord label is absolute-positioned and doesn't expand the container,
-                      // so minWidth is always needed to reserve horizontal space equal to the chord
-                      // text width. Without it, wide chords mid-word overflow into adjacent chords.
-                      minWidth: `${(part.chord + (part.strum || '')).length * 0.7 + 0.3}em`,
+                      // Reserve width only when this chord's label would collide with the next
+                      // chord; otherwise let it overhang the following lyric chars without
+                      // splitting the word. See chordNeedsWidth above.
+                      ...(chordNeedsWidth(part.key, part.chord + (part.strum || ''))
+                        ? { minWidth: `${(part.chord + (part.strum || '')).length * 0.7 + 0.3}em` }
+                        : {}),
                     }}
                   >
                     <span

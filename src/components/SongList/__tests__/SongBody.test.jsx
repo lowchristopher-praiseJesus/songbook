@@ -100,6 +100,47 @@ describe('SongBody inline strum rendering', () => {
     // Chord line text should not show "Anull" or similar
     expect(screen.queryByText(/null/)).not.toBeInTheDocument()
   })
+
+  // The chord anchor is the inline-block span that holds one lyric character with the
+  // absolute-positioned chord label above it.
+  function chordAnchors(container) {
+    return [...container.querySelectorAll('span.relative.inline-block')]
+  }
+
+  it('does not reserve minWidth for an isolated mid-word chord (no word splitting)', () => {
+    const sections = [{
+      label: null,
+      lines: [{
+        type: 'lyric',
+        content: 'beloved is the most beautiful',
+        // Em mid-word over the second char; C far away near the end → no collision
+        chords: [{ chord: 'Em', position: 1, strum: null }, { chord: 'C', position: 25, strum: null }],
+        annotation: null,
+      }],
+    }]
+    const { container } = render(<SongBody sections={sections} />)
+    const anchors = chordAnchors(container)
+    expect(anchors).toHaveLength(2)
+    // Neither chord should reserve width — the word must not be split.
+    expect(anchors.every(a => a.style.minWidth === '')).toBe(true)
+  })
+
+  it('reserves minWidth when a wide chord would collide with the next chord', () => {
+    const sections = [{
+      label: null,
+      lines: [{
+        type: 'lyric',
+        content: 'abcdef',
+        // Dm7 (wide) immediately followed by G one char later → would overlap → reserve
+        chords: [{ chord: 'Dm7', position: 0, strum: null }, { chord: 'G', position: 1, strum: null }],
+        annotation: null,
+      }],
+    }]
+    const { container } = render(<SongBody sections={sections} />)
+    const anchors = chordAnchors(container)
+    // The first (wide) chord must reserve width to clear the next chord.
+    expect(anchors[0].style.minWidth).not.toBe('')
+  })
 })
 
 describe('SongBody section heading badge', () => {
