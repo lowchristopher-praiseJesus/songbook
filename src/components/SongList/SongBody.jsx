@@ -72,13 +72,10 @@ function ChordedLine({ line, fontSize, fitMode }) {
                     className="relative inline-block"
                     style={{
                       paddingTop: '1.3em',
-                      // The chord label is absolute-positioned and doesn't expand the container.
-                      // Apply minWidth when there's nothing to the right to act as a buffer:
-                      //   • char === ' ': container is only 1 nbsp wide (end-of-line or space anchor)
-                      //   • last part in the word group: no following lyric chars in the same word
-                      ...((part.char === ' ' || pi === group.parts.length - 1)
-                        ? { minWidth: `${(part.chord + (part.strum || '')).length * 0.7 + 0.3}em` }
-                        : {}),
+                      // The chord label is absolute-positioned and doesn't expand the container,
+                      // so minWidth is always needed to reserve horizontal space equal to the chord
+                      // text width. Without it, wide chords mid-word overflow into adjacent chords.
+                      minWidth: `${(part.chord + (part.strum || '')).length * 0.7 + 0.3}em`,
                     }}
                   >
                     <span
