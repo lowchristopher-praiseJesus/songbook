@@ -61,6 +61,23 @@ describe('ShareModal', () => {
     expect(screen.getByText('Copy')).toBeInTheDocument();
   });
 
+  it('saves shareCode and lastVersion:1 back to the collection after successful upload', async () => {
+    uploadShare.mockResolvedValue({
+      shareCode: 'abc',
+      shareUrl: 'http://app?share=abc',
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+    });
+    useLibraryStore.setState({
+      collections: [{ id: 'coll-1', name: 'My Set', createdAt: '', songIds: [] }],
+    });
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="My Set" onClose={() => {}} />);
+    fireEvent.click(screen.getByText('Create link'));
+    await screen.findByDisplayValue('http://app?share=abc');
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-1');
+    expect(col.shareCode).toBe('abc');
+    expect(col.lastVersion).toBe(1);
+  });
+
   it('shows error message and Retry button on upload failure', async () => {
     uploadShare.mockRejectedValue(Object.assign(new Error('fail'), { code: 'upload_failed' }));
     renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);

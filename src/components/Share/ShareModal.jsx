@@ -94,6 +94,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
         }
       })
 
+      // Save shareCode on the sharer's collection so Push Update / Check for updates work next time
+      if (collectionId) {
+        const shareCode = result.shareCode ?? new URL(result.shareUrl).searchParams.get('share')
+        updateCollection(collectionId, { shareCode, lastVersion: 1 })
+      }
+
       if (conductorEnabled) {
         const memberUrl = broadcastTime
           ? `${result.shareUrl}&bt=${encodeURIComponent(new Date(broadcastTime).toISOString())}`
@@ -132,6 +138,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     try {
       const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, null)
       const result = await updateShare(collection.shareCode, blob)
+      if (collectionId) updateCollection(collectionId, { lastVersion: result.version })
       setExpiresAt(result.updatedAt ?? new Date().toISOString())
       setStep('update-done')
     } catch (err) {
