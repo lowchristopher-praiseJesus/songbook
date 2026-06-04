@@ -91,7 +91,7 @@ export const useLibraryStore = create((set, get) => ({
    * If collectionSource is also provided, looks for an existing collection with
    * that source tag first and adds to it rather than creating a duplicate.
    */
-  addSongs(songs, collectionName = null, collectionSource = null, shareCode = null) {
+  addSongs(songs, collectionName = null, collectionSource = null, shareCode = null, initialVersion = null) {
     const currentIndex = [...get().index]
     const currentCollections = [...get().collections]
     const newSongIds = []
@@ -106,6 +106,20 @@ export const useLibraryStore = create((set, get) => ({
       const song = { ...rawSong }
       if (!song.id) song.id = uuidv4()
       if (!song.importedAt) song.importedAt = new Date().toISOString()
+
+      // Set sharedBaseline when importing from a share link
+      if (shareCode && song.meta.sbpId != null) {
+        song.meta = {
+          ...song.meta,
+          sharedBaseline: {
+            rawText:  song.rawText,
+            keyIndex: song.meta.keyIndex ?? 0,
+            key:      song.meta.key ?? '',
+            capo:     song.meta.capo ?? 0,
+            tempo:    song.meta.tempo ?? 0,
+          },
+        }
+      }
 
       saveSong(song)  // may throw QuotaExceededError — intentionally not caught here
 
@@ -143,6 +157,7 @@ export const useLibraryStore = create((set, get) => ({
           songIds: newSongIds,
           ...(collectionSource ? { source: collectionSource } : {}),
           ...(shareCode ? { shareCode } : {}),
+          ...(shareCode && initialVersion != null ? { lastVersion: initialVersion } : {}),
         }
         currentCollections.push(newCollection)
         resultCollectionId = newCollection.id
@@ -463,6 +478,71 @@ export const useLibraryStore = create((set, get) => ({
     )
     saveCollections(collections)
     set({ collections })
+  },
+
+  applyShareRefresh(collectionId, { patches, newSongs, removed, serverSbpIdOrder, newVersion }) {
+    const state = get()
+    const collection = state.collections.find(c => c.id === collectionId)
+    if (!collection) return
+
+    // Apply patches to existing songs
+    for (const patch of patches) {
+      const song = loadSong(patch.localId)
+      if (!song) continue
+      const updatedSong = {
+        ...song,
+        ...(patch.rawText !== undefined ? { rawText: patch.rawText } : {}),
+        meta: {
+          ...song.meta,
+          ...patch.metaUpdates,
+          sharedBaseline: patch.newBaseline,
+        },
+      }
+      saveSong(updatedSong)
+      if (state.activeSongId === patch.localId) {
+        set({ activeSong: updatedSong })
+      }
+    }
+
+    // Add new songs from server
+    let newIndex = [...state.index]
+    const addedIds = []
+    for (const newSong of newSongs) {
+      const id = newSong.id ?? uuidv4()
+      const song = { ...newSong, id, importedAt: new Date().toISOString() }
+      saveSong(song)
+      newIndex.push({ id, title: song.meta.title, artist: song.meta.artist ?? '', importedAt: song.importedAt })
+      addedIds.push(id)
+    }
+    newIndex.sort((a, b) => a.title.localeCompare(b.title))
+    saveIndex(newIndex)
+
+    // Build new songIds: server order first, then manually-added songs
+    const allSongIds = [...collection.songIds, ...addedIds].filter(id => !removed.includes(id))
+    const sbpIdToLocalId = new Map()
+    for (const id of allSongIds) {
+      const s = loadSong(id)
+      if (s?.meta?.sbpId) sbpIdToLocalId.set(s.meta.sbpId, id)
+    }
+
+    const orderedIds = serverSbpIdOrder
+      .map(sbpId => sbpIdToLocalId.get(sbpId))
+      .filter(Boolean)
+
+    const manualIds = allSongIds.filter(id => {
+      const s = loadSong(id)
+      return !s?.meta?.sharedBaseline
+    })
+
+    const newSongIds = [...new Set([...orderedIds, ...manualIds])]
+
+    const newCollections = state.collections.map(c =>
+      c.id === collectionId
+        ? { ...c, songIds: newSongIds, lastVersion: newVersion }
+        : c
+    )
+    saveCollections(newCollections)
+    set({ index: newIndex, collections: newCollections })
   },
 
   /**
