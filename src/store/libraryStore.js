@@ -508,11 +508,30 @@ export const useLibraryStore = create((set, get) => ({
     let newIndex = [...state.index]
     const addedIds = []
     for (const newSong of newSongs) {
-      const id = newSong.id ?? uuidv4()
-      const song = { ...newSong, id, importedAt: new Date().toISOString() }
-      saveSong(song)
-      newIndex.push({ id, title: song.meta.title, artist: song.meta.artist ?? '', importedAt: song.importedAt })
-      addedIds.push(id)
+      // If a song with this sbpId already exists in the library (e.g. the creator
+      // previously removed it from the collection), re-add that existing song rather
+      // than creating a duplicate with a new UUID.
+      const sbpId = newSong.meta?.sbpId
+      const existingEntry = sbpId != null ? newIndex.find(e => e.sbpId === sbpId) : null
+
+      if (existingEntry) {
+        // Re-use the existing library song — just add it back to the collection.
+        // Only push to addedIds if it's not already in the collection's songIds.
+        if (!collection.songIds.includes(existingEntry.id)) {
+          addedIds.push(existingEntry.id)
+        }
+        // Stamp the updated sharedBaseline so future refreshes work correctly.
+        const existing = loadSong(existingEntry.id)
+        if (existing) {
+          saveSong({ ...existing, meta: { ...existing.meta, sharedBaseline: newSong.meta.sharedBaseline } })
+        }
+      } else {
+        const id = newSong.id ?? uuidv4()
+        const song = { ...newSong, id, importedAt: new Date().toISOString() }
+        saveSong(song)
+        newIndex.push({ id, title: song.meta.title, artist: song.meta.artist ?? '', importedAt: song.importedAt })
+        addedIds.push(id)
+      }
     }
     newIndex.sort((a, b) => a.title.localeCompare(b.title))
     saveIndex(newIndex)
