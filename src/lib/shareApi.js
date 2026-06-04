@@ -22,7 +22,9 @@ export async function uploadShare(blob, expiresInDays = 7, turnstileToken) {
 }
 
 export async function fetchShare(shareCode) {
-  const res = await fetch(`${WORKER_URL}/share/${shareCode}`);
+  // cache: 'no-store' — a live share blob changes on every Push Update; a cached copy
+  // would silently merge stale data on refresh.
+  const res = await fetch(`${WORKER_URL}/share/${shareCode}`, { cache: 'no-store' });
   if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
   if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });
@@ -30,7 +32,9 @@ export async function fetchShare(shareCode) {
 }
 
 export async function checkShareVersion(shareCode) {
-  const res = await fetch(`${WORKER_URL}/share/${shareCode}`, { method: 'HEAD' });
+  // cache: 'no-store' — the version header must reflect the current server state, never a
+  // cached value, or "Check for updates" wrongly reports "Already up to date".
+  const res = await fetch(`${WORKER_URL}/share/${shareCode}`, { method: 'HEAD', cache: 'no-store' });
   if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
   if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });

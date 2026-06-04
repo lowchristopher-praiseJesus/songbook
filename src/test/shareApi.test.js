@@ -59,6 +59,15 @@ describe('fetchShare', () => {
     expect(result).toBe(buf);
   });
 
+  it('bypasses HTTP cache with cache: no-store', async () => {
+    fetch.mockResolvedValue({ status: 200, ok: true, arrayBuffer: async () => new ArrayBuffer(0) });
+    await fetchShare('abc123');
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/share/abc123'),
+      expect.objectContaining({ cache: 'no-store' }),
+    );
+  });
+
   it('throws with code not_found on 404', async () => {
     fetch.mockResolvedValue({ status: 404, ok: false });
     await expect(fetchShare('abc')).rejects.toMatchObject({ code: 'not_found' });
@@ -87,7 +96,7 @@ describe('checkShareVersion', () => {
     expect(result).toEqual({ version: 3 });
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/share/abc-123'),
-      expect.objectContaining({ method: 'HEAD' }),
+      expect.objectContaining({ method: 'HEAD', cache: 'no-store' }),
     );
   });
 

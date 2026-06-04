@@ -138,22 +138,10 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
 
   const handleCheckUpdates = useCallback(async (e) => {
     e.stopPropagation()
-    // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
-    console.log('[ShareRefresh:click] ' + JSON.stringify({
-      shareCode: collection?.shareCode ? String(collection.shareCode).slice(0, 8) : null,
-      refreshing,
-      localVersion: collection?.lastVersion ?? null,
-    }))
     if (!collection?.shareCode || refreshing) return
     setRefreshing(true)
     try {
       const { version } = await checkShareVersion(collection.shareCode)
-      // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
-      console.log('[ShareRefresh:version] ' + JSON.stringify({
-        serverVersion: version,
-        localVersion: collection.lastVersion ?? 1,
-        willSkipAsUpToDate: version < (collection.lastVersion ?? 1),
-      }))
       if (version < (collection.lastVersion ?? 1)) {
         onAddToast('Already up to date.', 'info')
         return
@@ -162,19 +150,6 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
       const { songs: serverSongs } = await parseSbpFile(buf)
       const localSongs = collection.songIds.map(id => loadSong(id)).filter(Boolean)
       const mergeResult = mergeSharedCollection(collection, localSongs, serverSongs)
-
-      // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
-      console.log('[ShareRefresh:merge] ' + JSON.stringify({
-        serverVersion: version,
-        localVersion: collection.lastVersion ?? 1,
-        server: serverSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
-        localCollection: localSongs.map(s => ({ id: String(s.id).slice(0, 8), sbpId: s.meta.sbpId, t: s.meta.title, base: !!s.meta.sharedBaseline })),
-        newSongs: mergeResult.newSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
-        removed: mergeResult.removed.map(id => String(id).slice(0, 8)),
-        autoApplied: mergeResult.autoApplied.length,
-        conflicts: mergeResult.conflicts.length,
-        fullLibrarySize: useLibraryStore.getState().index.length,
-      }))
 
       if (mergeResult.conflicts.length === 0) {
         applyShareRefresh(collection.id, {

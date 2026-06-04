@@ -568,22 +568,6 @@ export const useLibraryStore = create((set, get) => ({
 
     const newSongIds = [...new Set([...orderedIds, ...unorderedNewIds, ...manualIds])]
 
-    // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
-    console.log('[ShareRefresh:apply] ' + JSON.stringify({
-      newSongsIn: newSongs.map(s => ({ sbpId: s.meta?.sbpId, t: s.meta?.title })),
-      addedIds: addedIds.map(id => String(id).slice(0, 8)),
-      reusedExisting: newSongs.map(s => {
-        const sb = s.meta?.sbpId
-        const e = sb != null ? newIndex.find(x => x.sbpId === sb) : null
-        return { sbpId: sb, t: s.meta?.title, reused: !!e, reusedId: e ? String(e.id).slice(0, 8) : null }
-      }),
-      finalSongIds: newSongIds.map(id => {
-        const e = newIndex.find(x => x.id === id)
-        const s = songCache.get(id) ?? loadSong(id)
-        return { id: String(id).slice(0, 8), inIndex: !!e, sbpId: s?.meta?.sbpId, t: e?.title ?? s?.meta?.title }
-      }),
-    }))
-
     const newCollections = state.collections.map(c =>
       c.id === collectionId
         ? { ...c, songIds: newSongIds, lastVersion: newVersion }
