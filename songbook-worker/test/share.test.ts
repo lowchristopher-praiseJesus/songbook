@@ -107,6 +107,24 @@ describe('GET /share/:code', () => {
     expect(buf).toEqual(body);
   });
 
+  it('exposes X-Share-Version to the browser via Access-Control-Expose-Headers', async () => {
+    const body = new Uint8Array([10, 20, 30]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('dl-expose', body, {
+      customMetadata: { expiresAt: expiresAt.toISOString(), version: '5' },
+    });
+
+    const res = await SELF.fetch('http://example.com/share/dl-expose', {
+      headers: { Origin: ORIGIN },
+    });
+    const exposeHeaders = res.headers.get('Access-Control-Expose-Headers') ?? '';
+    const shareVersion = res.headers.get('X-Share-Version');
+    await res.arrayBuffer(); // consume stream before assertions to avoid isolated-storage leak
+    expect(res.status).toBe(200);
+    expect(shareVersion).toBe('5');
+    expect(exposeHeaders).toContain('X-Share-Version');
+  });
+
   it('returns 404 for unknown share code', async () => {
     const res = await SELF.fetch('http://example.com/share/no-such-code', {
       headers: { Origin: ORIGIN },
