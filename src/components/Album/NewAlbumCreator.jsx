@@ -76,7 +76,7 @@ function SortableTrackRow({ track, index, onRemove, onRename }) {
       <span
         {...attributes}
         {...listeners}
-        className="text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing text-base leading-none select-none touch-none"
+        className="text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing text-base leading-none select-none touch-none px-1 py-2"
         aria-label="Drag to reorder"
       >⠿</span>
       <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-right tabular-nums shrink-0">{index + 1}</span>
@@ -433,7 +433,7 @@ export function NewAlbumCreator({ album = null }) {
               </div>
 
               {/* Track order */}
-              <div className="flex flex-col gap-2 flex-1 min-h-0">
+              <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Track Order
                   {orderedTracks.length > 0 && (
@@ -450,7 +450,7 @@ export function NewAlbumCreator({ album = null }) {
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={trackIds} strategy={verticalListSortingStrategy}>
-                      <div className="flex flex-col gap-1.5 overflow-y-auto">
+                      <div className="flex flex-col gap-1.5">
                         {orderedTracks.map((t, i) => (
                           <SortableTrackRow
                             key={t.recordingId}
