@@ -31,11 +31,30 @@ export function mergeSharedCollection(localCollection, localSongs, serverSongs) 
 
   for (const localSong of localSongs) {
     const { sbpId, sharedBaseline } = localSong.meta;
-    if (!sharedBaseline) continue;  // manually added — skip removal + merge
+
+    // No sbpId AND no baseline → truly manually added → skip entirely
+    if (!sbpId && !sharedBaseline) continue;
 
     const serverSong = serverBysbpId.get(sbpId);
+
     if (!serverSong) {
+      // Absent from server ZIP → sharer removed this song.
+      // Applies to both new imports (with sharedBaseline) and old imports
+      // (sbpId present but sharedBaseline missing — imported before baseline stamping was added).
       removed.push(localSong.id);
+      continue;
+    }
+
+    if (!sharedBaseline) {
+      // Old import: has sbpId but no baseline (imported before this feature was deployed).
+      // Retroactively stamp baseline from server values so future refreshes get full 3-way merge.
+      // Don't apply any field updates — preserve whatever the user has locally.
+      autoApplied.push({
+        localId:     localSong.id,
+        metaUpdates: {},
+        rawText:     undefined,
+        newBaseline: buildBaseline(serverSong),
+      });
       continue;
     }
 

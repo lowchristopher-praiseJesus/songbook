@@ -126,4 +126,38 @@ describe('mergeSharedCollection', () => {
     expect(result.removed).toHaveLength(0);
     expect(result.newSongs).toHaveLength(0);
   });
+
+  it('removes old-import song (sbpId set, no sharedBaseline) absent from server ZIP', () => {
+    // Songs imported before the baseline-stamping fix have sbpId but no sharedBaseline
+    const oldImport = makeSong({ id: 'L1', sbpId: 'S1', baseline: null });
+    const server = makeServerSong({ sbpId: 'S2' }); // S1 gone from server
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [oldImport], [server]);
+
+    expect(result.removed).toContain('L1');
+  });
+
+  it('stamps baseline retroactively on old-import song still present in server ZIP', () => {
+    const oldImport = makeSong({ id: 'L1', sbpId: 'S1', keyIndex: 2, key: 'D', baseline: null });
+    const server = makeServerSong({ sbpId: 'S1', keyIndex: 2, key: 'D' });
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [oldImport], [server]);
+
+    expect(result.removed).not.toContain('L1');
+    // Baseline stamped via autoApplied with empty metaUpdates
+    const patch = result.autoApplied.find(p => p.localId === 'L1');
+    expect(patch).toBeTruthy();
+    expect(patch.newBaseline).toMatchObject({ keyIndex: 2, key: 'D' });
+    expect(patch.metaUpdates).toEqual({});
+    expect(patch.rawText).toBeUndefined();
+  });
+
+  it('does NOT remove song with no sbpId AND no sharedBaseline (truly manually added)', () => {
+    const manual = makeSong({ id: 'M1', sbpId: null, baseline: null });
+    const server = makeServerSong({ sbpId: 'S2' });
+
+    const result = mergeSharedCollection({ songIds: ['M1'] }, [manual], [server]);
+
+    expect(result.removed).not.toContain('M1');
+  });
 });
