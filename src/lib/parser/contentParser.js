@@ -95,7 +95,7 @@ function parseLine(rawLine) {
   }
 }
 
-const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add)?[0-9]{0,2}(?:\/[A-G][b#]?)?$/
+const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add|no)?[0-9]{0,2}(?:[b#][0-9]+)*(?:\([^)]+\))?(?:\/[A-G][b#]?)?$/
 
 export function isChord(str) {
   return CHORD_RE.test(str.trim())
