@@ -142,31 +142,14 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
     setRefreshing(true)
     try {
       const { version } = await checkShareVersion(collection.shareCode)
-      // TEMP DIAGNOSTIC — remove after debugging
-      console.log('[ShareRefresh:version] ' + JSON.stringify({
-        shareCode: String(collection.shareCode),
-        serverVersion: version,
-        localVersion: collection.lastVersion ?? 1,
-        willSkipAsUpToDate: version < (collection.lastVersion ?? 1),
-      }))
       if (version < (collection.lastVersion ?? 1)) {
-        onAddToast('Already up to date (v-guard).', 'info')
+        onAddToast('Already up to date.', 'info')
         return
       }
       const buf = await fetchShare(collection.shareCode)
       const { songs: serverSongs } = await parseSbpFile(buf)
       const localSongs = collection.songIds.map(id => loadSong(id)).filter(Boolean)
       const mergeResult = mergeSharedCollection(collection, localSongs, serverSongs)
-
-      // TEMP DIAGNOSTIC — remove after debugging
-      console.log('[ShareRefresh:merge] ' + JSON.stringify({
-        server: serverSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
-        localCollection: localSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title, base: !!s.meta.sharedBaseline })),
-        newSongs: mergeResult.newSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
-        removed: mergeResult.removed.length,
-        autoApplied: mergeResult.autoApplied.length,
-        conflicts: mergeResult.conflicts.length,
-      }))
 
       if (mergeResult.conflicts.length === 0) {
         applyShareRefresh(collection.id, {
@@ -183,7 +166,7 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
         if (changed) parts.push(`${changed} song${changed !== 1 ? 's' : ''} changed`)
         if (added) parts.push(`${added} added`)
         if (removedCount) parts.push(`${removedCount} removed`)
-        onAddToast(parts.length ? `Updated — ${parts.join(', ')}` : 'Already up to date (no changes).', 'success')
+        onAddToast(parts.length ? `Updated — ${parts.join(', ')}` : 'Already up to date.', 'success')
       } else {
         setPendingRefresh({ ...mergeResult, newVersion: version })
       }

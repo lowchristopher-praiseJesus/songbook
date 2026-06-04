@@ -81,7 +81,7 @@ it('shows "Already up to date" toast when server version is strictly older', asy
   const onAddToast = vi.fn();
   render(<CollectionGroup group={group} onSelect={() => {}} onAddToast={onAddToast} />);
   fireEvent.click(screen.getByLabelText(/check for updates/i));
-  await waitFor(() => expect(onAddToast).toHaveBeenCalledWith('Already up to date (v-guard).', 'info'));
+  await waitFor(() => expect(onAddToast).toHaveBeenCalledWith('Already up to date.', 'info'));
 });
 
 it('calls applyShareRefresh and shows success toast when update available with no conflicts', async () => {
