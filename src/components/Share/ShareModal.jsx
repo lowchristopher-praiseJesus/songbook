@@ -6,6 +6,8 @@ import { uploadShare, updateShare } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
+import { loadSong, getTransposeState } from '../../lib/storage';
+import { transposeChord } from '../../lib/parser/chordUtils';
 import { useLicense } from '../../contexts/LicenseContext';
 import useTurnstile from '../../hooks/useTurnstile';
 
@@ -136,7 +138,25 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setStep('uploading')
     setErrorMessage('')
     try {
-      const blob = await exportSongsAsSbp(songs, nameValue.trim() || null, shareLyricsOnly, null)
+      // Always derive songs from the collection's current songIds so that
+      // additions and removals since the modal opened are reflected in the ZIP.
+      const collectionSongs = collection.songIds.map(id => {
+        const song = loadSong(id)
+        if (!song) return null
+        const ts = getTransposeState(id)
+        const delta = ts?.delta ?? 0
+        const capo = ts?.capo ?? song.meta.capo ?? 0
+        const usesFlats = song.meta.usesFlats ?? false
+        const newKeyIndex = (((song.meta.keyIndex ?? 0) + delta) % 12 + 12) % 12
+        const rawText = delta === 0
+          ? (song.rawText ?? '')
+          : (song.rawText ?? '').replace(/\[([^\]]+)\]/g, (_, chord) =>
+              '[' + transposeChord(chord, delta, usesFlats) + ']'
+            )
+        return { ...song, rawText, meta: { ...song.meta, keyIndex: newKeyIndex, capo } }
+      }).filter(Boolean)
+
+      const blob = await exportSongsAsSbp(collectionSongs, nameValue.trim() || null, shareLyricsOnly, null)
       const result = await updateShare(collection.shareCode, blob)
       if (collectionId) updateCollection(collectionId, { lastVersion: result.version })
       setExpiresAt(result.updatedAt ?? new Date().toISOString())
