@@ -151,6 +151,19 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
       const localSongs = collection.songIds.map(id => loadSong(id)).filter(Boolean)
       const mergeResult = mergeSharedCollection(collection, localSongs, serverSongs)
 
+      // TEMP DIAGNOSTIC — remove after debugging share-refresh inconsistency
+      console.log('[ShareRefresh:merge] ' + JSON.stringify({
+        serverVersion: version,
+        localVersion: collection.lastVersion ?? 1,
+        server: serverSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
+        localCollection: localSongs.map(s => ({ id: String(s.id).slice(0, 8), sbpId: s.meta.sbpId, t: s.meta.title, base: !!s.meta.sharedBaseline })),
+        newSongs: mergeResult.newSongs.map(s => ({ sbpId: s.meta.sbpId, t: s.meta.title })),
+        removed: mergeResult.removed.map(id => String(id).slice(0, 8)),
+        autoApplied: mergeResult.autoApplied.length,
+        conflicts: mergeResult.conflicts.length,
+        fullLibrarySize: useLibraryStore.getState().index.length,
+      }))
+
       if (mergeResult.conflicts.length === 0) {
         applyShareRefresh(collection.id, {
           patches: mergeResult.autoApplied,
