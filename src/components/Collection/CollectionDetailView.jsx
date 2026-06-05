@@ -80,7 +80,7 @@ function SortableSongRow({ entry, index: idx, onSongClick, onRemove }) {
   )
 }
 
-export function CollectionDetailView({ onAddToast }) {
+export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   const collectionId = useLibraryStore(s => s.selectedCollectionId)
   const collections = useLibraryStore(s => s.collections)
   const index = useLibraryStore(s => s.index)
@@ -243,7 +243,10 @@ export function CollectionDetailView({ onAddToast }) {
       <div className="mb-6">
         <button
           type="button"
-          onClick={() => setSelectedCollectionId(null)}
+          onClick={() => {
+            setSelectedCollectionId(null)
+            if (window.innerWidth < 768) onOpenSidebar?.()
+          }}
           className="mb-3 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400
             hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >

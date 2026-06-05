@@ -20,7 +20,7 @@ import { AlbumDetailView } from '../Album/AlbumDetailView'
 import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 import { CollectionDetailView } from '../Collection/CollectionDetailView'
 
-export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
+export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -168,7 +168,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
         : selectedCollectionId
-        ? <CollectionDetailView onAddToast={onAddToast} />
+        ? <CollectionDetailView onAddToast={onAddToast} onOpenSidebar={onOpenSidebar} />
         : isCreatingNewSong
         ? <NewSongEditor />
         : editingSongId
