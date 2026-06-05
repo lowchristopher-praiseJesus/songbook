@@ -68,7 +68,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
   const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
   const inCollection = !!activeSong && !!activeCollectionId
-    && !performanceSections && !editingSongId && !isCreatingNewSong
+    && !performanceSections && !editingSongId && !isCreatingNewSong && !selectedCollectionId
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
