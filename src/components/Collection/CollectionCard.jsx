@@ -2,14 +2,14 @@ import { useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 
 export function CollectionCard({ group, onSelect, onGroupCheckboxChange }) {
-  const selectedCollectionId = useLibraryStore(s => s.selectedCollectionId)
+  const highlightedCollectionId = useLibraryStore(s => s.highlightedCollectionId)
   const setSelectedCollectionId = useLibraryStore(s => s.setSelectedCollectionId)
   const isExportMode = useLibraryStore(s => s.isExportMode)
   const selectedSongIds = useLibraryStore(s => s.selectedSongIds)
   const toggleGroupSelection = useLibraryStore(s => s.toggleGroupSelection)
   const checkboxRef = useRef(null)
 
-  const isActive = selectedCollectionId === group.id
+  const isActive = highlightedCollectionId === group.id
   const songIds = group.entries.map(e => e.id)
   const selectedCount = songIds.filter(id => selectedSongIds.has(id)).length
   const allSelected = songIds.length > 0 && selectedCount === songIds.length

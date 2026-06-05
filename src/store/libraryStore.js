@@ -26,7 +26,8 @@ export const useLibraryStore = create((set, get) => ({
   activeAlbumCode: null,      // string | null
   isCreatingNewAlbum: false,
   editingAlbum: null,             // album object being edited, or null
-  selectedCollectionId: null, // string | null — collection whose detail view is open in main content
+  selectedCollectionId: null,   // string | null — collection whose detail view is open in main content
+  highlightedCollectionId: null, // string | null — collection card highlighted in sidebar (persists after Back)
 
   /**
    * Initialize from localStorage on app start.
@@ -343,7 +344,7 @@ export const useLibraryStore = create((set, get) => ({
 
   /** Enter or exit export mode. Clears selection when exiting. */
   toggleExportMode() {
-    set(s => ({ isExportMode: !s.isExportMode, selectedSongIds: new Set(), selectedCollectionId: null }))
+    set(s => ({ isExportMode: !s.isExportMode, selectedSongIds: new Set(), selectedCollectionId: null, highlightedCollectionId: null }))
   },
 
   /** Toggle a single song in/out of the export selection. */
@@ -376,7 +377,7 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null, selectedCollectionId: null })
+    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null, selectedCollectionId: null, highlightedCollectionId: null })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */
@@ -389,7 +390,7 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   setSelectedCollectionId(id) {
-    set({ selectedCollectionId: id })
+    set({ selectedCollectionId: id, ...(id !== null ? { highlightedCollectionId: id } : {}) })
   },
 
   syncAlbums() {
