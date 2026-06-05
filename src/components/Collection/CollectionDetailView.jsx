@@ -254,21 +254,45 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
         </button>
 
         {renaming ? (
-          <input
-            ref={renameInputRef}
-            value={renameDraft}
-            onChange={e => setRenameDraft(e.target.value)}
-            onBlur={() => {
-              if (renameEscapeRef.current) { renameEscapeRef.current = false; return }
-              commitRename()
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') { e.preventDefault(); commitRename() }
-              if (e.key === 'Escape') { renameEscapeRef.current = true; setRenaming(false) }
-            }}
-            className="w-full text-2xl font-bold bg-transparent border-b-2 border-indigo-400
-              text-gray-900 dark:text-gray-100 outline-none pb-1"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              ref={renameInputRef}
+              value={renameDraft}
+              onChange={e => setRenameDraft(e.target.value)}
+              onBlur={() => {
+                if (renameEscapeRef.current) { renameEscapeRef.current = false; return }
+                commitRename()
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); commitRename() }
+                if (e.key === 'Escape') { renameEscapeRef.current = true; setRenaming(false) }
+              }}
+              className="flex-1 min-w-0 text-2xl font-bold bg-transparent border-b-2 border-indigo-400
+                text-gray-900 dark:text-gray-100 outline-none pb-1"
+            />
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={commitRename}
+              aria-label="Save"
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full
+                text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30
+                transition-colors text-xl leading-none"
+            >
+              ✓
+            </button>
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => { renameEscapeRef.current = true; setRenaming(false) }}
+              aria-label="Cancel"
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full
+                text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700
+                transition-colors text-xl leading-none"
+            >
+              ✕
+            </button>
+          </div>
         ) : (
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {collectionName}
