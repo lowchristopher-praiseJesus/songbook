@@ -74,7 +74,7 @@ describe('addSongs with shareCode', () => {
     };
     addSongs([song], 'My Set', null, 'share-xyz', 1);
     const saved = saveSong.mock.calls[0][0];
-    expect(saved.meta.sharedBaseline).toEqual({ rawText: 'verse', keyIndex: 3, key: 'Eb', capo: 2, tempo: 90 });
+    expect(saved.meta.sharedBaseline).toEqual({ title: 'T', artist: '', rawText: 'verse', keyIndex: 3, key: 'Eb', capo: 2, tempo: 90 });
   });
 
   it('does not set sharedBaseline when no shareCode', () => {
@@ -132,6 +132,25 @@ describe('applyShareRefresh', () => {
     const { applyShareRefresh } = useLibraryStore.getState();
     applyShareRefresh('C1', { patches: [], newSongs: [], removed: [], serverSbpIdOrder: [], newVersion: 5 });
     expect(useLibraryStore.getState().collections[0].lastVersion).toBe(5);
+  });
+
+  it('updates index entry title and artist when a patch changes them', () => {
+    const { applyShareRefresh } = useLibraryStore.getState();
+    applyShareRefresh('C1', {
+      patches: [{
+        localId: 'L1',
+        metaUpdates: { title: 'New Name', artist: 'New Artist' },
+        rawText: undefined,
+        newBaseline: { title: 'New Name', artist: 'New Artist', rawText: 'old', keyIndex: 0, key: 'C', capo: 0, tempo: 120 },
+      }],
+      newSongs: [],
+      removed: [],
+      serverSbpIdOrder: ['S1'],
+      newVersion: 2,
+    });
+    const indexEntry = useLibraryStore.getState().index.find(e => e.id === 'L1');
+    expect(indexEntry.title).toBe('New Name');
+    expect(indexEntry.artist).toBe('New Artist');
   });
 
   it('includes new songs in collection even when serverSbpIdOrder is empty', () => {

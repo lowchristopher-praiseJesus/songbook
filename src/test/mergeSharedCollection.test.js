@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { mergeSharedCollection, buildBaseline } from '../lib/mergeSharedCollection';
 
-function makeSong({ id, sbpId, keyIndex = 0, key = 'C', capo = 0, tempo = 120, rawText = 'Hello', baseline = null }) {
+function makeSong({ id, sbpId, title = 'TestSong', artist = '', keyIndex = 0, key = 'C', capo = 0, tempo = 120, rawText = 'Hello', baseline = null }) {
   return {
     id,
     rawText,
     meta: {
-      title: `Song ${id}`,
-      artist: '',
+      title,
+      artist,
       keyIndex,
       key,
       capo,
@@ -19,10 +19,10 @@ function makeSong({ id, sbpId, keyIndex = 0, key = 'C', capo = 0, tempo = 120, r
   };
 }
 
-function makeServerSong({ sbpId, keyIndex = 0, key = 'C', capo = 0, tempo = 120, rawText = 'Hello' }) {
+function makeServerSong({ sbpId, title = 'TestSong', artist = '', keyIndex = 0, key = 'C', capo = 0, tempo = 120, rawText = 'Hello' }) {
   return {
     rawText,
-    meta: { title: `Song ${sbpId}`, artist: '', keyIndex, key, capo, tempo, sbpId },
+    meta: { title, artist, keyIndex, key, capo, tempo, sbpId },
     sections: [],
   };
 }
@@ -30,7 +30,7 @@ function makeServerSong({ sbpId, keyIndex = 0, key = 'C', capo = 0, tempo = 120,
 describe('buildBaseline', () => {
   it('extracts the tracked fields from a song', () => {
     const song = makeSong({ id: '1', sbpId: 'A', keyIndex: 3, key: 'Eb', capo: 2, tempo: 90, rawText: 'verse' });
-    expect(buildBaseline(song)).toEqual({ keyIndex: 3, key: 'Eb', capo: 2, tempo: 90, rawText: 'verse' });
+    expect(buildBaseline(song)).toEqual({ title: 'TestSong', artist: '', keyIndex: 3, key: 'Eb', capo: 2, tempo: 90, rawText: 'verse' });
   });
 
   it('preserves undefined tempo rather than coercing to 0', () => {
@@ -40,7 +40,7 @@ describe('buildBaseline', () => {
 });
 
 describe('mergeSharedCollection', () => {
-  const baseline = { keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'Hello' };
+  const baseline = { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'Hello' };
 
   it('auto-applies server change when local is unchanged', () => {
     const local = makeSong({ id: 'L1', sbpId: 'S1', keyIndex: 0, key: 'C', baseline });
@@ -135,7 +135,7 @@ describe('mergeSharedCollection', () => {
   it('does not produce a false tempo conflict when both sides have undefined tempo', () => {
     // parseSbpFile returns tempo: undefined for songs with TempoInt=0.
     // buildBaseline must preserve undefined so the comparison sees undefined===undefined (no change).
-    const baselineNoTempo = { keyIndex: 0, key: 'C', capo: 0, tempo: undefined, rawText: 'Hello' };
+    const baselineNoTempo = { title: 'Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: undefined, rawText: 'Hello' };
     const local = {
       id: 'L1', rawText: 'Hello',
       meta: { title: 'Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: undefined, sbpId: 'S1', sharedBaseline: baselineNoTempo },

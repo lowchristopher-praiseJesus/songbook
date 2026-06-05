@@ -502,6 +502,7 @@ export const useLibraryStore = create((set, get) => ({
     if (!collection) return
 
     // Apply patches to existing songs
+    let newIndex = [...state.index]
     for (const patch of patches) {
       const song = loadSong(patch.localId)
       if (!song) continue
@@ -518,10 +519,20 @@ export const useLibraryStore = create((set, get) => ({
       if (state.activeSongId === patch.localId) {
         set({ activeSong: updatedSong })
       }
+      // Keep index in sync when title or artist changes
+      if (patch.metaUpdates.title !== undefined || patch.metaUpdates.artist !== undefined) {
+        const idx = newIndex.findIndex(e => e.id === patch.localId)
+        if (idx >= 0) {
+          newIndex[idx] = {
+            ...newIndex[idx],
+            ...(patch.metaUpdates.title  !== undefined ? { title:  patch.metaUpdates.title  } : {}),
+            ...(patch.metaUpdates.artist !== undefined ? { artist: patch.metaUpdates.artist } : {}),
+          }
+        }
+      }
     }
 
     // Add new songs from server
-    let newIndex = [...state.index]
     const addedIds = []
     for (const newSong of newSongs) {
       // If a song with this sbpId already exists in the library (e.g. the creator

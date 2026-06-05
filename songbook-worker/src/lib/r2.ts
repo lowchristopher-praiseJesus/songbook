@@ -3,17 +3,18 @@ export async function putShare(
   shareCode: string,
   body: ArrayBuffer | Uint8Array | ReadableStream,
   expiresAt: Date,
+  version = 1,
 ): Promise<void> {
   await bucket.put(shareCode, body, {
-    customMetadata: { expiresAt: expiresAt.toISOString() },
+    customMetadata: { expiresAt: expiresAt.toISOString(), version: String(version) },
     httpMetadata: { contentType: 'application/zip' },
   });
 }
 
-export async function getShareIfValid(
+export async function headShare(
   bucket: R2Bucket,
   shareCode: string,
-): Promise<{ object: R2ObjectBody } | { error: 'not_found' | 'expired' }> {
+): Promise<{ version: number; expiresAt: Date } | { error: 'not_found' | 'expired' }> {
   const head = await bucket.head(shareCode);
   if (!head) return { error: 'not_found' };
 
@@ -22,9 +23,19 @@ export async function getShareIfValid(
     return { error: 'expired' };
   }
 
+  return { version: Number(head.customMetadata?.version ?? 1), expiresAt };
+}
+
+export async function getShareIfValid(
+  bucket: R2Bucket,
+  shareCode: string,
+): Promise<{ object: R2ObjectBody; version: number } | { error: 'not_found' | 'expired' }> {
+  const head = await headShare(bucket, shareCode);
+  if ('error' in head) return head;
+
   const object = await bucket.get(shareCode);
   if (!object) return { error: 'not_found' };
-  return { object };
+  return { object, version: head.version };
 }
 
 // ── Album helpers ────────────────────────────────────────────────────────────

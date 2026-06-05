@@ -1,4 +1,6 @@
 const TRACKED_FIELDS = [
+  { key: 'title',    label: 'Title' },
+  { key: 'artist',   label: 'Artist' },
   { key: 'keyIndex', label: 'Key' },
   { key: 'key',      label: 'Key name' },
   { key: 'capo',     label: 'Capo' },
@@ -8,6 +10,8 @@ const TRACKED_FIELDS = [
 
 export function buildBaseline(song) {
   return {
+    title:    song.meta.title ?? '',
+    artist:   song.meta.artist ?? '',
     rawText:  song.rawText,
     keyIndex: song.meta.keyIndex ?? 0,
     key:      song.meta.key ?? '',
