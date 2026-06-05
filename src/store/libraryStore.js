@@ -26,6 +26,7 @@ export const useLibraryStore = create((set, get) => ({
   activeAlbumCode: null,      // string | null
   isCreatingNewAlbum: false,
   editingAlbum: null,             // album object being edited, or null
+  selectedCollectionId: null, // string | null — collection whose detail view is open in main content
 
   /**
    * Initialize from localStorage on app start.
@@ -258,12 +259,11 @@ export const useLibraryStore = create((set, get) => ({
    * Drops the collection if it becomes empty.
    */
   removeSongFromCollection(songId, collectionId) {
-    const collections = get().collections
-      .map(c => c.id === collectionId
+    const collections = get().collections.map(c =>
+      c.id === collectionId
         ? { ...c, songIds: c.songIds.filter(id => id !== songId) }
         : c
-      )
-      .filter(c => c.songIds.length > 0 || c.conductorCode)
+    )
     saveCollections(collections)
     set({ collections })
   },
@@ -343,7 +343,7 @@ export const useLibraryStore = create((set, get) => ({
 
   /** Enter or exit export mode. Clears selection when exiting. */
   toggleExportMode() {
-    set(s => ({ isExportMode: !s.isExportMode, selectedSongIds: new Set() }))
+    set(s => ({ isExportMode: !s.isExportMode, selectedSongIds: new Set(), selectedCollectionId: null }))
   },
 
   /** Toggle a single song in/out of the export selection. */
@@ -376,7 +376,7 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null })
+    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null, selectedCollectionId: null })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */
@@ -386,6 +386,10 @@ export const useLibraryStore = create((set, get) => ({
 
   setActiveAlbumCode(code) {
     set({ activeAlbumCode: code })
+  },
+
+  setSelectedCollectionId(id) {
+    set({ selectedCollectionId: id })
   },
 
   syncAlbums() {
@@ -405,10 +409,10 @@ export const useLibraryStore = create((set, get) => ({
     })
   },
 
-  /** Create a new empty collection with the given name. No-op if name is blank. */
+  /** Create a new empty collection with the given name. Returns the new id, or null if name is blank. */
   createCollection(name) {
     const trimmed = name.trim()
-    if (!trimmed) return
+    if (!trimmed) return null
     const newCollection = {
       id: uuidv4(),
       name: trimmed,
@@ -418,6 +422,7 @@ export const useLibraryStore = create((set, get) => ({
     const collections = [...get().collections, newCollection]
     saveCollections(collections)
     set({ collections })
+    return newCollection.id
   },
 
   /**
@@ -626,5 +631,6 @@ export const useLibraryStore = create((set, get) => ({
     ]
     saveCollections(next)
     set({ collections: next })
+    return newCollection.id
   },
 }))

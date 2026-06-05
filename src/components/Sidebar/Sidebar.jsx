@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect, Fragment } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
-import { CollectionGroup } from './CollectionGroup'
 import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
@@ -14,11 +13,12 @@ import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
 import { ExportPrintModal } from './ExportPrintModal'
 import { AllSongsList } from './AllSongsList'
-import { AddSongsModal } from './AddSongsModal'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
 import { BroadcastsPanel } from '../Conductor/BroadcastsPanel'
 import { AlbumsPanel } from '../Album/AlbumsPanel'
 import { AlbumCard } from '../Album/AlbumCard'
+import { CollectionsPanel } from '../Collection/CollectionsPanel'
+import { CollectionCard } from '../Collection/CollectionCard'
 
 export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuccess, onStartSession, onJoinSession, conductorSync, onNewAlbum, isAutoClosing = false }) {
   const [query, setQuery] = useState('')
@@ -43,19 +43,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const viewMode = useLibraryStore(s => s.viewMode)
   const setViewMode = useLibraryStore(s => s.setViewMode)
   const setIsCreatingNewSong = useLibraryStore(s => s.setIsCreatingNewSong)
-  const createCollection = useLibraryStore(s => s.createCollection)
-  const duplicateCollection = useLibraryStore(s => s.duplicateCollection)
   const selectSong = useLibraryStore(s => s.selectSong)
   const setExpandedCollectionId = useLibraryStore(s => s.setExpandedCollectionId)
-  const [creatingCollection, setCreatingCollection] = useState(false)
-  const [collectionDraft, setCollectionDraft] = useState('')
-  const [addSongsTarget, setAddSongsTarget] = useState(null) // { id, name } | null
   const [exportSourceName, setExportSourceName] = useState(null)
   const [exportSourceCollectionId, setExportSourceCollectionId] = useState(null)
-  const creatingEscapeRef = useRef(false)
-  const [duplicatingCollectionId, setDuplicatingCollectionId] = useState(null)
-  const [duplicateDraft, setDuplicateDraft] = useState('')
-  const duplicatingEscapeRef = useRef(false)
   // Clear tracked collection name when export mode is turned off
   useEffect(() => {
     if (!isExportMode) {
@@ -73,23 +64,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
     const { resolve } = duplicateState
     setDuplicateState(null)
     resolve(resolution)
-  }
-
-  function confirmCreate() {
-    if (collectionDraft.trim()) {
-      createCollection(collectionDraft.trim())
-    }
-    setCreatingCollection(false)
-    setCollectionDraft('')
-  }
-
-  function confirmDuplicate() {
-    if (!duplicatingCollectionId) return
-    if (duplicateDraft.trim()) {
-      duplicateCollection(duplicatingCollectionId, duplicateDraft.trim())
-    }
-    setDuplicatingCollectionId(null)
-    setDuplicateDraft('')
   }
 
   const { importFiles } = useFileImport({
@@ -125,8 +99,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const filteredCollectionGroups = trimmedQuery
     ? buildGroups(index, collections.filter(c => c.name.toLowerCase().includes(trimmedQuery.toLowerCase())))
     : []
-
-  const groups = !trimmedQuery ? buildGroups(index, collections) : []
 
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
@@ -326,187 +298,85 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
       {/* Song list */}
       {viewMode !== 'albums' && (
-      <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
-        {trimmedQuery ? (
-          viewMode === 'collections' ? (
-            <>
-              {filteredCollectionGroups.map(group => (
-                <CollectionGroup
-                  key={group.id}
-                  group={group}
-                  onSelect={onSongSelect}
-                  onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
-                  onDuplicate={id => {
-                    setCreatingCollection(false)
-                    setDuplicatingCollectionId(id)
-                    setDuplicateDraft('Copy of ' + group.name)
-                  }}
-                  onGroupCheckboxChange={(val) => {
-                    if (val === null) {
-                      setExportSourceName(null)
-                      setExportSourceCollectionId(null)
-                    } else {
-                      setExportSourceName(val.name)
-                      setExportSourceCollectionId(val.id)
-                    }
-                  }}
-                  onAddToast={onAddToast}
-                />
-              ))}
-              {filteredCollectionGroups.length === 0 && (
-                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                  No matches
-                </li>
-              )}
-            </>
-          ) : (
-            <>
-              {filtered.map(entry => (
-                <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
-              ))}
-              {filtered.length === 0 && (
-                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                  No matches
-                </li>
-              )}
-            </>
-          )
-        ) : viewMode === 'allSongs' ? (
-          <>
-            <li>
-              <button
-                type="button"
-                onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
-                className="w-full flex items-center gap-1 px-2 py-1 text-xs
-                  text-indigo-500 dark:text-indigo-400
-                  border border-dashed border-gray-300 dark:border-gray-600 rounded
-                  hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
-                  transition-colors"
-              >
-                + New Song
-              </button>
-            </li>
-            {index.length > 0
-              ? <AllSongsList entries={index} onSelect={onSongSelect} />
-              : (
-                <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                  No songs yet
-                </li>
-              )
-            }
-          </>
+        viewMode === 'collections' && !trimmedQuery ? (
+          <CollectionsPanel
+            onSelect={onSongSelect}
+            onGroupCheckboxChange={(val) => {
+              if (val === null) {
+                setExportSourceName(null)
+                setExportSourceCollectionId(null)
+              } else {
+                setExportSourceName(val.name)
+                setExportSourceCollectionId(val.id)
+              }
+            }}
+          />
         ) : (
-          <>
-            {/* New Collection trigger */}
-            <li>
-              {creatingCollection ? (
-                <div className="px-1 py-1">
-                  <input
-                    autoFocus
-                    type="text"
-                    value={collectionDraft}
-                    onChange={e => setCollectionDraft(e.target.value)}
-                    placeholder="Collection name…"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') { e.preventDefault(); confirmCreate() }
-                      if (e.key === 'Escape') {
-                        creatingEscapeRef.current = true
-                        setCreatingCollection(false)
-                        setCollectionDraft('')
-                      }
-                    }}
-                    onBlur={() => {
-                      if (creatingEscapeRef.current) { creatingEscapeRef.current = false; return }
-                      confirmCreate()
-                    }}
-                    className="w-full px-2 py-1 text-[16px] rounded border border-indigo-400
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                      outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 px-1">
-                    Enter to create · Esc to cancel
-                  </p>
-                </div>
+          <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
+            {trimmedQuery ? (
+              viewMode === 'collections' ? (
+                <>
+                  {filteredCollectionGroups.map(group => (
+                    <CollectionCard
+                      key={group.id}
+                      group={group}
+                      onSelect={onSongSelect}
+                      onGroupCheckboxChange={(val) => {
+                        if (val === null) {
+                          setExportSourceName(null)
+                          setExportSourceCollectionId(null)
+                        } else {
+                          setExportSourceName(val.name)
+                          setExportSourceCollectionId(val.id)
+                        }
+                      }}
+                    />
+                  ))}
+                  {filteredCollectionGroups.length === 0 && (
+                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                      No matches
+                    </li>
+                  )}
+                </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDuplicatingCollectionId(null)
-                    setCreatingCollection(true)
-                  }}
-                  className="w-full flex items-center gap-1 px-2 py-1 text-xs
-                    text-indigo-500 dark:text-indigo-400
-                    border border-dashed border-gray-300 dark:border-gray-600 rounded
-                    hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
-                    transition-colors"
-                >
-                  + New Collection
-                </button>
-              )}
-            </li>
-            {groups.map(group => (
-              <Fragment key={group.id}>
-                <CollectionGroup
-                  group={group}
-                  onSelect={onSongSelect}
-                  onAddSongs={id => setAddSongsTarget({ id, name: group.name })}
-                  onDuplicate={id => {
-                    setCreatingCollection(false)
-                    setDuplicatingCollectionId(id)
-                    setDuplicateDraft('Copy of ' + group.name)
-                  }}
-                  onGroupCheckboxChange={(val) => {
-                    if (val === null) {
-                      setExportSourceName(null)
-                      setExportSourceCollectionId(null)
-                    } else {
-                      setExportSourceName(val.name)
-                      setExportSourceCollectionId(val.id)
-                    }
-                  }}
-                  onAddToast={onAddToast}
-                />
-                {duplicatingCollectionId === group.id && (
-                  <li>
-                    <div className="px-1 py-1">
-                      <input
-                        autoFocus
-                        type="text"
-                        value={duplicateDraft}
-                        onChange={e => setDuplicateDraft(e.target.value)}
-                        placeholder="Collection name…"
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') { e.preventDefault(); confirmDuplicate() }
-                          if (e.key === 'Escape') {
-                            duplicatingEscapeRef.current = true
-                            setDuplicatingCollectionId(null)
-                            setDuplicateDraft('')
-                          }
-                        }}
-                        onBlur={() => {
-                          if (duplicatingEscapeRef.current) { duplicatingEscapeRef.current = false; return }
-                          confirmDuplicate()
-                        }}
-                        className="w-full px-2 py-1 text-[16px] rounded border border-indigo-400
-                          bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                          outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 px-1">
-                        Enter to confirm · Esc to cancel
-                      </p>
-                    </div>
-                  </li>
-                )}
-              </Fragment>
-            ))}
-            {groups.length === 0 && !creatingCollection && (
-              <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                No songs yet
-              </li>
+                <>
+                  {filtered.map(entry => (
+                    <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
+                  ))}
+                  {filtered.length === 0 && (
+                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                      No matches
+                    </li>
+                  )}
+                </>
+              )
+            ) : (
+              <>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
+                    className="w-full flex items-center gap-1 px-2 py-1 text-xs
+                      text-indigo-500 dark:text-indigo-400
+                      border border-dashed border-gray-300 dark:border-gray-600 rounded
+                      hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
+                      transition-colors"
+                  >
+                    + New Song
+                  </button>
+                </li>
+                {index.length > 0
+                  ? <AllSongsList entries={index} onSelect={onSongSelect} />
+                  : (
+                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                      No songs yet
+                    </li>
+                  )
+                }
+              </>
             )}
-          </>
-        )}
-      </ul>
+          </ul>
+        )
       )}
 
       <BroadcastsPanel conductorSync={conductorSync} onAddToast={onAddToast} />
@@ -687,13 +557,6 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         onSongSelect={onSongSelect}
         onImportSuccess={onImportSuccess}
         onAddToast={onAddToast}
-      />
-
-      <AddSongsModal
-        isOpen={!!addSongsTarget}
-        collectionId={addSongsTarget?.id ?? null}
-        collectionName={addSongsTarget?.name ?? ''}
-        onClose={() => setAddSongsTarget(null)}
       />
 
       <LiveSessionModal

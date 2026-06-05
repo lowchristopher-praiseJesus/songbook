@@ -18,6 +18,7 @@ import metronomeIcon from '../../assets/metronome.png'
 import swipeIcon from '../../assets/swipe.png'
 import { AlbumDetailView } from '../Album/AlbumDetailView'
 import { NewAlbumCreator } from '../Album/NewAlbumCreator'
+import { CollectionDetailView } from '../Collection/CollectionDetailView'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -33,6 +34,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const viewMode = useLibraryStore(s => s.viewMode)
   const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
   const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
+  const selectedCollectionId = useLibraryStore(s => s.selectedCollectionId)
   const albums = useLibraryStore(s => s.albums)
   const activeAlbum = activeAlbumCode ? albums.find(a => a.albumCode === activeAlbumCode) ?? null : null
   const [performanceSections, setPerformanceSections] = useState(null)
@@ -165,6 +167,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         ? <NewAlbumCreator album={editingAlbum} />
         : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
+        : selectedCollectionId
+        ? <CollectionDetailView onAddToast={onAddToast} />
         : isCreatingNewSong
         ? <NewSongEditor />
         : editingSongId
@@ -228,7 +232,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {/* Floating font-size + auto-scroll controls */}
-      {activeSong && !isCreatingNewAlbum && !activeAlbum && (
+      {activeSong && !isCreatingNewAlbum && !activeAlbum && !selectedCollectionId && (
         <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20 pointer-events-auto items-center"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           {speedMode ? (
