@@ -16,6 +16,7 @@ vi.mock('../lib/conductorApi', () => ({
 
 import { uploadShare, updateShare } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';
+import { createConductorSession } from '../lib/conductorApi';
 
 const songs = [{ meta: { title: 'El Shaddai' }, id: '1' }];
 
@@ -136,17 +137,16 @@ describe('ShareModal', () => {
 
 describe('ShareModal — self-direct conductor path', () => {
   it('calls updateCollection with conductorRole "conductor" when selfDirect is on and collectionId is provided', async () => {
-    const { uploadShare } = await import('../lib/shareApi')
     uploadShare.mockResolvedValue({
       shareCode: 'sc1',
       shareUrl: 'http://app?share=sc1',
       expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
     })
 
-    const { createConductorSession } = await import('../lib/conductorApi')
-    vi.mock('../lib/conductorApi', () => ({
-      createConductorSession: vi.fn().mockResolvedValue({}),
-    }))
+    createConductorSession.mockResolvedValueOnce({
+      conductorCode: 'test-cond-code',
+      directorToken: 'test-dir-token',
+    })
 
     useLibraryStore.setState({
       collections: [{ id: 'col-99', name: 'Easter', songIds: [], createdAt: '' }],

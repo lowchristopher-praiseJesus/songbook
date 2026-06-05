@@ -37,6 +37,7 @@ vi.mock('../../../hooks/useFileImport', () => ({
 
 vi.mock('../../UGImport/UGSearchModal', () => ({ UGSearchModal: () => null }))
 vi.mock('../../Share/ShareModal', () => ({ ShareModal: () => null }))
+vi.mock('../../Session/LiveSessionModal', () => ({ LiveSessionModal: () => null }))
 vi.mock('../ExportBackgroundModal', () => ({ ExportBackgroundModal: () => null }))
 vi.mock('../../../lib/storage', () => ({ loadSong: vi.fn(() => null) }))
 vi.mock('../AllSongsList', () => ({ AllSongsList: () => <ul /> }))

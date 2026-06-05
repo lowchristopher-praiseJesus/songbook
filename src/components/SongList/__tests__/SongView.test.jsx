@@ -12,6 +12,7 @@ const mockDisconnect = vi.fn()
 
 beforeEach(() => {
   localStorage.clear()
+  Element.prototype.scrollIntoView = vi.fn()
   vi.stubGlobal('IntersectionObserver', vi.fn(() => ({
     observe: mockObserve,
     unobserve: vi.fn(),
@@ -62,15 +63,16 @@ describe('SongView', () => {
 
   it('opens the sidebar when the tab is clicked', () => {
     render(<SongView {...baseProps} />)
+    expect(screen.getAllByRole('button', { name: 'Intro' })).toHaveLength(1) // strip only
     fireEvent.click(screen.getByRole('button', { name: /show sections panel/i }))
-    expect(screen.getByRole('button', { name: 'Intro' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Intro' })).toHaveLength(2) // strip + sidebar
   })
 
   it('closes the sidebar when the hide button is clicked', () => {
     render(<SongView {...baseProps} />)
     fireEvent.click(screen.getByRole('button', { name: /show sections panel/i }))
     fireEvent.click(screen.getByRole('button', { name: /hide sections panel/i }))
-    expect(screen.queryByRole('button', { name: 'Intro' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Intro' })).toHaveLength(1) // strip only
   })
 
   it('registers an IntersectionObserver on mount', () => {

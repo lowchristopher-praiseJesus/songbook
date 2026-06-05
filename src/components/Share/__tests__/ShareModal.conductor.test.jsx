@@ -31,6 +31,7 @@ vi.mock('../../../lib/exportSbp.js', () => ({
   exportSongsAsSbp: vi.fn().mockResolvedValue(new Blob()),
   computeExportId: vi.fn().mockReturnValue(1),
 }))
+vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }))
 
 beforeEach(() => {
   vi.clearAllMocks()

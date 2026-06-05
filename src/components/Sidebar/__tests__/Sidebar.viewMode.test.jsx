@@ -13,6 +13,7 @@ vi.mock('../../../store/libraryStore', () => ({
     selector({
       index: [],
       collections: [],
+      albums: [],
       isExportMode: false,
       selectedSongIds: new Set(),
       toggleExportMode: vi.fn(),
@@ -91,7 +92,7 @@ describe('Sidebar view toggle', () => {
 
   it('hides the view toggle while a search query is active', () => {
     render(<Sidebar {...defaultProps} />)
-    const input = screen.getByPlaceholderText('Search songs...')
+    const input = screen.getByPlaceholderText('Search collections...')
     expect(screen.getByRole('button', { name: 'Collections' })).toBeInTheDocument()
     fireEvent.change(input, { target: { value: 'grace' } })
     expect(screen.queryByRole('button', { name: 'Collections' })).not.toBeInTheDocument()
