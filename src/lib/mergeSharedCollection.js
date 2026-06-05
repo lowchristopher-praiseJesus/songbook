@@ -84,9 +84,10 @@ export function mergeSharedCollection(localCollection, localSongs, serverSongs) 
       if (!serverChanged) continue;  // server didn't touch it — keep local
 
       if (!localChanged) {
-        // Apply server's raw value so storage format stays consistent
-        if (isTopLevel) newRawText = rawServer;
-        else metaUpdates[key] = rawServer;
+        // Use the normalized value so a cleared field (e.g. artist set to '')
+        // is stored as '' rather than undefined, keeping index guards reliable.
+        if (isTopLevel) newRawText = rawServer;   // rawText has no norm; rawServer === serverVal
+        else metaUpdates[key] = serverVal;
       } else {
         conflictFields.push({ key, label, mine: rawLocal, theirs: rawServer });
       }

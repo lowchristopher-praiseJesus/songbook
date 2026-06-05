@@ -132,6 +132,25 @@ describe('mergeSharedCollection', () => {
     expect(result.newSongs).toHaveLength(0);
   });
 
+  it('auto-applies server artist clear and stores empty string (not undefined) in metaUpdates', () => {
+    // User 2 cleared the artist. sbpParser converts '' author to undefined, but the
+    // patch must store '' so the index guard (metaUpdates.artist !== undefined) still fires.
+    const baselineWithArtist = { title: 'Song', artist: 'City Harvest Church', keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'Hello' };
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'Song', artist: 'City Harvest Church', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', sharedBaseline: baselineWithArtist },
+      sections: [],
+    };
+    // Server artist is undefined because sbpParser uses s.author || undefined and author was ''.
+    const server = { rawText: 'Hello', meta: { title: 'Song', artist: undefined, keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1' }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.conflicts).toHaveLength(0);
+    expect(result.autoApplied).toHaveLength(1);
+    expect(result.autoApplied[0].metaUpdates.artist).toBe('');  // normalized, not undefined
+  });
+
   it('does not produce a false artist conflict when both have undefined artist but baseline has empty string', () => {
     // sbpParser sets artist: s.author || undefined, so '' becomes undefined.
     // buildBaseline normalises undefined to '' — the comparison must treat them as equal.
