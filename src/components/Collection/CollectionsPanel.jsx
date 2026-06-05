@@ -14,12 +14,6 @@ export function CollectionsPanel({ onSelect, onGroupCheckboxChange }) {
 
   const groups = buildGroups(index, collections)
 
-  // Compute uncategorized songs
-  const assignedIds = new Set(collections.flatMap(c => c.songIds))
-  const uncategorizedEntries = index.filter(e => !assignedIds.has(e.id))
-  const uncategorizedGroup = uncategorizedEntries.length > 0
-    ? { id: '__uncategorized__', name: 'Uncategorized', entries: uncategorizedEntries }
-    : null
 
   function confirmCreate() {
     if (draft.trim()) {
@@ -87,16 +81,7 @@ export function CollectionsPanel({ onSelect, onGroupCheckboxChange }) {
           />
         ))}
 
-        {uncategorizedGroup && (
-          <CollectionCard
-            key="__uncategorized__"
-            group={uncategorizedGroup}
-            onSelect={onSelect}
-            onGroupCheckboxChange={onGroupCheckboxChange}
-          />
-        )}
-
-        {groups.length === 0 && !uncategorizedGroup && !creating && (
+        {groups.length === 0 && !creating && (
           <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
             No songs yet
           </li>
