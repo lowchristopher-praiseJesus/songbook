@@ -87,6 +87,33 @@ describe('addSongs with shareCode', () => {
   });
 });
 
+describe('stampSharedBaseline', () => {
+  it('stamps sharedBaseline from current song state when sbpId is present', () => {
+    const { stampSharedBaseline } = useLibraryStore.getState();
+    stampSharedBaseline('L1');
+    expect(saveSong).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: expect.objectContaining({
+          sharedBaseline: expect.objectContaining({
+            title: 'T', keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'old',
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('does nothing if the song has no sbpId', () => {
+    loadSong.mockReturnValueOnce({
+      id: 'L1', rawText: 'old',
+      meta: { title: 'T', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120 },
+      sections: [],
+    });
+    const { stampSharedBaseline } = useLibraryStore.getState();
+    stampSharedBaseline('L1');
+    expect(saveSong).not.toHaveBeenCalled();
+  });
+});
+
 describe('applyShareRefresh', () => {
   it('applies patch: updates song meta and sharedBaseline in localStorage', () => {
     const { applyShareRefresh } = useLibraryStore.getState();

@@ -484,6 +484,31 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Stamp sharedBaseline on a song from its current localStorage state.
+   * Called after creating or pushing a share so the sharer can receive
+   * updates pushed by recipients via the 3-way merge.
+   */
+  stampSharedBaseline(songId) {
+    const song = loadSong(songId)
+    if (!song || !song.meta.sbpId) return
+    saveSong({
+      ...song,
+      meta: {
+        ...song.meta,
+        sharedBaseline: {
+          title:    song.meta.title    ?? '',
+          artist:   song.meta.artist   ?? '',
+          rawText:  song.rawText,
+          keyIndex: song.meta.keyIndex ?? 0,
+          key:      song.meta.key      ?? '',
+          capo:     song.meta.capo     ?? 0,
+          tempo:    song.meta.tempo,
+        },
+      },
+    })
+  },
+
+  /**
    * Merge arbitrary fields into an existing collection.
    * Used to attach conductor-mode fields (e.g. conductorCode, conductorDirectorToken)
    * after importing a conductor-enabled share.

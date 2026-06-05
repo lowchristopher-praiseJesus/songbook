@@ -38,6 +38,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const directorQrRef = useRef(null)
   const updateCollection = useLibraryStore(s => s.updateCollection)
   const backfillSongSbpId = useLibraryStore(s => s.backfillSongSbpId)
+  const stampSharedBaseline = useLibraryStore(s => s.stampSharedBaseline)
   const collections = useLibraryStore(s => s.collections)
   const collection = collectionId ? collections.find(c => c.id === collectionId) : null
   const isUpdateMode = !!collection?.shareCode
@@ -95,6 +96,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
           backfillSongSbpId(song.id, computeExportId(song))
         }
       })
+      // Stamp sharedBaseline so the sharer receives updates pushed by recipients
+      songs.forEach(song => stampSharedBaseline(song.id))
 
       // Save shareCode on the sharer's collection so Push Update / Check for updates work next time
       if (collectionId) {
@@ -159,6 +162,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       const blob = await exportSongsAsSbp(collectionSongs, nameValue.trim() || null, shareLyricsOnly, null)
       const result = await updateShare(collection.shareCode, blob)
       if (collectionId) updateCollection(collectionId, { lastVersion: result.version })
+      // Update baseline so the sharer's songs look "in sync" after pushing;
+      // prevents false merge conflicts when recipients push further changes.
+      collection.songIds.forEach(id => stampSharedBaseline(id))
       setExpiresAt(result.updatedAt ?? new Date().toISOString())
       setStep('update-done')
     } catch (err) {
