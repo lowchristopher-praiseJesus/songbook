@@ -132,6 +132,23 @@ describe('mergeSharedCollection', () => {
     expect(result.newSongs).toHaveLength(0);
   });
 
+  it('does not produce a false artist conflict when both have undefined artist but baseline has empty string', () => {
+    // sbpParser sets artist: s.author || undefined, so '' becomes undefined.
+    // buildBaseline normalises undefined to '' — the comparison must treat them as equal.
+    const baselineEmptyArtist = { title: 'Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'Hello' };
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'Song', artist: undefined, keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', sharedBaseline: baselineEmptyArtist },
+      sections: [],
+    };
+    const server = { rawText: 'Hello', meta: { title: 'Song', artist: undefined, keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1' }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.conflicts).toHaveLength(0);
+    expect(result.autoApplied).toHaveLength(0);
+  });
+
   it('does not produce a false tempo conflict when both sides have undefined tempo', () => {
     // parseSbpFile returns tempo: undefined for songs with TempoInt=0.
     // buildBaseline must preserve undefined so the comparison sees undefined===undefined (no change).

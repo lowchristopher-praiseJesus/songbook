@@ -1,10 +1,12 @@
+// norm must match the normalization buildBaseline applies so that
+// undefined/null raw values compare equal to a stored '' or 0 baseline.
 const TRACKED_FIELDS = [
-  { key: 'title',    label: 'Title' },
-  { key: 'artist',   label: 'Artist' },
-  { key: 'keyIndex', label: 'Key' },
-  { key: 'key',      label: 'Key name' },
-  { key: 'capo',     label: 'Capo' },
-  { key: 'tempo',    label: 'Tempo' },
+  { key: 'title',    label: 'Title',                        norm: v => v ?? '' },
+  { key: 'artist',   label: 'Artist',                       norm: v => v ?? '' },
+  { key: 'keyIndex', label: 'Key',                          norm: v => v ?? 0 },
+  { key: 'key',      label: 'Key name',                     norm: v => v ?? '' },
+  { key: 'capo',     label: 'Capo',                         norm: v => v ?? 0 },
+  { key: 'tempo',    label: 'Tempo' },                      // preserve undefined — matches buildBaseline
   { key: 'rawText',  label: 'Lyrics / Chords', isTopLevel: true },
 ];
 
@@ -66,10 +68,15 @@ export function mergeSharedCollection(localCollection, localSongs, serverSongs) 
     const metaUpdates    = {};
     let   newRawText     = undefined;
 
-    for (const { key, label, isTopLevel } of TRACKED_FIELDS) {
-      const baseVal   = sharedBaseline[key];
-      const localVal  = isTopLevel ? localSong.rawText : localSong.meta[key];
-      const serverVal = getFieldValue(serverSong, key);
+    for (const { key, label, isTopLevel, norm = v => v } of TRACKED_FIELDS) {
+      const baseVal    = sharedBaseline[key];
+      const rawLocal   = isTopLevel ? localSong.rawText : localSong.meta[key];
+      const rawServer  = getFieldValue(serverSong, key);
+
+      // Normalize before comparing so that e.g. undefined artist and '' baseline
+      // are treated as identical (both mean "no artist").
+      const localVal  = norm(rawLocal);
+      const serverVal = norm(rawServer);
 
       const localChanged  = localVal  !== baseVal;
       const serverChanged = serverVal !== baseVal;
@@ -77,10 +84,11 @@ export function mergeSharedCollection(localCollection, localSongs, serverSongs) 
       if (!serverChanged) continue;  // server didn't touch it — keep local
 
       if (!localChanged) {
-        if (isTopLevel) newRawText = serverVal;
-        else metaUpdates[key] = serverVal;
+        // Apply server's raw value so storage format stays consistent
+        if (isTopLevel) newRawText = rawServer;
+        else metaUpdates[key] = rawServer;
       } else {
-        conflictFields.push({ key, label, mine: localVal, theirs: serverVal });
+        conflictFields.push({ key, label, mine: rawLocal, theirs: rawServer });
       }
     }
 
