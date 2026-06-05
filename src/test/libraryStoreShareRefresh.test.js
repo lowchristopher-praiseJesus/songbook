@@ -135,6 +135,37 @@ describe('applyShareRefresh', () => {
     expect(saved.rawText).toBe('{c: Verse}\nAmazing grace');
   });
 
+  it('nulls out sbpOriginalContent when rawText patch is applied so re-export uses new content', () => {
+    // Simulate a song that was originally imported from SBP (has sbpOriginalContent).
+    loadSong.mockReturnValueOnce({
+      id: 'L1',
+      rawText: 'original',
+      meta: {
+        title: 'T', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120,
+        sbpId: 'S1', sbpKey: 0, sbpOriginalContent: 'original',
+        sharedBaseline: { rawText: 'original', keyIndex: 0, key: 'C', capo: 0, tempo: 120 },
+      },
+      sections: [],
+    });
+    const { applyShareRefresh } = useLibraryStore.getState();
+    applyShareRefresh('C1', {
+      patches: [{
+        localId: 'L1',
+        metaUpdates: {},
+        rawText: 'edited',
+        newBaseline: { rawText: 'edited', keyIndex: 0, key: 'C', capo: 0, tempo: 120 },
+      }],
+      newSongs: [],
+      removed: [],
+      serverSbpIdOrder: ['S1'],
+      newVersion: 2,
+    });
+    const saved = saveSong.mock.calls[0][0];
+    // sbpOriginalContent must be cleared so exportSbp uses the new rawText on the next Push Update
+    expect(saved.meta.sbpOriginalContent).toBeNull();
+    expect(saved.rawText).toBe('edited');
+  });
+
   it('applies patch: updates song meta and sharedBaseline in localStorage', () => {
     const { applyShareRefresh } = useLibraryStore.getState();
     applyShareRefresh('C1', {

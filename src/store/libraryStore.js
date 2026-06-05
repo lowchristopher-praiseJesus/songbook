@@ -540,6 +540,9 @@ export const useLibraryStore = create((set, get) => ({
           ...song.meta,
           ...patch.metaUpdates,
           sharedBaseline: patch.newBaseline,
+          // If the patch updated rawText, discard the cached original SBP content so
+          // exportSbp uses the new rawText rather than silently shipping the old version.
+          ...(patch.rawText !== undefined ? { sbpOriginalContent: null } : {}),
         },
       }
       saveSong(updatedSong)
