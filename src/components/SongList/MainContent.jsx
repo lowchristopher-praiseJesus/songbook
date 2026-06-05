@@ -19,6 +19,7 @@ import swipeIcon from '../../assets/swipe.png'
 import { AlbumDetailView } from '../Album/AlbumDetailView'
 import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 import { CollectionDetailView } from '../Collection/CollectionDetailView'
+import { NewCollectionCreator } from '../Collection/NewCollectionCreator'
 
 export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
@@ -30,6 +31,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
   const isCreatingNewAlbum = useLibraryStore(s => s.isCreatingNewAlbum)
+  const isCreatingNewCollection = useLibraryStore(s => s.isCreatingNewCollection)
   const editingAlbum = useLibraryStore(s => s.editingAlbum)
   const viewMode = useLibraryStore(s => s.viewMode)
   const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
@@ -167,6 +169,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         ? <NewAlbumCreator album={editingAlbum} />
         : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
+        : isCreatingNewCollection
+        ? <NewCollectionCreator onOpenSidebar={onOpenSidebar} />
         : selectedCollectionId
         ? <CollectionDetailView onAddToast={onAddToast} onOpenSidebar={onOpenSidebar} />
         : isCreatingNewSong
@@ -232,7 +236,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {/* Floating font-size + auto-scroll controls */}
-      {activeSong && !isCreatingNewAlbum && !activeAlbum && !selectedCollectionId && (
+      {activeSong && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
         <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20 pointer-events-auto items-center"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           {speedMode ? (

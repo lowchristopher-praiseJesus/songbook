@@ -28,6 +28,7 @@ export const useLibraryStore = create((set, get) => ({
   editingAlbum: null,             // album object being edited, or null
   selectedCollectionId: null,   // string | null — collection whose detail view is open in main content
   highlightedCollectionId: null, // string | null — collection card highlighted in sidebar (persists after Back)
+  isCreatingNewCollection: false,
 
   /**
    * Initialize from localStorage on app start.
@@ -114,6 +115,8 @@ export const useLibraryStore = create((set, get) => ({
         song.meta = {
           ...song.meta,
           sharedBaseline: {
+            title:    song.meta.title ?? '',
+            artist:   song.meta.artist ?? '',
             rawText:  song.rawText,
             keyIndex: song.meta.keyIndex ?? 0,
             key:      song.meta.key ?? '',
@@ -377,7 +380,7 @@ export const useLibraryStore = create((set, get) => ({
   /** Switch between 'collections' and 'allSongs' view modes. Persists to localStorage. */
   setViewMode(mode) {
     saveViewMode(mode)
-    set({ viewMode: mode, isCreatingNewAlbum: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null, selectedCollectionId: null, highlightedCollectionId: null })
+    set({ viewMode: mode, isCreatingNewAlbum: false, isCreatingNewCollection: false, ...(mode !== 'albums' ? { activeAlbumCode: null } : {}), activeCollectionId: null, selectedCollectionId: null, highlightedCollectionId: null })
   },
 
   /** Set which collection should auto-expand (e.g. after import). */
@@ -391,6 +394,13 @@ export const useLibraryStore = create((set, get) => ({
 
   setSelectedCollectionId(id) {
     set({ selectedCollectionId: id, ...(id !== null ? { highlightedCollectionId: id } : {}) })
+  },
+
+  setIsCreatingNewCollection(val) {
+    set({
+      isCreatingNewCollection: val,
+      ...(val ? { selectedCollectionId: null, activeSongId: null, activeSong: null, editingSongId: null, isCreatingNewSong: false, isCreatingNewAlbum: false, activeAlbumCode: null } : {}),
+    })
   },
 
   syncAlbums() {

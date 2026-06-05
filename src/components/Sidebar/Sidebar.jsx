@@ -301,6 +301,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         viewMode === 'collections' && !trimmedQuery ? (
           <CollectionsPanel
             onSelect={onSongSelect}
+            onClose={onClose}
             onGroupCheckboxChange={(val) => {
               if (val === null) {
                 setExportSourceName(null)
