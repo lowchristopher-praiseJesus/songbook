@@ -533,7 +533,9 @@ export const useLibraryStore = create((set, get) => ({
       if (!song) continue
       const updatedSong = {
         ...song,
-        ...(patch.rawText !== undefined ? { rawText: patch.rawText } : {}),
+        ...(patch.rawText !== undefined
+          ? { rawText: patch.rawText, sections: parseContent(patch.rawText) }
+          : {}),
         meta: {
           ...song.meta,
           ...patch.metaUpdates,

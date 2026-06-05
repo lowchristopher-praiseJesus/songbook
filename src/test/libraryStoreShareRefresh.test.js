@@ -115,6 +115,26 @@ describe('stampSharedBaseline', () => {
 });
 
 describe('applyShareRefresh', () => {
+  it('re-parses sections when rawText changes so the render view is not stale', () => {
+    const { applyShareRefresh } = useLibraryStore.getState();
+    applyShareRefresh('C1', {
+      patches: [{
+        localId: 'L1',
+        metaUpdates: {},
+        rawText: '{c: Verse}\nAmazing grace',
+        newBaseline: { rawText: '{c: Verse}\nAmazing grace', keyIndex: 0, key: 'C', capo: 0, tempo: 120 },
+      }],
+      newSongs: [],
+      removed: [],
+      serverSbpIdOrder: ['S1'],
+      newVersion: 2,
+    });
+    const saved = saveSong.mock.calls[0][0];
+    // sections must be recomputed from the new rawText, not left as the old []
+    expect(saved.sections).not.toEqual([]);
+    expect(saved.rawText).toBe('{c: Verse}\nAmazing grace');
+  });
+
   it('applies patch: updates song meta and sharedBaseline in localStorage', () => {
     const { applyShareRefresh } = useLibraryStore.getState();
     applyShareRefresh('C1', {
