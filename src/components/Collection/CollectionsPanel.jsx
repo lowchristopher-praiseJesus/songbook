@@ -12,7 +12,7 @@ export function CollectionsPanel({ onSelect, onGroupCheckboxChange }) {
   const [draft, setDraft] = useState('')
   const escapeRef = useRef(false)
 
-  const groups = buildGroups(index, collections)
+  const groups = buildGroups(index, [...collections].reverse())
 
 
   function confirmCreate() {
