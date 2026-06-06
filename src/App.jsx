@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Bars3Icon, MusicalNoteIcon, QuestionMarkCircleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { LicenseProvider } from './contexts/LicenseContext'
 import { useLibraryStore } from './store/libraryStore'
@@ -244,13 +245,16 @@ export default function App() {
         <header className={`flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0 transition-colors duration-75 ${isFlashing ? 'bg-red-500/40' : ''}`}>
           <div className="flex items-center gap-2">
             <button
-              className="md:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="md:hidden p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
               onClick={() => setSidebarOpen(o => !o)}
               aria-label="Toggle sidebar"
             >
-              ☰
+              <Bars3Icon className="w-5 h-5" />
             </button>
-            <span className="font-bold text-lg select-none">🎵 SongSheet</span>
+            <span className="flex items-center gap-1.5 font-bold text-lg select-none">
+              <MusicalNoteIcon className="w-5 h-5 text-indigo-500" />
+              SongSheet
+            </span>
             <RecordingIndicator />
           </div>
           <div className="flex items-center gap-1">
@@ -260,16 +264,16 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="User guide"
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-base font-semibold leading-none"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             >
-              ?
+              <QuestionMarkCircleIcon className="w-5 h-5" />
             </a>
             <button
               onClick={() => setSettingsOpen(true)}
               aria-label="Settings"
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-xl"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
             >
-              ⚙️
+              <Cog6ToothIcon className="w-5 h-5" />
             </button>
           </div>
         </header>

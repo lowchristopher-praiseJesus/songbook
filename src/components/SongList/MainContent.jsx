@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
+import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
@@ -319,14 +320,19 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 type="button"
                 onClick={() => setIsFit(f => !f)}
                 className={`w-11 h-11 flex items-center justify-center rounded-full
-                  text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+                  text-gray-700 dark:text-gray-300 leading-none select-none
                   active:opacity-100 transition-opacity duration-150
                   ${isFit
                     ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
                     : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
                   }`}
                 aria-label="Fit song to screen"
-              >⤢</button>
+              >
+                {isFit
+                  ? <ArrowsPointingInIcon className="w-5 h-5" />
+                  : <ArrowsPointingOutIcon className="w-5 h-5" />
+                }
+              </button>
               <button
                 type="button"
                 onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
@@ -364,14 +370,16 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 type="button"
                 onClick={isScrolling ? stop : () => { start(); setSpeedMode(true) }}
                 className={`w-11 h-11 flex items-center justify-center rounded-full
-                  text-gray-700 dark:text-gray-300 text-sm leading-none select-none
+                  text-gray-700 dark:text-gray-300 leading-none select-none
                   active:opacity-100 transition-opacity duration-150
                   ${isScrolling
                     ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
                     : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
                   }`}
                 aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
-              >{isScrolling ? '⏹' : '▶'}</button>
+              >
+                {isScrolling ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+              </button>
               {metronomeEnabled && (
                 <button
                   type="button"

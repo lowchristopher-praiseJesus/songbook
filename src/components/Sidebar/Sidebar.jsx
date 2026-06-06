@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { SignalIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
@@ -435,10 +436,10 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             </Button>
             <Button
               variant="secondary"
-              className="w-full"
+              className="w-full flex items-center justify-center gap-2"
               onClick={() => setLiveSessionModalOpen(true)}
             >
-              🎙 Live Session
+              <SignalIcon className="w-4 h-4" /> Live Session
             </Button>
           </>
         )}

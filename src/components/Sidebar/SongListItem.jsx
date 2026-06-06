@@ -1,4 +1,18 @@
+import { TrashIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
+
+function GripIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="4.5" r="1.25" />
+      <circle cx="11" cy="4.5" r="1.25" />
+      <circle cx="5" cy="8" r="1.25" />
+      <circle cx="11" cy="8" r="1.25" />
+      <circle cx="5" cy="11.5" r="1.25" />
+      <circle cx="11" cy="11.5" r="1.25" />
+    </svg>
+  )
+}
 
 export function SongListItem({
   entry,
@@ -57,7 +71,7 @@ export function SongListItem({
           aria-label="Drag to reorder"
           className="ml-1 shrink-0 px-1 py-2 touch-none cursor-grab active:cursor-grabbing text-gray-400 dark:text-gray-500"
         >
-          ⠿
+          <GripIcon className="w-4 h-4" />
         </span>
       )}
       {isExportMode && (
@@ -92,11 +106,11 @@ export function SongListItem({
           type="button"
           onClick={handleDelete}
           aria-label={`Delete ${entry.title}`}
-          className={`ml-1 mr-1 p-1 rounded focus:opacity-100 transition-opacity shrink-0
+          className={`ml-1 mr-1 p-1 rounded cursor-pointer focus:opacity-100 transition-opacity shrink-0
             [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
             ${isActive ? 'hover:bg-indigo-700 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500'}`}
         >
-          🗑
+          <TrashIcon className="w-4 h-4" />
         </button>
       )}
     </li>
