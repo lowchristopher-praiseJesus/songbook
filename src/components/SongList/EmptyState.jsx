@@ -3,8 +3,10 @@ import { MusicalNoteIcon } from '@heroicons/react/24/outline'
 export function EmptyState({ onFileChange }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-8">
-      <div className="mb-4 select-none text-indigo-300 dark:text-indigo-700">
-        <MusicalNoteIcon className="w-16 h-16 mx-auto" />
+      <div className="mb-6 select-none">
+        <div className="w-24 h-24 mx-auto rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center">
+          <MusicalNoteIcon className="w-12 h-12 text-indigo-400 dark:text-indigo-500" />
+        </div>
       </div>
       <h2 className="text-2xl font-semibold mb-2 text-gray-700 dark:text-gray-300">No songs yet</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-1">

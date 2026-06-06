@@ -236,175 +236,138 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         </div>
       )}
 
-      {/* Floating font-size + auto-scroll controls */}
+      {/* Floating controls — grouped pill card */}
       {activeSong && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
-        <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-20 pointer-events-auto items-center"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          {speedMode ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setTargetDuration(targetDuration + 5)}
-                disabled={targetDuration >= 600}
-                className="w-16 h-16 flex items-center justify-center rounded-full
-                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
-                  text-3xl font-light leading-none select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Slower (increase scroll duration)"
-              >+</button>
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none">
-                {formatDuration(targetDuration)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setTargetDuration(targetDuration - 5)}
-                disabled={targetDuration <= 30}
-                className="w-16 h-16 flex items-center justify-center rounded-full
-                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
-                  text-3xl font-light leading-none select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Faster (decrease scroll duration)"
-              >−</button>
-              <button
-                type="button"
-                onClick={() => setSpeedMode(false)}
-                className="mt-1 px-4 py-2 rounded-full
-                  bg-indigo-500/40 dark:bg-indigo-400/30
-                  text-gray-800 dark:text-gray-200 text-sm font-medium select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150"
-                aria-label="Done adjusting speed"
-              >Done</button>
-            </>
-          ) : bpmMode ? (
-            <>
-              <button
-                type="button"
-                onClick={() => onMetronomeBpmChange(Math.min(300, metronomeBpm + 5))}
-                disabled={metronomeBpm >= 300}
-                className="w-16 h-16 flex items-center justify-center rounded-full
-                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
-                  text-3xl font-light leading-none select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Increase BPM"
-              >+</button>
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none">
-                {metronomeBpm}
-              </span>
-              <button
-                type="button"
-                onClick={() => onMetronomeBpmChange(Math.max(30, metronomeBpm - 5))}
-                disabled={metronomeBpm <= 30}
-                className="w-16 h-16 flex items-center justify-center rounded-full
-                  bg-gray-500/25 dark:bg-white/15 text-gray-700 dark:text-gray-300
-                  text-3xl font-light leading-none select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Decrease BPM"
-              >−</button>
-              <button
-                type="button"
-                onClick={() => setBpmMode(false)}
-                className="mt-1 px-4 py-2 rounded-full
-                  bg-indigo-500/40 dark:bg-indigo-400/30
-                  text-gray-800 dark:text-gray-200 text-sm font-medium select-none
-                  opacity-80 active:opacity-100 transition-opacity duration-150"
-                aria-label="Done adjusting BPM"
-              >Done</button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setIsFit(f => !f)}
-                className={`w-11 h-11 flex items-center justify-center rounded-full
-                  text-gray-700 dark:text-gray-300 leading-none select-none
-                  active:opacity-100 transition-opacity duration-150
-                  ${isFit
-                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
-                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
-                  }`}
-                aria-label="Fit song to screen"
-              >
-                {isFit
-                  ? <ArrowsPointingInIcon className="w-5 h-5" />
-                  : <ArrowsPointingOutIcon className="w-5 h-5" />
-                }
-              </button>
-              <button
-                type="button"
-                onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
-                disabled={fontSize >= 28 || isFit}
-                className="w-11 h-11 flex items-center justify-center rounded-full
-                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
-                  text-lg font-light leading-none select-none
-                  opacity-50 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Increase font size"
-              >+</button>
-              <button
-                type="button"
-                onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
-                disabled={fontSize <= 12 || isFit}
-                className="w-11 h-11 flex items-center justify-center rounded-full
-                  bg-gray-500/30 dark:bg-white/20 text-gray-700 dark:text-gray-300
-                  text-lg font-light leading-none select-none
-                  opacity-50 active:opacity-100 transition-opacity duration-150
-                  disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Decrease font size"
-              >−</button>
-              {isScrolling && (
+        <div
+          className="fixed bottom-4 right-4 z-20 pointer-events-auto"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <div className="flex flex-col items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/70 dark:border-gray-700/60 py-2 px-1.5">
+            {speedMode ? (
+              <>
                 <button
                   type="button"
-                  onClick={() => setSpeedMode(true)}
-                  className="w-11 h-7 flex items-center justify-center rounded-full
-                    bg-gray-500/20 dark:bg-white/10
-                    text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none
-                    opacity-60 active:opacity-100 transition-opacity duration-150"
-                  aria-label="Adjust scroll speed"
-                >{formatDuration(targetDuration)}</button>
-              )}
-              <button
-                type="button"
-                onClick={isScrolling ? stop : () => { start(); setSpeedMode(true) }}
-                className={`w-11 h-11 flex items-center justify-center rounded-full
-                  text-gray-700 dark:text-gray-300 leading-none select-none
-                  active:opacity-100 transition-opacity duration-150
-                  ${isScrolling
-                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
-                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
-                  }`}
-                aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
-              >
-                {isScrolling ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
-              </button>
-              {metronomeEnabled && (
+                  onClick={() => setTargetDuration(targetDuration + 5)}
+                  disabled={targetDuration >= 600}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 text-2xl font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Slower (increase scroll duration)"
+                >+</button>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none py-0.5">
+                  {formatDuration(targetDuration)}
+                </span>
                 <button
                   type="button"
-                  onClick={() => setBpmMode(true)}
-                  className="w-11 h-7 flex items-center justify-center rounded-full
-                    bg-gray-500/20 dark:bg-white/10
-                    text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none
-                    opacity-60 active:opacity-100 transition-opacity duration-150"
-                  aria-label="Adjust metronome BPM"
-                >{metronomeBpm}</button>
-              )}
-              <button
-                type="button"
-                onClick={metronomeEnabled ? onMetronomeToggle : () => { onMetronomeToggle(); setBpmMode(true) }}
-                className={`w-11 h-11 flex items-center justify-center rounded-full
-                  text-gray-700 dark:text-gray-300 text-lg leading-none select-none
-                  active:opacity-100 transition-opacity duration-150
-                  ${metronomeEnabled
-                    ? 'bg-indigo-500/50 dark:bg-indigo-400/40 opacity-80'
-                    : 'bg-gray-500/30 dark:bg-white/20 opacity-50'
-                  }`}
-                aria-label={metronomeEnabled ? 'Disable metronome flash' : 'Enable metronome flash'}
-              ><img src={metronomeIcon} alt="" className="w-6 h-6 object-contain" /></button>
-            </>
-          )}
+                  onClick={() => setTargetDuration(targetDuration - 5)}
+                  disabled={targetDuration <= 30}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 text-2xl font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Faster (decrease scroll duration)"
+                >−</button>
+                <div className="w-6 h-px bg-gray-200 dark:bg-gray-700 my-0.5" />
+                <button
+                  type="button"
+                  onClick={() => setSpeedMode(false)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
+                  aria-label="Done adjusting speed"
+                >Done</button>
+              </>
+            ) : bpmMode ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onMetronomeBpmChange(Math.min(300, metronomeBpm + 5))}
+                  disabled={metronomeBpm >= 300}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 text-2xl font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Increase BPM"
+                >+</button>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none py-0.5">
+                  {metronomeBpm}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onMetronomeBpmChange(Math.max(30, metronomeBpm - 5))}
+                  disabled={metronomeBpm <= 30}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-600 dark:text-gray-300 text-2xl font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Decrease BPM"
+                >−</button>
+                <div className="w-6 h-px bg-gray-200 dark:bg-gray-700 my-0.5" />
+                <button
+                  type="button"
+                  onClick={() => setBpmMode(false)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
+                  aria-label="Done adjusting BPM"
+                >Done</button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsFit(f => !f)}
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl select-none transition-colors
+                    ${isFit
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`}
+                  aria-label="Fit song to screen"
+                >
+                  {isFit ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}
+                </button>
+                <div className="w-6 h-px bg-gray-200 dark:bg-gray-700 my-0.5" />
+                <button
+                  type="button"
+                  onClick={() => onFontSizeChange(Math.min(fontSize + 2, 28))}
+                  disabled={fontSize >= 28 || isFit}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 text-lg font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Increase font size"
+                >+</button>
+                <button
+                  type="button"
+                  onClick={() => onFontSizeChange(Math.max(fontSize - 2, 12))}
+                  disabled={fontSize <= 12 || isFit}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 text-lg font-light select-none hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  aria-label="Decrease font size"
+                >−</button>
+                <div className="w-6 h-px bg-gray-200 dark:bg-gray-700 my-0.5" />
+                {isScrolling && (
+                  <button
+                    type="button"
+                    onClick={() => setSpeedMode(true)}
+                    className="w-11 h-7 flex items-center justify-center rounded-lg text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Adjust scroll speed"
+                  >{formatDuration(targetDuration)}</button>
+                )}
+                <button
+                  type="button"
+                  onClick={isScrolling ? stop : () => { start(); setSpeedMode(true) }}
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl select-none transition-colors
+                    ${isScrolling
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`}
+                  aria-label={isScrolling ? 'Stop auto-scroll' : 'Start auto-scroll'}
+                >
+                  {isScrolling ? <StopIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+                </button>
+                {metronomeEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setBpmMode(true)}
+                    className="w-11 h-7 flex items-center justify-center rounded-lg text-xs text-gray-500 dark:text-gray-400 font-mono tabular-nums select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Adjust metronome BPM"
+                  >{metronomeBpm}</button>
+                )}
+                <button
+                  type="button"
+                  onClick={metronomeEnabled ? onMetronomeToggle : () => { onMetronomeToggle(); setBpmMode(true) }}
+                  className={`w-11 h-11 flex items-center justify-center rounded-xl select-none transition-colors
+                    ${metronomeEnabled
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`}
+                  aria-label={metronomeEnabled ? 'Disable metronome flash' : 'Enable metronome flash'}
+                ><img src={metronomeIcon} alt="" className="w-6 h-6 object-contain" /></button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

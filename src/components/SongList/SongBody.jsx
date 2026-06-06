@@ -145,9 +145,8 @@ const SongSection = React.forwardRef(function SongSection(
               fontFamily: 'var(--section-font)',
               fontSize: 'var(--section-size)',
               color: 'var(--section-color-active)',
-              border: '2px solid var(--section-color-active)',
-              borderRadius: '6px',
-              padding: '2px 10px',
+              borderLeft: '3px solid var(--section-color-active)',
+              paddingLeft: '8px',
             }}
           >
             {section.label}

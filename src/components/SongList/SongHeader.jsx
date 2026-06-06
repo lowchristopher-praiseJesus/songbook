@@ -41,7 +41,7 @@ export function SongHeader({
   })
 
   return (
-    <div ref={headerRef} className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-2">
+    <div ref={headerRef} className="border-b border-gray-100 dark:border-gray-800 pb-4 mb-2">
       <h1
         className="font-bold leading-tight"
         style={{ fontFamily: 'var(--title-font)', fontSize: 'var(--title-size)', color: 'var(--title-color-active)' }}

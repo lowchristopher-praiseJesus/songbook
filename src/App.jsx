@@ -242,7 +242,7 @@ export default function App() {
       <LicenseProvider>
       <div className="flex flex-col h-[100dvh] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         {/* Top Nav */}
-        <header className={`flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0 transition-colors duration-75 ${isFlashing ? 'bg-red-500/40' : ''}`}>
+        <header className={`flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-800 shrink-0 transition-colors duration-75 ${isFlashing ? 'bg-red-500/40' : ''}`}>
           <div className="flex items-center gap-2">
             <button
               className="md:hidden p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"

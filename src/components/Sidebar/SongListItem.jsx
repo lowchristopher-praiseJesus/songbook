@@ -101,7 +101,7 @@ export function SongListItem({
           </div>
         )}
       </button>
-      {!isExportMode && (
+      {!isExportMode && !isActive && (
         <button
           type="button"
           onClick={handleDelete}

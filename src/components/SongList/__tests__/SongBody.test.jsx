@@ -144,13 +144,12 @@ describe('SongBody inline strum rendering', () => {
 })
 
 describe('SongBody section heading badge', () => {
-  it('renders section label inside a span with border style', () => {
+  it('renders section label inside a span with left-accent border style', () => {
     render(<SongBody sections={[{ label: 'Verse 1', lines: [] }]} />)
     const badge = screen.getByText('Verse 1')
     expect(badge.tagName).toBe('SPAN')
-    expect(badge.style.border).toContain('2px solid')
-    expect(badge.style.borderRadius).toBe('6px')
-    expect(badge.style.padding).toBe('2px 10px')
+    expect(badge.style.borderLeft).toContain('3px solid')
+    expect(badge.style.paddingLeft).toBe('8px')
   })
 })
 

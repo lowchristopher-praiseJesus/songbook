@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { SignalIcon } from '@heroicons/react/24/outline'
+import { SignalIcon, MagnifyingGlassIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
@@ -212,32 +212,33 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
       <aside className={`
         w-[85vw] md:w-64 shrink-0 flex flex-col
-        border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800
+        border-r border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800
         absolute inset-y-0 left-0 z-40
         md:static md:z-auto
         transition-transform duration-200 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'}
       `}>
       {/* Search */}
-      <div className="p-3 pb-0 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-3 pb-0 border-b border-gray-100 dark:border-gray-800">
         <div className="relative mb-3">
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" />
           <input
             type="text"
             placeholder={viewMode === 'albums' ? 'Search albums...' : viewMode === 'collections' ? 'Search collections...' : 'Search songs...'}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+            className="w-full pl-8 pr-7 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600
               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-              focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-7"
+              focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
             >
-              ✕
+              <XMarkIcon className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -384,7 +385,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <BroadcastsPanel conductorSync={conductorSync} onAddToast={onAddToast} />
 
       {/* Footer: normal mode → Import + Export; export mode → selection bar */}
-      {(viewMode !== 'albums' || trimmedQuery) && <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+      {(viewMode !== 'albums' || trimmedQuery) && <div className="p-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
         {isExportMode ? (
           <div className="flex items-center gap-2">
             <div className="flex-1 flex flex-col">
@@ -419,28 +420,35 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             >
               + Import
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={toggleExportMode}
-              aria-label="Export songs"
-            >
-              Export
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={() => setUgModalOpen(true)}
-            >
-              Search UG
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={() => setLiveSessionModalOpen(true)}
-            >
-              <SignalIcon className="w-4 h-4" /> Live Session
-            </Button>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={toggleExportMode}
+                aria-label="Export songs"
+                className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                <ArrowUpTrayIcon className="w-4 h-4" />
+                <span className="text-[10px] font-medium">Export</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUgModalOpen(true)}
+                aria-label="Search Ultimate Guitar"
+                className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                <MagnifyingGlassIcon className="w-4 h-4" />
+                <span className="text-[10px] font-medium">Search UG</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLiveSessionModalOpen(true)}
+                aria-label="Live Session"
+                className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                <SignalIcon className="w-4 h-4" />
+                <span className="text-[10px] font-medium">Live</span>
+              </button>
+            </div>
           </>
         )}
         <input
