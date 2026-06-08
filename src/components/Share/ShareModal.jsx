@@ -266,7 +266,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             {songs.length} song{songs.length !== 1 ? 's' : ''} will be shared.
           </p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
               Collection name <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
             <input
@@ -274,17 +274,25 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               placeholder="e.g. Easter Set"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm placeholder-gray-400 dark:placeholder-gray-500"
+              disabled={isUpdateMode}
+              className={`w-full rounded-lg border px-3 py-2 text-sm placeholder-gray-400 dark:placeholder-gray-500
+                ${isUpdateMode
+                  ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
               Link expires in
             </label>
             <select
               value={expiresInDays}
               onChange={(e) => setExpiresInDays(Number(e.target.value))}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+              disabled={isUpdateMode}
+              className={`w-full rounded-lg border px-3 py-2 text-sm
+                ${isUpdateMode
+                  ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}
             >
               {[1, 3, 7, 14, 30].map((d) => (
                 <option key={d} value={d}>
@@ -299,8 +307,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               role="switch"
               aria-checked={shareLyricsOnly}
               aria-label="Share lyrics only"
-              onClick={() => setShareLyricsOnly(v => !v)}
-              className="flex items-center gap-3 w-full text-left"
+              onClick={() => !isUpdateMode && setShareLyricsOnly(v => !v)}
+              disabled={isUpdateMode}
+              className={`flex items-center gap-3 w-full text-left ${isUpdateMode ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
                 transition-colors duration-200
@@ -308,7 +317,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
                   ${shareLyricsOnly ? 'translate-x-5' : 'translate-x-0'}`} />
               </span>
-              <span className="text-sm text-gray-700 dark:text-gray-300">Share lyrics only</span>
+              <span className={`text-sm ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>Share lyrics only</span>
             </button>
           </div>
           {/* Conductor broadcast section */}
@@ -319,8 +328,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               role="switch"
               aria-checked={conductorEnabled}
               aria-label="Enable Conductor Broadcast"
-              onClick={() => setConductorEnabled(v => !v)}
-              className="flex items-center gap-3 w-full text-left"
+              onClick={() => !isUpdateMode && setConductorEnabled(v => !v)}
+              disabled={isUpdateMode}
+              className={`flex items-center gap-3 w-full text-left ${isUpdateMode ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
                 transition-colors duration-200
@@ -328,7 +338,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
                   ${conductorEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
               </span>
-              <span className="text-sm text-gray-700 dark:text-gray-300">Enable Conductor Broadcast</span>
+              <span className={`text-sm ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>Enable Conductor Broadcast</span>
             </button>
             {conductorEnabled && collectionId && (
               <div className="mt-3">
