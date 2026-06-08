@@ -242,7 +242,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
           className="fixed bottom-4 right-4 z-20 pointer-events-auto"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          <div className="flex flex-col items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/70 dark:border-gray-700/60 py-2 px-1.5">
+          <div className="flex flex-col items-center gap-0.5 bg-white/60 dark:bg-gray-900/55 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/40 py-2 px-1.5">
             {speedMode ? (
               <>
                 <button
