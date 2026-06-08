@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { MetaFields } from './MetaFields'
+import { FixHeadersModal } from './FixHeadersModal'
 import { parseContent } from '../../lib/parser/contentParser'
+import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/sectionDetector'
 
 const KEY_TO_INDEX = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
@@ -20,6 +22,17 @@ export function NewSongEditor() {
   const [meta, setMeta] = useState({ ...DEFAULT_META })
   const [rawText, setRawText] = useState('')
   const [titleError, setTitleError] = useState(false)
+  const [pendingFixes, setPendingFixes] = useState(null)
+
+  function handleDetectHeaders() {
+    const detections = detectSectionHeaders(rawText)
+    if (detections.length > 0) setPendingFixes(detections)
+  }
+
+  function handleApplyFixes() {
+    setRawText(convertSectionHeaders(rawText, pendingFixes))
+    setPendingFixes(null)
+  }
 
   function handleMetaChange(field, value) {
     setMeta(m => ({ ...m, [field]: value }))
@@ -81,9 +94,18 @@ export function NewSongEditor() {
 
       {/* Content textarea */}
       <div className="flex flex-1 flex-col px-4 pt-3 pb-4 min-h-0">
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 select-none">
-          {'{c: Section}'} for headers · [Chord] before a syllable · {'{note: text}'} for annotations · [Chord]{'{strum: ///}'} for strum patterns
-        </p>
+        <div className="flex items-start justify-between mb-1">
+          <p className="text-xs text-gray-400 dark:text-gray-500 select-none">
+            {'{c: Section}'} for headers · [Chord] before a syllable · {'{note: text}'} for annotations · [Chord]{'{strum: ///}'} for strum patterns
+          </p>
+          <button
+            type="button"
+            onClick={handleDetectHeaders}
+            className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 shrink-0 ml-3 focus:outline-none"
+          >
+            Fix headers
+          </button>
+        </div>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"
           value={rawText}
@@ -92,6 +114,12 @@ export function NewSongEditor() {
           spellCheck={false}
         />
       </div>
+      <FixHeadersModal
+        isOpen={pendingFixes !== null}
+        detections={pendingFixes ?? []}
+        onApply={handleApplyFixes}
+        onCancel={() => setPendingFixes(null)}
+      />
     </div>
   )
 }
