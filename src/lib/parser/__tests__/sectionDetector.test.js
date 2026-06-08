@@ -83,6 +83,34 @@ describe('detectSectionHeaders', () => {
     expect(detectSectionHeaders('This line is too long to be a section\nHello')).toHaveLength(0)
   })
 
+  it('detects "Section A1" pattern', () => {
+    expect(detectSectionHeaders('Section A1\nHello')[0].proposed).toBe('{c: Section A1}')
+  })
+
+  it('detects "Section B1" pattern', () => {
+    expect(detectSectionHeaders('Section B1\nHello')[0].proposed).toBe('{c: Section B1}')
+  })
+
+  it('detects case-insensitive "section a1"', () => {
+    expect(detectSectionHeaders('section a1\nHello')[0].proposed).toBe('{c: Section a1}')
+  })
+
+  it('detects "Section A" (letter only suffix)', () => {
+    expect(detectSectionHeaders('Section A\nHello')[0].proposed).toBe('{c: Section A}')
+  })
+
+  it('detects "[Section A1]" bracket format', () => {
+    expect(detectSectionHeaders('[Section A1]\nHello')[0].proposed).toBe('{c: Section A1}')
+  })
+
+  it('detects multiple Section X candidates in one song', () => {
+    const text = 'Section A1\nHello\nSection B1\nWorld'
+    const results = detectSectionHeaders(text)
+    expect(results).toHaveLength(2)
+    expect(results[0].proposed).toBe('{c: Section A1}')
+    expect(results[1].proposed).toBe('{c: Section B1}')
+  })
+
   it('detects multiple candidates in one song', () => {
     const text = '[Verse]\nHello world\nChorus\nAmazing grace\nBrige\nContent'
     const results = detectSectionHeaders(text)

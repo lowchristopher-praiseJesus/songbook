@@ -99,6 +99,19 @@ export function detectSectionHeaders(rawText) {
 
     // Strip trailing colon before matching
     const stripped = trimmed.replace(/:$/, '').trim()
+
+    // "Section X" pattern: "Section A1", "Section B1", "Section A", etc.
+    const sectionPrefixMatch = stripped.match(/^section\s+(\S+)$/i)
+    if (sectionPrefixMatch) {
+      results.push({
+        lineIndex: i,
+        original: line,
+        proposed: `{c: Section ${sectionPrefixMatch[1]}}`,
+        confidence: 'high',
+      })
+      continue
+    }
+
     const match = matchSection(stripped)
     if (match) {
       results.push({
