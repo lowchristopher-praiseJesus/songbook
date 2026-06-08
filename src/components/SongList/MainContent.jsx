@@ -64,6 +64,50 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     if (!metronomeEnabled) setBpmMode(false)
   }, [metronomeEnabled])
 
+  // Draggable pill position — persisted to localStorage
+  const [pillTop, setPillTop] = useState(() => {
+    const saved = localStorage.getItem('songsheet_pill_top')
+    return saved !== null ? Number(saved) : null
+  })
+  const pillRef = useRef(null)
+  const activeDragRef = useRef(null)
+
+  useEffect(() => () => {
+    if (activeDragRef.current) {
+      window.removeEventListener('pointermove', activeDragRef.current.onMove)
+      window.removeEventListener('pointerup', activeDragRef.current.onUp)
+    }
+  }, [])
+
+  function startPillDrag(e) {
+    e.preventDefault()
+    const rect = pillRef.current.getBoundingClientRect()
+    const startClientY = e.clientY
+    const startTop = rect.top
+
+    function onMove(ev) {
+      const delta = ev.clientY - startClientY
+      const newTop = startTop + delta
+      const pillHeight = pillRef.current?.offsetHeight ?? 240
+      const clamped = Math.max(8, Math.min(window.innerHeight - pillHeight - 8, newTop))
+      setPillTop(clamped)
+    }
+
+    function onUp() {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      activeDragRef.current = null
+      setPillTop(prev => {
+        if (prev !== null) localStorage.setItem('songsheet_pill_top', String(Math.round(prev)))
+        return prev
+      })
+    }
+
+    activeDragRef.current = { onMove, onUp }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
   const navOrder = buildNavOrder(index, collections, viewMode, activeCollectionId)
   const currentIdx = navOrder.findIndex(e => e.id === activeSongId)
   const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
@@ -239,10 +283,26 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       {/* Floating controls — grouped pill card */}
       {activeSong && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
         <div
-          className="fixed bottom-4 right-4 z-20 pointer-events-auto"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          ref={pillRef}
+          className="fixed right-4 z-20 pointer-events-auto"
+          style={{
+            bottom: pillTop === null ? '1rem' : undefined,
+            top: pillTop !== null ? `${pillTop}px` : undefined,
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          }}
         >
           <div className="flex flex-col items-center gap-0.5 bg-white/25 dark:bg-gray-900/25 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/40 dark:border-gray-700/30 py-2 px-1.5">
+            {/* Drag handle */}
+            <div
+              onPointerDown={startPillDrag}
+              className="w-full flex justify-center pt-0.5 pb-1 cursor-grab active:cursor-grabbing touch-none select-none"
+              aria-label="Drag to reposition toolbar"
+            >
+              <div className="flex flex-col gap-[3px]">
+                <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
+                <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
+              </div>
+            </div>
             {speedMode ? (
               <>
                 <button
