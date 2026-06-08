@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '../UI/Modal'
+import { Button } from '../UI/Button'
 
 export function FixHeadersModal({ isOpen, detections, onApply, onCancel }) {
   const [selected, setSelected] = useState(() => new Set(detections.map((_, i) => i)))
@@ -37,56 +38,39 @@ export function FixHeadersModal({ isOpen, detections, onApply, onCancel }) {
         <button
           type="button"
           onClick={toggleAll}
-          className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 focus:outline-none"
+          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
         >
-          {allChecked ? 'Deselect all' : 'Select all'}
+          {allChecked ? 'Deselect All' : 'Select All'}
         </button>
       </div>
-      <ul className="space-y-1 mb-5 max-h-60 overflow-y-auto">
+      <ul className="max-h-60 overflow-y-auto space-y-0.5 mb-4">
         {detections.map((d, idx) => (
-          <li
-            key={idx}
-            onClick={() => toggleOne(idx)}
-            className="flex items-baseline gap-2 px-2 py-1.5 rounded-lg cursor-pointer select-none
-                       hover:bg-gray-50 dark:hover:bg-gray-700/50"
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(idx)}
-              onChange={() => toggleOne(idx)}
-              onClick={e => e.stopPropagation()}
-              className="mt-0.5 shrink-0 accent-indigo-600"
-            />
-            <span className="text-sm font-mono flex flex-wrap items-baseline gap-x-2 min-w-0">
-              <span className="text-gray-500 dark:text-gray-400">{d.original.trim()}</span>
-              <span className="text-gray-400">→</span>
-              <span className="text-indigo-600 dark:text-indigo-400">{d.proposed}</span>
-              {d.confidence === 'low' && (
-                <span className="text-xs text-amber-500 font-sans">(possible typo)</span>
-              )}
-            </span>
+          <li key={idx}>
+            <label className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer select-none
+                              hover:bg-gray-100 dark:hover:bg-gray-700">
+              <input
+                type="checkbox"
+                checked={selected.has(idx)}
+                onChange={() => toggleOne(idx)}
+                className="h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm font-mono flex flex-wrap items-baseline gap-x-2 min-w-0">
+                <span className="text-gray-500 dark:text-gray-400">{d.original.trim()}</span>
+                <span className="text-gray-400">→</span>
+                <span className="text-indigo-600 dark:text-indigo-400">{d.proposed}</span>
+                {d.confidence === 'low' && (
+                  <span className="text-xs text-amber-500 font-sans">(possible typo)</span>
+                )}
+              </span>
+            </label>
           </li>
         ))}
       </ul>
-      <div className="flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-sm px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600
-                     hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          disabled={noneChecked}
-          className="text-sm px-4 py-2 bg-indigo-600 text-white rounded-lg
-                     hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500
-                     disabled:opacity-40 disabled:cursor-not-allowed"
-        >
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button variant="primary" onClick={handleApply} disabled={noneChecked}>
           Apply{selected.size < detections.length && selected.size > 0 ? ` (${selected.size})` : ''}
-        </button>
+        </Button>
       </div>
     </Modal>
   )
