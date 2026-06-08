@@ -22,8 +22,8 @@ export function SongEditor({ songId }) {
     if (detections.length > 0) setPendingFixes(detections)
   }
 
-  function handleApplyFixes() {
-    setRawText(convertSectionHeaders(rawText, pendingFixes))
+  function handleApplyFixes(selectedFixes) {
+    setRawText(convertSectionHeaders(rawText, selectedFixes))
     setIsDirty(true)
     setPendingFixes(null)
   }
