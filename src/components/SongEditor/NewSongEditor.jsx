@@ -101,7 +101,9 @@ export function NewSongEditor() {
           <button
             type="button"
             onClick={handleDetectHeaders}
-            className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 shrink-0 ml-3 focus:outline-none"
+            className="shrink-0 ml-3 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+                       text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           >
             Fix headers
           </button>
