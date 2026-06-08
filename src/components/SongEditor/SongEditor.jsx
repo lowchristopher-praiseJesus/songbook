@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { MetaFields } from './MetaFields'
+import { TransposeConfirmModal } from './TransposeConfirmModal'
+import { transposeRawTextByKey } from '../../lib/parser/chordUtils'
 
 export function SongEditor({ songId }) {
   const song = useLibraryStore(s => s.activeSong)
@@ -10,12 +12,31 @@ export function SongEditor({ songId }) {
   const [meta, setMeta] = useState(() => song ? { ...song.meta } : {})
   const [rawText, setRawText] = useState(() => song?.rawText ?? '')
   const [isDirty, setIsDirty] = useState(false)
+  const [pendingKeyChange, setPendingKeyChange] = useState(null)
 
   if (!song) return null
 
   function handleMetaChange(field, value) {
+    if (field === 'key' && value !== meta.key && rawText.includes('[')) {
+      setPendingKeyChange({ fromKey: meta.key, toKey: value })
+      return
+    }
     setMeta(m => ({ ...m, [field]: value }))
     setIsDirty(true)
+  }
+
+  function handleTranspose() {
+    const { fromKey, toKey } = pendingKeyChange
+    setRawText(transposeRawTextByKey(rawText, fromKey, toKey))
+    setMeta(m => ({ ...m, key: toKey }))
+    setIsDirty(true)
+    setPendingKeyChange(null)
+  }
+
+  function handleKeepAsIs() {
+    setMeta(m => ({ ...m, key: pendingKeyChange.toKey }))
+    setIsDirty(true)
+    setPendingKeyChange(null)
   }
 
   function handleSave() {
@@ -53,6 +74,13 @@ export function SongEditor({ songId }) {
 
       {/* Metadata fields */}
       <MetaFields meta={meta} onChange={handleMetaChange} />
+      <TransposeConfirmModal
+        isOpen={pendingKeyChange !== null}
+        fromKey={pendingKeyChange?.fromKey ?? ''}
+        toKey={pendingKeyChange?.toKey ?? ''}
+        onTranspose={handleTranspose}
+        onKeepAsIs={handleKeepAsIs}
+      />
 
       {/* Content textarea */}
       <div className="flex flex-1 flex-col px-4 pt-3 pb-4 min-h-0">

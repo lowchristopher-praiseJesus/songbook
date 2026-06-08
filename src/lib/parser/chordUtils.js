@@ -73,6 +73,30 @@ export function detectKeyFromContent(rawText) {
 }
 
 /**
+ * Transpose all [Chord] markers in a raw text string by `delta` semitones.
+ */
+export function transposeRawText(rawText, delta, usesFlats) {
+  if (delta === 0) return rawText
+  return rawText.replace(/\[([^\]]+)\]/g, (match, inner) => {
+    if (!/^[A-G][b#]?/.test(inner)) return match
+    return '[' + transposeChord(inner, delta, usesFlats) + ']'
+  })
+}
+
+/**
+ * Compute the delta between two key names and transpose rawText accordingly.
+ */
+export function transposeRawTextByKey(rawText, fromKey, toKey) {
+  const fromIdx = NOTE_TO_INDEX[fromKey]
+  const toIdx   = NOTE_TO_INDEX[toKey]
+  if (fromIdx === undefined || toIdx === undefined || fromIdx === toIdx) return rawText
+  let delta = ((toIdx - fromIdx) % 12 + 12) % 12
+  if (delta > 6) delta -= 12
+  const usesFlats = FLAT_KEY_NAMES.has(toKey)
+  return transposeRawText(rawText, delta, usesFlats)
+}
+
+/**
  * Return a new sections array with all chord tokens transposed by `delta` semitones.
  * Does not mutate the original array or any of its contents.
  */
