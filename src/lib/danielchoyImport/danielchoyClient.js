@@ -10,8 +10,10 @@ const KEY_CHORD_BOUNDARY_RE = /\.\s+[A-G][b#]?(?:[-/][A-G][b#]?)?\s+[Cc]hord/
  * "Light Of The World – Hillsong. G Chord. (Lyrics and Chords) | Daniel Choy"
  */
 export function parseDCTitle(rawTitle) {
+  // Strip "Daniel Choy: " prefix — Blogger puts blog name before post title in <title>
+  let title = rawTitle.replace(/^Daniel Choy\s*:\s*/i, '').trim()
   // Strip site suffix "| Daniel Choy" or "- Daniel Choy"
-  let title = rawTitle.replace(/\s*[|–-]\s*Daniel Choy\s*$/i, '').trim()
+  title = title.replace(/\s*[|–-]\s*Daniel Choy\s*$/i, '').trim()
 
   let songName = title
   let artist = ''
@@ -53,9 +55,11 @@ export function parseDCTitle(rawTitle) {
  * Returns [{ title, artist, url, description }] — only lyrics+chords posts.
  */
 export async function searchDanielChoy(query, apiKey) {
+  // Quote the song title for phrase matching; DC_URL_RE filters non-song results
   const data = await firecrawlSearch(
-    `site:danielchoy.blogspot.com ${query} "(Lyrics and Chords)"`,
+    `site:danielchoy.blogspot.com "${query}"`,
     apiKey,
+    10,
   )
   return data
     .filter(item => DC_URL_RE.test(item.url))
