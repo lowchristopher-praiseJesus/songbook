@@ -117,7 +117,10 @@ async function searchDCviaBlogger(query) {
       const rawTitle = entry?.title?.['$t'] ?? ''
       const url = entry?.link?.find(l => l.rel === 'alternate')?.href ?? ''
       const { songName, artist } = parseDCTitle(rawTitle)
-      return { title: songName, artist, url }
+      // Blogger feed includes the full post HTML — carry it so the importer
+      // can skip the Firecrawl scrape step (no API key needed for JSONP results)
+      const rawHtml = entry?.content?.['$t'] ?? ''
+      return { title: songName, artist, url, rawHtml }
     })
 }
 

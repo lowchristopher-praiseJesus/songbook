@@ -89,8 +89,10 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       let song
       let sourceLabel
       if (result.source === 'danielchoy') {
-        const scraped = await scrapeURL(result.url, apiKey)
-        song = parseDanielChoyPage(scraped.rawHtml, result)
+        // JSONP results carry rawHtml from the Blogger feed — no scrape needed.
+        // Firecrawl results have no rawHtml and require a scrape (needs API key).
+        const rawHtml = result.rawHtml || (await scrapeURL(result.url, apiKey)).rawHtml
+        song = parseDanielChoyPage(rawHtml, result)
         sourceLabel = 'Daniel Choy'
       } else {
         const scraped = await scrapeURL(result.url, apiKey)
