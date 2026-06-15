@@ -30,7 +30,7 @@ function isFooterLine(trimmed) {
 }
 
 // Expand tab characters to 4-space tab stops
-function expandTabs(str) {
+export function expandTabs(str) {
   let result = ''
   for (const ch of str) {
     if (ch === '\t') {
@@ -50,7 +50,7 @@ function isChordLine(line) {
 }
 
 // Merge a chord-above-lyrics pair into an inline [Chord] line
-function mergeChordAboveLyric(chordLine, lyricLine) {
+export function mergeChordAboveLyric(chordLine, lyricLine) {
   const expandedChord = expandTabs(chordLine)
   const expandedLyric = expandTabs(lyricLine)
 
@@ -81,7 +81,7 @@ function mergeChordAboveLyric(chordLine, lyricLine) {
 }
 
 // Convert a chord line with no following lyric to [G]    [D] format
-function toPureChordLine(chordLine) {
+export function toPureChordLine(chordLine) {
   const tokens = expandTabs(chordLine).trim().split(/\s+/).filter(Boolean)
   return tokens.map(t => `[${t}]`).join('    ')
 }
@@ -192,12 +192,12 @@ function makeSong(contentString, meta) {
 // Key parsing helpers
 // ---------------------------------------------------------------------------
 
-const KEY_TO_INDEX = {
+export const KEY_TO_INDEX = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
   E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
   Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
 }
-const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
+export const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
 
 function parseTonality(tonalityName) {
   if (!tonalityName) return { key: 'C', keyIndex: 0, isMinor: false, usesFlats: false }

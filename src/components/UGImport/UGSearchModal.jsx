@@ -5,6 +5,8 @@ import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
 import { searchUG, scrapeURL } from '../../lib/ugImport/firecrawlClient'
 import { parseUGPage } from '../../lib/ugImport/ugParser'
+import { searchDanielChoy } from '../../lib/danielchoyImport/danielchoyClient'
+import { parseDanielChoyEntry } from '../../lib/danielchoyImport/danielchoyParser'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -41,9 +43,23 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setStatus('searching')
     setError(null)
     try {
-      const items = await searchUG(query.trim(), apiKey)
-      setResults(items)
+      const [ugOutcome, dcOutcome] = await Promise.allSettled([
+        apiKey ? searchUG(query.trim(), apiKey) : Promise.resolve([]),
+        searchDanielChoy(query.trim()),
+      ])
+      const ugItems = ugOutcome.status === 'fulfilled' ? ugOutcome.value : []
+      const dcItems = dcOutcome.status === 'fulfilled' ? dcOutcome.value : []
+      const combined = [
+        ...ugItems.map(r => ({ ...r, source: 'ug' })),
+        ...dcItems.map(r => ({ ...r, source: 'danielchoy' })),
+      ]
+      setResults(combined)
       setStatus('results')
+      // Surface errors only if both sources failed
+      if (ugOutcome.status === 'rejected' && dcOutcome.status === 'rejected') {
+        setStatus('idle')
+        setError(errorMessage(ugOutcome.reason))
+      }
     } catch (err) {
       setStatus('idle')
       setError(errorMessage(err))
@@ -67,8 +83,16 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setStatus('importing')
     setError(null)
     try {
-      const scraped = await scrapeURL(result.url, apiKey)
-      const song = parseUGPage(scraped, result.url)
+      let song
+      let sourceLabel
+      if (result.source === 'danielchoy') {
+        song = parseDanielChoyEntry(result.entry, result)
+        sourceLabel = 'Daniel Choy'
+      } else {
+        const scraped = await scrapeURL(result.url, apiKey)
+        song = parseUGPage(scraped, result.url)
+        sourceLabel = 'Ultimate Guitar'
+      }
 
       if (!song.sections.length) {
         setStatus('results')
@@ -98,8 +122,9 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
 
       const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
 
+      const sourceKey = result.source === 'danielchoy' ? 'danielchoy' : 'ug'
       try {
-        addSongs([song], 'Ultimate Guitar', 'ug')
+        addSongs([song], sourceLabel, sourceKey)
       } catch (e) {
         if (e.name === 'QuotaExceededError') {
           setStatus('results')
@@ -123,100 +148,111 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   }, [addSongs, replaceSong, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
 
   const apiKey = getFirecrawlKey()
-  const noKey = !apiKey
 
   return (
-    <Modal isOpen={isOpen} title="Search Ultimate Guitar" onClose={resetAndClose}>
-      {noKey ? (
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          Add your Firecrawl API key in <strong>Settings</strong> (top right) to search Ultimate Guitar.
-        </p>
-      ) : (
-        <>
-          {status === 'idle' && (
-            <form onSubmit={handleSearch} className="space-y-3">
-              <input
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Song title or artist…"
-                autoFocus
-                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" variant="primary" className="w-full" disabled={!query.trim()}>
-                Search
-              </Button>
-            </form>
-          )}
+    <Modal isOpen={isOpen} title="Search Songs" onClose={resetAndClose}>
+      <>
+        {status === 'idle' && (
+          <form onSubmit={handleSearch} className="space-y-3">
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Song title or artist…"
+              autoFocus
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            {!apiKey && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Add a Firecrawl API key in <strong>Settings</strong> to also search Ultimate Guitar.
+              </p>
+            )}
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button type="submit" variant="primary" className="w-full" disabled={!query.trim()}>
+              Search
+            </Button>
+          </form>
+        )}
 
-          {status === 'searching' && (
-            <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              <span className="text-sm">Searching…</span>
-            </div>
-          )}
+        {status === 'searching' && (
+          <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <span className="text-sm">Searching…</span>
+          </div>
+        )}
 
-          {status === 'results' && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => { setStatus('idle'); setError(null) }}
-                className="text-sm text-indigo-500 hover:underline"
-              >
-                ← Back
-              </button>
-              {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-              {results.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-                  No chord charts found — try a different search
-                </p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {results.map(r => {
-                    // Strip " Chords ver. N" and " Chords by Artist" from display title
-                    const displayTitle = (r.title ?? '')
-                      .replace(/\s+[Cc]hords?\s+ver\.\s*\d+.*$/g, '')
-                      .replace(/\s+[Cc]hords?\s+by\s+.*$/g, '')
-                      .trim()
-                    return (
-                      <li key={r.url}>
-                        <button
-                          type="button"
-                          onClick={() => handleSelect(r)}
-                          className="w-full text-left px-3 py-2 rounded-lg
-                            hover:bg-gray-100 dark:hover:bg-gray-700
-                            text-sm text-gray-900 dark:text-gray-100"
-                        >
-                          <div className="font-medium">{displayTitle || r.title}</div>
-                          {r.description && (
-                            <div className="text-xs text-gray-400 truncate mt-0.5">{r.description}</div>
-                          )}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-          )}
+        {status === 'results' && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => { setStatus('idle'); setError(null) }}
+              className="text-sm text-indigo-500 hover:underline"
+            >
+              ← Back
+            </button>
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            {results.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
+                No chord charts found — try a different search
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-1">
+                {results.map(r => {
+                  // Strip " Chords ver. N" and " Chords by Artist" from UG display titles
+                  const displayTitle = (r.title ?? '')
+                    .replace(/\s+[Cc]hords?\s+ver\.\s*\d+.*$/g, '')
+                    .replace(/\s+[Cc]hords?\s+by\s+.*$/g, '')
+                    .trim()
+                  const isDC = r.source === 'danielchoy'
+                  return (
+                    <li key={r.url}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(r)}
+                        className="w-full text-left px-3 py-2 rounded-lg
+                          hover:bg-gray-100 dark:hover:bg-gray-700
+                          text-sm text-gray-900 dark:text-gray-100"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium flex-1 min-w-0 truncate">{displayTitle || r.title}</span>
+                          <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                            isDC
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                              : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400'
+                          }`}>
+                            {isDC ? 'DC' : 'UG'}
+                          </span>
+                        </div>
+                        {r.description && (
+                          <div className="text-xs text-gray-400 truncate mt-0.5">{r.description}</div>
+                        )}
+                        {isDC && r.artist && (
+                          <div className="text-xs text-gray-400 truncate mt-0.5">{r.artist}</div>
+                        )}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )}
 
-          {status === 'importing' && (
-            <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              <span className="text-sm">Importing…</span>
-            </div>
-          )}
-        </>
-      )}
+        {status === 'importing' && (
+          <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <span className="text-sm">Importing…</span>
+          </div>
+        )}
+      </>
 
       {/* Duplicate resolution */}
       {duplicateState && (
