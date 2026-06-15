@@ -126,26 +126,33 @@ async function searchDCviaBlogger(query) {
 
 /**
  * Search Daniel Choy's blog for lyrics+chords posts.
- * Phase 1: Firecrawl (Google-backed, fast) — requires API key.
- * Phase 2: Blogger JSONP fallback — no key needed, fetches 20 results with title filtering.
- * Returns [{ title, artist, url, description? }].
+ * Runs Firecrawl (Google-backed) and Blogger JSONP in parallel, merges and deduplicates.
+ * JSONP always runs so songs not indexed by Google are still found via title matching.
+ * Returns [{ title, artist, url, description?, rawHtml? }].
  */
 export async function searchDanielChoy(query, apiKey) {
-  if (apiKey) {
-    const data = await firecrawlSearch(
-      `site:danielchoy.blogspot.com "${query}"`,
-      apiKey,
-      10,
-    )
-    const filtered = data.filter(item => DC_URL_RE.test(item.url))
-    if (filtered.length > 0) {
-      return filtered.map(item => {
-        const { songName, artist } = parseDCTitle(item.title ?? '')
-        return { title: songName, artist, url: item.url, description: item.description }
-      })
-    }
-  }
+  const [fcOutcome, bloggerOutcome] = await Promise.allSettled([
+    apiKey
+      ? firecrawlSearch(`site:danielchoy.blogspot.com "${query}"`, apiKey, 10)
+      : Promise.resolve([]),
+    searchDCviaBlogger(query),
+  ])
 
-  // Firecrawl found nothing (or no key) — fall back to Blogger JSONP
-  return searchDCviaBlogger(query)
+  const fcItems = fcOutcome.status === 'fulfilled'
+    ? fcOutcome.value
+        .filter(item => DC_URL_RE.test(item.url))
+        .map(item => {
+          const { songName, artist } = parseDCTitle(item.title ?? '')
+          return { title: songName, artist, url: item.url, description: item.description }
+        })
+    : []
+
+  const bloggerItems = bloggerOutcome.status === 'fulfilled' ? bloggerOutcome.value : []
+
+  // Merge: Firecrawl results first, then JSONP results not already present
+  const seen = new Set(fcItems.map(r => r.url))
+  return [
+    ...fcItems,
+    ...bloggerItems.filter(r => !seen.has(r.url)),
+  ]
 }
