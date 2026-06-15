@@ -52,20 +52,33 @@ function entryURL(entry) {
   return ''
 }
 
+// Blogger's alt=json endpoint has no CORS headers — use JSONP (alt=json-in-script) instead.
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = `_dcBlogger_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const script = document.createElement('script')
+
+    const cleanup = () => {
+      delete window[cbName]
+      script.remove()
+      clearTimeout(timer)
+    }
+
+    const timer = setTimeout(() => { cleanup(); reject(new Error('TIMEOUT')) }, 10000)
+    window[cbName] = (data) => { cleanup(); resolve(data) }
+    script.onerror = () => { cleanup(); reject(new Error('NETWORK_ERROR')) }
+    script.src = `${url}&callback=${cbName}`
+    document.head.appendChild(script)
+  })
+}
+
 /**
  * Search Daniel Choy's blog for songs matching query.
  * Returns [{ title, artist, url, entry }] — only lyrics+chords posts.
  */
 export async function searchDanielChoy(query) {
-  const params = new URLSearchParams({ q: query, alt: 'json', 'max-results': '8' })
-  let res
-  try {
-    res = await fetch(`${BLOGGER_FEED}?${params}`)
-  } catch {
-    throw new Error('NETWORK_ERROR')
-  }
-  if (!res.ok) throw new Error('NETWORK_ERROR')
-  const data = await res.json()
+  const params = new URLSearchParams({ q: query, alt: 'json-in-script', 'max-results': '8' })
+  const data = await jsonp(`${BLOGGER_FEED}?${params}`)
   const entries = data?.feed?.entry ?? []
 
   return entries
