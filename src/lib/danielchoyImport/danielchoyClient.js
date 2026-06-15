@@ -1,20 +1,25 @@
-const BLOGGER_FEED = 'https://danielchoy.blogspot.com/feeds/posts/default'
+import { firecrawlSearch } from '../ugImport/firecrawlClient'
+
+const DC_URL_RE = /danielchoy\.blogspot\.com\/\d{4}\/\d{2}\/[^?#]+\.html/i
 
 // Matches the key-chord boundary in post titles: ". G Chord" or ". Ab Chord"
 const KEY_CHORD_BOUNDARY_RE = /\.\s+[A-G][b#]?(?:[-/][A-G][b#]?)?\s+[Cc]hord/
 
 /**
- * Extract song name and artist from a post title like:
- * "Song Name – Artist. G Chord. (Lyrics and Chords)"
+ * Extract song name and artist from a DC post title like:
+ * "Light Of The World – Hillsong. G Chord. (Lyrics and Chords) | Daniel Choy"
  */
-function parseTitle(title) {
+export function parseDCTitle(rawTitle) {
+  // Strip site suffix "| Daniel Choy" or "- Daniel Choy"
+  let title = rawTitle.replace(/\s*[|–-]\s*Daniel Choy\s*$/i, '').trim()
+
   let songName = title
   let artist = ''
 
   const emIdx = title.indexOf(' – ')
   const hypIdx = title.indexOf(' - ')
   const sepIdx = emIdx >= 0 ? emIdx : hypIdx
-  const sepLen = emIdx >= 0 ? 3 : 3
+  const sepLen = 3
 
   if (sepIdx >= 0) {
     songName = title.slice(0, sepIdx).trim()
@@ -32,59 +37,30 @@ function parseTitle(title) {
       }
     }
 
-    // Strip trailing " @ Year" or "(..." from artist
     const atIdx2 = artist.indexOf(' @ ')
     if (atIdx2 >= 0) artist = artist.slice(0, atIdx2).trim()
     const parenIdx = artist.indexOf(' (')
     if (parenIdx >= 0) artist = artist.slice(0, parenIdx).trim()
   }
 
-  // Remove "(Lyrics and Chords)" suffix from songName if present
   songName = songName.replace(/\s*\(Lyrics and Chords\)\s*$/i, '').trim()
 
   return { songName, artist }
 }
 
-function entryURL(entry) {
-  for (const link of entry.link ?? []) {
-    if (link.rel === 'alternate') return link.href
-  }
-  return ''
-}
-
-// Blogger's alt=json endpoint has no CORS headers — use JSONP (alt=json-in-script) instead.
-function jsonp(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = `_dcBlogger_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    const script = document.createElement('script')
-
-    const cleanup = () => {
-      delete window[cbName]
-      script.remove()
-      clearTimeout(timer)
-    }
-
-    const timer = setTimeout(() => { cleanup(); reject(new Error('TIMEOUT')) }, 10000)
-    window[cbName] = (data) => { cleanup(); resolve(data) }
-    script.onerror = () => { cleanup(); reject(new Error('NETWORK_ERROR')) }
-    script.src = `${url}&callback=${cbName}`
-    document.head.appendChild(script)
-  })
-}
-
 /**
- * Search Daniel Choy's blog for songs matching query.
- * Returns [{ title, artist, url, entry }] — only lyrics+chords posts.
+ * Search Daniel Choy's blog using Firecrawl (Google-backed search).
+ * Returns [{ title, artist, url, description }] — only lyrics+chords posts.
  */
-export async function searchDanielChoy(query) {
-  const params = new URLSearchParams({ q: query, alt: 'json-in-script', 'max-results': '8' })
-  const data = await jsonp(`${BLOGGER_FEED}?${params}`)
-  const entries = data?.feed?.entry ?? []
-
-  return entries
-    .filter(e => /\(lyrics and chords\)/i.test(e.title?.$t ?? ''))
-    .map(e => {
-      const { songName, artist } = parseTitle(e.title.$t)
-      return { title: songName, artist, url: entryURL(e), entry: e }
+export async function searchDanielChoy(query, apiKey) {
+  const data = await firecrawlSearch(
+    `site:danielchoy.blogspot.com ${query} "(Lyrics and Chords)"`,
+    apiKey,
+  )
+  return data
+    .filter(item => DC_URL_RE.test(item.url))
+    .map(item => {
+      const { songName, artist } = parseDCTitle(item.title ?? '')
+      return { title: songName, artist, url: item.url, description: item.description }
     })
 }

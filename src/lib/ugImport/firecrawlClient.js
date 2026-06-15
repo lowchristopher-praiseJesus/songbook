@@ -25,15 +25,20 @@ async function firecrawlPost(endpoint, body, apiKey) {
 }
 
 /**
+ * Generic Firecrawl search. Returns [{ url, title, description }].
+ */
+export async function firecrawlSearch(query, apiKey, limit = 8) {
+  const data = await firecrawlPost('/search', { query, limit }, apiKey)
+  return data.data ?? []
+}
+
+/**
  * Search Ultimate Guitar for chord charts matching the query.
  * Returns up to 8 filtered results: [{ url, title, description }]
  */
 export async function searchUG(query, apiKey) {
-  const data = await firecrawlPost('/search', {
-    query: `site:ultimate-guitar.com ${query} chords`,
-    limit: 8,
-  }, apiKey)
-  return (data.data ?? []).filter(item => UG_CHORD_URL_RE.test(item.url))
+  const items = await firecrawlSearch(`site:ultimate-guitar.com ${query} chords`, apiKey)
+  return items.filter(item => UG_CHORD_URL_RE.test(item.url))
 }
 
 /**

@@ -98,12 +98,12 @@ function resolveKey(keyStr) {
 }
 
 /**
- * Parse a BloggerEntry from the Daniel Choy feed into a song object.
- * @param {{ title: { $t: string }, content: { $t: string } }} entry
- * @param {{ title: string, artist: string }} titleMeta - pre-parsed title/artist from client
+ * Parse a scraped Daniel Choy blog post page into a song object.
+ * @param {string} rawHtml - full page HTML from Firecrawl /scrape
+ * @param {{ title: string, artist: string }} titleMeta - pre-parsed from Firecrawl search result
  */
-export function parseDanielChoyEntry(entry, titleMeta) {
-  const html = entry?.content?.$t ?? ''
+export function parseDanielChoyPage(rawHtml, titleMeta) {
+  const html = rawHtml ?? ''
   const text = stripHTML(html)
   const rawLines = text.split('\n')
 

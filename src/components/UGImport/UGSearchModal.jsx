@@ -6,7 +6,7 @@ import { getFirecrawlKey } from '../../lib/storage'
 import { searchUG, scrapeURL } from '../../lib/ugImport/firecrawlClient'
 import { parseUGPage } from '../../lib/ugImport/ugParser'
 import { searchDanielChoy } from '../../lib/danielchoyImport/danielchoyClient'
-import { parseDanielChoyEntry } from '../../lib/danielchoyImport/danielchoyParser'
+import { parseDanielChoyPage } from '../../lib/danielchoyImport/danielchoyParser'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -45,7 +45,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     try {
       const [ugOutcome, dcOutcome] = await Promise.allSettled([
         apiKey ? searchUG(query.trim(), apiKey) : Promise.resolve([]),
-        searchDanielChoy(query.trim()),
+        apiKey ? searchDanielChoy(query.trim(), apiKey) : Promise.resolve([]),
       ])
       const ugItems = ugOutcome.status === 'fulfilled' ? ugOutcome.value : []
       const dcItems = dcOutcome.status === 'fulfilled' ? dcOutcome.value : []
@@ -86,7 +86,8 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       let song
       let sourceLabel
       if (result.source === 'danielchoy') {
-        song = parseDanielChoyEntry(result.entry, result)
+        const scraped = await scrapeURL(result.url, apiKey)
+        song = parseDanielChoyPage(scraped.rawHtml, result)
         sourceLabel = 'Daniel Choy'
       } else {
         const scraped = await scrapeURL(result.url, apiKey)
@@ -166,7 +167,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
             />
             {!apiKey && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Add a Firecrawl API key in <strong>Settings</strong> to also search Ultimate Guitar.
+                Add a Firecrawl API key in <strong>Settings</strong> to search Ultimate Guitar and Daniel Choy.
               </p>
             )}
             {error && <p className="text-sm text-red-500">{error}</p>}
