@@ -15,7 +15,10 @@ const CREDIT_RE  = /@\s+(?:[A-Za-z]+\s+)?\d{4}/
 const PLAY_IN_KEY_RE = /play\s+in\s+key\s*:\s*([A-G][b#]?)/i
 
 function stripHTML(html) {
-  let s = html.replace(/<\/(div|p|li|tr)>/gi, '\n')
+  // Remove <style> and <script> block content (not just the tags)
+  let s = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+  s = s.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+  s = s.replace(/<\/(div|p|li|tr)>/gi, '\n')
   s = s.replace(/<br\s*\/?>/gi, '\n')
   s = s.replace(/<[^>]+>/g, '')
   s = s.replace(/&amp;/g, '&')
@@ -28,6 +31,15 @@ function stripHTML(html) {
   s = s.replace(/&rsquo;|&lsquo;|&#8217;|&#8216;|’|‘/g, "'")
   s = s.replace(/&rdquo;|&ldquo;|&#8220;|&#8221;|“|”/g, '"')
   return s
+}
+
+// Replace rhythm-only tokens (-, |, ^, x) with spaces to preserve chord column positions.
+// This prevents mergeChordAboveLyric from inserting [-] or [|] into lyric lines.
+const RHYTHM_ONLY_RE = /^[-|^x/]+$/
+function stripRhythmTokens(line) {
+  return expandTabs(line).replace(/\S+/g, token =>
+    RHYTHM_ONLY_RE.test(token) ? ' '.repeat(token.length) : token
+  )
 }
 
 function isChordLine(line) {
@@ -163,13 +175,19 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
     if (cl.type === T_SECTION) { outputLines.push(`{c: ${cl.text}}`); i++; continue }
 
     if (cl.type === T_CHORD) {
+      // Strip rhythm tokens (|, -) from chord line before merging — these are beat
+      // placeholders in Daniel Choy's format and must not become [-] or [|] in output
+      const cleanChord = stripRhythmTokens(cl.text)
+      const hasChords = /\S/.test(cleanChord)
       const next = classified[i + 1]
       if (next && next.type === T_LYRIC) {
-        outputLines.push(mergeChordAboveLyric(cl.text, next.text))
+        outputLines.push(hasChords ? mergeChordAboveLyric(cleanChord, next.text) : next.text)
         i += 2
-      } else {
-        outputLines.push(toPureChordLine(cl.text))
+      } else if (hasChords) {
+        outputLines.push(toPureChordLine(cleanChord))
         i++
+      } else {
+        i++ // rhythm-only line with no following lyric — skip
       }
       continue
     }
