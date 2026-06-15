@@ -45,7 +45,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     try {
       const [ugOutcome, dcOutcome] = await Promise.allSettled([
         apiKey ? searchUG(query.trim(), apiKey) : Promise.resolve([]),
-        apiKey ? searchDanielChoy(query.trim(), apiKey) : Promise.resolve([]),
+        searchDanielChoy(query.trim(), apiKey),
       ])
       const ugItems = ugOutcome.status === 'fulfilled' ? ugOutcome.value : []
       const dcItems = dcOutcome.status === 'fulfilled' ? dcOutcome.value : []
@@ -55,10 +55,13 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       ]
       setResults(combined)
       setStatus('results')
-      // Surface errors only if both sources failed
-      if (ugOutcome.status === 'rejected' && dcOutcome.status === 'rejected') {
+      // Surface an error only when all searched sources failed
+      const ugFailed = ugOutcome.status === 'rejected'
+      const dcFailed = dcOutcome.status === 'rejected'
+      const ugSkipped = !apiKey  // UG not searched (no key)
+      if ((ugFailed || ugSkipped) && dcFailed) {
         setStatus('idle')
-        setError(errorMessage(ugOutcome.reason))
+        setError(ugFailed ? errorMessage(ugOutcome.reason) : errorMessage(dcOutcome.reason))
       }
     } catch (err) {
       setStatus('idle')
@@ -167,7 +170,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
             />
             {!apiKey && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Add a Firecrawl API key in <strong>Settings</strong> to search Ultimate Guitar and Daniel Choy.
+                Add a Firecrawl API key in <strong>Settings</strong> to also search Ultimate Guitar.
               </p>
             )}
             {error && <p className="text-sm text-red-500">{error}</p>}
