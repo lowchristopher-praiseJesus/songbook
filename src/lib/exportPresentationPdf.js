@@ -666,6 +666,22 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
   // 'top' has no meaning there, so default to 'bottom-right'.
   const sectionTitlePos = titlePosition === 'top' ? 'bottom-right' : titlePosition
 
+  // Pre-compute one consistent font for ALL section-per-page slides across all songs.
+  // The most content-heavy section across every song sets the ceiling.
+  const globalSectionFont = sectionPerPage
+    ? Math.min(
+        desiredFont,
+        songs.reduce((min, song) => {
+          const sections = song.sections ?? []
+          const qualifies = sections.some(s => s.label && (s.lines ?? []).some(l => l.type === 'lyric'))
+          if (!qualifies) return min
+          return sections
+            .filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
+            .reduce((m, s) => Math.min(m, findSectionFont(doc, s, annotationsVisible)), min)
+        }, FILL_FONT_MAX)
+      )
+    : FILL_FONT_MAX
+
   let pageCount = 0
 
   songs.forEach((song, songIdx) => {
@@ -679,13 +695,12 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
 
     if (usesSectionPerPage) {
       // ── Section-per-page: one page per section, content in top half only ──────
-      sections
-        .filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
-        .forEach(section => {
+      const lyricSections = sections.filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
+      const sectionFont = globalSectionFont
+      lyricSections.forEach(section => {
           if (pageCount > 0) doc.addPage()
           pageCount++
           doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
-          const sectionFont = findSectionFont(doc, section, annotationsVisible)
           renderSections(doc, [section], sectionFont, PAGE_W / 2, MAX_W, MARGIN_TOP, annotationsVisible)
           renderBottomTitle(doc, song.meta.title ?? 'Untitled', sectionTitlePos)
         })
