@@ -701,7 +701,7 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
           if (pageCount > 0) doc.addPage()
           pageCount++
           doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
-          renderSections(doc, [section], sectionFont, PAGE_W / 2, MAX_W, MARGIN_TOP, annotationsVisible)
+          renderSections(doc, [{ ...section, label: null }], sectionFont, PAGE_W / 2, MAX_W, MARGIN_TOP, annotationsVisible)
           renderBottomTitle(doc, song.meta.title ?? 'Untitled', sectionTitlePos)
         })
     } else {
