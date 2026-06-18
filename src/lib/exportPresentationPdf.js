@@ -539,11 +539,11 @@ function renderBottomTitle(doc, title, position) {
 
 /**
  * Find the largest font size that fits a single section's content (label + lyrics)
- * within SECTION_CONTENT_H, used in section-per-page mode.
+ * within the full usable slide height, used in section-per-page mode.
  */
 function findSectionFont(doc, section, annotationsVisible) {
   for (let fs = FILL_FONT_MAX; fs >= MIN_FONT; fs--) {
-    if (measureSections(doc, [section], fs, MAX_W, annotationsVisible) <= SECTION_CONTENT_H) return fs
+    if (measureSections(doc, [section], fs, MAX_W, annotationsVisible) <= USABLE_H) return fs
   }
   return MIN_FONT
 }
