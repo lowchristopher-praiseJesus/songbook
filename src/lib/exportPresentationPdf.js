@@ -9,6 +9,10 @@ const MAX_W = PAGE_W - MARGIN_X * 2            // 840 pt
 const USABLE_H = PAGE_H - MARGIN_TOP - MARGIN_BOTTOM  // 450 pt
 const FILL_FONT_MAX = 120
 const MIN_FONT = 8
+const COMPACT_MARGIN_TOP  = 20           // top padding when title is moved to the bottom
+const BOTTOM_TITLE_SIZE   = 12           // pt — small corner label used in bottom-title mode
+const SECTION_PAGE_MAX_Y  = PAGE_H / 2  // content must not exceed this y in section-per-page mode
+const SECTION_CONTENT_H   = SECTION_PAGE_MAX_Y - MARGIN_TOP  // 270 - 50 = 220 pt
 const COL_GAP = 40
 const COL_W = (MAX_W - COL_GAP) / 2                      // 400 pt per column
 const COL1_CX = MARGIN_X + COL_W / 2                     // 260 pt (left column centre)
@@ -257,11 +261,13 @@ function splitSections3(doc, sections, fontSize, contentH) {
  * @param {number} maxCols      1 = single-column only; 2 = up to two columns; 3 = up to three columns
  * @returns {{ font: number, cols: 1|2|3 }}
  */
-function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible) {
+function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible, titlePosition = 'top') {
   const sections = song.sections ?? []
 
   for (let fs = desiredFont; fs >= MIN_FONT; fs--) {
-    const contentH = USABLE_H - measureHeader(doc, song, fs, annotationsVisible)
+    const contentH = titlePosition === 'top'
+      ? USABLE_H - measureHeader(doc, song, fs, annotationsVisible)
+      : PAGE_H - COMPACT_MARGIN_TOP - MARGIN_BOTTOM
 
     if (maxCols === 1) {
       if (measureSections(doc, sections, fs, MAX_W, annotationsVisible) <= contentH) return { font: fs, cols: 1 }
@@ -286,6 +292,69 @@ function findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVis
 }
 
 // ---------------------------------------------------------------------------
+// CJK text rendering helpers
+// ---------------------------------------------------------------------------
+
+const CJK_RE = /[⺀-鿿豈-﫿︰-﹏＀-￯　-〿]/
+
+/** True when text contains at least one CJK codepoint. */
+function hasCJK(text) {
+  return CJK_RE.test(text)
+}
+
+/**
+ * Render a line of text that contains CJK characters onto an offscreen canvas
+ * using the browser's Noto Sans SC font (loaded via @fontsource/noto-sans-sc),
+ * then return a transparent PNG data URL and its display dimensions in PDF points.
+ *
+ * Returns null in non-browser environments so callers can fall back to
+ * jsPDF's built-in helvetica rendering.
+ *
+ * @param {string}   text
+ * @param {number}   fontSizePt
+ * @param {boolean}  bold
+ * @param {number[]} rgb         [r, g, b] 0-255
+ * @returns {{ dataURL: string, widthPt: number, heightPt: number, baselinePt: number } | null}
+ */
+function cjkLineToImage(text, fontSizePt, bold, rgb) {
+  if (typeof document === 'undefined') return null
+
+  const SCALE   = 2
+  const fontPx  = Math.round(fontSizePt * SCALE)
+  const weight  = bold ? 'bold' : 'normal'
+  const fontCss = `${weight} ${fontPx}px "Noto Sans SC", Helvetica, Arial, sans-serif`
+
+  const tmp  = document.createElement('canvas')
+  const tCtx = tmp.getContext('2d')
+  if (!tCtx) return null
+  tCtx.font = fontCss
+  const textW = Math.ceil(tCtx.measureText(text).width)
+
+  const padX       = Math.max(2, Math.ceil(fontPx * 0.04))
+  const canvasW    = textW + padX * 2
+  const baselinePx = Math.round(fontPx * 0.82)
+  const canvasH    = Math.round(fontPx * 1.15)
+
+  const canvas  = document.createElement('canvas')
+  canvas.width  = canvasW
+  canvas.height = canvasH
+  const ctx     = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.clearRect(0, 0, canvasW, canvasH)
+  ctx.font         = fontCss
+  ctx.fillStyle    = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(text, padX, baselinePx)
+
+  return {
+    dataURL   : canvas.toDataURL('image/png'),
+    widthPt   : canvasW    / SCALE,
+    heightPt  : canvasH    / SCALE,
+    baselinePt: baselinePx / SCALE,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Render helpers
 // ---------------------------------------------------------------------------
 
@@ -305,15 +374,38 @@ function renderHeader(doc, song, fontSize, annotationsVisible = true) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(titleSize)
   doc.setTextColor(35, 18, 6)
-  const titleLines = doc.splitTextToSize(song.meta.title ?? 'Untitled', MAX_W)
-  doc.text(titleLines, PAGE_W / 2, y, { align: 'center' })
-  y += titleLines.length * titleLineH
+  const titleText = song.meta.title ?? 'Untitled'
+  if (hasCJK(titleText)) {
+    const ti = cjkLineToImage(titleText, titleSize, true, [35, 18, 6])
+    if (ti) {
+      doc.addImage(ti.dataURL, 'PNG', PAGE_W / 2 - ti.widthPt / 2, y - ti.baselinePt, ti.widthPt, ti.heightPt)
+      y += titleLineH
+    } else {
+      const tl = doc.splitTextToSize(titleText, MAX_W)
+      doc.text(tl, PAGE_W / 2, y, { align: 'center' })
+      y += tl.length * titleLineH
+    }
+  } else {
+    const titleLines = doc.splitTextToSize(titleText, MAX_W)
+    doc.text(titleLines, PAGE_W / 2, y, { align: 'center' })
+    y += titleLines.length * titleLineH
+  }
 
   if (song.meta.artist) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(artistSize)
     doc.setTextColor(90, 62, 42)
-    doc.text(song.meta.artist, PAGE_W / 2, y, { align: 'center' })
+    const artistText = song.meta.artist
+    if (hasCJK(artistText)) {
+      const ai = cjkLineToImage(artistText, artistSize, false, [90, 62, 42])
+      if (ai) {
+        doc.addImage(ai.dataURL, 'PNG', PAGE_W / 2 - ai.widthPt / 2, y - ai.baselinePt, ai.widthPt, ai.heightPt)
+      } else {
+        doc.text(artistText, PAGE_W / 2, y, { align: 'center' })
+      }
+    } else {
+      doc.text(artistText, PAGE_W / 2, y, { align: 'center' })
+    }
     doc.setTextColor(35, 18, 6)
     y += artistLineH + 4
   }
@@ -354,7 +446,17 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(labelSize)
       doc.setTextColor(115, 22, 22)
-      doc.text(section.label.toUpperCase(), cx, y, { align: 'center' })
+      const labelText = section.label.toUpperCase()
+      if (hasCJK(labelText)) {
+        const li = cjkLineToImage(labelText, labelSize, true, [115, 22, 22])
+        if (li) {
+          doc.addImage(li.dataURL, 'PNG', cx - li.widthPt / 2, y - li.baselinePt, li.widthPt, li.heightPt)
+        } else {
+          doc.text(labelText, cx, y, { align: 'center' })
+        }
+      } else {
+        doc.text(labelText, cx, y, { align: 'center' })
+      }
       doc.setTextColor(35, 18, 6)
       y += labelLineH + 4
 
@@ -372,11 +474,26 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
     for (const line of section.lines ?? []) {
       if (line.type === 'chord') continue
       if (line.type === 'blank') { y += lineH * 0.5; continue }
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(fontSize)
-      const wrapped = doc.splitTextToSize(line.content ?? '', maxW)
-      doc.text(wrapped, cx, y, { align: 'center' })
-      y += wrapped.length * lineH
+      const content = line.content ?? ''
+      if (hasCJK(content)) {
+        const ci = cjkLineToImage(content, fontSize, false, [35, 18, 6])
+        if (ci) {
+          doc.addImage(ci.dataURL, 'PNG', cx - ci.widthPt / 2, y - ci.baselinePt, ci.widthPt, ci.heightPt)
+          y += lineH
+        } else {
+          doc.setFont('helvetica', 'normal')
+          doc.setFontSize(fontSize)
+          const wrapped = doc.splitTextToSize(content, maxW)
+          doc.text(wrapped, cx, y, { align: 'center' })
+          y += wrapped.length * lineH
+        }
+      } else {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(fontSize)
+        const wrapped = doc.splitTextToSize(content, maxW)
+        doc.text(wrapped, cx, y, { align: 'center' })
+        y += wrapped.length * lineH
+      }
 
       if (annotationsVisible && line.annotation) {
         doc.setFont('helvetica', 'italic')
@@ -393,6 +510,42 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
   }
 
   return y
+}
+
+/**
+ * Render the song title as a small corner label in bottom-title mode.
+ * Placed within the bottom margin so it never overlaps lyric content.
+ * @param {'bottom-left'|'bottom-right'} position
+ */
+function renderBottomTitle(doc, title, position) {
+  const y   = PAGE_H - 14     // baseline: 14 pt above the slide bottom edge
+  const rgb = [35, 18, 6]
+  const x   = position === 'bottom-right' ? PAGE_W - MARGIN_X : MARGIN_X
+
+  if (hasCJK(title)) {
+    const img = cjkLineToImage(title, BOTTOM_TITLE_SIZE, false, rgb)
+    if (img) {
+      const imgX = position === 'bottom-right' ? x - img.widthPt : x
+      doc.addImage(img.dataURL, 'PNG', imgX, y - img.baselinePt, img.widthPt, img.heightPt)
+      return
+    }
+  }
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(BOTTOM_TITLE_SIZE)
+  doc.setTextColor(...rgb)
+  doc.text(title, x, y, { align: position === 'bottom-right' ? 'right' : 'left' })
+  doc.setTextColor(35, 18, 6)
+}
+
+/**
+ * Find the largest font size that fits a single section's content (label + lyrics)
+ * within SECTION_CONTENT_H, used in section-per-page mode.
+ */
+function findSectionFont(doc, section, annotationsVisible) {
+  for (let fs = FILL_FONT_MAX; fs >= MIN_FONT; fs--) {
+    if (measureSections(doc, [section], fs, MAX_W, annotationsVisible) <= SECTION_CONTENT_H) return fs
+  }
+  return MIN_FONT
 }
 
 // ---------------------------------------------------------------------------
@@ -421,8 +574,14 @@ function renderSections(doc, sections, fontSize, cx, maxW, startY, annotationsVi
  *   desiredFont    — minimum font size floor (8–120). Default 20.
  *   maxCols        — maximum columns per page (1, 2, or 3); ignored when optimizedFont is true. Default 2.
  *   optimizedFont  — when true, columns are also chosen automatically (up to 3). Default false.
+ *   titlePosition  — 'top' (default) renders title+artist as a centred header; 'bottom-left' /
+ *                    'bottom-right' moves the title to a small corner label, removes the top margin,
+ *                    and gives the full slide height to the lyrics.
+ *   sectionPerPage — when true, any song that has at least one labelled section (verse/chorus/bridge)
+ *                    gets one page per section; each page uses only the top half so content stays
+ *                    within SECTION_PAGE_MAX_Y. Songs without section labels render normally.
  */
-export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true, optimizedFont = false } = {}) {
+export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCols = 2, annotationsVisible = true, optimizedFont = false, titlePosition = 'top', sectionPerPage = false } = {}) {
   if (!songs.length) return
 
   const doc = new jsPDF({ unit: 'pt', format: [PAGE_W, PAGE_H], orientation: 'landscape' })
@@ -442,23 +601,23 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
     songFonts = songs.map(song => {
       // Find the largest font allowing up to 3 columns, then prefer fewer columns
       // when the font sacrifice is small (≤ PREFER_SINGLE_COL_DELTA pt).
-      const { font: maxFont, cols: maxCols3 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 3, annotationsVisible)
+      const { font: maxFont, cols: maxCols3 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 3, annotationsVisible, titlePosition)
 
       if (maxCols3 === 1) return maxFont  // already single-col — no trade-off
 
       if (maxCols3 === 3) {
         // Try 2-col: prefer over 3-col when font loss is small
-        const { font: twoFont, cols: twoCols } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible)
+        const { font: twoFont, cols: twoCols } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible, titlePosition)
         if (twoFont >= maxFont - PREFER_SINGLE_COL_DELTA) {
           if (twoCols === 1) return twoFont  // 2-col search returned single-col
-          const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+          const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible, titlePosition)
           return oneFont >= twoFont - PREFER_SINGLE_COL_DELTA ? oneFont : twoFont
         }
         return maxFont  // 3-col wins
       }
 
       // maxCols3 === 2: check if 1-col is close enough
-      const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+      const { font: oneFont } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible, titlePosition)
       return oneFont >= maxFont - PREFER_SINGLE_COL_DELTA ? oneFont : maxFont
     })
   } else {
@@ -466,22 +625,22 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
     // within maxCols, starting from FILL_FONT_MAX. desiredFont acts as a minimum
     // floor — no song renders smaller than what desiredFont would produce.
     const globalFont = songs.reduce((min, song) => {
-      const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible)
+      const { font } = findBestFontConstrained(doc, song, desiredFont, maxCols, annotationsVisible, titlePosition)
       return Math.min(min, font)
     }, desiredFont)
     songFonts = songs.map(song => {
-      const { font: fMax, cols: cMax } = findBestFontConstrained(doc, song, FILL_FONT_MAX, maxCols, annotationsVisible)
+      const { font: fMax, cols: cMax } = findBestFontConstrained(doc, song, FILL_FONT_MAX, maxCols, annotationsVisible, titlePosition)
 
       let chosen = fMax
       if (cMax === 1) {
         chosen = fMax
       } else if (cMax >= 3 && maxCols >= 3) {
-        const { font: f2, cols: c2 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible)
+        const { font: f2, cols: c2 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 2, annotationsVisible, titlePosition)
         if (f2 >= fMax - PREFER_SINGLE_COL_DELTA) {
           if (c2 === 1) {
             chosen = f2
           } else {
-            const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+            const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible, titlePosition)
             chosen = f1 >= f2 - PREFER_SINGLE_COL_DELTA ? f1 : f2
           }
         } else {
@@ -489,7 +648,7 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
         }
       } else {
         // cMax === 2: prefer 1-col when font sacrifice is small
-        const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible)
+        const { font: f1 } = findBestFontConstrained(doc, song, FILL_FONT_MAX, 1, annotationsVisible, titlePosition)
         chosen = f1 >= fMax - PREFER_SINGLE_COL_DELTA ? f1 : fMax
       }
 
@@ -503,41 +662,73 @@ export function exportPresentationPdf(songs, bgImage, { desiredFont = 20, maxCol
   // all slides have a consistent title size regardless of lyric length.
   const titleBase = Math.min(...songFonts)
 
-  songs.forEach((song, i) => {
-    if (i > 0) doc.addPage()
+  // titlePosition to use when the section-per-page path renders the bottom label:
+  // 'top' has no meaning there, so default to 'bottom-right'.
+  const sectionTitlePos = titlePosition === 'top' ? 'bottom-right' : titlePosition
 
-    doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
+  let pageCount = 0
 
+  songs.forEach((song, songIdx) => {
     const sections = song.sections ?? []
-    const songFont = songFonts[i]
-    const headerFont = titleBase
-    const startY = renderHeader(doc, song, headerFont, annotationsVisible)
 
-    const totalH = measureSections(doc, sections, songFont, MAX_W, annotationsVisible)
-    if (effectiveMaxCols >= 2 && totalH > TWO_COL_THRESHOLD) {
-      const contentH = USABLE_H - (startY - MARGIN_TOP)
-      const { left, right } = splitSections(doc, sections, songFont, contentH)
-      const twoColFits = (
-        measureSections(doc, left,  songFont, COL_W, annotationsVisible) <= contentH &&
-        measureSections(doc, right, songFont, COL_W, annotationsVisible) <= contentH
-      )
-      if (twoColFits) {
-        renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
-        renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
-      } else if (effectiveMaxCols >= 3) {
-        // Three-column layout
-        const { left: l3, middle, right: r3 } = splitSections3(doc, sections, songFont, contentH)
-        renderSections(doc, l3,     songFont, COL1_3CX, COL3_W, startY, annotationsVisible)
-        renderSections(doc, middle, songFont, COL2_3CX, COL3_W, startY, annotationsVisible)
-        renderSections(doc, r3,     songFont, COL3_3CX, COL3_W, startY, annotationsVisible)
-      } else {
-        // maxCols=2 fallback — font may overflow at MIN_FONT; best effort
-        renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
-        renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
-      }
+    // Section-per-page mode applies to this song only when the option is on AND
+    // the song has at least one labelled section that contains lyric lines.
+    const usesSectionPerPage =
+      sectionPerPage &&
+      sections.some(s => s.label && (s.lines ?? []).some(l => l.type === 'lyric'))
+
+    if (usesSectionPerPage) {
+      // ── Section-per-page: one page per section, content in top half only ──────
+      sections
+        .filter(s => (s.lines ?? []).some(l => l.type === 'lyric'))
+        .forEach(section => {
+          if (pageCount > 0) doc.addPage()
+          pageCount++
+          doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
+          const sectionFont = findSectionFont(doc, section, annotationsVisible)
+          renderSections(doc, [section], sectionFont, PAGE_W / 2, MAX_W, MARGIN_TOP, annotationsVisible)
+          renderBottomTitle(doc, song.meta.title ?? 'Untitled', sectionTitlePos)
+        })
     } else {
-      // Single-column layout
-      renderSections(doc, sections, songFont, PAGE_W / 2, MAX_W, startY, annotationsVisible)
+      // ── Normal single-page rendering ─────────────────────────────────────────
+      if (pageCount > 0) doc.addPage()
+      pageCount++
+
+      doc.addImage(bgImage, 'PNG', 0, 0, PAGE_W, PAGE_H)
+
+      const songFont = songFonts[songIdx]
+      const startY = titlePosition === 'top'
+        ? renderHeader(doc, song, titleBase, annotationsVisible)
+        : COMPACT_MARGIN_TOP
+
+      // contentH = PAGE_H - MARGIN_BOTTOM - startY (correct for both title modes)
+      const contentH = PAGE_H - MARGIN_BOTTOM - startY
+      const totalH = measureSections(doc, sections, songFont, MAX_W, annotationsVisible)
+      if (effectiveMaxCols >= 2 && totalH > TWO_COL_THRESHOLD) {
+        const { left, right } = splitSections(doc, sections, songFont, contentH)
+        const twoColFits = (
+          measureSections(doc, left,  songFont, COL_W, annotationsVisible) <= contentH &&
+          measureSections(doc, right, songFont, COL_W, annotationsVisible) <= contentH
+        )
+        if (twoColFits) {
+          renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
+          renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
+        } else if (effectiveMaxCols >= 3) {
+          const { left: l3, middle, right: r3 } = splitSections3(doc, sections, songFont, contentH)
+          renderSections(doc, l3,     songFont, COL1_3CX, COL3_W, startY, annotationsVisible)
+          renderSections(doc, middle, songFont, COL2_3CX, COL3_W, startY, annotationsVisible)
+          renderSections(doc, r3,     songFont, COL3_3CX, COL3_W, startY, annotationsVisible)
+        } else {
+          renderSections(doc, left,  songFont, COL1_CX, COL_W, startY, annotationsVisible)
+          renderSections(doc, right, songFont, COL2_CX, COL_W, startY, annotationsVisible)
+        }
+      } else {
+        renderSections(doc, sections, songFont, PAGE_W / 2, MAX_W, startY, annotationsVisible)
+      }
+
+      if (titlePosition !== 'top') {
+        renderBottomTitle(doc, song.meta.title ?? 'Untitled', titlePosition)
+      }
     }
   })
 

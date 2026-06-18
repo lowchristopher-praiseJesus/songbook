@@ -30,6 +30,8 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
   const [fontSizeStr, setFontSizeStr] = useState('20')
   const [maxCols, setMaxCols] = useState(2)
   const [optimizedFont, setOptimizedFont] = useState(false)
+  const [titlePosition, setTitlePosition] = useState('top')
+  const [sectionPerPage, setSectionPerPage] = useState(false)
 
   const activeUrl = customUrl ?? TEMPLATES.find(t => t.id === selectedId)?.url ?? null
 
@@ -73,7 +75,7 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
         const raw = localStorage.getItem('songsheet_annotations_visible')
         if (raw !== null) annotationsVisible = JSON.parse(raw)
       } catch { /* keep default true */ }
-      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols, annotationsVisible, optimizedFont })
+      exportPresentationPdf(songs, bgImage, { desiredFont, maxCols, annotationsVisible, optimizedFont, titlePosition, sectionPerPage })
       onClose()
     } catch (err) {
       onAddToast('PDF export failed: ' + err.message, 'error')
@@ -147,6 +149,50 @@ export function ExportBackgroundModal({ isOpen, songs, onClose, onAddToast }) {
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">Optimized Font Size</span>
           <span className="text-xs text-gray-400 dark:text-gray-500">(maximize each song independently)</span>
+        </label>
+
+        {/* Title position */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+            Song title
+          </p>
+          <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
+            {[
+              { value: 'top',          label: 'Top' },
+              { value: 'bottom-left',  label: 'Bottom Left' },
+              { value: 'bottom-right', label: 'Bottom Right' },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTitlePosition(value)}
+                className={`px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500
+                  ${titlePosition === value
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {titlePosition !== 'top' && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Title printed as a small corner label; top margin removed for more lyric space.
+            </p>
+          )}
+        </div>
+
+        {/* One section per page */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={sectionPerPage}
+            onChange={e => setSectionPerPage(e.target.checked)}
+            className="w-4 h-4 accent-indigo-600"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">One section per page</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">(verse / chorus / bridge — lyrics in top half only)</span>
         </label>
 
         {/* Settings row — disabled when optimized font is active */}
