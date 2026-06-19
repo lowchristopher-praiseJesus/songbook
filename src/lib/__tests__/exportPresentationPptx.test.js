@@ -216,3 +216,41 @@ describe('title position', () => {
     expect(lyricsCall).toBeDefined()
   })
 })
+
+describe('chord and annotation visibility', () => {
+  it('excludes chord lines by default (showChords: false)', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([CHORD_SONG], null, { showChords: false }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).not.toContain('G  C')
+  })
+
+  it('includes chord lines when showChords is true', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([CHORD_SONG], null, { showChords: true }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).toContain('G  C')
+  })
+
+  it('includes line annotation when annotationsVisible is true', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    const song = {
+      meta: { title: 'T' },
+      sections: [{ label: 'V', lines: [{ type: 'lyric', content: 'Line', annotation: 'spoken' }] }],
+    }
+    await exportPresentationPptx([song], null, { annotationsVisible: true }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).toContain('spoken')
+  })
+
+  it('excludes line annotation when annotationsVisible is false', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    const song = {
+      meta: { title: 'T' },
+      sections: [{ label: 'V', lines: [{ type: 'lyric', content: 'Line', annotation: 'spoken' }] }],
+    }
+    await exportPresentationPptx([song], null, { annotationsVisible: false }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).not.toContain('spoken')
+  })
+})
