@@ -67,12 +67,12 @@ describe('exportPresentationPptx', () => {
     writeFileSpy.mockRestore()
   })
 
-  it('sets layout to LAYOUT_WIDE', async () => {
+  it('sets layout to LAYOUT_16x9', async () => {
     const { CapturePptx, getInstance } = makeMockPptx()
     await exportPresentationPptx(
       [{ meta: { title: 'T' }, sections: [] }], null, {}, CapturePptx
     )
-    expect(getInstance().layout).toBe('LAYOUT_WIDE')
+    expect(getInstance().layout).toBe('LAYOUT_16x9')
   })
 
   it('creates one slide per song (baseline — song mode)', async () => {

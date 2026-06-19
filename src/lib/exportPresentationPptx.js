@@ -106,7 +106,7 @@ export async function exportPresentationPptx(
   if (!songs.length) return
 
   const pres       = new PptxClass()
-  pres.layout      = 'LAYOUT_WIDE'
+  pres.layout      = 'LAYOUT_16x9'
   const bgDataUrl  = bgImage ? imageToDataUrl(bgImage) : null
   const contentOpts = { fontSize, showChords, annotationsVisible }
 
