@@ -100,3 +100,41 @@ describe('exportPresentationPptx', () => {
     vi.restoreAllMocks()
   })
 })
+
+describe('section-per-slide mode', () => {
+  it('creates one slide per lyric section', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TWO_SECTION_SONG], null, { slideMode: 'section' }, CapturePptx)
+    expect(getInstance().slides).toHaveLength(2)
+  })
+
+  it('skips sections that have no lyric lines', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    const song = {
+      meta: { title: 'T' },
+      sections: [
+        { label: 'Chord-only', lines: [{ type: 'chord', content: 'G' }] },
+        { label: 'Verse',      lines: [{ type: 'lyric', content: 'Line' }] },
+      ],
+    }
+    await exportPresentationPptx([song], null, { slideMode: 'section' }, CapturePptx)
+    expect(getInstance().slides).toHaveLength(1)
+  })
+
+  it('puts lyric content on the slide text', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TWO_SECTION_SONG], null, { slideMode: 'section' }, CapturePptx)
+    const slide0Text = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(slide0Text).toContain('Verse line')
+  })
+
+  it('creates one slide for a song with no labelled sections', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    const song = {
+      meta: { title: 'T' },
+      sections: [{ label: null, lines: [{ type: 'lyric', content: 'line' }] }],
+    }
+    await exportPresentationPptx([song], null, { slideMode: 'section' }, CapturePptx)
+    expect(getInstance().slides).toHaveLength(1)
+  })
+})

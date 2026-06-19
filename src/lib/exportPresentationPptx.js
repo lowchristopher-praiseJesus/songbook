@@ -17,6 +17,38 @@ function createSlide(pres, bgDataUrl) {
   return slide
 }
 
+function buildSectionText(section, { fontSize, showChords, annotationsVisible }) {
+  const runs = []
+  for (const line of section.lines ?? []) {
+    if (line.type === 'chord') {
+      if (!showChords) continue
+      runs.push({ text: (line.content ?? '') + '\n', options: { fontSize: fontSize * 0.7, color: '888888' } })
+    } else if (line.type === 'blank') {
+      runs.push({ text: '\n', options: { fontSize: fontSize * 0.5 } })
+    } else if (line.type === 'lyric') {
+      runs.push({ text: (line.content ?? '') + '\n', options: { fontSize, color: '231206' } })
+      if (annotationsVisible && line.annotation) {
+        runs.push({
+          text: '— ' + line.annotation + '\n',
+          options: { fontSize: fontSize * 0.75, color: '8C6E5A', italic: true },
+        })
+      }
+    }
+  }
+  return runs
+}
+
+function addLyricsToSlide(slide, textRuns, fontSize, titlePosition) {
+  if (!textRuns.length) return
+  const isTop = titlePosition === 'top'
+  slide.addText(textRuns, {
+    x: 0.5, y: isTop ? 1.45 : 0.25,
+    w: 9,   h: isTop ? 3.8  : 4.8,
+    align: 'center', valign: 'middle',
+    fontSize, shrinkText: true, wrap: true,
+  })
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function exportPresentationPptx(
@@ -33,13 +65,25 @@ export async function exportPresentationPptx(
 ) {
   if (!songs.length) return
 
-  const pres = new PptxClass()
-  pres.layout = 'LAYOUT_WIDE'
-
-  const bgDataUrl   = bgImage ? imageToDataUrl(bgImage) : null
+  const pres       = new PptxClass()
+  pres.layout      = 'LAYOUT_WIDE'
+  const bgDataUrl  = bgImage ? imageToDataUrl(bgImage) : null
+  const contentOpts = { fontSize, showChords, annotationsVisible }
 
   for (const song of songs) {
-    createSlide(pres, bgDataUrl)
+    if (slideMode === 'section') {
+      const lyricSections = (song.sections ?? []).filter(
+        s => (s.lines ?? []).some(l => l.type === 'lyric')
+      )
+      const toRender = lyricSections.length ? lyricSections : [{ label: null, lines: [] }]
+      for (const section of toRender) {
+        const slide = createSlide(pres, bgDataUrl)
+        const runs  = buildSectionText(section, contentOpts)
+        addLyricsToSlide(slide, runs, fontSize, titlePosition)
+      }
+    } else {
+      createSlide(pres, bgDataUrl)
+    }
   }
 
   const date = new Date().toISOString().slice(0, 10)
