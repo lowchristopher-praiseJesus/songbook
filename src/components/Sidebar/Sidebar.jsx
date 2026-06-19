@@ -12,6 +12,7 @@ import { loadSong, getTransposeState } from '../../lib/storage'
 import { transposeChord } from '../../lib/parser/chordUtils'
 import { ShareModal } from '../Share/ShareModal'
 import { ExportBackgroundModal } from './ExportBackgroundModal'
+import { ExportPresentationPptxModal } from './ExportPresentationPptxModal'
 import { ExportPrintModal } from './ExportPrintModal'
 import { AllSongsList } from './AllSongsList'
 import { LiveSessionModal } from '../Session/LiveSessionModal'
@@ -30,6 +31,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [choiceModalOpen, setChoiceModalOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [backgroundModalOpen, setBackgroundModalOpen] = useState(false)
+  const [pptxModalOpen, setPptxModalOpen] = useState(false)
   const [printModalOpen, setPrintModalOpen] = useState(false)
   const [liveSessionModalOpen, setLiveSessionModalOpen] = useState(false)
   const [pendingSongs, setPendingSongs] = useState([])
@@ -135,6 +137,18 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
 
   function handleBackgroundModalClose() {
     setBackgroundModalOpen(false)
+    toggleExportMode()
+  }
+
+  function handleChoosePresentationPptx() {
+    setChoiceModalOpen(false)
+    const songs = [...selectedSongIds].map(id => loadSong(id)).filter(Boolean)
+    setPendingSongs(songs)
+    setPptxModalOpen(true)
+  }
+
+  function handlePptxModalClose() {
+    setPptxModalOpen(false)
     toggleExportMode()
   }
 
@@ -533,6 +547,9 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
           <Button variant="secondary" className="w-full" onClick={handleChoosePresentationPdf}>
             Presentation PDF
           </Button>
+          <Button variant="secondary" className="w-full" onClick={handleChoosePresentationPptx}>
+            Presentation PPTX
+          </Button>
           <Button variant="secondary" className="w-full" onClick={handleChoosePrintPdf}>
             Print PDF
           </Button>
@@ -551,6 +568,13 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
         isOpen={backgroundModalOpen}
         songs={pendingSongs}
         onClose={handleBackgroundModalClose}
+        onAddToast={onAddToast}
+      />
+
+      <ExportPresentationPptxModal
+        isOpen={pptxModalOpen}
+        songs={pendingSongs}
+        onClose={handlePptxModalClose}
         onAddToast={onAddToast}
       />
 
