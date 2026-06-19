@@ -61,4 +61,42 @@ describe('exportPresentationPptx', () => {
     expect(writeFileSpy).not.toHaveBeenCalled()
     writeFileSpy.mockRestore()
   })
+
+  it('sets layout to LAYOUT_WIDE', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx(
+      [{ meta: { title: 'T' }, sections: [] }], null, {}, CapturePptx
+    )
+    expect(getInstance().layout).toBe('LAYOUT_WIDE')
+  })
+
+  it('creates one slide per song (baseline — song mode)', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx(
+      [{ meta: { title: 'A' }, sections: [] }, { meta: { title: 'B' }, sections: [] }],
+      null, { slideMode: 'song' }, CapturePptx
+    )
+    expect(getInstance().slides).toHaveLength(2)
+  })
+
+  it('sets slide.background when bgImage is provided', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    const fakeImg = { naturalWidth: 10, naturalHeight: 10 }
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation(tag => {
+      if (tag === 'canvas') {
+        return {
+          width: 0, height: 0,
+          getContext: () => ({ drawImage: vi.fn() }),
+          toDataURL: () => 'data:image/png;base64,MOCKED',
+        }
+      }
+      return origCreate(tag)
+    })
+    await exportPresentationPptx(
+      [{ meta: { title: 'T' }, sections: [] }], fakeImg, { slideMode: 'song' }, CapturePptx
+    )
+    expect(getInstance().slides[0].background).toEqual({ data: 'data:image/png;base64,MOCKED', type: 'png' })
+    vi.restoreAllMocks()
+  })
 })
