@@ -52,6 +52,11 @@ export const CHORD_SONG = {
   ],
 }
 
+const TITLED_SONG = {
+  meta: { title: 'My Song', artist: 'The Artist' },
+  sections: [{ label: 'Verse', lines: [{ type: 'lyric', content: 'line' }] }],
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('exportPresentationPptx', () => {
@@ -163,5 +168,51 @@ describe('song-per-slide mode', () => {
     const allText = JSON.stringify(getInstance().slides[0].textCalls)
     expect(allText).toContain('VERSE')
     expect(allText).toContain('CHORUS')
+  })
+})
+
+describe('title position', () => {
+  it('adds bold title text box at y=0.25 in top mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'top', slideMode: 'section' }, CapturePptx)
+    const calls     = getInstance().slides[0].textCalls
+    const titleCall = calls.find(c => JSON.stringify(c.text).includes('My Song') && c.opts?.bold)
+    expect(titleCall).toBeDefined()
+    expect(titleCall.opts.y).toBe(0.25)
+  })
+
+  it('adds artist text box at y=0.95 in top mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'top', slideMode: 'section' }, CapturePptx)
+    const calls      = getInstance().slides[0].textCalls
+    const artistCall = calls.find(c => JSON.stringify(c.text).includes('The Artist'))
+    expect(artistCall).toBeDefined()
+    expect(artistCall.opts.y).toBe(0.95)
+  })
+
+  it('places lyrics at y=1.45 in top mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'top', slideMode: 'section' }, CapturePptx)
+    const calls       = getInstance().slides[0].textCalls
+    const lyricsCall  = calls.find(c => c.opts?.y === 1.45)
+    expect(lyricsCall).toBeDefined()
+  })
+
+  it('adds title as small label at y=5.3 right-aligned in bottom-right mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'bottom-right', slideMode: 'section' }, CapturePptx)
+    const calls     = getInstance().slides[0].textCalls
+    const titleCall = calls.find(c => JSON.stringify(c.text).includes('My Song'))
+    expect(titleCall).toBeDefined()
+    expect(titleCall.opts.y).toBe(5.3)
+    expect(titleCall.opts.align).toBe('right')
+  })
+
+  it('places lyrics at y=0.25 with h=4.8 in bottom-left mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'bottom-left', slideMode: 'section' }, CapturePptx)
+    const calls      = getInstance().slides[0].textCalls
+    const lyricsCall = calls.find(c => c.opts?.y === 0.25 && c.opts?.h === 4.8)
+    expect(lyricsCall).toBeDefined()
   })
 })

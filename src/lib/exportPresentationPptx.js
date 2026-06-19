@@ -65,6 +65,30 @@ function addLyricsToSlide(slide, textRuns, fontSize, titlePosition) {
   })
 }
 
+function addTitleToSlide(slide, song, fontSize, titlePosition) {
+  const title = song.meta.title ?? 'Untitled'
+  if (titlePosition === 'top') {
+    slide.addText(title, {
+      x: 0.5, y: 0.25, w: 9, h: 0.7,
+      fontSize: fontSize * 1.5, bold: true, align: 'center', color: '231206', wrap: true,
+    })
+    if (song.meta.artist) {
+      slide.addText(song.meta.artist, {
+        x: 0.5, y: 0.95, w: 9, h: 0.4,
+        fontSize: fontSize * 0.85, align: 'center', color: '5A3E2A', wrap: true,
+      })
+    }
+  } else {
+    const isRight = titlePosition === 'bottom-right'
+    slide.addText(title, {
+      x: isRight ? 5.5 : 0.5, y: 5.3, w: 4, h: 0.3,
+      fontSize: fontSize * 0.55,
+      align: isRight ? 'right' : 'left',
+      color: '231206',
+    })
+  }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function exportPresentationPptx(
@@ -94,11 +118,13 @@ export async function exportPresentationPptx(
       const toRender = lyricSections.length ? lyricSections : [{ label: null, lines: [] }]
       for (const section of toRender) {
         const slide = createSlide(pres, bgDataUrl)
+        addTitleToSlide(slide, song, fontSize, titlePosition)
         const runs  = buildSectionText(section, contentOpts)
         addLyricsToSlide(slide, runs, fontSize, titlePosition)
       }
     } else {
       const slide = createSlide(pres, bgDataUrl)
+      addTitleToSlide(slide, song, fontSize, titlePosition)
       const runs  = buildSongText(song, contentOpts)
       addLyricsToSlide(slide, runs, fontSize, titlePosition)
     }
