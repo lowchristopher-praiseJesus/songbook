@@ -14,9 +14,10 @@ class MockSlide {
 }
 
 class MockPptx {
-  constructor() { this.slides = []; this.layout = null }
-  addSlide()          { const s = new MockSlide(); this.slides.push(s); return s }
-  async writeFile()   {}
+  constructor() { this.slides = []; this.layout = null; this.masters = [] }
+  defineSlideMaster(opts) { this.masters.push(opts) }
+  addSlide()              { const s = new MockSlide(); this.slides.push(s); return s }
+  async writeFile()       {}
 }
 
 /** Returns a MockPptx subclass that captures its own instance. */
@@ -84,7 +85,7 @@ describe('exportPresentationPptx', () => {
     expect(getInstance().slides).toHaveLength(2)
   })
 
-  it('sets slide.background when bgImage is provided', async () => {
+  it('sets background on the slide master (not per-slide) when bgImage is provided', async () => {
     const { CapturePptx, getInstance } = makeMockPptx()
     const fakeImg = { naturalWidth: 10, naturalHeight: 10 }
     const origCreate = document.createElement.bind(document)
@@ -101,7 +102,9 @@ describe('exportPresentationPptx', () => {
     await exportPresentationPptx(
       [{ meta: { title: 'T' }, sections: [] }], fakeImg, { slideMode: 'song' }, CapturePptx
     )
-    expect(getInstance().slides[0].background).toEqual({ data: 'data:image/png;base64,MOCKED', type: 'png' })
+    expect(getInstance().masters).toHaveLength(1)
+    expect(getInstance().masters[0].background).toEqual({ data: 'data:image/png;base64,MOCKED' })
+    expect(getInstance().slides[0].background).toBeNull()  // not set per-slide
     vi.restoreAllMocks()
   })
 })

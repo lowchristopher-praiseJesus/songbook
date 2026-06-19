@@ -11,10 +11,17 @@ function imageToDataUrl(img) {
   return canvas.toDataURL('image/png')
 }
 
-function createSlide(pres, bgDataUrl) {
-  const slide = pres.addSlide()
-  if (bgDataUrl) slide.background = { data: bgDataUrl, type: 'png' }
-  return slide
+const MASTER_NAME = 'BG'
+
+function setupMaster(pres, bgDataUrl) {
+  pres.defineSlideMaster({
+    title: MASTER_NAME,
+    background: bgDataUrl ? { data: bgDataUrl } : { color: '000000' },
+  })
+}
+
+function createSlide(pres) {
+  return pres.addSlide({ masterName: MASTER_NAME })
 }
 
 function buildSectionText(section, { fontSize, showChords, annotationsVisible }) {
@@ -108,6 +115,7 @@ export async function exportPresentationPptx(
   const pres       = new PptxClass()
   pres.layout      = 'LAYOUT_16x9'
   const bgDataUrl  = bgImage ? imageToDataUrl(bgImage) : null
+  setupMaster(pres, bgDataUrl)
   const contentOpts = { fontSize, showChords, annotationsVisible }
 
   for (const song of songs) {
@@ -117,13 +125,13 @@ export async function exportPresentationPptx(
       )
       const toRender = lyricSections.length ? lyricSections : [{ label: null, lines: [] }]
       for (const section of toRender) {
-        const slide = createSlide(pres, bgDataUrl)
+        const slide = createSlide(pres)
         addTitleToSlide(slide, song, fontSize, titlePosition)
         const runs  = buildSectionText(section, contentOpts)
         addLyricsToSlide(slide, runs, fontSize, titlePosition)
       }
     } else {
-      const slide = createSlide(pres, bgDataUrl)
+      const slide = createSlide(pres)
       addTitleToSlide(slide, song, fontSize, titlePosition)
       const runs  = buildSongText(song, contentOpts)
       addLyricsToSlide(slide, runs, fontSize, titlePosition)
