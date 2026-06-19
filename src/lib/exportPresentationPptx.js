@@ -79,12 +79,6 @@ function addTitleToSlide(slide, song, fontSize, titlePosition) {
       x: 0.5, y: 0.25, w: 9, h: 0.7,
       fontSize: fontSize * 1.5, bold: true, align: 'center', color: '231206', wrap: true,
     })
-    if (song.meta.artist) {
-      slide.addText(song.meta.artist, {
-        x: 0.5, y: 0.95, w: 9, h: 0.4,
-        fontSize: fontSize * 0.85, align: 'center', color: '5A3E2A', wrap: true,
-      })
-    }
   } else {
     const isRight = titlePosition === 'bottom-right'
     slide.addText(title, {
