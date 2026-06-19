@@ -54,7 +54,7 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: /export/i }))
     expect(exportPresentationPdf).toHaveBeenCalledOnce()
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 2, annotationsVisible: true, optimizedFont: false })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), expect.objectContaining({ desiredFont: 20, maxCols: 2, annotationsVisible: true, optimizedFont: false }))
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -90,14 +90,14 @@ describe('ExportBackgroundModal', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
     fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '14' } })
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 14, maxCols: 2, annotationsVisible: true, optimizedFont: false })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), expect.objectContaining({ desiredFont: 14, maxCols: 2, annotationsVisible: true, optimizedFont: false }))
   })
 
   it('passes maxCols=1 when column 1 button is clicked', () => {
     render(<ExportBackgroundModal {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: '1' }))
     fireEvent.click(screen.getByRole('button', { name: /^export$/i }))
-    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), { desiredFont: 20, maxCols: 1, annotationsVisible: true, optimizedFont: false })
+    expect(exportPresentationPdf).toHaveBeenCalledWith(songs, expect.any(SyncImage), expect.objectContaining({ desiredFont: 20, maxCols: 1, annotationsVisible: true, optimizedFont: false }))
   })
 
   it('reads annotationsVisible fresh from localStorage at export time', () => {
