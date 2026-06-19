@@ -23,7 +23,7 @@ export function ExportPresentationPptxModal({ isOpen, songs, onClose, onAddToast
   const [selectedId,    setSelectedId]    = useState(TEMPLATES[0]?.id ?? null)
   const [customUrl,     setCustomUrl]     = useState(null)
   const [bgImage,       setBgImage]       = useState(null)
-  const [slideMode,     setSlideMode]     = useState('section')
+  const slideMode = 'section'
   const [fontSizeStr,   setFontSizeStr]   = useState('24')
   const [titlePosition, setTitlePosition] = useState('top')
   const [showChords,    setShowChords]    = useState(false)
@@ -100,18 +100,6 @@ export function ExportPresentationPptxModal({ isOpen, songs, onClose, onAddToast
                 {selectedId === t.id && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs leading-none">✓</span>
                 )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Slide layout */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Slide layout</p>
-          <div className="flex rounded border border-gray-300 dark:border-gray-600 overflow-hidden w-fit">
-            {[{ value: 'section', label: 'Per section' }, { value: 'song', label: 'Per song' }].map(({ value, label }) => (
-              <button key={value} type="button" onClick={() => setSlideMode(value)} className={toggleBtn(slideMode === value)}>
-                {label}
               </button>
             ))}
           </div>
