@@ -184,13 +184,12 @@ describe('title position', () => {
     expect(titleCall.opts.y).toBe(0.25)
   })
 
-  it('adds artist text box at y=0.95 in top mode', async () => {
+  it('does not add artist text box in top mode', async () => {
     const { CapturePptx, getInstance } = makeMockPptx()
     await exportPresentationPptx([TITLED_SONG], null, { titlePosition: 'top', slideMode: 'section' }, CapturePptx)
     const calls      = getInstance().slides[0].textCalls
     const artistCall = calls.find(c => JSON.stringify(c.text).includes('The Artist'))
-    expect(artistCall).toBeDefined()
-    expect(artistCall.opts.y).toBe(0.95)
+    expect(artistCall).toBeUndefined()
   })
 
   it('places lyrics at y=1.45 in top mode', async () => {
