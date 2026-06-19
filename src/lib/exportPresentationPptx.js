@@ -38,6 +38,22 @@ function buildSectionText(section, { fontSize, showChords, annotationsVisible })
   return runs
 }
 
+function buildSongText(song, contentOpts) {
+  const runs = []
+  for (const section of song.sections ?? []) {
+    if (!(section.lines ?? []).some(l => l.type === 'lyric')) continue
+    if (section.label) {
+      runs.push({
+        text: section.label.toUpperCase() + '\n',
+        options: { fontSize: contentOpts.fontSize * 0.65, bold: true, color: '731616' },
+      })
+    }
+    runs.push(...buildSectionText(section, contentOpts))
+    runs.push({ text: '\n', options: { fontSize: contentOpts.fontSize * 0.4 } })
+  }
+  return runs
+}
+
 function addLyricsToSlide(slide, textRuns, fontSize, titlePosition) {
   if (!textRuns.length) return
   const isTop = titlePosition === 'top'
@@ -82,7 +98,9 @@ export async function exportPresentationPptx(
         addLyricsToSlide(slide, runs, fontSize, titlePosition)
       }
     } else {
-      createSlide(pres, bgDataUrl)
+      const slide = createSlide(pres, bgDataUrl)
+      const runs  = buildSongText(song, contentOpts)
+      addLyricsToSlide(slide, runs, fontSize, titlePosition)
     }
   }
 

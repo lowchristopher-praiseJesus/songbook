@@ -138,3 +138,30 @@ describe('section-per-slide mode', () => {
     expect(getInstance().slides).toHaveLength(1)
   })
 })
+
+describe('song-per-slide mode', () => {
+  it('creates one slide per song', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx(
+      [TWO_SECTION_SONG, TWO_SECTION_SONG],
+      null, { slideMode: 'song' }, CapturePptx
+    )
+    expect(getInstance().slides).toHaveLength(2)
+  })
+
+  it('puts all section lyrics on one slide', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TWO_SECTION_SONG], null, { slideMode: 'song' }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).toContain('Verse line')
+    expect(allText).toContain('Chorus line')
+  })
+
+  it('shows section labels as uppercase inline text in song mode', async () => {
+    const { CapturePptx, getInstance } = makeMockPptx()
+    await exportPresentationPptx([TWO_SECTION_SONG], null, { slideMode: 'song' }, CapturePptx)
+    const allText = JSON.stringify(getInstance().slides[0].textCalls)
+    expect(allText).toContain('VERSE')
+    expect(allText).toContain('CHORUS')
+  })
+})
