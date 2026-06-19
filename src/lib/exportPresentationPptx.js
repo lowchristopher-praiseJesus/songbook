@@ -67,8 +67,8 @@ function addLyricsToSlide(slide, textRuns, fontSize, titlePosition) {
   slide.addText(textRuns, {
     x: 0.5, y: isTop ? 1.45 : 0.25,
     w: 9,   h: isTop ? 3.8  : 4.8,
-    align: 'center', valign: 'top',
-    fontSize, shrinkText: true, wrap: true,
+    align: 'center',
+    fontSize, autoFit: true, wrap: true,
   })
 }
 
