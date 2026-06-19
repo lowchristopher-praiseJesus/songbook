@@ -16,6 +16,7 @@ const TEMPLATES = Object.entries(bgModules)
     else if (/^Background\d+$/.test(stem)) label = `Template ${stem.replace('Background', '')}`
     return { id: stem, label, url: mod.default }
   })
+  .filter(({ id }) => /^Background\d*$/.test(id))
   .sort((a, b) => {
     // Default first, then numerically
     if (a.id === 'Background') return -1
