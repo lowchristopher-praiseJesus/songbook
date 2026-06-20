@@ -98,7 +98,7 @@ describe('MainContent maximize button', () => {
     expect(screen.getByTestId('song-view').dataset.isFit).toBe('true')
   })
 
-  it('disables the + font button while fit mode is active', () => {
+  it('hides the floating controls pill while fit mode is active', () => {
     render(
       <MainContent
         onAddToast={vi.fn()}
@@ -109,10 +109,11 @@ describe('MainContent maximize button', () => {
       />
     )
     fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    expect(screen.getByLabelText('Increase font size')).toBeDisabled()
+    expect(screen.queryByLabelText('Increase font size')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Decrease font size')).not.toBeInTheDocument()
   })
 
-  it('disables the − font button while fit mode is active', () => {
+  it('shows an exit maximize button in the overlay while fit mode is active', () => {
     render(
       <MainContent
         onAddToast={vi.fn()}
@@ -123,6 +124,22 @@ describe('MainContent maximize button', () => {
       />
     )
     fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    expect(screen.getByLabelText('Decrease font size')).toBeDisabled()
+    expect(screen.getByLabelText('Exit maximize')).toBeInTheDocument()
+  })
+
+  it('exits maximize mode when the exit button is clicked', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    fireEvent.click(screen.getByLabelText('Exit maximize'))
+    expect(screen.queryByLabelText('Exit maximize')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Fit song to screen')).toBeInTheDocument()
   })
 })

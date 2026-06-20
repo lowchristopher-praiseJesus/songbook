@@ -157,6 +157,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
   // Desktop arrow-key navigation (skip when a modal is open or user is typing)
   useEffect(() => {
     function onKey(e) {
+      if (e.key === 'Escape' && isFit) { setIsFit(false); return }
       if (performanceSections || editingSongId) return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
@@ -165,7 +166,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goNext, goPrev, performanceSections, editingSongId])
+  }, [goNext, goPrev, performanceSections, editingSongId, isFit])
 
   function onDuplicateCheck(title) {
     return new Promise(resolve => setDuplicateState({ title, resolve }))
@@ -224,7 +225,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
         ? <SongEditor songId={editingSongId} />
         : !activeSong
           ? <EmptyState onFileChange={handleFileInput} />
-          : <div
+          : !isFit
+          ? <div
               key={activeSongId}
               className={`h-full overflow-x-hidden
                 ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
@@ -241,11 +243,51 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 chordsOpen={chordsOpen}
                 onChordsToggle={() => setChordsOpen(o => !o)}
                 onEdit={() => setEditingSongId(activeSongId)}
-                isFit={isFit}
+                isFit={false}
                 containerRef={containerRef}
               />
             </div>
+          : null
       }
+
+      {/* Full-viewport maximize overlay */}
+      {isFit && activeSong && (
+        <div
+          className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col overflow-hidden"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <button
+            type="button"
+            onClick={() => setIsFit(false)}
+            className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Exit maximize"
+          >
+            <ArrowsPointingInIcon className="w-5 h-5" />
+          </button>
+          <div
+            key={activeSongId}
+            className={`h-full overflow-x-hidden
+              ${swipeDir === 'left'  ? 'animate-slideFromRight' : ''}
+              ${swipeDir === 'right' ? 'animate-slideFromLeft'  : ''}
+            `}
+            onAnimationEnd={() => setSwipeDir(null)}
+          >
+            <SongView
+              song={activeSong}
+              onPerformanceMode={setPerformanceSections}
+              lyricsOnly={lyricsOnly}
+              fontSize={fontSize}
+              onFontSizeChange={onFontSizeChange}
+              chordsOpen={chordsOpen}
+              onChordsToggle={() => setChordsOpen(o => !o)}
+              onEdit={() => setEditingSongId(activeSongId)}
+              isFit={true}
+              containerRef={containerRef}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Swipe navigation hint */}
       {swipeHint && (
@@ -281,7 +323,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
       )}
 
       {/* Floating controls — grouped pill card */}
-      {activeSong && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
+      {activeSong && !isFit && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
         <div
           ref={pillRef}
           className="fixed right-4 z-20 pointer-events-auto"
