@@ -22,7 +22,7 @@ import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 import { CollectionDetailView } from '../Collection/CollectionDetailView'
 import { NewCollectionCreator } from '../Collection/NewCollectionCreator'
 
-export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
+export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -238,6 +238,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
                 song={activeSong}
                 onPerformanceMode={setPerformanceSections}
                 lyricsOnly={lyricsOnly}
+                hideChordDiagram={hideChordDiagram}
                 fontSize={fontSize}
                 onFontSizeChange={onFontSizeChange}
                 chordsOpen={chordsOpen}
@@ -277,6 +278,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, fontSize = 16, onF
               song={activeSong}
               onPerformanceMode={setPerformanceSections}
               lyricsOnly={lyricsOnly}
+              hideChordDiagram={hideChordDiagram}
               fontSize={fontSize}
               onFontSizeChange={onFontSizeChange}
               chordsOpen={chordsOpen}

@@ -8,6 +8,7 @@ export function SongView({
   song,
   onPerformanceMode,
   lyricsOnly,
+  hideChordDiagram = false,
   fontSize,
   onFontSizeChange,
   chordsOpen,
@@ -107,6 +108,7 @@ export function SongView({
             song={song}
             onPerformanceMode={onPerformanceMode}
             lyricsOnly={lyricsOnly}
+            hideChordDiagram={hideChordDiagram}
             fontSize={fontSize}
             onFontSizeChange={onFontSizeChange}
             chordsOpen={chordsOpen}

@@ -44,6 +44,7 @@ export default function App() {
   const autoCloseTimerRef = useRef(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [lyricsOnly, setLyricsOnly] = useLocalStorage('songsheet_lyrics_only', false)
+  const [hideChordDiagram, setHideChordDiagram] = useLocalStorage('songsheet_hide_chord_diagram', false)
   const [sessionLyricsOnly, setSessionLyricsOnly] = useState(false)
   const effectiveLyricsOnly = lyricsOnly || sessionLyricsOnly
   const [fontSize, setFontSize] = useLocalStorage('songsheet_font_size', 16)
@@ -175,6 +176,10 @@ export default function App() {
   function handleToggleLyricsOnly() {
     setSessionLyricsOnly(false)
     setLyricsOnly(!effectiveLyricsOnly)
+  }
+
+  function handleToggleHideChordDiagram() {
+    setHideChordDiagram(v => !v)
   }
 
   function handleShareCancel() {
@@ -321,7 +326,7 @@ export default function App() {
                 conductorSync={conductorSync}
                 isAutoClosing={autoClosingSidebar}
               />
-              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} onOpenSidebar={() => setSidebarOpen(true)} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
+              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} hideChordDiagram={hideChordDiagram} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} onOpenSidebar={() => setSidebarOpen(true)} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
             </>
           )}
         </div>
@@ -333,6 +338,8 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
           lyricsOnly={effectiveLyricsOnly}
           onToggleLyricsOnly={handleToggleLyricsOnly}
+          hideChordDiagram={hideChordDiagram}
+          onToggleHideChordDiagram={handleToggleHideChordDiagram}
           displaySettings={displaySettings}
           fontSize={fontSize}
           onFontSizeChange={setFontSize}

@@ -7,7 +7,7 @@ import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/sto
 import { Button } from '../UI/Button'
 import { DisplayTab } from './DisplayTab'
 
-export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, displaySettings, fontSize, onFontSizeChange }) {
+export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideChordDiagram, onToggleHideChordDiagram, displaySettings, fontSize, onFontSizeChange }) {
   const [tab, setTab] = useState('general')
   const { theme, setTheme } = useTheme()
   const index = useLibraryStore(s => s.index)
@@ -128,6 +128,21 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, display
                 ${lyricsOnly ? 'translate-x-5' : 'translate-x-0'}`} />
             </span>
             <span className="text-sm text-gray-700 dark:text-gray-300">Lyrics only (hide chords)</span>
+          </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={hideChordDiagram}
+            onClick={onToggleHideChordDiagram}
+            className="flex items-center gap-3 w-full text-left mt-3"
+          >
+            <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+              transition-colors duration-200 focus:outline-none
+              ${hideChordDiagram ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+              <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                ${hideChordDiagram ? 'translate-x-5' : 'translate-x-0'}`} />
+            </span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Hide chord diagrams</span>
           </button>
         </div>
 

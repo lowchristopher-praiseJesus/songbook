@@ -11,6 +11,7 @@ export function SongList({
   song,
   onPerformanceMode,
   lyricsOnly = false,
+  hideChordDiagram = false,
   fontSize = 16,
   onFontSizeChange,
   chordsOpen,
@@ -54,7 +55,7 @@ export function SongList({
               onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
               songId={song.id}
             />
-            {!lyricsOnly && (
+            {!lyricsOnly && !hideChordDiagram && (
               <ChordStrip
                 sections={transpose.transposedSections}
                 open={chordsOpen}
