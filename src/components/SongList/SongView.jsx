@@ -84,20 +84,24 @@ export function SongView({
 
   return (
     <div className="flex h-full overflow-hidden">
-      <SectionsSidebar
-        sections={song.sections ?? []}
-        activeIndex={activeIndex}
-        open={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onSectionClick={handleSectionClick}
-        topOffset={bodyOffset}
-      />
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <MobileSectionStrip
+      {!isFit && (
+        <SectionsSidebar
           sections={song.sections ?? []}
           activeIndex={activeIndex}
+          open={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
           onSectionClick={handleSectionClick}
+          topOffset={bodyOffset}
         />
+      )}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        {!isFit && (
+          <MobileSectionStrip
+            sections={song.sections ?? []}
+            activeIndex={activeIndex}
+            onSectionClick={handleSectionClick}
+          />
+        )}
         <div className="flex-1 overflow-y-auto overflow-x-hidden" ref={containerRef}>
           <SongList
             song={song}

@@ -37,7 +37,7 @@ export function SongList({
 
   return (
     <div
-      className="max-w-2xl mx-auto px-4 py-6 w-full relative"
+      className={`w-full relative px-4 py-6 ${isFit ? '' : 'max-w-2xl mx-auto'}`}
       style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
     >
       <div ref={headerRef}>
