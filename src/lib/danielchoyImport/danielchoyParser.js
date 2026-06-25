@@ -1,5 +1,5 @@
 import { isChord, parseContent } from '../parser/contentParser'
-import { detectKeyFromContent } from '../parser/chordUtils'
+import { detectKeyFromContent, transposeRawText } from '../parser/chordUtils'
 import { expandTabs, mergeChordAboveLyric, toPureChordLine, KEY_TO_INDEX, FLAT_KEY_NAMES } from '../ugImport/ugParser'
 
 // Line type constants
@@ -12,7 +12,9 @@ const T_BLANK   = 'blank'
 const SECTION_RE = /^(verse|chorus|bridge|intro|outro|pre.?chorus|tag|refrain|interlude|coda|hook|vamp|ending|instrumental|turnaround|modulation|key\s+change)\b/i
 const META_RE    = /^((original\s+key[^:]*:|key\s+sig[^:]*:|play\s+in[^:]*:|capo\s*:|tempo\s*:|time\s+sig[^:]*:|sequence\s*:|ccli[^:]*:|song\s+no[^:]*:|hp\s+recording[^:]*:|writer[^:]*:|author[^:]*:|arr\.?[^:]*:|arrangement[^:]*:)|(written\s+by|produced?\s+by|co-?produced\s+by|strumming\s+pattern)\s+)/i
 const CREDIT_RE  = /@\s+(?:[A-Za-z]+\s+)?\d{4}/
-const PLAY_IN_KEY_RE = /play\s+in\s+key\s*:\s*([A-G][b#]?)/i
+// Matches "Play in G key", "Play in Key: G", "Play in Eb" etc.
+// The optional (?:key[\s:]*) handles "key:" or "key " before the note name.
+const PLAY_IN_KEY_RE = /play\s+in\s+(?:key[\s:]*)?([A-G][b#]?)\b/i
 
 function stripHTML(html) {
   // Remove <style> and <script> block content (not just the tags)
@@ -270,12 +272,25 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
     outputLines.pop()
   }
 
-  const contentString = outputLines.join('\n')
-  const sections = parseContent(contentString)
+  let contentString = outputLines.join('\n')
 
-  // Resolve key
+  // Resolve key. Daniel Choy's blog JavaScript transposes chords on the fly, so the raw
+  // HTML may store chords in a different key than what the "Play in X key" header says.
+  // When the declared play-in key differs from the detected content key, transpose the
+  // chord content so the stored song matches what the header promises.
   let keyInfo = resolveKey(metaState.key)
-  if (!keyInfo) keyInfo = detectKeyFromContent(contentString)
+  if (keyInfo) {
+    const contentKeyInfo = detectKeyFromContent(contentString)
+    if (contentKeyInfo.keyIndex !== keyInfo.keyIndex) {
+      let delta = ((keyInfo.keyIndex - contentKeyInfo.keyIndex) % 12 + 12) % 12
+      if (delta > 6) delta -= 12
+      contentString = transposeRawText(contentString, delta, keyInfo.usesFlats)
+    }
+  } else {
+    keyInfo = detectKeyFromContent(contentString)
+  }
+
+  const sections = parseContent(contentString)
 
   const capo = parseInt(metaState.capo, 10) || 0
 
