@@ -33,12 +33,20 @@ function stripHTML(html) {
   return s
 }
 
+// Repeat annotations like (2x), x2, x3, (3x) found in chord lines
+const REPEAT_ANNOTATION_RE = /^\(?\d+x\)?$|^\(?x\d+\)?$/i
+
+// Lines that are purely rhythmic notation (bar lines, dashes) — not real lyrics
+const PURE_RHYTHM_RE = /^[\s|\-]+$/
+
 // Replace rhythm-only tokens (-, |, ^, x) with spaces to preserve chord column positions.
-// This prevents mergeChordAboveLyric from inserting [-] or [|] into lyric lines.
+// Also strips repeat annotations like (2x) so they don't become [(2x)] in output.
 const RHYTHM_ONLY_RE = /^[-|^x/]+$/
 function stripRhythmTokens(line) {
   return expandTabs(line).replace(/\S+/g, token =>
-    RHYTHM_ONLY_RE.test(token) ? ' '.repeat(token.length) : token
+    RHYTHM_ONLY_RE.test(token) || REPEAT_ANNOTATION_RE.test(token)
+      ? ' '.repeat(token.length)
+      : token
   )
 }
 
@@ -48,7 +56,10 @@ function isChordLine(line) {
   if (tokens.length === 0) return false
   const withoutRhythm = tokens.map(t => t.replace(/[-^|/]+$/, ''))
   const chordCount = withoutRhythm.filter(t => t && isChord(t)).length
-  return chordCount > 0 && withoutRhythm.every(t => !t || isChord(t) || /^[|\-^/x]+$/.test(t))
+  // Allow repeat annotations like (2x) alongside chords and rhythm tokens
+  return chordCount > 0 && withoutRhythm.every(t =>
+    !t || isChord(t) || /^[|\-^/x]+$/.test(t) || REPEAT_ANNOTATION_RE.test(t)
+  )
 }
 
 function classifyLine(line) {
@@ -110,6 +121,33 @@ function resolveKey(keyStr) {
 }
 
 /**
+ * Pre-pass over raw lines to fix Blogger HTML div-split of section names:
+ * "Verse" on one line + "1" on the next -> "Verse 1" as one line.
+ * This must run before classification so seenSections keys include the number,
+ * otherwise "Verse 2" causes a false duplicate-stop after "Verse 1".
+ */
+function patchSectionLines(rawLines) {
+  const out = []
+  let i = 0
+  while (i < rawLines.length) {
+    const line = rawLines[i]
+    const trimmed = line.trim()
+    const plain = trimmed.replace(/^(\*\*?|__?)/, '').replace(/(\*\*?|__?)$/, '').trim()
+    if (SECTION_RE.test(plain) && plain.split(/\s+/).length <= 3) {
+      const nextTrimmed = rawLines[i + 1]?.trim()
+      if (nextTrimmed && /^\d+$/.test(nextTrimmed)) {
+        out.push(trimmed + ' ' + nextTrimmed)
+        i += 2
+        continue
+      }
+    }
+    out.push(line)
+    i++
+  }
+  return out
+}
+
+/**
  * Parse a scraped Daniel Choy blog post page into a song object.
  * @param {string} rawHtml - full page HTML from Firecrawl /scrape
  * @param {{ title: string, artist: string }} titleMeta - pre-parsed from Firecrawl search result
@@ -117,7 +155,8 @@ function resolveKey(keyStr) {
 export function parseDanielChoyPage(rawHtml, titleMeta) {
   const html = rawHtml ?? ''
   const text = stripHTML(html)
-  const rawLines = text.split('\n')
+  // Fix "Verse" + "1" HTML-split before classification so seenSections keys are correct
+  const rawLines = patchSectionLines(text.split('\n'))
 
   const metaState = { key: '', capo: '' }
   const classified = []
@@ -174,20 +213,44 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
     if (cl.type === T_META)    { i++; continue }
     if (cl.type === T_SECTION) { outputLines.push(`{c: ${cl.text}}`); i++; continue }
 
+    // Skip standalone rhythm artifacts (|, -, bare bar lines) misclassified as lyrics
+    if (cl.type === T_LYRIC && PURE_RHYTHM_RE.test(cl.text)) { i++; continue }
+
     if (cl.type === T_CHORD) {
-      // Strip rhythm tokens (|, -) from chord line before merging — these are beat
-      // placeholders in Daniel Choy's format and must not become [-] or [|] in output
-      const cleanChord = stripRhythmTokens(cl.text)
+      // Accumulate consecutive chord lines — Blogger HTML often puts each chord in its
+      // own <div>, producing fragmented single-chord lines that belong together.
+      const chordParts = [cl.text]
+      let j = i + 1
+      while (j < classified.length && classified[j].type === T_CHORD) {
+        chordParts.push(classified[j].text)
+        j++
+      }
+
+      // Skip past pure-rhythm lyric artifacts between chord block and real lyrics
+      while (j < classified.length && classified[j].type === T_LYRIC && PURE_RHYTHM_RE.test(classified[j].text)) {
+        j++
+      }
+
+      const isFragmented = chordParts.length > 1
+      const cleanChord = stripRhythmTokens(chordParts.join('  '))
       const hasChords = /\S/.test(cleanChord)
-      const next = classified[i + 1]
-      if (next && next.type === T_LYRIC) {
-        outputLines.push(hasChords ? mergeChordAboveLyric(cleanChord, next.text) : next.text)
-        i += 2
+
+      const next = classified[j]
+      if (next && next.type === T_LYRIC && hasChords) {
+        if (!isFragmented) {
+          // Single chord line with preserved column positions — inline merge
+          outputLines.push(mergeChordAboveLyric(cleanChord, next.text))
+        } else {
+          // Fragmented: column positions lost from div-per-chord HTML — keep separate
+          outputLines.push(toPureChordLine(cleanChord))
+          outputLines.push(next.text)
+        }
+        i = j + 1
       } else if (hasChords) {
         outputLines.push(toPureChordLine(cleanChord))
-        i++
+        i = j
       } else {
-        i++ // rhythm-only line with no following lyric — skip
+        i = j // rhythm-only, skip
       }
       continue
     }
