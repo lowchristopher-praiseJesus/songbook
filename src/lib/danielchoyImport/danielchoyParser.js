@@ -36,8 +36,13 @@ function stripHTML(html) {
 // Repeat annotations like (2x), x2, x3, (3x) found in chord lines
 const REPEAT_ANNOTATION_RE = /^\(?\d+x\)?$|^\(?x\d+\)?$/i
 
-// Lines that are purely rhythmic notation (bar lines, dashes) — not real lyrics
-const PURE_RHYTHM_RE = /^[\s|\-]+$/
+// Returns true when every token in the line is a rhythm marker or repeat annotation.
+// Catches lines like "- - | (2x)" that PURE_RHYTHM_RE would miss because of the parens.
+function isPureRhythmLine(text) {
+  const tokens = text.trim().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return false
+  return tokens.every(t => /^[-|^x/]+$/.test(t) || REPEAT_ANNOTATION_RE.test(t))
+}
 
 // Replace rhythm-only tokens (-, |, ^, x) with spaces to preserve chord column positions.
 // Also strips repeat annotations like (2x) so they don't become [(2x)] in output.
@@ -213,8 +218,8 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
     if (cl.type === T_META)    { i++; continue }
     if (cl.type === T_SECTION) { outputLines.push(`{c: ${cl.text}}`); i++; continue }
 
-    // Skip standalone rhythm artifacts (|, -, bare bar lines) misclassified as lyrics
-    if (cl.type === T_LYRIC && PURE_RHYTHM_RE.test(cl.text)) { i++; continue }
+    // Skip standalone rhythm artifacts (|, -, bare bar lines, "- - | (2x)" etc.) misclassified as lyrics
+    if (cl.type === T_LYRIC && isPureRhythmLine(cl.text)) { i++; continue }
 
     if (cl.type === T_CHORD) {
       // Accumulate consecutive chord lines — Blogger HTML often puts each chord in its
@@ -227,7 +232,7 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
       }
 
       // Skip past pure-rhythm lyric artifacts between chord block and real lyrics
-      while (j < classified.length && classified[j].type === T_LYRIC && PURE_RHYTHM_RE.test(classified[j].text)) {
+      while (j < classified.length && classified[j].type === T_LYRIC && isPureRhythmLine(classified[j].text)) {
         j++
       }
 

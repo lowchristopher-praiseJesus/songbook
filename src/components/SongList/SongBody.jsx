@@ -20,11 +20,14 @@ function ChordedLine({ line, fontSize, fitMode }) {
   const LYRIC_CHAR_EM = 0.5 // approximate width of one proportional lyric character
   const sortedPositions = chords.map((c) => c.position).sort((a, b) => a - b)
   function chordNeedsWidth(position, chordText) {
+    // Trailing chords (past lyric text) have no lyric chars providing spacing —
+    // always reserve width so consecutive trailing chords don't overlap.
+    if (position >= text.length) return true
     const next = sortedPositions.find((p) => p > position)
     if (next === undefined) return false // nothing to the right to collide with
     const gapEm = (next - position) * LYRIC_CHAR_EM
     const chordEm = chordText.length * 0.7 + 0.3
-    return chordEm > gapEm
+    return chordEm >= gapEm
   }
 
   // Segment the text into word-groups (non-space runs) and spaces.
