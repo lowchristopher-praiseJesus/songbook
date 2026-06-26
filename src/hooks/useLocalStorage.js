@@ -12,12 +12,15 @@ export function useLocalStorage(key, defaultValue) {
   })
 
   const set = useCallback((newValue) => {
-    setValue(newValue)
-    try {
-      localStorage.setItem(key, JSON.stringify(newValue))
-    } catch (e) {
-      console.warn('useLocalStorage write failed:', e)
-    }
+    setValue(prev => {
+      const resolved = typeof newValue === 'function' ? newValue(prev) : newValue
+      try {
+        localStorage.setItem(key, JSON.stringify(resolved))
+      } catch (e) {
+        console.warn('useLocalStorage write failed:', e)
+      }
+      return resolved
+    })
   }, [key])
 
   return [value, set]
