@@ -9,11 +9,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { TransposeControl } from './TransposeControl'
 import { RecorderButton } from '../Recorder/RecorderButton'
-import { RecordingTimer } from '../Recorder/RecordingTimer'
-import { NamingDialog } from '../Recorder/NamingDialog'
-import { RecordingErrorDialog } from '../Recorder/RecordingErrorDialog'
-import { RecordingsPanel } from '../Recorder/RecordingsPanel'
-import { useRecording } from '../../hooks/useRecording'
 import { checkRecorderSupport } from '../../lib/recorderFeatureDetect'
 
 const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
@@ -29,16 +24,16 @@ export function SongHeader({
   annotationsVisible = true,
   onAnnotationsToggle,
   songId,
+  recording,
+  onPanelOpen,
 }) {
   const [infoOpen, setInfoOpen] = useState(false)
-  const [panelOpen, setPanelOpen] = useState(false)
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
 
-  const recording = useRecording({
-    songId: songId ?? '',
-    songTitle: meta.title ?? '',
-  })
+  const isActiveRecording = recording
+    ? recording.status === 'recording' || recording.status === 'paused'
+    : false
 
   return (
     <div ref={headerRef} className="border-b border-gray-100 dark:border-gray-800 pb-4 mb-2">
@@ -142,25 +137,22 @@ export function SongHeader({
               <ChatBubbleLeftEllipsisIcon className="w-4 h-4" />
             </button>
           )}
-          {songId && RECORDER_SUPPORTED && (
+          {songId && RECORDER_SUPPORTED && recording && (
             <>
-              <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
-              {recording.channels != null && (recording.status === 'recording' || recording.status === 'paused') && (
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
-                  {recording.channels >= 2 ? 'Stereo' : 'Mono'}
-                </span>
+              {/* Rec button only shown when idle — active controls live in the sticky bar */}
+              {!isActiveRecording && (
+                <RecorderButton
+                  status={recording.status}
+                  onStart={recording.startRecording}
+                  onStop={recording.stopRecording}
+                  onPause={recording.pauseRecording}
+                  onResume={recording.resumeRecording}
+                />
               )}
-              <RecorderButton
-                status={recording.status}
-                onStart={recording.startRecording}
-                onStop={recording.stopRecording}
-                onPause={recording.pauseRecording}
-                onResume={recording.resumeRecording}
-              />
               <div className="relative inline-flex">
                 <button
                   type="button"
-                  onClick={() => setPanelOpen(true)}
+                  onClick={onPanelOpen}
                   aria-label={recording.hasRecordings ? 'Recordings available' : 'Recordings'}
                   title={recording.hasRecordings ? 'View recordings - this song has recordings' : 'View recordings'}
                   className="flex items-center gap-1.5 text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
@@ -189,26 +181,6 @@ export function SongHeader({
           {meta.copyright && <div className="col-span-2 text-xs"><span className="font-medium text-gray-700 dark:text-gray-300">©</span> {meta.copyright}</div>}
         </div>
       )}
-
-      <NamingDialog
-        isOpen={recording.status === 'naming'}
-        defaultName={recording.pendingName}
-        onSave={recording.saveRecording}
-        onCancel={recording.cancelNaming}
-      />
-
-      <RecordingErrorDialog
-        isOpen={recording.status === 'error' && !!recording.error}
-        message={recording.error}
-        onClose={recording.dismissError}
-      />
-
-      <RecordingsPanel
-        isOpen={panelOpen}
-        songId={songId}
-        onClose={() => setPanelOpen(false)}
-        onRecordingsChange={recording.handleRecordingsChange}
-      />
     </div>
   )
 }
