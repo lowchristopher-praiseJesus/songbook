@@ -1,6 +1,7 @@
 import { isChord, parseContent } from '../parser/contentParser'
 import { detectKeyFromContent, transposeRawText } from '../parser/chordUtils'
-import { expandTabs, mergeChordAboveLyric, toPureChordLine, KEY_TO_INDEX, FLAT_KEY_NAMES } from '../ugImport/ugParser'
+import { KEY_TO_INDEX, FLAT_KEY_NAMES } from '../ugImport/ugParser'
+import { expandTabs, isChordLine, mergeChordAboveLyric, toPureChordLine } from '../parser/chordLineUtils'
 
 // Line type constants
 const T_SECTION = 'section'
@@ -54,18 +55,6 @@ function stripRhythmTokens(line) {
     RHYTHM_ONLY_RE.test(token) || REPEAT_ANNOTATION_RE.test(token)
       ? ' '.repeat(token.length)
       : token
-  )
-}
-
-function isChordLine(line) {
-  const expanded = expandTabs(line)
-  const tokens = expanded.trim().split(/\s+/).filter(Boolean)
-  if (tokens.length === 0) return false
-  const withoutRhythm = tokens.map(t => t.replace(/[-^|/]+$/, ''))
-  const chordCount = withoutRhythm.filter(t => t && isChord(t)).length
-  // Allow repeat annotations like (2x) alongside chords and rhythm tokens
-  return chordCount > 0 && withoutRhythm.every(t =>
-    !t || isChord(t) || /^[|\-^/x]+$/.test(t) || REPEAT_ANNOTATION_RE.test(t)
   )
 }
 
