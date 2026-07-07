@@ -9,6 +9,8 @@ import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/se
 export function SongEditor({ songId }) {
   const song = useLibraryStore(s => s.activeSong)
   const updateSong = useLibraryStore(s => s.updateSong)
+  const saveAsNewSong = useLibraryStore(s => s.saveAsNewSong)
+  const selectSong = useLibraryStore(s => s.selectSong)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
 
   const [meta, setMeta] = useState(() => song ? { ...song.meta } : {})
@@ -58,6 +60,12 @@ export function SongEditor({ songId }) {
     setEditingSongId(null)
   }
 
+  function handleSaveAs() {
+    const newId = saveAsNewSong(songId, { meta, rawText })
+    if (newId) selectSong(newId)
+    setEditingSongId(null)
+  }
+
   function handleCancel() {
     if (isDirty && !window.confirm('Discard changes?')) return
     setEditingSongId(null)
@@ -75,6 +83,14 @@ export function SongEditor({ songId }) {
             className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAs}
+            className="text-sm px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            title="Save as a new song, keeping the original unchanged"
+          >
+            Save As
           </button>
           <button
             type="button"
