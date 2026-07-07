@@ -34,7 +34,12 @@ vi.mock('../../../lib/ugImport/firecrawlClient', () => ({
 vi.mock('../../../lib/ugImport/ugParser', () => ({ parseUGPage: vi.fn(() => fakeSong) }))
 vi.mock('../../../lib/danielchoyImport/danielchoyClient', () => ({ searchDanielChoy: vi.fn(() => Promise.resolve([])) }))
 vi.mock('../../../lib/danielchoyImport/danielchoyParser', () => ({ parseDanielChoyPage: vi.fn() }))
+vi.mock('../../../lib/ugImport/fetchSong', () => ({ fetchAndParseSong: vi.fn() }))
+vi.mock('../../SongList/SongBody', () => ({
+  SongBody: ({ sections }) => <div data-testid="songbody">{sections.length} sections</div>,
+}))
 
+import { fetchAndParseSong } from '../../../lib/ugImport/fetchSong'
 import { UGSearchModal } from '../UGSearchModal'
 
 function renderIt() {
@@ -59,6 +64,8 @@ async function searchAndGetRow() {
 describe('UGSearchModal direct import (characterization)', () => {
   beforeEach(() => {
     storeState.index = []
+    fetchAndParseSong.mockReset()
+    fetchAndParseSong.mockResolvedValue(fakeSong)
     mockAddSongs.mockReset()
     mockAddSongs.mockImplementation((songs, sourceLabel, sourceKey) => {
       songs.forEach((s, i) => storeState.index.push({
@@ -78,11 +85,62 @@ describe('UGSearchModal direct import (characterization)', () => {
 
   it('clicking a result imports it directly', async () => {
     const row = await searchAndGetRow()
-  // reset call counts captured during render of this test's own render
-  mockAddSongs.mockClear()
-  mockSelectSong.mockClear()
-  fireEvent.click(row)
+    fireEvent.click(row)
     await waitFor(() => expect(mockAddSongs).toHaveBeenCalledWith([fakeSong], 'Ultimate Guitar', 'ug'))
     await waitFor(() => expect(mockSelectSong).toHaveBeenCalled())
+  })
+})
+
+describe('UGSearchModal preview wiring', () => {
+  beforeEach(() => {
+    storeState.index = []
+    fetchAndParseSong.mockReset()
+    fetchAndParseSong.mockResolvedValue(fakeSong)
+    mockAddSongs.mockReset()
+    mockAddSongs.mockImplementation((songs, sourceLabel, sourceKey) => {
+      songs.forEach((s, i) => storeState.index.push({
+        id: `id-${storeState.index.length}-${i}`,
+        title: s.meta.title,
+        sourceLabel,
+        sourceKey,
+      }))
+    })
+    mockSelectSong.mockReset()
+  })
+
+  async function searchToResults() {
+    renderIt()
+    fireEvent.change(screen.getByPlaceholderText(/Song title or artist/i), { target: { value: 'foo' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    await screen.findByText(/Foo/i)
+  }
+
+  it('clicking Preview opens the preview without importing', async () => {
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /Preview Foo/i }))
+    await screen.findByTestId('songbody')
+    expect(mockAddSongs).not.toHaveBeenCalled()
+  })
+
+  it('clicking the row body still imports directly', async () => {
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /^Foo/i }))
+    await waitFor(() => expect(mockAddSongs).toHaveBeenCalledWith([fakeSong], 'Ultimate Guitar', 'ug'))
+  })
+
+  it('Preview button does not trigger row import (stopPropagation)', async () => {
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /Preview Foo/i }))
+    await screen.findByTestId('songbody')
+    // import path would have called addSongs; preview must not
+    expect(mockAddSongs).not.toHaveBeenCalled()
+  })
+
+  it('Import from preview runs runImport', async () => {
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /Preview Foo/i }))
+    await screen.findByTestId('songbody')
+    fireEvent.click(screen.getByRole('button', { name: /^Import$/i }))
+    await waitFor(() => expect(mockAddSongs).toHaveBeenCalledWith([fakeSong], 'Ultimate Guitar', 'ug'))
   })
 })

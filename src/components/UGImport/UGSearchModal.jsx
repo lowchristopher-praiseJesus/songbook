@@ -6,6 +6,7 @@ import { getFirecrawlKey } from '../../lib/storage'
 import { searchUG } from '../../lib/ugImport/firecrawlClient'
 import { fetchAndParseSong } from '../../lib/ugImport/fetchSong'
 import { searchDanielChoy } from '../../lib/danielchoyImport/danielchoyClient'
+import { UGPreviewModal } from './UGPreviewModal'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -18,6 +19,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   const [results, setResults] = useState([])
   const [error, setError] = useState(null)
   const [duplicateState, setDuplicateState] = useState(null)
+  const [previewResult, setPreviewResult] = useState(null)
 
   const addSongs = useLibraryStore(s => s.addSongs)
   const replaceSong = useLibraryStore(s => s.replaceSong)
@@ -31,6 +33,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setResults([])
     setError(null)
     setDuplicateState(null)
+    setPreviewResult(null)
     importingRef.current = false
     onClose()
   }, [onClose])
@@ -207,13 +210,21 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
                     .trim()
                   const isDC = r.source === 'danielchoy'
                   return (
-                    <li key={r.url}>
-                      <button
-                        type="button"
+                    <li key={r.url} className="flex items-stretch gap-1">
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleSelect(r)}
-                        className="w-full text-left px-3 py-2 rounded-lg
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            handleSelect(r)
+                          }
+                        }}
+                        className="flex-1 min-w-0 text-left px-3 py-2 rounded-lg cursor-pointer
                           hover:bg-gray-100 dark:hover:bg-gray-700
-                          text-sm text-gray-900 dark:text-gray-100"
+                          text-sm text-gray-900 dark:text-gray-100
+                          focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-medium flex-1 min-w-0 truncate">{displayTitle || r.title}</span>
@@ -231,7 +242,20 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
                         {isDC && r.artist && (
                           <div className="text-xs text-gray-400 truncate mt-0.5">{r.artist}</div>
                         )}
-                      </button>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="shrink-0 self-center px-2"
+                        onClick={e => { e.stopPropagation(); setPreviewResult(r) }}
+                        aria-label={`Preview ${displayTitle || r.title}`}
+                        title="Preview"
+                      >
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </Button>
                     </li>
                   )
                 })}
@@ -264,6 +288,14 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
           </div>
         </div>
       )}
+
+      <UGPreviewModal
+        result={previewResult}
+        apiKey={apiKey}
+        isOpen={!!previewResult}
+        onClose={() => setPreviewResult(null)}
+        onImported={(song, result) => runImport(song, result)}
+      />
     </Modal>
   )
 }
