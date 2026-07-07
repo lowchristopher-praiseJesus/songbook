@@ -4,6 +4,8 @@ import { MetaFields } from './MetaFields'
 import { FixHeadersModal } from './FixHeadersModal'
 import { parseContent } from '../../lib/parser/contentParser'
 import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/sectionDetector'
+import { FixChordsModal } from './FixChordsModal'
+import { detectChordFixes, applyChordFixes } from '../../lib/parser/chordLineDetector'
 
 const KEY_TO_INDEX = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
@@ -23,6 +25,7 @@ export function NewSongEditor() {
   const [rawText, setRawText] = useState('')
   const [titleError, setTitleError] = useState(false)
   const [pendingFixes, setPendingFixes] = useState(null)
+  const [pendingChordFixes, setPendingChordFixes] = useState(null)
 
   function handleDetectHeaders() {
     const detections = detectSectionHeaders(rawText)
@@ -32,6 +35,16 @@ export function NewSongEditor() {
   function handleApplyFixes(selectedFixes) {
     setRawText(convertSectionHeaders(rawText, selectedFixes))
     setPendingFixes(null)
+  }
+
+  function handleDetectChords() {
+    const detections = detectChordFixes(rawText)
+    if (detections.length > 0) setPendingChordFixes(detections)
+  }
+
+  function handleApplyChordFixes(selectedFixes) {
+    setRawText(applyChordFixes(rawText, selectedFixes))
+    setPendingChordFixes(null)
   }
 
   function handleMetaChange(field, value) {
@@ -107,6 +120,15 @@ export function NewSongEditor() {
           >
             Fix headers
           </button>
+          <button
+            type="button"
+            onClick={handleDetectChords}
+            className="shrink-0 ml-2 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+                       text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+          >
+            Fix chords
+          </button>
         </div>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"
@@ -121,6 +143,12 @@ export function NewSongEditor() {
         detections={pendingFixes ?? []}
         onApply={handleApplyFixes}
         onCancel={() => setPendingFixes(null)}
+      />
+      <FixChordsModal
+        isOpen={pendingChordFixes !== null}
+        detections={pendingChordFixes ?? []}
+        onApply={handleApplyChordFixes}
+        onCancel={() => setPendingChordFixes(null)}
       />
     </div>
   )
