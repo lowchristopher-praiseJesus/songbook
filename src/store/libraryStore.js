@@ -7,7 +7,15 @@ import {
   getTransposeState, setTransposeState,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
+import { resolveSaveAsTitle } from '../lib/saveAsTitle'
 import { loadMyAlbums } from '../lib/albumApi'
+
+const KEY_TO_INDEX = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
+  E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8,
+  Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+}
+const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
 
 export const useLibraryStore = create((set, get) => ({
   // State
@@ -343,6 +351,44 @@ export const useLibraryStore = create((set, get) => ({
       index: newIndex,
       ...(get().activeSongId === id ? { activeSong: updatedSong } : {}),
     })
+  },
+
+  /**
+   * Save the editor's current content as a NEW song, leaving the original
+   * untouched. If the user did not rename the song, a numeric suffix is appended
+   * (e.g. "Amazing Grace" -> "Amazing Grace 1") so the copy's title differs from
+   * the original and from any existing library song.
+   *
+   * Returns the new song's id (or null if the original could not be found).
+   */
+  saveAsNewSong(id, { meta, rawText }) {
+    const original = loadSong(id)
+    if (!original) return null
+
+    const existingTitles = get().index.map(e => e.title)
+    const newTitle = resolveSaveAsTitle(original.meta.title, meta.title, existingTitles)
+
+    const keyIndex = KEY_TO_INDEX[meta.key] ?? original.meta.keyIndex ?? 0
+    const usesFlats = FLAT_KEY_NAMES.has(meta.key)
+    const sections = parseContent(rawText)
+
+    // Strip sharing-specific fields so the copy is a standalone song, not tied
+    // to the original's share baseline or SBP id.
+    const { sbpId, sharedBaseline, ...cleanMeta } = meta
+
+    const newSong = {
+      rawText,
+      meta: {
+        ...cleanMeta,
+        title: newTitle,
+        keyIndex,
+        usesFlats,
+      },
+      sections,
+    }
+
+    const { newSongIds } = get().addSongs([newSong])
+    return newSongIds[0] ?? null
   },
 
   /** Enter or exit export mode. Clears selection when exiting. */

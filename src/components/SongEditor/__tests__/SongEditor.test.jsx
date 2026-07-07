@@ -20,12 +20,16 @@ const mockSong = {
 
 const mockUpdateSong = vi.fn()
 const mockSetEditingSongId = vi.fn()
+const mockSaveAsNewSong = vi.fn()
+const mockSelectSong = vi.fn()
 
 vi.mock('../../../store/libraryStore', () => ({
   useLibraryStore: (selector) =>
     selector({
       activeSong: mockSong,
       updateSong: mockUpdateSong,
+      saveAsNewSong: mockSaveAsNewSong,
+      selectSong: mockSelectSong,
       setEditingSongId: mockSetEditingSongId,
     }),
 }))
@@ -34,6 +38,8 @@ describe('SongEditor', () => {
   beforeEach(() => {
     mockUpdateSong.mockReset()
     mockSetEditingSongId.mockReset()
+    mockSaveAsNewSong.mockReset()
+    mockSelectSong.mockReset()
   })
 
   afterEach(() => {
@@ -53,7 +59,7 @@ describe('SongEditor', () => {
 
   it('Save calls updateSong with songId and current meta and rawText', () => {
     render(<SongEditor songId="song-1" />)
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(mockUpdateSong).toHaveBeenCalledWith('song-1', {
       meta: expect.objectContaining({ title: 'My Song', key: 'G' }),
       rawText: mockSong.rawText,
@@ -62,7 +68,7 @@ describe('SongEditor', () => {
 
   it('Save calls setEditingSongId(null)', () => {
     render(<SongEditor songId="song-1" />)
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(mockSetEditingSongId).toHaveBeenCalledWith(null)
   })
 
@@ -93,5 +99,30 @@ describe('SongEditor', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
     expect(mockSetEditingSongId).toHaveBeenCalledWith(null)
+  })
+
+  it('Save As calls saveAsNewSong with songId and current meta and rawText', () => {
+    mockSaveAsNewSong.mockReturnValue('new-song-id')
+    render(<SongEditor songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save As' }))
+    expect(mockSaveAsNewSong).toHaveBeenCalledWith('song-1', {
+      meta: expect.objectContaining({ title: 'My Song', key: 'G' }),
+      rawText: mockSong.rawText,
+    })
+  })
+
+  it('Save As selects the new song and closes the editor', () => {
+    mockSaveAsNewSong.mockReturnValue('new-song-id')
+    render(<SongEditor songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save As' }))
+    expect(mockSelectSong).toHaveBeenCalledWith('new-song-id')
+    expect(mockSetEditingSongId).toHaveBeenCalledWith(null)
+  })
+
+  it('Save As does not call updateSong on the original', () => {
+    mockSaveAsNewSong.mockReturnValue('new-song-id')
+    render(<SongEditor songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save As' }))
+    expect(mockUpdateSong).not.toHaveBeenCalled()
   })
 })
