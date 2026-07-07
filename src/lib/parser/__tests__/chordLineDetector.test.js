@@ -11,8 +11,19 @@ describe('detectChordFixes', () => {
     expect(detectChordFixes('{c: Verse}\n\nHello world')).toEqual([])
   })
 
-  it('skips already-bracketed pure chord lines', () => {
-    expect(detectChordFixes('[F]    [Bb]    [C]\nCelebrate Jesus')).toEqual([])
+  it('treats a bracketed chord line above a lyric line as a merge candidate', () => {
+    const results = detectChordFixes('[F]    [Bb]    [C]\nCelebrate Jesus')
+    expect(results).toHaveLength(1)
+    expect(results[0]).toMatchObject({ type: 'merge', chordLineIndex: 0, lyricLineIndex: 1 })
+    expect(results[0].proposed).toBe('[F]Celebra[Bb]te Jesus[C]')
+  })
+
+  it('skips a bracketed chord line already in canonical standalone form', () => {
+    expect(detectChordFixes('{c: Intro}\n[G]    [D]    [Em]    [C]')).toEqual([])
+  })
+
+  it('skips already-inline-mixed lyric lines (chords embedded mid-word)', () => {
+    expect(detectChordFixes('{c: Verse}\n[F]Cele[Bb]brate Jesus')).toEqual([])
   })
 
   it('detects a chord line followed by a lyric line as a merge', () => {

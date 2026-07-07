@@ -16,7 +16,7 @@ const FLAT_KEY_NAMES = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
 
 const DEFAULT_META = { title: '', artist: '', key: 'C', capo: 0 }
 
-export function NewSongEditor() {
+export function NewSongEditor({ onAddToast }) {
   const addSongs = useLibraryStore(s => s.addSongs)
   const selectSong = useLibraryStore(s => s.selectSong)
   const setIsCreatingNewSong = useLibraryStore(s => s.setIsCreatingNewSong)
@@ -30,6 +30,7 @@ export function NewSongEditor() {
   function handleDetectHeaders() {
     const detections = detectSectionHeaders(rawText)
     if (detections.length > 0) setPendingFixes(detections)
+    else onAddToast?.('No section headers to fix.', 'info')
   }
 
   function handleApplyFixes(selectedFixes) {
@@ -40,6 +41,7 @@ export function NewSongEditor() {
   function handleDetectChords() {
     const detections = detectChordFixes(rawText)
     if (detections.length > 0) setPendingChordFixes(detections)
+    else onAddToast?.('No chord lines to fix.', 'info')
   }
 
   function handleApplyChordFixes(selectedFixes) {

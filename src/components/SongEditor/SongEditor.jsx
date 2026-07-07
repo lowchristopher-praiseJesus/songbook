@@ -8,7 +8,7 @@ import { transposeRawTextByKey } from '../../lib/parser/chordUtils'
 import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/sectionDetector'
 import { detectChordFixes, applyChordFixes } from '../../lib/parser/chordLineDetector'
 
-export function SongEditor({ songId }) {
+export function SongEditor({ songId, onAddToast }) {
   const song = useLibraryStore(s => s.activeSong)
   const updateSong = useLibraryStore(s => s.updateSong)
   const saveAsNewSong = useLibraryStore(s => s.saveAsNewSong)
@@ -25,6 +25,7 @@ export function SongEditor({ songId }) {
   function handleDetectHeaders() {
     const detections = detectSectionHeaders(rawText)
     if (detections.length > 0) setPendingFixes(detections)
+    else onAddToast?.('No section headers to fix.', 'info')
   }
 
   function handleApplyFixes(selectedFixes) {
@@ -36,6 +37,7 @@ export function SongEditor({ songId }) {
   function handleDetectChords() {
     const detections = detectChordFixes(rawText)
     if (detections.length > 0) setPendingChordFixes(detections)
+    else onAddToast?.('No chord lines to fix.', 'info')
   }
 
   function handleApplyChordFixes(selectedFixes) {

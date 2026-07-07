@@ -33,6 +33,10 @@ describe('isChordLine', () => {
   it('rejects a line that is only rhythm/annotation markers with no real chords', () => {
     expect(isChordLine('- - | (2x)')).toBe(false)
   })
+
+  it('detects a standalone chord line already written in bracket notation', () => {
+    expect(isChordLine('[D]     [A]     [Bm7]')).toBe(true)
+  })
 })
 
 describe('mergeChordAboveLyric', () => {
@@ -53,6 +57,11 @@ describe('mergeChordAboveLyric', () => {
   it('splits pipe-joined chords and drops repeat annotations', () => {
     const merged = mergeChordAboveLyric('F   Bb   C   F        Bb|C (To Repeat)', 'Celebrate Jesus celebrate.')
     expect(merged.match(/\[([^\]]+)\]/g)).toEqual(['[F]', '[Bb]', '[C]', '[F]', '[Bb]', '[C]'])
+  })
+
+  it('merges a chord line already written in bracket notation', () => {
+    const merged = mergeChordAboveLyric('[D]     [A]     [Bm7]', 'Every day of my life,  I know..')
+    expect(merged).toBe('[D]Every da[A]y of my [Bm7]life,  I know..')
   })
 })
 

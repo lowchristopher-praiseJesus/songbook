@@ -60,13 +60,22 @@ function stripTrailingRhythm(text) {
   return text.replace(/[-^/]+$/, '')
 }
 
+// A token may already be written as a bracketed chord label, e.g. "[D]" — unwrap it
+// so downstream chord-name checks see the bare name "D". Left unchanged if the token
+// isn't wholly bracketed (e.g. "[F]Cele[Bb]brate", a genuinely inline-mixed token).
+function unwrapBracket(text) {
+  const m = /^\[(.+)\]$/.exec(text)
+  return m ? m[1] : text
+}
+
 // True if the line is a chord-only line: at least one real chord, and every other
-// token is either a chord, a rhythm marker, or a repeat annotation.
+// token is either a chord (bare or bracketed, e.g. "D" or "[D]"), a rhythm marker,
+// or a repeat annotation.
 export function isChordLine(line) {
   const tokens = extractChordTokens(expandTabs(line))
   if (tokens.length === 0) return false
 
-  const names = tokens.map(t => stripTrailingRhythm(t.text))
+  const names = tokens.map(t => unwrapBracket(stripTrailingRhythm(t.text)))
   const chordCount = names.filter(name => name && isChord(name)).length
 
   return chordCount > 0 && names.every(name =>
@@ -80,7 +89,7 @@ export function mergeChordAboveLyric(chordLine, lyricLine) {
   const expandedLyric = expandTabs(lyricLine)
 
   const chords = extractChordTokens(expandTabs(chordLine))
-    .map(t => ({ name: stripTrailingRhythm(t.text), pos: t.pos }))
+    .map(t => ({ name: unwrapBracket(stripTrailingRhythm(t.text)), pos: t.pos }))
     .filter(t => t.name && isChord(t.name))
 
   if (chords.length === 0) return expandedLyric.trimEnd()
@@ -105,7 +114,7 @@ export function mergeChordAboveLyric(chordLine, lyricLine) {
 // any decoration tokens.
 export function toPureChordLine(chordLine) {
   const chords = extractChordTokens(expandTabs(chordLine))
-    .map(t => stripTrailingRhythm(t.text))
+    .map(t => unwrapBracket(stripTrailingRhythm(t.text)))
     .filter(name => name && isChord(name))
   return chords.map(name => `[${name}]`).join('    ')
 }

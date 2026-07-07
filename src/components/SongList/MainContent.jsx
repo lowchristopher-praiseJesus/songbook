@@ -220,9 +220,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
         : selectedCollectionId
         ? <CollectionDetailView onAddToast={onAddToast} onOpenSidebar={onOpenSidebar} />
         : isCreatingNewSong
-        ? <NewSongEditor />
+        ? <NewSongEditor onAddToast={onAddToast} />
         : editingSongId
-        ? <SongEditor songId={editingSongId} />
+        ? <SongEditor songId={editingSongId} onAddToast={onAddToast} />
         : !activeSong
           ? <EmptyState onFileChange={handleFileInput} />
           : !isFit

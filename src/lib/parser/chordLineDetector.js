@@ -1,7 +1,6 @@
 import { isChordLine, mergeChordAboveLyric, toPureChordLine } from './chordLineUtils'
 
 const SECTION_RE = /^\{c:\s*(.+?)\s*\}$/
-const INLINE_CHORD_RE = /\[.+?\]/
 
 // Returns array of { type, chordLineIndex, lyricLineIndex, original, proposed } for
 // merge detections, or { type, lineIndex, original, proposed } for standalone ones.
@@ -15,13 +14,12 @@ export function detectChordFixes(rawText) {
 
     if (!trimmed) continue
     if (SECTION_RE.test(trimmed)) continue
-    if (INLINE_CHORD_RE.test(trimmed)) continue
     if (!isChordLine(line)) continue
 
     const next = lines[i + 1]
     const nextTrimmed = next?.trim() ?? ''
     const nextIsLyric = next !== undefined && nextTrimmed !== '' &&
-      !SECTION_RE.test(nextTrimmed) && !INLINE_CHORD_RE.test(nextTrimmed) && !isChordLine(next)
+      !SECTION_RE.test(nextTrimmed) && !isChordLine(next)
 
     if (nextIsLyric) {
       results.push({
@@ -33,12 +31,10 @@ export function detectChordFixes(rawText) {
       })
       i++ // consume the lyric line so it isn't re-examined as its own line
     } else {
-      results.push({
-        type: 'standalone',
-        lineIndex: i,
-        original: line,
-        proposed: toPureChordLine(line),
-      })
+      const proposed = toPureChordLine(line)
+      if (proposed !== line) {
+        results.push({ type: 'standalone', lineIndex: i, original: line, proposed })
+      }
     }
   }
 
