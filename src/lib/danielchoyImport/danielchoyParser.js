@@ -1,4 +1,4 @@
-import { isChord, parseContent } from '../parser/contentParser'
+import { parseContent } from '../parser/contentParser'
 import { detectKeyFromContent, transposeRawText } from '../parser/chordUtils'
 import { KEY_TO_INDEX, FLAT_KEY_NAMES } from '../ugImport/ugParser'
 import { expandTabs, isChordLine, mergeChordAboveLyric, toPureChordLine } from '../parser/chordLineUtils'
