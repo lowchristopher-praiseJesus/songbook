@@ -328,68 +328,69 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               }
             }}
           />
+        ) : viewMode === 'allSongs' && !trimmedQuery ? (
+          <>
+            {/* New Song button stays fixed above the scrolling song list */}
+            <div className="px-2 pt-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
+                className="w-full flex items-center gap-1 px-2 py-1 text-xs
+                  text-indigo-500 dark:text-indigo-400
+                  border border-dashed border-gray-300 dark:border-gray-600 rounded
+                  hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
+                  transition-colors"
+              >
+                + New Song
+              </button>
+            </div>
+            <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
+              {index.length > 0
+                ? <AllSongsList entries={index} onSelect={onSongSelect} />
+                : (
+                  <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                    No songs yet
+                  </li>
+                )
+              }
+            </ul>
+          </>
         ) : (
           <ul className="flex-1 overflow-y-auto p-2 space-y-0.5" role="list">
-            {trimmedQuery ? (
-              viewMode === 'collections' ? (
-                <>
-                  {filteredCollectionGroups.map(group => (
-                    <CollectionCard
-                      key={group.id}
-                      group={group}
-                      onSelect={onSongSelect}
-                      onGroupCheckboxChange={(val) => {
-                        if (val === null) {
-                          setExportSourceName(null)
-                          setExportSourceCollectionId(null)
-                        } else {
-                          setExportSourceName(val.name)
-                          setExportSourceCollectionId(val.id)
-                        }
-                      }}
-                    />
-                  ))}
-                  {filteredCollectionGroups.length === 0 && (
-                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                      No matches
-                    </li>
-                  )}
-                </>
-              ) : (
-                <>
-                  {filtered.map(entry => (
-                    <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
-                  ))}
-                  {filtered.length === 0 && (
-                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                      No matches
-                    </li>
-                  )}
-                </>
-              )
+            {viewMode === 'collections' ? (
+              <>
+                {filteredCollectionGroups.map(group => (
+                  <CollectionCard
+                    key={group.id}
+                    group={group}
+                    onSelect={onSongSelect}
+                    onGroupCheckboxChange={(val) => {
+                      if (val === null) {
+                        setExportSourceName(null)
+                        setExportSourceCollectionId(null)
+                      } else {
+                        setExportSourceName(val.name)
+                        setExportSourceCollectionId(val.id)
+                      }
+                    }}
+                  />
+                ))}
+                {filteredCollectionGroups.length === 0 && (
+                  <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                    No matches
+                  </li>
+                )}
+              </>
             ) : (
               <>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
-                    className="w-full flex items-center gap-1 px-2 py-1 text-xs
-                      text-indigo-500 dark:text-indigo-400
-                      border border-dashed border-gray-300 dark:border-gray-600 rounded
-                      hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
-                      transition-colors"
-                  >
-                    + New Song
-                  </button>
-                </li>
-                {index.length > 0
-                  ? <AllSongsList entries={index} onSelect={onSongSelect} />
-                  : (
-                    <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-                      No songs yet
-                    </li>
-                  )
-                }
+                {filtered.map(entry => (
+                  <SongListItem key={entry.id} entry={entry} onSelect={onSongSelect} />
+                ))}
+                {filtered.length === 0 && (
+                  <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+                    No matches
+                  </li>
+                )}
               </>
             )}
           </ul>
