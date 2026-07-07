@@ -3,10 +3,9 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
-import { searchUG, scrapeURL } from '../../lib/ugImport/firecrawlClient'
-import { parseUGPage } from '../../lib/ugImport/ugParser'
+import { searchUG } from '../../lib/ugImport/firecrawlClient'
+import { fetchAndParseSong } from '../../lib/ugImport/fetchSong'
 import { searchDanielChoy } from '../../lib/danielchoyImport/danielchoyClient'
-import { parseDanielChoyPage } from '../../lib/danielchoyImport/danielchoyParser'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -79,6 +78,56 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     resolve(resolution)
   }
 
+  const runImport = useCallback(async (song, result) => {
+    if (!song.sections.length) {
+      setStatus('results')
+      setError("Couldn't extract chords from this page — try another result")
+      return
+    }
+
+    const sourceLabel = result.source === 'danielchoy' ? 'Daniel Choy' : 'Ultimate Guitar'
+
+    // Duplicate check
+    const index = useLibraryStore.getState().index
+    const duplicate = index.find(e => e.title === song.meta.title)
+    if (duplicate) {
+      const resolution = await onDuplicateCheck(song.meta.title)
+      if (resolution === 'replace') {
+        replaceSong(duplicate.id, song)
+        selectSong(duplicate.id)
+        onSongSelect()
+        onImportSuccess?.()
+        onAddToast(`Imported: ${song.meta.title}`, 'success')
+        resetAndClose()
+        return
+      } else if (resolution === 'skip') {
+        setStatus('results')
+        return
+      }
+      // 'keep-both' falls through to addSongs — new UUID is assigned
+    }
+
+    const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
+    const sourceKey = result.source === 'danielchoy' ? 'danielchoy' : 'ug'
+    try {
+      addSongs([song], sourceLabel, sourceKey)
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        setStatus('results')
+        setError('Storage full — delete some songs before importing')
+        return
+      }
+      throw e
+    }
+
+    const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
+    if (newEntry) selectSong(newEntry.id)
+    onSongSelect()
+    onImportSuccess?.()
+    onAddToast(`Imported: ${song.meta.title}`, 'success')
+    resetAndClose()
+  }, [addSongs, replaceSong, selectSong, onDuplicateCheck, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
+
   const handleSelect = useCallback(async (result) => {
     if (importingRef.current) return
     importingRef.current = true
@@ -86,72 +135,14 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setStatus('importing')
     setError(null)
     try {
-      let song
-      let sourceLabel
-      if (result.source === 'danielchoy') {
-        // JSONP results carry rawHtml from the Blogger feed — no scrape needed.
-        // Firecrawl results have no rawHtml and require a scrape (needs API key).
-        const rawHtml = result.rawHtml || (await scrapeURL(result.url, apiKey)).rawHtml
-        song = parseDanielChoyPage(rawHtml, result)
-        sourceLabel = 'Daniel Choy'
-      } else {
-        const scraped = await scrapeURL(result.url, apiKey)
-        song = parseUGPage(scraped, result.url)
-        sourceLabel = 'Ultimate Guitar'
-      }
-
-      if (!song.sections.length) {
-        setStatus('results')
-        setError("Couldn't extract chords from this page — try another result")
-        return
-      }
-
-      // Duplicate check
-      const index = useLibraryStore.getState().index
-      const duplicate = index.find(e => e.title === song.meta.title)
-      if (duplicate) {
-        const resolution = await onDuplicateCheck(song.meta.title)
-        if (resolution === 'replace') {
-          replaceSong(duplicate.id, song)
-          selectSong(duplicate.id)
-          onSongSelect()
-          onImportSuccess?.()
-          onAddToast(`Imported: ${song.meta.title}`, 'success')
-          resetAndClose()
-          return
-        } else if (resolution === 'skip') {
-          setStatus('results')
-          return
-        }
-        // 'keep-both' falls through to addSongs — new UUID is assigned
-      }
-
-      const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
-
-      const sourceKey = result.source === 'danielchoy' ? 'danielchoy' : 'ug'
-      try {
-        addSongs([song], sourceLabel, sourceKey)
-      } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-          setStatus('results')
-          setError('Storage full — delete some songs before importing')
-          return
-        }
-        throw e
-      }
-
-      const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
-      if (newEntry) selectSong(newEntry.id)
-      onSongSelect()
-      onImportSuccess?.()
-      onAddToast(`Imported: ${song.meta.title}`, 'success')
-      resetAndClose()
+      const song = await fetchAndParseSong(result, apiKey)
+      await runImport(song, result)
     } catch (err) {
       setStatus('results')
       setError(errorMessage(err))
       importingRef.current = false
     }
-  }, [addSongs, replaceSong, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
+  }, [runImport])
 
   const apiKey = getFirecrawlKey()
 
