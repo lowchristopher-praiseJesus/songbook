@@ -30,7 +30,7 @@ export function FixChordsModal({ isOpen, detections, onApply, onCancel }) {
   }
 
   return (
-    <Modal isOpen={isOpen} title="Merge Chords Into Lyrics" onClose={onCancel}>
+    <Modal isOpen={isOpen} title="Fix Chords" onClose={onCancel}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-gray-700 dark:text-gray-300">
           Select the chord lines to fix:

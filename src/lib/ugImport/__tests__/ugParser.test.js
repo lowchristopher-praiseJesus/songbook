@@ -145,6 +145,21 @@ describe('parseUGMarkdown — chord-above-lyrics conversion', () => {
     expect(song.sections[0].lines[1].type).toBe('lyric')
     expect(song.sections[0].lines[1].chords[0].chord).toBe('Am')
   })
+
+  it('treats a single bare chord line as a chord line (permissive threshold from shared chordLineUtils)', () => {
+    // The shared isChordLine only requires chordCount > 0 (no minimum token count),
+    // so a lone "C" line above a lyric is now recognized as a chord line and merged
+    // inline — previously (pre-consolidation) ugParser required >=2 chord tokens,
+    // so "C" would have been emitted as a literal lyric line instead.
+    const md = '[Verse 1]\nC\nHello world'
+    const song = parseUGMarkdown(md)
+    const line = song.sections[0].lines[0]
+    expect(line.type).toBe('lyric')
+    expect(line.content).toBe('Hello world')
+    expect(line.chords).toHaveLength(1)
+    expect(line.chords[0].chord).toBe('C')
+    expect(line.chords[0].position).toBe(0)
+  })
 })
 
 describe('parseUGMarkdown — [Tab] skip', () => {
