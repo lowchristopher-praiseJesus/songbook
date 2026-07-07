@@ -3,8 +3,10 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { MetaFields } from './MetaFields'
 import { TransposeConfirmModal } from './TransposeConfirmModal'
 import { FixHeadersModal } from './FixHeadersModal'
+import { FixChordsModal } from './FixChordsModal'
 import { transposeRawTextByKey } from '../../lib/parser/chordUtils'
 import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/sectionDetector'
+import { detectChordFixes, applyChordFixes } from '../../lib/parser/chordLineDetector'
 
 export function SongEditor({ songId }) {
   const song = useLibraryStore(s => s.activeSong)
@@ -18,6 +20,7 @@ export function SongEditor({ songId }) {
   const [isDirty, setIsDirty] = useState(false)
   const [pendingKeyChange, setPendingKeyChange] = useState(null)
   const [pendingFixes, setPendingFixes] = useState(null)
+  const [pendingChordFixes, setPendingChordFixes] = useState(null)
 
   function handleDetectHeaders() {
     const detections = detectSectionHeaders(rawText)
@@ -28,6 +31,17 @@ export function SongEditor({ songId }) {
     setRawText(convertSectionHeaders(rawText, selectedFixes))
     setIsDirty(true)
     setPendingFixes(null)
+  }
+
+  function handleDetectChords() {
+    const detections = detectChordFixes(rawText)
+    if (detections.length > 0) setPendingChordFixes(detections)
+  }
+
+  function handleApplyChordFixes(selectedFixes) {
+    setRawText(applyChordFixes(rawText, selectedFixes))
+    setIsDirty(true)
+    setPendingChordFixes(null)
   }
 
   if (!song) return null
@@ -127,6 +141,15 @@ export function SongEditor({ songId }) {
           >
             Fix headers
           </button>
+          <button
+            type="button"
+            onClick={handleDetectChords}
+            className="shrink-0 ml-2 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+                       text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+          >
+            Fix chords
+          </button>
         </div>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"
@@ -141,6 +164,12 @@ export function SongEditor({ songId }) {
         detections={pendingFixes ?? []}
         onApply={handleApplyFixes}
         onCancel={() => setPendingFixes(null)}
+      />
+      <FixChordsModal
+        isOpen={pendingChordFixes !== null}
+        detections={pendingChordFixes ?? []}
+        onApply={handleApplyChordFixes}
+        onCancel={() => setPendingChordFixes(null)}
       />
     </div>
   )
