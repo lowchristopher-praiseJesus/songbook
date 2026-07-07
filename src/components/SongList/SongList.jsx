@@ -113,6 +113,21 @@ export function SongList({
         className={`w-full relative px-4 ${isFit ? 'py-6' : 'max-w-2xl mx-auto pb-6'}`}
         style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
       >
+        {isFit && (
+          <div className="mb-4">
+            <h1
+              className="font-bold leading-tight"
+              style={{ fontFamily: 'var(--title-font)', fontSize: 'var(--title-size)', color: 'var(--title-color-active)' }}
+            >{song.meta.title}</h1>
+            {(song.meta.key || song.meta.tempo) && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {song.meta.key && <span>Key: {song.meta.key}</span>}
+                {song.meta.key && song.meta.tempo && <span className="mx-1.5">·</span>}
+                {song.meta.tempo && <span>BPM: {song.meta.tempo}</span>}
+              </p>
+            )}
+          </div>
+        )}
         <div ref={bodyRef}>
           <SongBody
             sections={transpose.transposedSections}

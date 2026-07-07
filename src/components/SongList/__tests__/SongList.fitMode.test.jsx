@@ -57,13 +57,51 @@ vi.mock('../../Recorder/RecordingsPanel', () => ({
 
 const song = {
   id: 'song-1',
-  meta: { title: 'Test', keyIndex: 0 },
+  meta: { title: 'Test', keyIndex: 0, key: 'Eb', tempo: 120 },
   sections: [],
 }
 
 const containerRef = { current: document.createElement('div') }
 
 describe('SongList fitMode', () => {
+  it('shows the song title, key, and tempo at the top when isFit is true', () => {
+    const { getByRole, getByText } = render(
+      <SongList
+        song={song}
+        onPerformanceMode={vi.fn()}
+        lyricsOnly={false}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        chordsOpen={true}
+        onChordsToggle={vi.fn()}
+        onEdit={vi.fn()}
+        isFit={true}
+        containerRef={containerRef}
+      />
+    )
+    expect(getByRole('heading', { name: 'Test' })).not.toBeNull()
+    expect(getByText('Key: Eb')).not.toBeNull()
+    expect(getByText('BPM: 120')).not.toBeNull()
+  })
+
+  it('renders the title exactly once when isFit is true (no duplicate from the sticky header)', () => {
+    const { getAllByRole } = render(
+      <SongList
+        song={song}
+        onPerformanceMode={vi.fn()}
+        lyricsOnly={false}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        chordsOpen={true}
+        onChordsToggle={vi.fn()}
+        onEdit={vi.fn()}
+        isFit={true}
+        containerRef={containerRef}
+      />
+    )
+    expect(getAllByRole('heading', { name: 'Test' })).toHaveLength(1)
+  })
+
   it('renders a hidden shadow SongBody when isFit is true', () => {
     const { container } = render(
       <SongList
