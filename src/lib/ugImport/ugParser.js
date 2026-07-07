@@ -1,5 +1,6 @@
-import { isChord, parseContent } from '../parser/contentParser'
+import { parseContent } from '../parser/contentParser'
 import { detectKeyFromContent } from '../parser/chordUtils'
+import { isChordLine, mergeChordAboveLyric, toPureChordLine } from '../parser/chordLineUtils'
 
 // Matches [Verse 1], [Chorus], [Bridge], etc. AND ## Verse, ## Chorus etc.
 const SECTION_HEADER_RE = /^\[([^\]]+)\]$|^##\s+(.+)$/
@@ -27,63 +28,6 @@ function isFooterLine(trimmed) {
     /^Please,?\s+rate/i.test(trimmed) ||
     /^Create correction/i.test(trimmed) ||
     /^Report bad tab/i.test(trimmed)
-}
-
-// Expand tab characters to 4-space tab stops
-export function expandTabs(str) {
-  let result = ''
-  for (const ch of str) {
-    if (ch === '\t') {
-      result += ' '.repeat(4 - (result.length % 4))
-    } else {
-      result += ch
-    }
-  }
-  return result
-}
-
-// A chord line has ≥2 whitespace-delimited tokens, all passing isChord()
-function isChordLine(line) {
-  const expanded = expandTabs(line)
-  const tokens = expanded.trim().split(/\s+/).filter(Boolean)
-  return tokens.length >= 2 && tokens.every(t => isChord(t))
-}
-
-// Merge a chord-above-lyrics pair into an inline [Chord] line
-export function mergeChordAboveLyric(chordLine, lyricLine) {
-  const expandedChord = expandTabs(chordLine)
-  const expandedLyric = expandTabs(lyricLine)
-
-  const chords = []
-  const re = /\S+/g
-  let m
-  while ((m = re.exec(expandedChord)) !== null) {
-    chords.push({ name: m[0], pos: m.index })
-  }
-
-  if (chords.length === 0) return expandedLyric.trimEnd()
-
-  // Pad lyric so the rightmost chord position is reachable
-  const maxPos = chords[chords.length - 1].pos
-  let lyric = expandedLyric.length > maxPos
-    ? expandedLyric
-    : expandedLyric.padEnd(maxPos + 1)
-
-  // Insert right-to-left using original column positions directly.
-  // Right-to-left means each splice only shifts characters to its right,
-  // so positions to the left are unaffected — no offset adjustment needed.
-  for (let i = chords.length - 1; i >= 0; i--) {
-    const { name, pos } = chords[i]
-    lyric = lyric.slice(0, pos) + `[${name}]` + lyric.slice(pos)
-  }
-
-  return lyric.trimEnd()
-}
-
-// Convert a chord line with no following lyric to [G]    [D] format
-export function toPureChordLine(chordLine) {
-  const tokens = expandTabs(chordLine).trim().split(/\s+/).filter(Boolean)
-  return tokens.map(t => `[${t}]`).join('    ')
 }
 
 // Slug → Title Case, e.g. "blowin-in-the-wind" → "Blowin In The Wind"
