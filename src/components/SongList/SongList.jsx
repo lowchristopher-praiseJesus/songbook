@@ -55,58 +55,64 @@ export function SongList({
 
   return (
     <>
-      {/* Sticky recording bar — pinned to top of scroll container when recording is active */}
-      {!isFit && RECORDER_SUPPORTED && isActiveRecording && (
-        <div className="sticky top-0 z-20 flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-red-200 dark:border-red-800 shadow-sm">
-          {recording.status === 'recording' && (
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true" />
+      {/* Sticky top region — the active recording bar and the song header (title +
+          controls + chord strip) stay pinned while the song body scrolls beneath. */}
+      {!isFit && (
+        <div className="sticky top-0 z-10">
+          {RECORDER_SUPPORTED && isActiveRecording && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-red-200 dark:border-red-800 shadow-sm">
+              {recording.status === 'recording' && (
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true" />
+              )}
+              <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
+              {recording.channels != null && (
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
+                  {recording.channels >= 2 ? 'Stereo' : 'Mono'}
+                </span>
+              )}
+              <RecorderButton
+                status={recording.status}
+                onStart={recording.startRecording}
+                onStop={recording.stopRecording}
+                onPause={recording.pauseRecording}
+                onResume={recording.resumeRecording}
+              />
+            </div>
           )}
-          <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
-          {recording.channels != null && (
-            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
-              {recording.channels >= 2 ? 'Stereo' : 'Mono'}
-            </span>
-          )}
-          <RecorderButton
-            status={recording.status}
-            onStart={recording.startRecording}
-            onStop={recording.stopRecording}
-            onPause={recording.pauseRecording}
-            onResume={recording.resumeRecording}
-          />
+          {/* Full-width surface so scrolling lyrics don't show through beside the centered column */}
+          <div className="bg-white dark:bg-gray-900">
+            <div className="max-w-2xl mx-auto px-4 pt-6">
+              <div ref={headerRef}>
+                <SongHeader
+                  meta={song.meta}
+                  transpose={transpose}
+                  lyricsOnly={lyricsOnly}
+                  onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
+                  onExportPdf={() => exportLyricsPdf(song.meta, song.sections, annotationsVisible)}
+                  onEdit={onEdit}
+                  annotationsVisible={annotationsVisible}
+                  onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
+                  songId={song.id}
+                  recording={recording}
+                  onPanelOpen={() => setPanelOpen(true)}
+                />
+                {!lyricsOnly && !hideChordDiagram && (
+                  <ChordStrip
+                    sections={transpose.transposedSections}
+                    open={chordsOpen}
+                    onToggle={onChordsToggle}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       <div
-        className={`w-full relative px-4 py-6 ${isFit ? '' : 'max-w-2xl mx-auto'}`}
+        className={`w-full relative px-4 ${isFit ? 'py-6' : 'max-w-2xl mx-auto pb-6'}`}
         style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
       >
-        <div ref={headerRef}>
-          {!isFit && (
-            <>
-              <SongHeader
-                meta={song.meta}
-                transpose={transpose}
-                lyricsOnly={lyricsOnly}
-                onPerformanceMode={() => onPerformanceMode(transpose.transposedSections)}
-                onExportPdf={() => exportLyricsPdf(song.meta, song.sections, annotationsVisible)}
-                onEdit={onEdit}
-                annotationsVisible={annotationsVisible}
-                onAnnotationsToggle={() => setAnnotationsVisible(!annotationsVisible)}
-                songId={song.id}
-                recording={recording}
-                onPanelOpen={() => setPanelOpen(true)}
-              />
-              {!lyricsOnly && !hideChordDiagram && (
-                <ChordStrip
-                  sections={transpose.transposedSections}
-                  open={chordsOpen}
-                  onToggle={onChordsToggle}
-                />
-              )}
-            </>
-          )}
-        </div>
         <div ref={bodyRef}>
           <SongBody
             sections={transpose.transposedSections}
