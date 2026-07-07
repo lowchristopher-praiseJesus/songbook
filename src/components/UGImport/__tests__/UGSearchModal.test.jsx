@@ -144,3 +144,65 @@ describe('UGSearchModal preview wiring', () => {
     await waitFor(() => expect(mockAddSongs).toHaveBeenCalledWith([fakeSong], 'Ultimate Guitar', 'ug'))
   })
 })
+
+describe('UGSearchModal duplicate-during-preview-import', () => {
+  beforeEach(() => {
+    storeState.index = []
+    fetchAndParseSong.mockReset()
+    fetchAndParseSong.mockResolvedValue(fakeSong)
+    mockAddSongs.mockReset()
+    mockAddSongs.mockImplementation((songs, sourceLabel, sourceKey) => {
+      songs.forEach((s, i) => storeState.index.push({
+        id: `id-${storeState.index.length}-${i}`,
+        title: s.meta.title,
+        sourceLabel,
+        sourceKey,
+      }))
+    })
+    mockSelectSong.mockReset()
+    mockReplaceSong.mockReset()
+  })
+
+  async function searchToResults() {
+    renderIt()
+    fireEvent.change(screen.getByPlaceholderText(/Song title or artist/i), { target: { value: 'foo' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    await screen.findByText(/Foo/i)
+  }
+
+  it('shows duplicate prompt and closes preview when importing a duplicate from preview, then Keep Both adds the song', async () => {
+    // Seed the library with a duplicate entry matching fakeSong.meta.title
+    storeState.index.push({ id: 'existing-1', title: 'Foo', sourceLabel: 'Ultimate Guitar', sourceKey: 'ug' })
+
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /Preview Foo/i }))
+    await screen.findByTestId('songbody')
+
+    fireEvent.click(screen.getByRole('button', { name: /^Import$/i }))
+
+    // Preview closes (no songbody) and the duplicate prompt is visible
+    await waitFor(() => expect(screen.queryByTestId('songbody')).not.toBeInTheDocument())
+    expect(screen.getByText(/already exists/i)).toBeInTheDocument()
+
+    // Choosing "Keep Both" resolves the duplicate and completes the import via addSongs
+    fireEvent.click(screen.getByRole('button', { name: /^Keep Both$/i }))
+    await waitFor(() => expect(mockAddSongs).toHaveBeenCalledWith([fakeSong], 'Ultimate Guitar', 'ug'))
+    expect(mockReplaceSong).not.toHaveBeenCalled()
+  })
+
+  it('choosing Replace from the duplicate prompt replaces the existing song', async () => {
+    storeState.index.push({ id: 'existing-1', title: 'Foo', sourceLabel: 'Ultimate Guitar', sourceKey: 'ug' })
+
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /Preview Foo/i }))
+    await screen.findByTestId('songbody')
+    fireEvent.click(screen.getByRole('button', { name: /^Import$/i }))
+
+    await waitFor(() => expect(screen.queryByTestId('songbody')).not.toBeInTheDocument())
+    expect(screen.getByText(/already exists/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /^Replace$/i }))
+    await waitFor(() => expect(mockReplaceSong).toHaveBeenCalledWith('existing-1', fakeSong))
+    expect(mockAddSongs).not.toHaveBeenCalled()
+  })
+})

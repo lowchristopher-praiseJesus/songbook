@@ -72,6 +72,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   }
 
   function onDuplicateCheck(title) {
+    setPreviewResult(null)
     return new Promise(resolve => setDuplicateState({ title, resolve }))
   }
 

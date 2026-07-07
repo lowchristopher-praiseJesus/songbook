@@ -43,7 +43,9 @@ export function UGPreviewModal({ result, apiKey, isOpen, onClose, onImported }) 
   function handleImport() {
     if (importing || !song) return
     setImporting(true)
-    Promise.resolve(onImported(song, result)).finally(() => setImporting(false))
+    Promise.resolve(onImported(song, result))
+      .catch(err => { setError(errorMessage(err)); setStatus('error') })
+      .finally(() => setImporting(false))
   }
 
   if (!isOpen) return null
