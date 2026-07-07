@@ -21,7 +21,7 @@ export function detectChordFixes(rawText) {
     const next = lines[i + 1]
     const nextTrimmed = next?.trim() ?? ''
     const nextIsLyric = next !== undefined && nextTrimmed !== '' &&
-      !SECTION_RE.test(nextTrimmed) && !isChordLine(next)
+      !SECTION_RE.test(nextTrimmed) && !INLINE_CHORD_RE.test(nextTrimmed) && !isChordLine(next)
 
     if (nextIsLyric) {
       results.push({

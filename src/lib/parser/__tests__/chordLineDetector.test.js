@@ -64,6 +64,14 @@ describe('detectChordFixes', () => {
     expect(results[0]).toMatchObject({ type: 'merge', chordLineIndex: 0, lyricLineIndex: 1 })
     expect(results[1]).toMatchObject({ type: 'merge', chordLineIndex: 2, lyricLineIndex: 3 })
   })
+
+  it('treats a raw chord line followed by an already-bracketed pure chord line as standalone, not merge', () => {
+    const text = 'G    D\n[Em]    [C]'
+    const results = detectChordFixes(text)
+    expect(results).toHaveLength(1)
+    expect(results[0]).toMatchObject({ type: 'standalone', lineIndex: 0 })
+    expect(results[0].proposed).toBe('[G]    [D]')
+  })
 })
 
 describe('applyChordFixes', () => {
