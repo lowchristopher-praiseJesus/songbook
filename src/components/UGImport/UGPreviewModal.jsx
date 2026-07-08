@@ -52,8 +52,17 @@ export function UGPreviewModal({ result, apiKey, isOpen, onClose, onImported }) 
 
   const title = status === 'ready' && song?.meta?.title ? song.meta.title : 'Preview'
 
+  const footer = status === 'ready' && song ? (
+    <div className="flex justify-end gap-2">
+      <Button variant="secondary" onClick={onClose} disabled={importing}>Cancel</Button>
+      <Button variant="primary" onClick={handleImport} disabled={importing}>
+        {importing ? 'Importing…' : 'Import'}
+      </Button>
+    </div>
+  ) : null
+
   return (
-    <Modal isOpen={isOpen} title={title} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} title={title} onClose={onClose} size="xl" footer={footer}>
       {status === 'loading' && (
         <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
           <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
@@ -85,12 +94,6 @@ export function UGPreviewModal({ result, apiKey, isOpen, onClose, onImported }) 
           </div>
           <div className="mb-4">
             <SongBody sections={song.sections} fontSize={16} />
-          </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" onClick={onClose} disabled={importing}>Cancel</Button>
-            <Button variant="primary" onClick={handleImport} disabled={importing}>
-              {importing ? 'Importing…' : 'Import'}
-            </Button>
           </div>
         </>
       )}
