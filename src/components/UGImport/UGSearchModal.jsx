@@ -13,7 +13,7 @@ function errorMessage(err) {
   return 'Connection failed — check your internet and try again'
 }
 
-export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, onAddToast }) {
+export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, onAddToast, collectionId }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('idle')  // idle | searching | results | importing
   const [results, setResults] = useState([])
@@ -24,6 +24,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
   const addSongs = useLibraryStore(s => s.addSongs)
   const replaceSong = useLibraryStore(s => s.replaceSong)
   const selectSong = useLibraryStore(s => s.selectSong)
+  const addSongToCollection = useLibraryStore(s => s.addSongToCollection)
 
   const importingRef = useRef(false)
 
@@ -98,6 +99,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       const resolution = await onDuplicateCheck(song.meta.title)
       if (resolution === 'replace') {
         replaceSong(duplicate.id, song)
+        if (collectionId) addSongToCollection(duplicate.id, collectionId)
         selectSong(duplicate.id)
         onSongSelect()
         onImportSuccess?.()
@@ -125,12 +127,13 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     }
 
     const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
+    if (newEntry && collectionId) addSongToCollection(newEntry.id, collectionId)
     if (newEntry) selectSong(newEntry.id)
     onSongSelect()
     onImportSuccess?.()
     onAddToast(`Imported: ${song.meta.title}`, 'success')
     resetAndClose()
-  }, [addSongs, replaceSong, selectSong, onDuplicateCheck, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
+  }, [addSongs, replaceSong, selectSong, addSongToCollection, collectionId, onDuplicateCheck, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
 
   const handleSelect = useCallback(async (result) => {
     if (importingRef.current) return

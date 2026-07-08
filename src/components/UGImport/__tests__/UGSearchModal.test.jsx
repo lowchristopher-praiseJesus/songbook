@@ -13,6 +13,8 @@ const mockAddSongs = vi.fn((songs, sourceLabel, sourceKey) => {
   }))
 })
 storeState.addSongs = mockAddSongs
+const mockAddSongToCollection = vi.fn()
+storeState.addSongToCollection = mockAddSongToCollection
 
 vi.mock('../../../store/libraryStore', () => ({
   useLibraryStore: Object.assign((s) => s(storeState), { getState: () => storeState }),
@@ -42,7 +44,7 @@ vi.mock('../../SongList/SongBody', () => ({
 import { fetchAndParseSong } from '../../../lib/ugImport/fetchSong'
 import { UGSearchModal } from '../UGSearchModal'
 
-function renderIt() {
+function renderIt({ collectionId } = {}) {
   return render(
     <UGSearchModal
       isOpen
@@ -50,6 +52,7 @@ function renderIt() {
       onSongSelect={vi.fn()}
       onImportSuccess={vi.fn()}
       onAddToast={vi.fn()}
+      collectionId={collectionId}
     />,
   )
 }
@@ -203,6 +206,68 @@ describe('UGSearchModal duplicate-during-preview-import', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Replace$/i }))
     await waitFor(() => expect(mockReplaceSong).toHaveBeenCalledWith('existing-1', fakeSong))
+    expect(mockAddSongs).not.toHaveBeenCalled()
+  })
+})
+
+describe('UGSearchModal collectionId prop', () => {
+  beforeEach(() => {
+    storeState.index = []
+    fetchAndParseSong.mockReset()
+    fetchAndParseSong.mockResolvedValue(fakeSong)
+    mockAddSongs.mockReset()
+    mockAddSongs.mockImplementation((songs, sourceLabel, sourceKey) => {
+      songs.forEach((s, i) => storeState.index.push({
+        id: `id-${storeState.index.length}-${i}`,
+        title: s.meta.title,
+        sourceLabel,
+        sourceKey,
+      }))
+    })
+    mockSelectSong.mockReset()
+    mockReplaceSong.mockReset()
+    mockAddSongToCollection.mockReset()
+  })
+
+  async function searchToResults(opts) {
+    renderIt(opts)
+    fireEvent.change(screen.getByPlaceholderText(/Song title or artist/i), { target: { value: 'foo' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    await screen.findByText(/Foo/i)
+  }
+
+  it('adds the newly imported song to the collection when collectionId is set', async () => {
+    await searchToResults({ collectionId: 'c1' })
+    fireEvent.click(screen.getByRole('button', { name: /^Foo/i }))
+    await waitFor(() => expect(mockAddSongs).toHaveBeenCalled())
+    expect(mockAddSongToCollection).toHaveBeenCalledWith('id-0-0', 'c1')
+  })
+
+  it('does not call addSongToCollection when collectionId is not set', async () => {
+    await searchToResults()
+    fireEvent.click(screen.getByRole('button', { name: /^Foo/i }))
+    await waitFor(() => expect(mockAddSongs).toHaveBeenCalled())
+    expect(mockAddSongToCollection).not.toHaveBeenCalled()
+  })
+
+  it('adds the replaced song to the collection when resolving a duplicate with Replace', async () => {
+    storeState.index.push({ id: 'existing-1', title: 'Foo', sourceLabel: 'Ultimate Guitar', sourceKey: 'ug' })
+    await searchToResults({ collectionId: 'c1' })
+    fireEvent.click(screen.getByRole('button', { name: /^Foo/i }))
+    await screen.findByText(/already exists/i)
+    fireEvent.click(screen.getByRole('button', { name: /^Replace$/i }))
+    await waitFor(() => expect(mockReplaceSong).toHaveBeenCalledWith('existing-1', fakeSong))
+    expect(mockAddSongToCollection).toHaveBeenCalledWith('existing-1', 'c1')
+  })
+
+  it('does not call addSongToCollection when resolving a duplicate with Skip', async () => {
+    storeState.index.push({ id: 'existing-1', title: 'Foo', sourceLabel: 'Ultimate Guitar', sourceKey: 'ug' })
+    await searchToResults({ collectionId: 'c1' })
+    fireEvent.click(screen.getByRole('button', { name: /^Foo/i }))
+    await screen.findByText(/already exists/i)
+    fireEvent.click(screen.getByRole('button', { name: /^Skip$/i }))
+    await waitFor(() => expect(screen.queryByText(/already exists/i)).not.toBeInTheDocument())
+    expect(mockAddSongToCollection).not.toHaveBeenCalled()
     expect(mockAddSongs).not.toHaveBeenCalled()
   })
 })
