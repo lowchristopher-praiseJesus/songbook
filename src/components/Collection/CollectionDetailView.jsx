@@ -17,6 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
 import { AddSongsModal } from '../Sidebar/AddSongsModal'
+import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { ConflictPickerModal } from '../Share/ConflictPickerModal'
 import { checkShareVersion, fetchShare } from '../../lib/shareApi'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
@@ -99,6 +100,7 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   const [duplicating, setDuplicating] = useState(false)
   const [duplicateDraft, setDuplicateDraft] = useState('')
   const [addSongsOpen, setAddSongsOpen] = useState(false)
+  const [ugModalOpen, setUgModalOpen] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [linkExpired, setLinkExpired] = useState(false)
   const [pendingRefresh, setPendingRefresh] = useState(null)
@@ -317,6 +319,16 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
             Add Songs
           </button>
 
+          <button
+            type="button"
+            onClick={() => setUgModalOpen(true)}
+            className="w-full py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
+              text-gray-700 dark:text-gray-300 text-sm font-medium
+              hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Search UG
+          </button>
+
           {renaming ? null : (
             <button
               type="button"
@@ -488,6 +500,17 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
         collectionId={collectionId}
         collectionName={collectionName}
         onClose={() => setAddSongsOpen(false)}
+      />
+
+      <UGSearchModal
+        isOpen={ugModalOpen}
+        onClose={() => setUgModalOpen(false)}
+        collectionId={collectionId}
+        onAddToast={onAddToast}
+        onSongSelect={() => {
+          setSelectedCollectionId(null)
+          if (window.innerWidth < 768) onOpenSidebar?.()
+        }}
       />
 
       {pendingRefresh && (
