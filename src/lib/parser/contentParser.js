@@ -1,5 +1,5 @@
-const SECTION_RE = /^\{c:\s*(.+?)\s*\}$/
-const NOTE_RE = /^\{note:\s*(.*?)\s*\}$/
+const SECTION_RE = /^\{c:\s*(.+?)\s*\}\s*$/
+const NOTE_RE = /^\{note:\s*(.*?)\s*\}\s*$/
 
 export function parseContent(content) {
   if (!content) return []

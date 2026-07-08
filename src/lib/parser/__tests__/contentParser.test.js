@@ -41,6 +41,14 @@ describe('parseContent', () => {
     expect(sections[1].label).toBe('Chorus')
   })
 
+  it('recognizes a section header with trailing spaces after the closing brace', () => {
+    const content = '{c: Chorus}   \nLine one'
+    const sections = parseContent(content)
+    expect(sections).toHaveLength(1)
+    expect(sections[0].label).toBe('Chorus')
+    expect(sections[0].lines).toHaveLength(1)
+  })
+
   it('returns default section for content without section markers', () => {
     const sections = parseContent('Just some lyrics')
     expect(sections).toHaveLength(1)
