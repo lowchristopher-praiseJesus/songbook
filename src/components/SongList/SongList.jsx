@@ -55,10 +55,12 @@ export function SongList({
 
   return (
     <>
-      {/* Sticky top region — the active recording bar and the song header (title +
-          controls + chord strip) stay pinned while the song body scrolls beneath. */}
+      {/* Sticky top region — on desktop (md+), the active recording bar and the song
+          header (title + controls + chord strip) stay pinned while the song body
+          scrolls beneath. On mobile the header takes up too much of the viewport, so
+          it scrolls away with the rest of the content instead. */}
       {!isFit && (
-        <div className="sticky top-0 z-10">
+        <div className="md:sticky md:top-0 md:z-10">
           {RECORDER_SUPPORTED && isActiveRecording && (
             <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-red-200 dark:border-red-800 shadow-sm">
               {recording.status === 'recording' && (
