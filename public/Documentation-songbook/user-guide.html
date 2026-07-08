@@ -435,6 +435,23 @@
       margin: 24px auto;
     }
 
+    /* Screenshot filename label (for recapture reference) */
+    .screenshot-filename {
+      display: block;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: #fff;
+      background: #4338ca;
+      opacity: .85;
+      padding: 2px 8px;
+      border-radius: 20px;
+      width: fit-content;
+      margin: -14px auto 24px;
+      position: relative;
+      z-index: 1;
+    }
+
     /* Side-by-side screenshot pair */
     .screenshot-pair {
       display: flex;
@@ -734,7 +751,7 @@
         <div class="nav-items open" id="nav-import">
           <a class="nav-item" href="#import-sbp">Import Song Files</a>
           <a class="nav-item" href="#duplicates">Handling Duplicates</a>
-          <a class="nav-item" href="#ug-search">Search Ultimate Guitar</a>
+          <a class="nav-item" href="#ug-search">Search for Songs Online</a>
         </div>
       </div>
 
@@ -745,7 +762,9 @@
         <div class="nav-items open" id="nav-viewing">
           <a class="nav-item" href="#song-header">Song Header & Info</a>
           <a class="nav-item" href="#chord-strip">Chord Strip</a>
+          <a class="nav-item" href="#section-jump">Jumping to a Section</a>
           <a class="nav-item" href="#display-controls">Display Controls</a>
+          <a class="nav-item" href="#metronome">Metronome</a>
           <a class="nav-item" href="#lyrics-only">Lyrics Only & PDF</a>
         </div>
       </div>
@@ -760,8 +779,10 @@
           Editing a Song <span class="chevron">›</span>
         </button>
         <div class="nav-items open" id="nav-editing">
+          <a class="nav-item" href="#new-song">Creating a Blank Song</a>
           <a class="nav-item" href="#editor-metadata">Metadata Fields</a>
           <a class="nav-item" href="#editor-content">Content Syntax</a>
+          <a class="nav-item" href="#fix-tools">Fix Headers &amp; Fix Chords</a>
           <a class="nav-item" href="#annotations">Annotations</a>
           <a class="nav-item" href="#strum-patterns">Strum Patterns</a>
         </div>
@@ -775,6 +796,7 @@
           <a class="nav-item" href="#export-sbp">Download .sbp</a>
           <a class="nav-item" href="#export-share">Share via Link</a>
           <a class="nav-item" href="#export-pdf">Presentation PDF</a>
+          <a class="nav-item" href="#export-pptx">Presentation PPTX</a>
           <a class="nav-item" href="#export-print-pdf">Print PDF</a>
         </div>
       </div>
@@ -787,6 +809,7 @@
         <div class="nav-items open" id="nav-settings">
           <a class="nav-item" href="#settings">General</a>
           <a class="nav-item" href="#settings-display">Display Tab</a>
+          <a class="nav-item" href="#settings-license">Conductor Broadcast License</a>
         </div>
       </div>
 
@@ -865,6 +888,7 @@
         <p>Everything lives in your browser; there is no account to create and no data is sent to any server.</p>
 
         <img src="images/SS-01.png" alt="Full app interface overview — top navigation bar, sidebar with a collection open and a song selected, Import/Export/Search UG buttons at the bottom" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-01.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Interface Overview</h3>
@@ -919,11 +943,12 @@
           <h3 class="subsection-title">Search</h3>
           <p>Type in the search bar at the top of the sidebar to filter songs by <strong>title</strong> or <strong>artist</strong>. The list updates instantly as you type. Clear the search field to return to the full library view.</p>
           <img src="images/SS-02.png" alt="Sidebar search — 'Jesus' typed in the search bar with two matching songs filtered: Jesus Paid It All and Yeshua" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-02.png</div>
         </div>
 
         <div class="subsection" id="view-modes">
           <h3 class="subsection-title">View Modes</h3>
-          <p>When no search is active, a toggle beneath the search bar lets you switch between two views:</p>
+          <p>When no search is active, a toggle beneath the search bar lets you switch between three views:</p>
           <div class="option-grid">
             <div class="option-card">
               <div class="option-card-icon">📁</div>
@@ -935,20 +960,47 @@
               <div class="option-card-title">All Songs</div>
               <div class="option-card-desc">Every song in the library in one flat, alphabetical list.</div>
             </div>
+            <div class="option-card">
+              <div class="option-card-icon">💿</div>
+              <div class="option-card-title">Albums</div>
+              <div class="option-card-desc">Your published recording albums. See <a href="#albums-overview" style="color:var(--accent)">Albums</a>.</div>
+            </div>
           </div>
+          <p>In the <strong>All Songs</strong> view, a <span class="btn-replica">+ New Song</span> button appears above the list, letting you create a blank song from scratch instead of importing a file — see <a href="#new-song" style="color:var(--accent)">Creating a Blank Song</a>.</p>
         </div>
 
         <div class="subsection" id="collections">
           <h3 class="subsection-title">Collections</h3>
           <p>Collections are named groups of songs — useful for organising set lists by event, date, or genre.</p>
+
+          <p><strong>The collections list</strong> shows each collection's name and a song-count badge.</p>
           <ul class="feature-list">
             <li><strong>Create a collection</strong> — Click <span class="btn-replica">+ New Collection</span> in the Collections view, type a name, and press <span class="key">Enter</span> (or click away to confirm). Press <span class="key">Esc</span> to cancel.</li>
-            <li><strong>Add songs to a collection</strong> — Hover over a collection header and click the <strong>Add Songs</strong> button that appears. A modal will let you select songs from your library.</li>
-            <li><strong>Expand / collapse</strong> — Click a collection header to toggle its song list open or closed.</li>
-            <li><strong>Reorder songs</strong> — Expand a collection, then drag the <strong>⠿</strong> handle next to any song up or down to change its position. On mobile, press and hold the handle for a moment before dragging.</li>
-            <li><strong>Duplicate a collection</strong> — Hover over a collection header and click the <strong>⧉</strong> button. An inline name field appears, pre-filled with <em>Copy of {collection name}</em>. Edit the name if you like, then press <span class="key">Enter</span> to confirm or <span class="key">Esc</span> to cancel. The new collection contains the same songs and is inserted directly below the original. You can then add, remove, or reorder songs in the copy without affecting the original.</li>
+            <li><strong>Open a collection</strong> — Tap it in the list to open its detail view.</li>
           </ul>
-          <img src="images/SS-03.png" alt="Collections view — two collections: JUDAH 25F collapsed (12 songs) and JUDAH LG 1 expanded showing its songs, with the New Collection button at the top" class="screenshot-img" />
+
+          <p style="margin-top:16px"><strong>The collection detail view</strong> opens when you tap a collection. It shows the collection name, song count, a <strong>← Back</strong> link to return to the list, a column of action buttons, and the song list itself.</p>
+          <ul class="feature-list">
+            <li><strong>Add Songs</strong> — Opens a modal to select songs from your library to add to this collection.</li>
+            <li><strong>Search UG</strong> — Opens the <a href="#ug-search" style="color:var(--accent)">Search for Songs</a> modal and imports the result straight into this collection.</li>
+            <li><strong>Rename</strong> — Edits the collection name inline. Confirm with <strong>✓</strong> or cancel with <strong>✕</strong> (also <span class="key">Enter</span> / <span class="key">Esc</span>).</li>
+            <li><strong>Duplicate</strong> — Type a name for the copy (pre-filled with <em>Copy of {collection name}</em>), then press <span class="key">Enter</span> to confirm or <span class="key">Esc</span> to cancel. The copy contains the same songs and appears immediately adjacent to the original in your collections list — add, remove, or reorder songs in it without affecting the original.</li>
+            <li><strong>Check for Updates</strong> — Only shown for collections that were imported from a Share Link. Checks the original link for changes and applies them automatically, or opens a conflict picker if your local edits would otherwise be overwritten. Shows "Share link expired" if the source link is no longer valid.</li>
+            <li><strong>Delete Collection</strong> — Asks for confirmation, then removes the collection. The songs themselves are <em>not</em> deleted — they remain in your library.</li>
+          </ul>
+          <p style="margin-top:12px"><strong>The song list</strong> below the actions is numbered and reorderable: drag the <strong>⠿</strong> handle to change a song's position (on mobile, press and hold briefly before dragging). Tap a song to open it — this closes the detail view. Tap <strong>✕</strong> next to a song to remove it from the collection; the song stays in your library.</p>
+          <div class="screenshot-pair">
+            <div class="screenshot-pair-item">
+              <img src="images/SS-03-01.png" alt="Collections list — Daniel Choy, Ultimate Guitar, Campus Family Worship Night 26 June (selected), and Easter collections" />
+              <div class="screenshot-filename">images/SS-03-01.png</div>
+              <div class="screenshot-pair-caption">1 — Tap a collection to open it</div>
+            </div>
+            <div class="screenshot-pair-item">
+              <img src="images/SS-03.png" alt="Collection detail view — 'Campus Family Worship Night 26 June 2026' with Add Songs, Search UG, Rename, Duplicate, Check for Updates, and Delete Collection buttons, plus the 10-song list below" />
+              <div class="screenshot-filename">images/SS-03.png</div>
+              <div class="screenshot-pair-caption">2 — Collection detail view</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -972,6 +1024,7 @@
             <li><strong>Drag & Drop</strong> — Drag files from your computer and drop them anywhere on the main content area. The area highlights in blue when a drag is detected.</li>
           </ul>
           <img src="images/SS-04.png" alt="Empty state — 'No songs yet. Drag a file here to get started' with an Import File button" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-04.png</div>
         </div>
 
         <div class="subsection" id="duplicates">
@@ -983,52 +1036,60 @@
             <li><strong>Skip</strong> — Ignores the duplicate and does not import it.</li>
           </ul>
           <img src="images/SS-05.png" alt="Duplicate Song dialog — 'A song titled Emmanuel already exists. What would you like to do?' with Replace, Keep Both, and Skip buttons" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-05.png</div>
         </div>
 
         <div class="subsection" id="ug-search">
-          <h3 class="subsection-title">Search Ultimate Guitar</h3>
-          <p>SongSheet can search <strong>Ultimate Guitar</strong> and import chord charts directly from the web. This feature requires a free <strong>Firecrawl API key</strong>.</p>
+          <h3 class="subsection-title">Search for Songs Online</h3>
+          <p>SongSheet can search the web and import chord charts directly, without you needing to find and download a file yourself. Click <span class="btn-replica">Search UG</span> in the sidebar to open the <strong>Search Songs</strong> modal.</p>
+          <p>Results are pulled from two sources at once, each labelled with a small badge:</p>
+          <ul class="feature-list">
+            <li><strong><span style="display:inline-block;padding:1px 6px;border-radius:10px;background:var(--accent-light);color:var(--accent);font-size:.72rem;font-weight:600;">UG</span> Ultimate Guitar</strong> — requires a free <strong>Firecrawl API key</strong> (see below).</li>
+            <li><strong><span style="display:inline-block;padding:1px 6px;border-radius:10px;background:#d1fae5;color:#065f46;font-size:.72rem;font-weight:600;">DC</span> Daniel Choy</strong> — chord charts from Daniel Choy's blog. No API key required; the artist name is shown under the title for these results.</li>
+          </ul>
           <div class="steps">
             <div class="step">
               <div class="step-body">
-                <strong>Add your Firecrawl API key</strong>
-                <span>Go to ⚙️ Settings → Firecrawl API Key. Paste your key and it will be saved locally. <a href="firecrawl-api-key-guide.html" target="_blank" style="color:var(--accent)">How to get a Firecrawl API key →</a></span>
+                <strong>(Optional) Add your Firecrawl API key</strong>
+                <span>Go to ⚙️ Settings → Firecrawl API Key to also search Ultimate Guitar. Paste your key and it will be saved locally. <a href="firecrawl-api-key-guide.html" target="_blank" style="color:var(--accent)">How to get a Firecrawl API key →</a></span>
               </div>
             </div>
             <div class="step">
               <div class="step-body">
                 <strong>Click "Search UG" in the sidebar</strong>
-                <span>The Search Ultimate Guitar modal opens.</span>
+                <span>The Search Songs modal opens.</span>
               </div>
             </div>
             <div class="step">
               <div class="step-body">
                 <strong>Enter a song title or artist name</strong>
-                <span>Results from Ultimate Guitar appear below.</span>
+                <span>Matching results from both sources appear below, tagged with their <strong>UG</strong> or <strong>DC</strong> badge.</span>
               </div>
             </div>
             <div class="step">
               <div class="step-body">
                 <strong>Click a result to import it</strong>
-                <span>SongSheet downloads and parses the chord chart automatically, then opens it.</span>
+                <span>SongSheet downloads and parses the chord chart automatically, then opens it. You can also click the preview (👁) icon on a result to check it before importing.</span>
               </div>
             </div>
           </div>
           <div class="screenshot-pair">
             <div class="screenshot-pair-item">
-              <img src="images/SS-06-1.png" alt="Search Ultimate Guitar modal — 'Silent night' typed in the search field with the Search button" />
+              <img src="images/SS-06-1.png" alt="Search Songs modal — 'Silent night' typed in the search field with the Search button" />
+              <div class="screenshot-filename">images/SS-06-1.png</div>
               <div class="screenshot-pair-caption">1 — Enter a song title</div>
             </div>
             <div class="screenshot-pair-item">
-              <img src="images/SS-06-2.png" alt="Search results — multiple versions of Silent Night chord charts listed from Ultimate Guitar" />
+              <img src="images/SS-06-2.png" alt="Search results — multiple versions of Silent Night chord charts listed, tagged with UG and DC badges" />
+              <div class="screenshot-filename">images/SS-06-2.png</div>
               <div class="screenshot-pair-caption">2 — Select from results</div>
             </div>
           </div>
-          <div class="callout warn">
-            <span class="callout-icon">⚠️</span>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
             <div class="callout-body">
-              <strong>No API key?</strong>
-              The Search UG button will show a prompt asking you to add your key in Settings. The key is stored only in your browser — it is never sent to any SongSheet server.
+              <strong>No Firecrawl API key?</strong>
+              You'll still get results from Daniel Choy — you just won't see Ultimate Guitar results until you add a key in Settings. The key is stored only in your browser — it is never sent to any SongSheet server.
             </div>
           </div>
         </div>
@@ -1043,6 +1104,7 @@
         <p>Click any song in the sidebar to open it in the main content area.</p>
 
         <img src="images/SS-07.png" alt="Full song view — 'Thou Art A Shield For Me' showing the song header with key, capo, info and edit controls, chord strip with Am/G/F diagrams, and lyrics with inline chords" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-07.png</div>
 
         <div class="subsection" id="song-header">
           <h3 class="subsection-title">Song Header & Info Panel</h3>
@@ -1052,6 +1114,7 @@
             <li>Click <strong>Info ▲</strong> to collapse it again.</li>
           </ul>
           <img src="images/SS-08.png" alt="Song header with Info panel expanded — showing Key: C and Capo: 3 beneath the title and controls" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-08.png</div>
         </div>
 
         <div class="subsection" id="chord-strip">
@@ -1063,18 +1126,43 @@
             <li>The chord strip is hidden in Lyrics Only mode.</li>
           </ul>
           <img src="images/SS-09.png" alt="Chord strip open — Am, G, and F chord diagrams displayed below the song header with the Chords toggle button" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-09.png</div>
+        </div>
+
+        <div class="subsection" id="section-jump">
+          <h3 class="subsection-title">Jumping to a Section</h3>
+          <p>For songs with <code>{c: Section Name}</code> headers, SongSheet gives you a way to jump straight to any section instead of scrolling.</p>
+          <ul class="feature-list">
+            <li><strong>Desktop</strong> — A slim <strong>SECTIONS</strong> tab is fixed to the left edge of the song view. Click it to slide open a panel listing every section in the song; click a section name to scroll to it. The active section is highlighted.</li>
+            <li><strong>Mobile</strong> — A horizontally scrollable strip of section pills appears below the song header. Tap a pill to jump to that section; the strip auto-scrolls to keep the active pill in view.</li>
+          </ul>
+          <p>Only sections with a name (i.e. an actual <code>{c:}</code> header) appear in the list.</p>
         </div>
 
         <div class="subsection" id="display-controls">
           <h3 class="subsection-title">Font Size & Fit to Screen</h3>
           <p>A set of floating buttons appears in the <strong>bottom-right corner</strong> whenever a song is open.</p>
           <ul class="feature-list">
-            <li><strong>⤢ (Fit to Screen)</strong> — Automatically scales the font size so the entire song fits within the visible screen height without scrolling. When active, the button turns indigo. Tap again to return to manual font sizing.</li>
+            <li><strong>⛶ (Fit to Screen)</strong> — Automatically scales the font size so the entire song fits within the visible screen height without scrolling. When active, the button turns indigo and the icon flips to show the screen is filled. Tap again to return to manual font sizing.</li>
             <li><strong>+</strong> — Increase font size (up to 28 px). Disabled while Fit to Screen is on.</li>
             <li><strong>−</strong> — Decrease font size (down to 12 px). Disabled while Fit to Screen is on.</li>
+            <li><strong>▶ (Auto-Scroll)</strong> — Starts scrolling the song from top to bottom automatically. See <a href="#auto-scroll" style="color:var(--accent)">Auto-Scroll</a> for speed controls and full details.</li>
           </ul>
           <p>Font size preference is saved across sessions.</p>
-          <img src="images/SS-10.png" alt="Floating display controls — arrow pointing to the bottom-right cluster of ⤢ fit, + and − font size, and ▶ auto-scroll buttons" class="screenshot-img" />
+          <img src="images/SS-10.png" alt="Floating display controls — arrow pointing to the bottom-right cluster of ⛶ fit, + and − font size, and ▶ auto-scroll buttons" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-10.png</div>
+        </div>
+
+        <div class="subsection" id="metronome">
+          <h3 class="subsection-title">Metronome</h3>
+          <p>A metronome button sits in the same floating bottom-right cluster as the font size and auto-scroll controls. It's a <strong>visual click only</strong> — there is no audio — so it won't interfere with a live mix or recording.</p>
+          <ul class="feature-list">
+            <li>Tap the metronome icon to turn it on. This also opens the BPM adjuster, with <strong>+</strong> and <strong>−</strong> buttons (steps of 5, range 30–300 BPM, default 120).</li>
+            <li>On every beat, the app's top header bar flashes briefly — a clear visual cue without any sound.</li>
+            <li>Tap <span class="btn-replica">Done</span> to collapse the adjuster back to a compact BPM readout button. Tap the readout at any time to reopen the adjuster.</li>
+            <li>Tap the metronome icon again to turn it off.</li>
+          </ul>
+          <p>Your BPM and on/off state are remembered the next time you open the app.</p>
         </div>
 
         <div class="subsection" id="lyrics-only">
@@ -1103,6 +1191,7 @@
           <h3 class="subsection-title">Transpose</h3>
           <p>A <strong>key dropdown</strong> in the song header lists all 12 major (or minor) keys. Selecting a different key instantly transposes every chord in the song. The original key stored in the file is never modified — transpose is non-destructive.</p>
           <img src="images/SS-11.png" alt="Transpose key dropdown open — all 12 major keys listed with C ticked as the current key" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-11.png</div>
         </div>
 
         <div class="subsection">
@@ -1124,17 +1213,37 @@
         <p>Auto-scroll slowly and smoothly scrolls the song content from top to bottom at a speed you control — useful when performing and you need both hands free.</p>
         <p>Auto-scroll is available in <strong>both the standard song view and Performance Mode</strong>.</p>
 
-        <img src="images/SS-12.png" alt="Auto-scroll active — ⏹ stop button highlighted in indigo, speed display showing 1:30, with + and − speed controls, arrow pointing to the button cluster" class="screenshot-img" />
+        <div class="screenshot-pair">
+          <div class="screenshot-pair-item">
+            <img src="images/SS-12-1.png" alt="Auto-scroll running — floating toolbar showing the fit-to-screen icon, font size + and −, the 1:30 duration pill, and the blue ⏹ stop button" />
+            <div class="screenshot-filename">images/SS-12-1.png</div>
+            <div class="screenshot-pair-caption">1 — Auto-scroll running; tap the duration pill to adjust speed</div>
+          </div>
+          <div class="screenshot-pair-item">
+            <img src="images/SS-12.png" alt="Speed adjuster open — + button, 1:30 duration, − button, and a Done button to collapse it" />
+            <div class="screenshot-filename">images/SS-12.png</div>
+            <div class="screenshot-pair-caption">2 — Speed adjuster</div>
+          </div>
+        </div>
 
         <div class="subsection">
           <h3 class="subsection-title">Controls</h3>
           <ul class="feature-list">
-            <li><strong>▶ Start</strong> — Tap the play button (bottom right) to begin scrolling.</li>
-            <li><strong>⏹ Stop</strong> — Tap again to stop. The button turns indigo while scrolling is active.</li>
-            <li><strong>Speed +</strong> — Increases the target scroll duration by 5 seconds (slower scroll).</li>
-            <li><strong>Speed −</strong> — Decreases the target scroll duration by 5 seconds (faster scroll). Minimum is <code>0:30</code>.</li>
-            <li><strong>Duration display</strong> — Shows the current target scroll time (e.g. <code>1:30</code>) between the speed buttons. Maximum is <code>10:00</code>.</li>
+            <li><strong>▶ Start</strong> — Tap the play button in the floating toolbar (bottom right) to begin scrolling. This automatically opens the speed adjuster shown above.</li>
+            <li><strong>Speed +</strong> — In the adjuster, increases the target scroll duration by 5 seconds (slower scroll).</li>
+            <li><strong>Speed −</strong> — In the adjuster, decreases the target scroll duration by 5 seconds (faster scroll). Minimum is <code>0:30</code>.</li>
+            <li><strong>Done</strong> — Collapses the adjuster back down to the compact toolbar, showing just the duration pill (e.g. <code>1:30</code>) and the stop button. Tap the duration pill at any time to reopen the adjuster.</li>
+            <li><strong>⏹ Stop</strong> — Tap the same button (now showing a stop icon, highlighted indigo) to stop scrolling.</li>
           </ul>
+          <p>Maximum scroll duration is <code>10:00</code>.</p>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body">
+            <strong>Reposition the toolbar</strong>
+            Drag the small grip at the top of the floating toolbar to move it up or down along the screen edge — handy if it's covering part of the song you need to see.
+          </div>
         </div>
 
         <div class="callout tip">
@@ -1178,6 +1287,7 @@
         <p style="margin-top:14px">After navigating, a brief <strong>swipe hint</strong> appears at the bottom of the screen showing the direction and the title of the song you've moved to.</p>
 
         <img src="images/SS-13.png" alt="Swipe navigation hint — '← Yeshua' pill toast appearing at the bottom of the screen after swiping to the previous song" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-13.png</div>
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
@@ -1210,6 +1320,7 @@
         </div>
 
         <img src="images/SS-14.png" alt="Performance Mode — 'Yeshua' by Jesus Image in full-screen view with large text, INTRO and VERSE section headers, sticky title bar with Exit button, and auto-scroll button bottom right" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-14.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Keyboard Navigation in Performance Mode</h3>
@@ -1247,6 +1358,13 @@
         <p>Click the <span class="btn-replica">Edit</span> button in the song header to open the built-in editor. The main content area switches to an edit view with metadata fields at the top and a raw-text content editor below.</p>
 
         <img src="images/SS-15.png" alt="Song editor open — 'Yeshua' with Title, Artist, Key, Capo, Tempo and Time Sig fields, and the raw content textarea showing {c:} section headers and [Chord] inline syntax" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-15.png</div>
+
+        <div class="subsection" id="new-song">
+          <h3 class="subsection-title">Creating a Blank Song</h3>
+          <p>You don't need a file to start a new song — switch the sidebar to the <strong>All Songs</strong> view and click <span class="btn-replica">+ New Song</span> above the list. This opens the same editor described below, but blank: the key defaults to C, capo to 0, and Title is required before you can save (an inline error appears if you try to save with no title).</p>
+          <p>Click <span class="btn-replica">Save</span> to add it to your library, or <span class="btn-replica">Cancel</span> to discard it — you'll be asked to confirm if you've already typed anything.</p>
+        </div>
 
         <div class="subsection" id="editor-metadata">
           <h3 class="subsection-title">Metadata Fields</h3>
@@ -1256,9 +1374,16 @@
             <li><strong>Key</strong> — chromatic key index used for transposing</li>
             <li><strong>Capo</strong> — default capo fret</li>
             <li><strong>Tempo (BPM)</strong> and <strong>Time Signature</strong></li>
-            <li><strong>CCLI number</strong> and <strong>Copyright</strong></li>
             <li><strong>Song Note</strong> — a free-text annotation shown below the title/artist (e.g. "sing in a happy mood" or "xx and yy to sing this"). See <a href="#annotations" style="color:var(--accent)">Annotations</a> for more detail.</li>
           </ul>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Changing the key transposes chords too</strong>
+              If the song's content already has <code>[Chord]</code> tokens and you change the <strong>Key</strong> field, a confirmation dialog asks whether to <strong>Transpose Chords</strong> (rewrite every chord in the text to match the new key) or <strong>Keep As-Is</strong> (only update the stored key label).
+            </div>
+          </div>
+          <p><em>CCLI number and copyright are read-only and shown in the song's <a href="#song-header" style="color:var(--accent)">Info panel</a> when present in the imported file — they aren't editable fields in the editor.</em></p>
         </div>
 
         <div class="subsection" id="editor-content">
@@ -1289,12 +1414,32 @@
             <li><code>[Chord]{strum: pattern}</code> — Appends a strum pattern to a chord label (e.g. <code>E///</code>). Place immediately after the closing <code>]</code> with no space. See <a href="#strum-patterns" style="color:var(--accent)">Strum Patterns</a> for full details.</li>
             <li><code>{note: text}</code> — Attaches an annotation to the element (section header or lyric line) immediately <em>above</em> it. Must be on its own line. See <a href="#annotations" style="color:var(--accent)">Annotations</a> for full details.</li>
           </ul>
+          <p style="margin-top:12px">A one-line legend above the content textarea reminds you of the syntax: <code>{c: Section} for headers · [Chord] before a syllable · {note: text} for annotations · [Chord]{strum: ///} for strum patterns</code>.</p>
+        </div>
+
+        <div class="subsection" id="fix-tools">
+          <h3 class="subsection-title">Fix Headers &amp; Fix Chords</h3>
+          <p>If you paste in a chord chart copied from another site or app, it likely won't already use SongSheet's syntax. Two buttons above the content textarea can convert it automatically.</p>
+          <div class="option-grid">
+            <div class="option-card">
+              <div class="option-card-icon">🏷️</div>
+              <div class="option-card-title">Fix Headers</div>
+              <div class="option-card-desc">Scans the text for lines that look like section markers but aren't written as <code>{c: ...}</code> — e.g. <code>[Verse]</code>, <code>## Chorus</code>, a bare line reading <code>Bridge:</code>, or even likely typos like <em>Corus</em>. Opens a checklist so you can pick which to convert.</div>
+            </div>
+            <div class="option-card">
+              <div class="option-card-icon">🎸</div>
+              <div class="option-card-title">Fix Chords</div>
+              <div class="option-card-desc">Scans for the common "chords on their own line above the lyrics" format and proposes merging each pair into inline <code>[Chord]</code> syntax, and re-spaces standalone chord-only lines. Opens the same kind of checklist.</div>
+            </div>
+          </div>
+          <p>In both cases, click <span class="btn-replica">Apply</span> to convert only the items you've ticked. If nothing is detected, a toast confirms there's nothing to fix.</p>
         </div>
 
         <div class="subsection">
           <h3 class="subsection-title">Saving and Cancelling</h3>
           <ul class="feature-list">
             <li><span class="btn-replica">Save</span> — Commits your changes and returns to the song view.</li>
+            <li><span class="btn-replica">Save As</span> — Saves your edits as a brand-new song, leaving the original untouched, then switches to the new copy.</li>
             <li><span class="btn-replica">Cancel</span> — Discards changes. If you've made edits, a confirmation prompt will appear before discarding.</li>
           </ul>
         </div>
@@ -1342,6 +1487,7 @@
           </div>
 
           <img src="images/SS-28.png" alt="Annotations visible in the song view — a song-level note below the title, a section-level note after the CHORUS header, and a line-level note after a lyric line, all rendered in grey italic" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-28.png</div>
 
           <p style="margin-top:18px"><strong>Showing and hiding annotations:</strong></p>
           <ul class="feature-list">
@@ -1351,6 +1497,7 @@
           </ul>
 
           <img src="images/SS-29.png" alt="The annotation toggle button (💬) in the song header bar, highlighted in indigo to show annotations are visible" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-29.png</div>
 
           <div class="callout tip">
             <span class="callout-icon">💡</span>
@@ -1369,6 +1516,7 @@
           </ul>
 
           <img src="images/SS-30.png" alt="The Annotations row in Settings → Display, showing font, size, and colour customisation controls" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-30.png</div>
 
           <p style="margin-top:18px"><strong>Export behaviour:</strong></p>
           <ul class="feature-list">
@@ -1435,12 +1583,13 @@
           <div class="step">
             <div class="step-body">
               <strong>Click "Export" (with a count)</strong>
-              <span>A choice modal appears with four export options.</span>
+              <span>A choice modal appears with five export options.</span>
             </div>
           </div>
         </div>
 
         <img src="images/SS-16.png" alt="Export mode — 3 songs selected (Emmanuel, For You Alone, Give Me This Mountain) highlighted in indigo, with '3 selected · Export · Cancel' bar at the bottom" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-16.png</div>
 
         <div class="subsection" id="export-sbp">
           <h3 class="subsection-title">Download .sbp</h3>
@@ -1458,6 +1607,7 @@
           </ul>
 
           <img src="images/SS-17.png" alt="Share via Link modal — 3 songs will be shared, collection name field, link expires in 7 days dropdown, Share lyrics only toggle, and Create link button" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-17.png</div>
 
           <p>Once the link is created, you have two ways to share it with your congregation:</p>
           <ul class="feature-list">
@@ -1476,6 +1626,18 @@
               To export just one song as a simple lyrics PDF, use the <strong>↓ PDF</strong> button in the song header while Lyrics Only mode is active. See <a href="#lyrics-only" style="color:var(--accent)">Lyrics Only & PDF</a>.
             </div>
           </div>
+        </div>
+
+        <div class="subsection" id="export-pptx">
+          <h3 class="subsection-title">Presentation PPTX</h3>
+          <p>Generates an editable PowerPoint (<code>.pptx</code>) slide deck of the selected songs — the same visual purpose as the Presentation PDF, but as a file you can keep tweaking in PowerPoint, Keynote, or Google Slides.</p>
+          <ul class="feature-list">
+            <li><strong>Background</strong> — Pick from a grid of built-in templates, or upload your own image.</li>
+            <li><strong>Song title position</strong> — Top, Bottom Left, or Bottom Right.</li>
+            <li><strong>Font size</strong> — 12–48 pt (default 24). This is only a starting point — PowerPoint and Keynote auto-fit text to each slide.</li>
+            <li><strong>Show chords</strong> — Off by default (lyrics-only slides); tick it to include chords.</li>
+          </ul>
+          <p>Annotations are included or excluded to match your current annotation visibility setting. Export is disabled until the background image has finished loading.</p>
         </div>
 
         <div class="subsection" id="export-print-pdf">
@@ -1540,6 +1702,7 @@
         </div>
 
         <img src="images/SS-18.png" alt="Import confirmation modal — 'Shared Songbook' listing Emmanuel, For You Alone, and Give Me This Mountain, with a lyrics-only notice and 'Will be added to collection: Worship Night', Cancel and Import All buttons" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-18.png</div>
 
         <div class="callout warn">
           <span class="callout-icon">⚠️</span>
@@ -1559,16 +1722,18 @@
         <p>Open Settings by clicking the <strong>⚙️</strong> button in the top-right corner of the app. Press <span class="key">Esc</span> to close. Settings has two tabs: <strong>General</strong> and <strong>Display</strong>.</p>
 
         <img src="images/SS-19.png" alt="Settings panel — General tab showing Light theme selected, Lyrics only toggle off, Firecrawl API key field with masked key, Library showing 32 songs with storage bar, and Clear All Data button" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-19.png</div>
 
         <div class="subsection" id="settings-display">
           <h3 class="subsection-title">Display Tab</h3>
-          <p>Switch to the <strong>Display</strong> tab to customise how song content is rendered. Each display element — <strong>Lyrics</strong>, <strong>Chords</strong>, <strong>Sections</strong>, and <strong>Annotations</strong> — has its own collapsible row where you can adjust font, size, and colour independently.</p>
+          <p>Switch to the <strong>Display</strong> tab to customise how song content is rendered. Each display element — <strong>Song Title</strong>, <strong>Artist</strong>, <strong>Lyrics</strong>, <strong>Chords</strong>, <strong>Sections</strong>, and <strong>Annotations</strong> — has its own collapsible row where you can adjust font, size, and colour independently.</p>
 
-          <img src="images/SS-31.png" alt="Settings Display tab — four collapsible rows for Lyrics, Chords, Sections, and Annotations, each showing font, size, and colour controls" class="screenshot-img" />
+          <img src="images/SS-31.png" alt="Settings Display tab — six collapsible rows for Song Title, Artist, Lyrics, Chords, Sections, and Annotations, each showing font, size, and colour controls" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-31.png</div>
 
           <ul class="feature-list">
             <li><strong>Font</strong> — Choose from System Default, Georgia, Times New Roman, Helvetica Neue, Arial, Courier New, Menlo, or Monaco. Each element can use a different font.</li>
-            <li><strong>Size</strong> — Lyrics and Chords share a base font size (the same +/- control in the song viewer). Chords use a <em>size offset</em> relative to that base (e.g. −3 means three pixels smaller). Sections and Annotations have their own absolute size in pixels (8–32 px).</li>
+            <li><strong>Size</strong> — Lyrics and Chords share a base font size (the same +/- control in the song viewer). Chords use a <em>size offset</em> relative to that base (e.g. −3 means three pixels smaller). Song Title, Artist, Sections, and Annotations each have their own absolute size in pixels (Title default 24px, Artist default 16px, Sections and Annotations 8–32 px).</li>
             <li><strong>Colour</strong> — Pick from six preset colours or click the rainbow swatch to open your system's colour picker and choose any custom colour. The selected colour is applied in both light and dark modes (automatically lightened for dark mode readability).</li>
           </ul>
 
@@ -1592,9 +1757,33 @@
         </div>
 
         <div class="subsection">
+          <h3 class="subsection-title">Hide Chord Diagrams</h3>
+          <p>A second toggle, separate from Lyrics Only. When on, it hides only the chord-strip <strong>fretboard diagrams</strong> — inline <code>[Chord]</code> names above the lyrics still show. Use this if your team wants chord names but not diagrams.</p>
+        </div>
+
+        <div class="subsection">
           <h3 class="subsection-title">Firecrawl API Key</h3>
-          <p>Required to use the <strong>Search Ultimate Guitar</strong> feature. Paste your key here; it's stored locally in your browser and never sent to any SongSheet server. Use the <strong>Show / Hide</strong> button to reveal or mask the key.</p>
+          <p>Required to see Ultimate Guitar results in the <a href="#ug-search" style="color:var(--accent)">Search for Songs</a> feature. Paste your key here; it's stored locally in your browser and never sent to any SongSheet server. Use the <strong>Show / Hide</strong> button to reveal or mask the key.</p>
           <p><a href="firecrawl-api-key-guide.html" target="_blank" style="color:var(--accent)">How to get a Firecrawl API key →</a></p>
+        </div>
+
+        <div class="subsection" id="settings-license">
+          <h3 class="subsection-title">Conductor Broadcast License</h3>
+          <p><a href="#conductor" style="color:var(--accent)">Follow the Conductor</a> is a paid feature and requires a license key entered here before it becomes available. Paste your key (format <code>SONGBOOK-XXXX-XXXX-XXXX-XXXX</code>) into the field; use <strong>Show / Hide</strong> to reveal or mask it, or <strong>Clear</strong> to remove it.</p>
+          <p>A status message beneath the field tells you where things stand:</p>
+          <ul class="feature-list">
+            <li><strong>"License active — Conductor Broadcast unlocked"</strong> (green) — you're all set.</li>
+            <li><strong>"License expired — Conductor Broadcast is locked"</strong> (amber) — renew your license to keep using it.</li>
+            <li><strong>"Invalid license key"</strong> (red) — double-check the key you entered.</li>
+            <li><strong>"Enter a license key to unlock Conductor Broadcast."</strong> (grey) — no key entered yet.</li>
+          </ul>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div class="callout-body">
+              <strong>Albums aren't gated</strong>
+              This license only affects Follow the Conductor. Recording and Albums are available on the free plan (subject to the one-album limit).
+            </div>
+          </div>
         </div>
 
         <div class="subsection">
@@ -1625,12 +1814,14 @@
         <p>Common uses: finalising a set list during rehearsal with your band, letting a team member transpose a song for their instrument, or having a vocalist follow the same chord chart as the leader during a service.</p>
 
         <img src="images/SS-20.png" alt="Session view — leader perspective — set list panel on the left, song viewer with chords and lyrics on the right, green Live badge in the header" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-20.png</div>
 
         <div class="subsection" id="session-starting">
           <h3 class="subsection-title">Starting a Session (Leader)</h3>
           <p>Click the <span class="btn-replica">🎙 Live Session</span> button at the bottom of the sidebar to open the Live Session modal.</p>
 
           <img src="images/SS-21.png" alt="Live Session modal — session name field pre-filled with today's date, Create and Enter button, and Recent Sessions list above" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-21.png</div>
 
           <div class="steps">
             <div class="step">
@@ -1686,6 +1877,7 @@
           </div>
 
           <img src="images/SS-22.png" alt="Session view — set list on the left with a song highlighted in indigo, chord chart for the selected song on the right with key dropdown and capo controls in the sub-header" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-22.png</div>
 
           <p>The header bar shows the session name and a pulsing green <strong>Live</strong> badge while connected. If the session is approaching expiry, a coloured countdown badge also appears.</p>
 
@@ -1703,6 +1895,7 @@
           <p>Any participant can edit a song's content directly within the session — useful for on-the-fly lyric corrections or chord adjustments during rehearsal.</p>
 
           <img src="images/SS-23.png" alt="Song editor modal inside a session — Song name, Singer/Artist, Key dropdown, Capo field, and Lyrics and chords textarea, with Save and Cancel buttons at the bottom right" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-23.png</div>
 
           <div class="steps">
             <div class="step">
@@ -1726,6 +1919,7 @@
           </div>
 
           <img src="images/SS-24.png" alt="Edit lock indicator — a song in the set list showing the lock icon and the warning Someone is editing this song beneath it" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-24.png</div>
 
           <p>If someone else is already editing a song, its ✏️ button is replaced by a <strong>🔒</strong> icon and a warning appears beneath the row. The lock is released automatically when they save or cancel.</p>
 
@@ -1756,6 +1950,7 @@
           </div>
 
           <img src="images/SS-25.png" alt="Join by code — Live Session modal with Join with a different code expanded, showing a monospaced 6-character input field and the Join button" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-25.png</div>
 
           <p>Once joined, you see the same set list and can view any song, transpose for your own instrument, and edit songs (subject to edit locking). As a member you cannot reorder the set list or end the session.</p>
 
@@ -1764,6 +1959,7 @@
             <p>The Live Session modal tracks sessions you've previously joined or created. Each time you open the modal, it checks which of those sessions are still active and shows them under <strong>Recent Sessions</strong>. Tap any listed session to jump straight back in — as leader or member, depending on your original role.</p>
 
             <img src="images/SS-26.png" alt="Recent Sessions list — two sessions listed with their role, date joined, expiry badge, Enter button, and copy link icon" class="screenshot-img" />
+            <div class="screenshot-filename">images/SS-26.png</div>
 
             <p>Sessions that have already ended are removed from the list automatically. An amber or red <strong>Expires in Nd</strong> badge warns you when a session is approaching its expiry date (amber ≤ 7 days, red ≤ 3 days).</p>
           </div>
@@ -1774,6 +1970,7 @@
           <p>When the session is over, click <strong>End</strong> in the top-right of the session header. If the set list contains songs that haven't been saved to your library yet, a confirmation modal appears with three choices:</p>
 
           <img src="images/SS-27.png" alt="End Live Session confirmation modal — showing the number of songs, collection name pre-filled with the session name, and three buttons: Save as collection and End session, End without saving, and Cancel" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-27.png</div>
 
           <ul class="feature-list">
             <li><strong>Save as collection &amp; End session</strong> — Adds all songs in the set list to your personal library as a new collection named after the session, then closes the session for everyone.</li>
@@ -1801,6 +1998,14 @@
         <h2 class="section-title">Follow the Conductor</h2>
         <p><strong>Follow the Conductor</strong> is a broadcast feature that lets one person — the <em>conductor</em> — control which song every follower sees, in real time. As the conductor navigates through a set list, each follower's screen switches to the same song automatically. It's ideal for leading a congregation, a choir, or a band where you want everyone on the same page without shouting "turn to song three."</p>
         <p>Unlike a <a href="#live-session" style="color:var(--accent)">Live Session</a> (which is a collaborative editing workspace), Follow the Conductor is a one-way broadcast: the conductor drives, followers watch.</p>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div class="callout-body">
+            <strong>Requires a Conductor Broadcast License</strong>
+            Follow the Conductor is a paid feature. Before the <strong>Enable Conductor Broadcast</strong> toggle appears in the Share modal, you must enter an active license key under <a href="#settings-license" style="color:inherit;text-decoration:underline;">⚙️ Settings → Conductor Broadcast License</a>. Following a broadcast as a team member does not require a license — only the person setting it up does.
+          </div>
+        </div>
 
         <div class="callout tip">
           <span class="callout-icon">💡</span>
@@ -1843,7 +2048,7 @@
             <div class="step">
               <div class="step-body">
                 <strong>Enable Conductor Broadcast</strong>
-                <span>Toggle <strong>Enable Conductor Broadcast</strong> on. Additional options appear below.</span>
+                <span>Toggle <strong>Enable Conductor Broadcast</strong> on. Additional options appear below. This toggle only appears if you have an active <a href="#settings-license" style="color:var(--accent)">Conductor Broadcast License</a> entered in Settings.</span>
               </div>
             </div>
             <div class="step">
@@ -1949,7 +2154,7 @@
           <p>Set a <strong>Scheduled broadcast time</strong> when creating the broadcast if you want followers to know when it will start in advance — useful for Sunday services or rehearsals at a fixed time.</p>
           <ul class="feature-list">
             <li>Followers who join early see a countdown to the scheduled time instead of a generic "Waiting" message.</li>
-            <li>Polling by followers automatically ramps up as the scheduled time approaches, then switches to live-mode polling once the conductor starts broadcasting.</li>
+            <li>Followers only start polling for updates once the scheduled time is within 30 minutes — polling starts quick, then backs off gradually to about every 5 minutes while still waiting, and switches to live-mode polling once the conductor starts broadcasting.</li>
             <li>The scheduled time is informational only — the conductor can start earlier or later by clicking <span class="btn-replica">▶ Start Broadcast</span> whenever they're ready.</li>
           </ul>
         </div>
@@ -2008,6 +2213,7 @@
         </div>
 
         <img src="images/SS-32.png" alt="Recording in progress — red pulsing dot, elapsed timer showing 0:42, Pause and Stop buttons visible in the song header toolbar" class="screenshot-img" />
+        <div class="screenshot-filename">images/SS-32.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Pause & Resume</h3>
@@ -2026,6 +2232,7 @@
           </ul>
 
           <img src="images/SS-33.png" alt="Recordings panel — modal listing recordings for a song with play, download, rename, and delete controls, storage indicator at the top" class="screenshot-img" />
+          <div class="screenshot-filename">images/SS-33.png</div>
 
           <p>A storage indicator at the top of the panel shows how much space your recordings are using.</p>
         </div>
@@ -2076,7 +2283,7 @@
 
         <div class="subsection" id="albums-overview">
           <h3 class="subsection-title">Overview</h3>
-          <p>Albums are accessed from the <strong>Albums</strong> panel in the sidebar. Open it by clicking the Albums tab (disc icon) in the left sidebar. The panel shows all albums you've created on this device. From here you can create a new album or open an existing one.</p>
+          <p>Albums are accessed from the <strong>Albums</strong> view — click <strong>Albums</strong> in the three-way view toggle beneath the sidebar search bar (alongside Collections and All Songs). The panel shows all albums you've created on this device. From here you can create a new album or open an existing one.</p>
         </div>
 
         <div class="subsection" id="albums-create">
@@ -2225,7 +2432,7 @@
             <li><strong>Share your set with the whole team</strong> — Use <strong>Export → Share via Link</strong> to send a URL or QR code to your worship team, band, or congregation. Copy the link and paste it into a group chat, or save the QR code and print or project it so people can scan it with their phone. Either way, one tap brings them to the import screen — no app download required.</li>
             <li><strong>Share lyrics only for singers and congregation</strong> — When sharing, toggle <strong>Share lyrics only</strong> so chord-free lyrics are what the recipient sees. Ideal for singers who don't need chord charts.</li>
             <li><strong>Transpose on the fly for different vocalists</strong> — Transpose is non-destructive. If your lead singer needs a different key on the day, change it live without altering the stored song.</li>
-            <li><strong>Use Fit to Screen before leading</strong> — The ⤢ button scales the song to fill your screen so you can read it without scrolling, keeping your eyes up as much as possible.</li>
+            <li><strong>Use Fit to Screen before leading</strong> — The ⛶ button scales the song to fill your screen so you can read it without scrolling, keeping your eyes up as much as possible.</li>
             <li><strong>Dial in Auto-Scroll at rehearsal</strong> — Set the scroll speed for each song during the week so it flows naturally when you're leading.</li>
             <li><strong>Generate a Presentation PDF for the projector team</strong> — The Presentation PDF export gives your visuals team a ready-to-use slide deck, styled with your chosen background.</li>
             <li><strong>Export a backup .sbp before the service</strong> — Save your set list as a <code>.sbp</code> file in case you need to restore it quickly, especially at a venue with unreliable internet.</li>
@@ -2286,23 +2493,29 @@
     'viewing-a-song':  ['viewing-a-song'],
     'song-header':     ['song-header'],
     'chord-strip':     ['chord-strip'],
+    'section-jump':    ['section-jump'],
     'display-controls':['display-controls'],
+    'metronome':       ['metronome'],
     'lyrics-only':     ['lyrics-only'],
     'transpose-capo':  ['transpose-capo'],
     'auto-scroll':     ['auto-scroll'],
     'song-navigation': ['song-navigation'],
     'performance-mode':['performance-mode'],
     'editing-a-song':  ['editing-a-song'],
+    'new-song':        ['new-song'],
     'editor-metadata': ['editor-metadata'],
     'editor-content':  ['editor-content'],
+    'fix-tools':       ['fix-tools'],
     'annotations':     ['annotations'],
     'exporting-songs': ['exporting-songs'],
     'export-sbp':      ['export-sbp'],
     'export-share':    ['export-share'],
     'export-pdf':      ['export-pdf'],
+    'export-pptx':     ['export-pptx'],
     'share-import':    ['share-import'],
     'settings':        ['settings'],
     'settings-display':['settings-display'],
+    'settings-license':['settings-license'],
     'live-session':    ['live-session'],
     'session-starting':['session-starting'],
     'session-view':    ['session-view'],
@@ -2335,9 +2548,9 @@
 
   // Also observe subsections that are direct targets
   const subsectionIds = ['search','view-modes','collections','import-sbp','duplicates',
-    'ug-search','song-header','chord-strip','display-controls','lyrics-only',
-    'editor-metadata','editor-content','annotations','export-sbp','export-share','export-pdf',
-    'session-starting','session-view','session-editing','session-joining','session-ending','settings-display']
+    'ug-search','song-header','chord-strip','section-jump','display-controls','metronome','lyrics-only',
+    'new-song','editor-metadata','editor-content','fix-tools','annotations','export-sbp','export-share','export-pdf','export-pptx',
+    'session-starting','session-view','session-editing','session-joining','session-ending','settings-display','settings-license']
 
   subsectionIds.forEach(id => {
     const el = document.getElementById(id)
