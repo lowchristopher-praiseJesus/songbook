@@ -80,6 +80,48 @@ describe('setCollectionSongs', () => {
   })
 })
 
+describe('addSongToCollection', () => {
+  beforeEach(() => {
+    const seed = [
+      { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['a'] },
+      { id: 'c2', name: 'Worship', createdAt: '2026-01-01T00:00:00Z', songIds: ['b'] },
+    ]
+    useLibraryStore.setState({ collections: seed })
+    saveCollections(seed)
+  })
+
+  it('appends a new songId to the named collection', () => {
+    useLibraryStore.getState().addSongToCollection('x', 'c1')
+    const { collections } = useLibraryStore.getState()
+    expect(collections.find(c => c.id === 'c1').songIds).toEqual(['a', 'x'])
+  })
+
+  it('does not add a duplicate if the songId is already present', () => {
+    useLibraryStore.getState().addSongToCollection('a', 'c1')
+    const { collections } = useLibraryStore.getState()
+    expect(collections.find(c => c.id === 'c1').songIds).toEqual(['a'])
+  })
+
+  it('persists to localStorage', () => {
+    useLibraryStore.getState().addSongToCollection('x', 'c1')
+    const saved = loadCollections()
+    expect(saved.find(c => c.id === 'c1').songIds).toEqual(['a', 'x'])
+  })
+
+  it('does not affect other collections', () => {
+    useLibraryStore.getState().addSongToCollection('x', 'c1')
+    const { collections } = useLibraryStore.getState()
+    expect(collections.find(c => c.id === 'c2').songIds).toEqual(['b'])
+  })
+
+  it('no-ops when collectionId does not match any collection', () => {
+    useLibraryStore.getState().addSongToCollection('x', 'nope')
+    const { collections } = useLibraryStore.getState()
+    expect(collections.find(c => c.id === 'c1').songIds).toEqual(['a'])
+    expect(collections.find(c => c.id === 'c2').songIds).toEqual(['b'])
+  })
+})
+
 describe('deleteCollection', () => {
   it('removes the collection without touching index entries', () => {
     saveSong({ id: 's1', meta: { title: 'Song', artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })

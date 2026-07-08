@@ -281,6 +281,19 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Add a song to a collection's songIds if not already present.
+   */
+  addSongToCollection(songId, collectionId) {
+    const collections = get().collections.map(c =>
+      c.id === collectionId && !c.songIds.includes(songId)
+        ? { ...c, songIds: [...c.songIds, songId] }
+        : c
+    )
+    saveCollections(collections)
+    set({ collections })
+  },
+
+  /**
    * Set or clear the song currently being edited.
    */
   setEditingSongId(id) {
