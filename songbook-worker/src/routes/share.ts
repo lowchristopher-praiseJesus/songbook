@@ -64,6 +64,9 @@ share.put('/:code', async (c) => {
     const status = existing.error === 'not_found' ? 404 : 410;
     return c.json({ error: existing.error }, status);
   }
+  if (existing.locked) {
+    return c.json({ error: 'locked' }, 423);
+  }
 
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'no_body' }, 400);
@@ -71,9 +74,37 @@ share.put('/:code', async (c) => {
 
   const newVersion = existing.version + 1;
   const updatedAt = new Date();
-  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, newVersion);
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, newVersion, existing.locked);
 
   return c.json({ version: newVersion, updatedAt: updatedAt.toISOString() });
+});
+
+share.patch('/:code/lock', async (c) => {
+  const shareCode = c.req.param('code');
+
+  const existing = await headShare(c.env.R2_BUCKET, shareCode);
+  if ('error' in existing) {
+    const status = existing.error === 'not_found' ? 404 : 410;
+    return c.json({ error: existing.error }, status);
+  }
+
+  let payload: { locked?: unknown };
+  try {
+    payload = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid_body' }, 400);
+  }
+  if (typeof payload.locked !== 'boolean') {
+    return c.json({ error: 'invalid_body' }, 400);
+  }
+
+  const object = await c.env.R2_BUCKET.get(shareCode);
+  if (!object) return c.json({ error: 'not_found' }, 404);
+  const body = await object.arrayBuffer();
+
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, payload.locked);
+
+  return c.json({ locked: payload.locked });
 });
 
 export default share;
