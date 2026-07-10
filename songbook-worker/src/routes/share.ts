@@ -9,13 +9,14 @@ share.post('/upload', verifyTurnstile, async (c) => {
   const rawDays = Number(c.req.header('X-Expires-In-Days') ?? '7');
   const expiresInDays = isNaN(rawDays) ? 7 : Math.min(30, Math.max(1, rawDays));
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+  const locked = c.req.header('X-Locked') === 'true';
 
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'no_body' }, 400);
   if (body.byteLength > 10 * 1024 * 1024) return c.json({ error: 'too_large' }, 413);
 
   const shareCode = crypto.randomUUID();
-  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, 1);
+  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, 1, locked);
 
   const shareUrl = `${c.env.APP_ORIGIN}?share=${shareCode}`;
   return c.json({ shareCode, shareUrl, expiresAt: expiresAt.toISOString() });
@@ -32,6 +33,7 @@ share.on('HEAD', '/:code', async (c) => {
 
   return c.body(null, 200, {
     'X-Share-Version': String(result.version),
+    'X-Share-Locked': String(result.locked),
     // no-store: a live share is mutable; clients must always read the current version.
     'Cache-Control': 'no-store',
   });
@@ -50,6 +52,7 @@ share.get('/:code', async (c) => {
     headers: {
       'Content-Type': 'application/zip',
       'X-Share-Version': String(result.version),
+      'X-Share-Locked': String(result.locked),
       // no-store: a live share blob changes on every Push Update; never serve a cached copy.
       'Cache-Control': 'no-store',
     },

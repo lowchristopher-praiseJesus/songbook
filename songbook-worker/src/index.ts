@@ -26,7 +26,7 @@ app.use('*', async (c, next) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token, X-License-Token, X-Turnstile-Token',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token, X-License-Token, X-Turnstile-Token, X-Locked',
         'Access-Control-Max-Age': '86400',
       },
     });
@@ -38,8 +38,8 @@ app.use('*', async (c, next) => {
     c.res.headers.set('Access-Control-Allow-Origin', requestOrigin);
     c.res.headers.set('Vary', 'Origin');
     // Expose custom response headers so browser JS can read them. Without this,
-    // X-Share-Version is hidden from fetch() and checkShareVersion falls back to 1.
-    c.res.headers.set('Access-Control-Expose-Headers', 'X-Share-Version');
+    // X-Share-Version/X-Share-Locked are hidden from fetch() and the client falls back to defaults.
+    c.res.headers.set('Access-Control-Expose-Headers', 'X-Share-Version, X-Share-Locked');
   }
 });
 

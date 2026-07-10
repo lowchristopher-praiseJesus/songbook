@@ -159,3 +159,60 @@ describe('PATCH /share/:code/lock', () => {
     expect(buf).toEqual(new Uint8Array([1, 2, 3]));
   });
 });
+
+describe('HEAD/GET /share/:code — X-Share-Locked header', () => {
+  it('HEAD exposes X-Share-Locked: false by default', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Locked')).toBe('false');
+  });
+
+  it('HEAD exposes X-Share-Locked: true after locking', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true }),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Locked')).toBe('true');
+  });
+
+  it('GET exposes X-Share-Locked and Access-Control-Expose-Headers includes it', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      headers: { Origin: ORIGIN },
+    });
+    const exposeHeaders = res.headers.get('Access-Control-Expose-Headers') ?? '';
+    const locked = res.headers.get('X-Share-Locked');
+    await res.arrayBuffer();
+    expect(locked).toBe('false');
+    expect(exposeHeaders).toContain('X-Share-Locked');
+  });
+});
+
+describe('POST /share/upload — X-Locked header', () => {
+  it('creates a pre-locked share when X-Locked: true is sent', async () => {
+    const { shareCode } = await createShare({ 'X-Locked': 'true' });
+    const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(headRes.headers.get('X-Share-Locked')).toBe('true');
+  });
+
+  it('defaults to unlocked when X-Locked is omitted', async () => {
+    const { shareCode } = await createShare();
+    const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(headRes.headers.get('X-Share-Locked')).toBe('false');
+  });
+});
