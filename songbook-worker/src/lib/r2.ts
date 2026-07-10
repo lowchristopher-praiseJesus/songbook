@@ -4,9 +4,14 @@ export async function putShare(
   body: ArrayBuffer | Uint8Array | ReadableStream,
   expiresAt: Date,
   version = 1,
+  locked = false,
 ): Promise<void> {
   await bucket.put(shareCode, body, {
-    customMetadata: { expiresAt: expiresAt.toISOString(), version: String(version) },
+    customMetadata: {
+      expiresAt: expiresAt.toISOString(),
+      version: String(version),
+      locked: String(locked),
+    },
     httpMetadata: { contentType: 'application/zip' },
   });
 }
@@ -14,7 +19,9 @@ export async function putShare(
 export async function headShare(
   bucket: R2Bucket,
   shareCode: string,
-): Promise<{ version: number; expiresAt: Date } | { error: 'not_found' | 'expired' }> {
+): Promise<
+  { version: number; expiresAt: Date; locked: boolean } | { error: 'not_found' | 'expired' }
+> {
   const head = await bucket.head(shareCode);
   if (!head) return { error: 'not_found' };
 
@@ -23,19 +30,25 @@ export async function headShare(
     return { error: 'expired' };
   }
 
-  return { version: Number(head.customMetadata?.version ?? 1), expiresAt };
+  return {
+    version: Number(head.customMetadata?.version ?? 1),
+    expiresAt,
+    locked: head.customMetadata?.locked === 'true',
+  };
 }
 
 export async function getShareIfValid(
   bucket: R2Bucket,
   shareCode: string,
-): Promise<{ object: R2ObjectBody; version: number } | { error: 'not_found' | 'expired' }> {
+): Promise<
+  { object: R2ObjectBody; version: number; locked: boolean } | { error: 'not_found' | 'expired' }
+> {
   const head = await headShare(bucket, shareCode);
   if ('error' in head) return head;
 
   const object = await bucket.get(shareCode);
   if (!object) return { error: 'not_found' };
-  return { object, version: head.version };
+  return { object, version: head.version, locked: head.locked };
 }
 
 // ── Album helpers ────────────────────────────────────────────────────────────

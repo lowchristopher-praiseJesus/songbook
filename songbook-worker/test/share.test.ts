@@ -1,6 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
-import { putShare, getShareIfValid } from '../src/lib/r2';
+import { putShare, getShareIfValid, headShare } from '../src/lib/r2';
 
 const ORIGIN = 'http://localhost:5173';
 
@@ -14,6 +14,26 @@ describe('putShare', () => {
     expect(obj).not.toBeNull();
     expect(obj?.customMetadata?.expiresAt).toBe(expiresAt.toISOString());
     expect(obj?.httpMetadata?.contentType).toBe('application/zip');
+  });
+});
+
+describe('putShare — locked metadata', () => {
+  it('defaults locked to false when not passed', async () => {
+    const body = new Uint8Array([1, 2, 3]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await putShare(env.R2_BUCKET, 'test-put-default-lock', body, expiresAt);
+
+    const obj = await env.R2_BUCKET.head('test-put-default-lock');
+    expect(obj?.customMetadata?.locked).toBe('false');
+  });
+
+  it('writes locked: true when passed', async () => {
+    const body = new Uint8Array([1, 2, 3]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await putShare(env.R2_BUCKET, 'test-put-locked', body, expiresAt, 1, true);
+
+    const obj = await env.R2_BUCKET.head('test-put-locked');
+    expect(obj?.customMetadata?.locked).toBe('true');
   });
 });
 
@@ -44,6 +64,43 @@ describe('getShareIfValid', () => {
 
     const result = await getShareIfValid(env.R2_BUCKET, 'expired-code');
     expect(result).toEqual({ error: 'expired' });
+  });
+});
+
+describe('headShare — locked field', () => {
+  it('returns locked: false for an object with no locked metadata', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('head-no-lock', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString() },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-no-lock');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.locked).toBe(false);
+  });
+
+  it('returns locked: true when metadata says so', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('head-locked', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), locked: 'true' },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-locked');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.locked).toBe(true);
+  });
+});
+
+describe('getShareIfValid — locked field', () => {
+  it('surfaces locked from the underlying head', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('valid-locked', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), locked: 'true' },
+    });
+    const result = await getShareIfValid(env.R2_BUCKET, 'valid-locked');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.locked).toBe(true);
+      await result.object.arrayBuffer(); // consume stream to avoid isolated-storage leak
+    }
   });
 });
 
