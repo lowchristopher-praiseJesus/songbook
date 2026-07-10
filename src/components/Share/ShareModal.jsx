@@ -481,7 +481,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 <Button variant="secondary" onClick={handleCreateLink} aria-label="New link">
                   New link
                 </Button>
-                <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update" disabled={locked}>
+                <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update" disabled={locked || lockStatus === 'checking'}>
                   Push Update
                 </Button>
               </>

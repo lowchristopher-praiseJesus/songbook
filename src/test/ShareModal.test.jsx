@@ -290,6 +290,7 @@ describe('ShareModal — update mode', () => {
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
     );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /push update/i }));
     await waitFor(() => expect(updateShare).toHaveBeenCalledWith('abc-123', expect.any(Blob)));
     await waitFor(() => expect(screen.getByText(/link updated/i)).toBeInTheDocument());
