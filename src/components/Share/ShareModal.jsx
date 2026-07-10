@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
-import { uploadShare, updateShare } from '../../lib/shareApi';
+import { uploadShare, updateShare, checkShareVersion, setShareLocked } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
@@ -18,6 +18,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const [errorMessage, setErrorMessage] = useState('');
   const [nameValue, setNameValue] = useState(collectionName ?? '');
   const [shareLyricsOnly, setShareLyricsOnly] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [lockStatus, setLockStatus] = useState('idle'); // 'idle' | 'checking' | 'saving' | 'error'
   const [conductorEnabled, setConductorEnabled] = useState(false)
   const maxCap = Number(import.meta.env.VITE_CONDUCTOR_MAX_FOLLOWERS ?? 20)
   const [maxFollowers, setMaxFollowers] = useState(maxCap)
@@ -45,6 +47,25 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const existingShareUrl = isUpdateMode
     ? `${window.location.origin}/?share=${collection.shareCode}`
     : ''
+
+  // Live-check lock state on open — another holder of the link may have
+  // changed it since we last saw this collection, so we never trust a stale cache.
+  useEffect(() => {
+    if (!isOpen || !isUpdateMode) return;
+    let cancelled = false;
+    setLockStatus('checking');
+    checkShareVersion(collection.shareCode)
+      .then(({ locked: serverLocked }) => {
+        if (cancelled) return;
+        setLocked(serverLocked);
+        setLockStatus('idle');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLockStatus('idle');
+      });
+    return () => { cancelled = true };
+  }, [isOpen, isUpdateMode, collection?.shareCode]);
 
   // Render QR code once the done step is visible and canvas is in the DOM
   useEffect(() => {
@@ -82,7 +103,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       let result
       try {
         const shareToken = await getToken();
-        result = await uploadShare(blob, expiresInDays, shareToken)
+        result = await uploadShare(blob, expiresInDays, shareToken, locked)
       } catch (err) {
         console.error('[ShareModal] upload failed:', err)
         setErrorMessage('Upload failed. Please check your connection and try again.')
@@ -169,8 +190,31 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       setStep('update-done')
     } catch (err) {
       console.error('[ShareModal] push update failed:', err)
-      setErrorMessage('Update failed. Please check your connection and try again.')
+      if (err.code === 'locked') {
+        setLocked(true)
+        setErrorMessage('This link is locked. Unlock it before pushing updates.')
+      } else {
+        setErrorMessage('Update failed. Please check your connection and try again.')
+      }
       setStep('error')
+    }
+  }
+
+  async function handleToggleLocked() {
+    const nextLocked = !locked;
+    if (!isUpdateMode) {
+      setLocked(nextLocked);
+      return;
+    }
+    setLocked(nextLocked);
+    setLockStatus('saving');
+    try {
+      await setShareLocked(collection.shareCode, nextLocked);
+      setLockStatus('idle');
+    } catch (err) {
+      console.error('[ShareModal] lock toggle failed:', err);
+      setLocked(!nextLocked);
+      setLockStatus('error');
     }
   }
 
@@ -226,6 +270,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setShareUrl('');
     setCopied(false);
     setShareLyricsOnly(false);
+    setLocked(false);
+    setLockStatus('idle');
     setConductorEnabled(false);
     setMaxFollowers(maxCap);
     setBroadcastTime('');
@@ -320,6 +366,31 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               <span className={`text-sm ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>Share lyrics only</span>
             </button>
           </div>
+          <div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={locked}
+              aria-label="Lock link"
+              onClick={handleToggleLocked}
+              disabled={lockStatus === 'checking' || lockStatus === 'saving'}
+              className={`flex items-center gap-3 w-full text-left ${lockStatus === 'checking' || lockStatus === 'saving' ? 'opacity-50 cursor-wait' : ''}`}
+            >
+              <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
+                transition-colors duration-200
+                ${locked ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
+                  ${locked ? 'translate-x-5' : 'translate-x-0'}`} />
+              </span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Lock link</span>
+            </button>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-14">
+              When locked, no one — including you — can push new content until you unlock it.
+            </p>
+            {lockStatus === 'error' && (
+              <p className="text-xs text-red-500 mt-1 ml-14">Couldn't update lock — check your connection.</p>
+            )}
+          </div>
           {/* Conductor broadcast section */}
           {isLicensed ? (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -400,6 +471,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             )}
           </div>
           ) : null}
+          {isUpdateMode && locked && (
+            <p className="text-xs text-gray-400 text-right">Push Update is disabled — this link is locked.</p>
+          )}
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
             {isUpdateMode ? (
@@ -407,7 +481,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 <Button variant="secondary" onClick={handleCreateLink} aria-label="New link">
                   New link
                 </Button>
-                <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update">
+                <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update" disabled={locked}>
                   Push Update
                 </Button>
               </>

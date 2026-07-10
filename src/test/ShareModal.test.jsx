@@ -7,14 +7,19 @@ import { LicenseContext } from '../contexts/LicenseContext';
 vi.mock('../hooks/useTurnstile', () => ({
   default: () => ({ getToken: async () => 'mock-token' }),
 }));
-vi.mock('../lib/shareApi', () => ({ uploadShare: vi.fn(), updateShare: vi.fn() }));
+vi.mock('../lib/shareApi', () => ({
+  uploadShare: vi.fn(),
+  updateShare: vi.fn(),
+  checkShareVersion: vi.fn().mockResolvedValue({ version: 1, locked: false }),
+  setShareLocked: vi.fn().mockResolvedValue({ locked: true }),
+}));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }));
 vi.mock('../lib/conductorApi', () => ({
   createConductorSession: vi.fn().mockResolvedValue({}),
 }));
 
-import { uploadShare, updateShare } from '../lib/shareApi';
+import { uploadShare, updateShare, checkShareVersion, setShareLocked } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';
 import { createConductorSession } from '../lib/conductorApi';
 
@@ -133,6 +138,26 @@ describe('ShareModal', () => {
     );
     expect(screen.queryByLabelText(/enable conductor broadcast/i)).not.toBeInTheDocument();
   });
+
+  it('renders "Lock link" toggle unchecked by default in create mode', () => {
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    const toggle = screen.getByRole('switch', { name: /lock link/i });
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('passes locked=true to uploadShare when "Lock link" is checked before Create link', async () => {
+    uploadShare.mockResolvedValue({
+      shareCode: 'x',
+      shareUrl: 'http://app?share=x',
+      expiresAt: new Date().toISOString(),
+    });
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('switch', { name: /lock link/i }));
+    fireEvent.click(screen.getByText('Create link'));
+    await screen.findByDisplayValue('http://app?share=x');
+    expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 7, 'mock-token', true);
+  });
 });
 
 describe('ShareModal — self-direct conductor path', () => {
@@ -189,20 +214,74 @@ describe('ShareModal — update mode', () => {
     });
   });
 
-  it('shows "Push Update" button when collection has shareCode', () => {
+  it('checks live lock state on open and reflects it on the toggle', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    expect(checkShareVersion).toHaveBeenCalledWith('abc-123');
+  });
+
+  it('disables Push Update and shows a note when the live link is locked', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).toBeDisabled());
+    expect(screen.getByText(/push update is disabled — this link is locked/i)).toBeInTheDocument();
+  });
+
+  it('toggling "Lock link" in update mode calls setShareLocked immediately', async () => {
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).not.toBeDisabled());
+    fireEvent.click(toggle);
+    await waitFor(() => expect(setShareLocked).toHaveBeenCalledWith('abc-123', true));
+  });
+
+  it('reverts the toggle and shows an error if setShareLocked fails', async () => {
+    setShareLocked.mockRejectedValueOnce(Object.assign(new Error('lock_failed'), { code: 'lock_failed' }));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).not.toBeDisabled());
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'false'));
+    expect(screen.getByText(/couldn't update lock/i)).toBeInTheDocument();
+  });
+
+  it('shows a locked-specific error when Push Update hits a 423 mid-flight', async () => {
+    updateShare.mockRejectedValue(Object.assign(new Error('locked'), { code: 'locked' }));
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    expect(await screen.findByText(/unlock it before pushing updates/i)).toBeInTheDocument();
+  });
+
+  it('shows "Push Update" button when collection has shareCode', async () => {
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
     );
     expect(screen.getByRole('button', { name: /push update/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^create link$/i })).not.toBeInTheDocument();
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalled());
   });
 
-  it('shows live link banner with version info', () => {
+  it('shows live link banner with version info', async () => {
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
     );
     expect(screen.getByText(/live link exists/i)).toBeInTheDocument();
     expect(screen.getByText(/v1/i)).toBeInTheDocument();
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalled());
   });
 
   it('calls updateShare on "Push Update" click and shows success screen', async () => {
