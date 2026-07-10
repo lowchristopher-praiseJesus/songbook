@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { uploadShare, fetchShare, checkShareVersion, updateShare } from '../lib/shareApi';
+import { uploadShare, fetchShare, checkShareVersion, updateShare, setShareLocked } from '../lib/shareApi';
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
@@ -49,6 +49,28 @@ describe('uploadShare', () => {
       code: 'upload_failed',
     });
   });
+
+  it('sends X-Locked: false by default', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+    await uploadShare(new Blob(['x']), 7, 'tok');
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Locked': 'false' }),
+      }),
+    );
+  });
+
+  it('sends X-Locked: true when locked is passed', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+    await uploadShare(new Blob(['x']), 7, 'tok', true);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Locked': 'true' }),
+      }),
+    );
+  });
 });
 
 describe('fetchShare', () => {
@@ -93,7 +115,7 @@ describe('checkShareVersion', () => {
       text: async () => '',
     });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 3 });
+    expect(result).toEqual({ version: 3, locked: false });
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/share/abc-123'),
       expect.objectContaining({ method: 'HEAD', cache: 'no-store' }),
@@ -113,7 +135,29 @@ describe('checkShareVersion', () => {
   it('defaults to version 1 when X-Share-Version header is absent', async () => {
     fetch.mockResolvedValue({ status: 200, ok: true, headers: { get: () => null }, text: async () => '' });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 1 });
+    expect(result).toEqual({ version: 1, locked: false });
+  });
+
+  it('returns locked: true from X-Share-Locked header', async () => {
+    fetch.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: { get: (h) => (h === 'X-Share-Version' ? '3' : h === 'X-Share-Locked' ? 'true' : null) },
+      text: async () => '',
+    });
+    const result = await checkShareVersion('abc-123');
+    expect(result).toEqual({ version: 3, locked: true });
+  });
+
+  it('defaults locked to false when X-Share-Locked header is absent', async () => {
+    fetch.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: { get: () => null },
+      text: async () => '',
+    });
+    const result = await checkShareVersion('abc-123');
+    expect(result).toEqual({ version: 1, locked: false });
   });
 });
 
@@ -147,5 +191,41 @@ describe('updateShare', () => {
   it('throws with code expired on 410', async () => {
     fetch.mockResolvedValue({ status: 410, ok: false });
     await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'expired' });
+  });
+
+  it('throws with code locked on 423', async () => {
+    fetch.mockResolvedValue({ status: 423, ok: false });
+    await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'locked' });
+  });
+});
+
+describe('setShareLocked', () => {
+  it('PATCHes /share/{shareCode}/lock with JSON body and returns { locked }', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ locked: true }) });
+    const result = await setShareLocked('abc-123', true);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/share/abc-123/lock'),
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ locked: true }),
+      }),
+    );
+    expect(result).toEqual({ locked: true });
+  });
+
+  it('throws with code not_found on 404', async () => {
+    fetch.mockResolvedValue({ status: 404, ok: false });
+    await expect(setShareLocked('abc', true)).rejects.toMatchObject({ code: 'not_found' });
+  });
+
+  it('throws with code expired on 410', async () => {
+    fetch.mockResolvedValue({ status: 410, ok: false });
+    await expect(setShareLocked('abc', true)).rejects.toMatchObject({ code: 'expired' });
+  });
+
+  it('throws with code lock_failed on other failure', async () => {
+    fetch.mockResolvedValue({ status: 500, ok: false });
+    await expect(setShareLocked('abc', true)).rejects.toMatchObject({ code: 'lock_failed' });
   });
 });
