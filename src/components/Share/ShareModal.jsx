@@ -19,7 +19,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const [nameValue, setNameValue] = useState(collectionName ?? '');
   const [shareLyricsOnly, setShareLyricsOnly] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
   const [lockStatus, setLockStatus] = useState('idle'); // 'idle' | 'checking' | 'saving' | 'error'
+  const [pinInputMode, setPinInputMode] = useState('none'); // 'none' | 'set' | 'enter'
+  const [pinValue, setPinValue] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
   const [conductorEnabled, setConductorEnabled] = useState(false)
   const maxCap = Number(import.meta.env.VITE_CONDUCTOR_MAX_FOLLOWERS ?? 20)
   const [maxFollowers, setMaxFollowers] = useState(maxCap)
@@ -55,9 +60,10 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     let cancelled = false;
     setLockStatus('checking');
     checkShareVersion(collection.shareCode)
-      .then(({ locked: serverLocked }) => {
+      .then(({ locked: serverLocked, hasPin: serverHasPin }) => {
         if (cancelled) return;
         setLocked(serverLocked);
+        setHasPin(serverHasPin);
         setLockStatus('idle');
       })
       .catch(() => {
@@ -103,7 +109,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       let result
       try {
         const shareToken = await getToken();
-        result = await uploadShare(blob, expiresInDays, shareToken, locked)
+        result = await uploadShare(blob, expiresInDays, shareToken, locked, locked ? pinValue : null)
       } catch (err) {
         console.error('[ShareModal] upload failed:', err)
         setErrorMessage('Upload failed. Please check your connection and try again.')
@@ -200,22 +206,105 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     }
   }
 
-  async function handleToggleLocked() {
-    const nextLocked = !locked;
+  function handleToggleLocked() {
+    setPinError('');
     if (!isUpdateMode) {
-      setLocked(nextLocked);
+      // Create mode: nothing is persisted server-side yet, so toggling is purely local.
+      if (locked) {
+        setLocked(false);
+        setPinValue('');
+        setPinInputMode('none');
+      } else {
+        setPinInputMode('set');
+      }
       return;
     }
-    setLocked(nextLocked);
+    if (locked) {
+      setPinInputMode('enter');
+      return;
+    }
+    if (hasPin) {
+      relockSilently();
+    } else {
+      setPinInputMode('set');
+    }
+  }
+
+  async function relockSilently() {
+    setLocked(true);
     setLockStatus('saving');
     try {
-      await setShareLocked(collection.shareCode, nextLocked);
+      await setShareLocked(collection.shareCode, true);
       setLockStatus('idle');
     } catch (err) {
-      console.error('[ShareModal] lock toggle failed:', err);
-      setLocked(!nextLocked);
+      console.error('[ShareModal] silent re-lock failed:', err);
+      setLocked(false);
       setLockStatus('error');
     }
+  }
+
+  async function handleSetPinSubmit() {
+    if (!/^\d{4}$/.test(pinValue)) {
+      setPinError('Enter a 4-digit PIN.');
+      return;
+    }
+    if (!isUpdateMode) {
+      // Create mode: no network call yet — applied when Create link is clicked.
+      setLocked(true);
+      setPinInputMode('none');
+      setPinError('');
+      return;
+    }
+    setLockStatus('saving');
+    try {
+      await setShareLocked(collection.shareCode, true, pinValue);
+      setLocked(true);
+      setHasPin(true);
+      setPinInputMode('none');
+      setPinValue('');
+      setPinError('');
+      setLockStatus('idle');
+    } catch (err) {
+      console.error('[ShareModal] lock with pin failed:', err);
+      setPinError("Couldn't lock — check your connection.");
+      setLockStatus('idle');
+    }
+  }
+
+  async function handleUnlockPinSubmit() {
+    if (!/^\d{4}$/.test(pinValue)) {
+      setPinError('Enter a 4-digit PIN.');
+      return;
+    }
+    setLockStatus('saving');
+    try {
+      await setShareLocked(collection.shareCode, false, pinValue);
+      setLocked(false);
+      setPinInputMode('none');
+      setPinValue('');
+      setPinError('');
+      setPinAttempts(0);
+      setLockStatus('idle');
+    } catch (err) {
+      if (err.code === 'invalid_pin') {
+        setPinAttempts(a => a + 1);
+        setPinError('Incorrect PIN.');
+        setPinValue('');
+        setLockStatus('idle');
+      } else {
+        console.error('[ShareModal] unlock failed:', err);
+        setPinInputMode('none');
+        setPinValue('');
+        setLockStatus('error');
+      }
+    }
+  }
+
+  function handlePinCancel() {
+    setPinInputMode('none');
+    setPinValue('');
+    setPinError('');
+    setPinAttempts(0);
   }
 
   async function handleCopy() {
@@ -387,7 +476,30 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-14">
               When locked, no one — including you — can push new content until you unlock it.
             </p>
-            {lockStatus === 'error' && (
+            {pinInputMode !== 'none' && (
+              <div className="mt-2 ml-14 flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  maxLength={4}
+                  value={pinValue}
+                  onChange={(e) => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="4-digit PIN"
+                  aria-label="PIN"
+                  className="w-24 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+                />
+                <Button variant="primary" onClick={pinInputMode === 'set' ? handleSetPinSubmit : handleUnlockPinSubmit}>
+                  {pinInputMode === 'set' ? 'Lock' : 'Unlock'}
+                </Button>
+                <Button variant="ghost" onClick={handlePinCancel}>Cancel</Button>
+              </div>
+            )}
+            {pinError && <p className="text-xs text-red-500 mt-1 ml-14">{pinError}</p>}
+            {pinAttempts >= 3 && (
+              <p className="text-xs text-gray-400 mt-1 ml-14">Forgot your PIN? Use "New Link" to start over.</p>
+            )}
+            {lockStatus === 'error' && !pinError && (
               <p className="text-xs text-red-500 mt-1 ml-14">Couldn't update lock — check your connection.</p>
             )}
           </div>
