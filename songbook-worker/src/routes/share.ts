@@ -12,12 +12,23 @@ share.post('/upload', verifyTurnstile, async (c) => {
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
   const locked = c.req.header('X-Locked') === 'true';
 
+  let pinHash: string | undefined;
+  let pinSalt: string | undefined;
+  if (locked) {
+    const pin = c.req.header('X-Lock-Pin');
+    if (!isValidPinFormat(pin)) {
+      return c.json({ error: 'pin_required' }, 400);
+    }
+    pinSalt = generateSalt();
+    pinHash = await hashPin(pin, pinSalt);
+  }
+
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'no_body' }, 400);
   if (body.byteLength > 10 * 1024 * 1024) return c.json({ error: 'too_large' }, 413);
 
   const shareCode = crypto.randomUUID();
-  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, 1, locked);
+  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, 1, locked, pinHash, pinSalt);
 
   const shareUrl = `${c.env.APP_ORIGIN}?share=${shareCode}`;
   return c.json({ shareCode, shareUrl, expiresAt: expiresAt.toISOString() });
@@ -78,9 +89,12 @@ share.put('/:code', async (c) => {
 
   const newVersion = existing.version + 1;
   const updatedAt = new Date();
-  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, newVersion, existing.locked);
+  // A PIN-protected share re-locks itself on every successful push, so the
+  // next push needs the PIN entered again too.
+  const relock = existing.hasPin;
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, newVersion, relock, existing.pinHash, existing.pinSalt);
 
-  return c.json({ version: newVersion, updatedAt: updatedAt.toISOString() });
+  return c.json({ version: newVersion, updatedAt: updatedAt.toISOString(), locked: relock });
 });
 
 share.patch('/:code/lock', async (c) => {
