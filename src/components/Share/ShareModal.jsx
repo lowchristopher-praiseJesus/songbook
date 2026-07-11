@@ -83,7 +83,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     }
   }, [step, shareUrl, conductorData]);
 
-  async function handleCreateLink() {
+  async function handleCreateLink(options = {}) {
+    const lockedForThisLink = options.forceUnlocked ? false : locked
+    const pinForThisLink = lockedForThisLink ? pinValue : null
     setStep('uploading')
     setErrorMessage('')
     try {
@@ -109,7 +111,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       let result
       try {
         const shareToken = await getToken();
-        result = await uploadShare(blob, expiresInDays, shareToken, locked, locked ? pinValue : null)
+        result = await uploadShare(blob, expiresInDays, shareToken, lockedForThisLink, pinForThisLink)
       } catch (err) {
         console.error('[ShareModal] upload failed:', err)
         setErrorMessage('Upload failed. Please check your connection and try again.')
@@ -193,6 +195,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       // prevents false merge conflicts when recipients push further changes.
       collection.songIds.forEach(id => stampSharedBaseline(id))
       setExpiresAt(result.updatedAt ?? new Date().toISOString())
+      if (result.locked) setLocked(true)
       setStep('update-done')
     } catch (err) {
       console.error('[ShareModal] push update failed:', err)
@@ -352,6 +355,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   }
 
   function handleClose() {
+    if (isUpdateMode && hasPin && !locked) {
+      // A PIN-protected share must never sit unlocked once its modal session ends.
+      setShareLocked(collection.shareCode, true).catch(err => {
+        console.error('[ShareModal] re-lock on close failed:', err);
+      });
+    }
     setStep('idle');
     setErrorMessage('');
     setNameValue(collectionName ?? '');
@@ -595,7 +604,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
             {isUpdateMode ? (
               <>
-                <Button variant="secondary" onClick={handleCreateLink} aria-label="New link">
+                <Button variant="secondary" onClick={() => handleCreateLink({ forceUnlocked: true })} aria-label="New link">
                   New link
                 </Button>
                 <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update" disabled={locked || lockStatus === 'checking'}>
@@ -671,7 +680,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       {step === 'update-done' && (
         <div className="space-y-4">
           <p className="text-sm text-green-600 dark:text-green-400">
-            ✓ Link updated. Recipients can now tap "Check for updates" to see your changes.
+            {locked
+              ? '✓ Link updated and re-locked.'
+              : '✓ Link updated. Recipients can now tap "Check for updates" to see your changes.'}
           </p>
           <div className="flex justify-end">
             <Button variant="ghost" onClick={handleClose}>Done</Button>
