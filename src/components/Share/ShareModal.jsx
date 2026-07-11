@@ -360,7 +360,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setCopied(false);
     setShareLyricsOnly(false);
     setLocked(false);
+    setHasPin(false);
     setLockStatus('idle');
+    setPinInputMode('none');
+    setPinValue('');
+    setPinError('');
+    setPinAttempts(0);
     setConductorEnabled(false);
     setMaxFollowers(maxCap);
     setBroadcastTime('');
