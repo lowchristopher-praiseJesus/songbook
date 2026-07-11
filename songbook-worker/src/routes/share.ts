@@ -46,6 +46,7 @@ share.on('HEAD', '/:code', async (c) => {
   return c.body(null, 200, {
     'X-Share-Version': String(result.version),
     'X-Share-Locked': String(result.locked),
+    'X-Share-Has-Pin': String(result.hasPin),
     // no-store: a live share is mutable; clients must always read the current version.
     'Cache-Control': 'no-store',
   });
@@ -65,6 +66,7 @@ share.get('/:code', async (c) => {
       'Content-Type': 'application/zip',
       'X-Share-Version': String(result.version),
       'X-Share-Locked': String(result.locked),
+      'X-Share-Has-Pin': String(result.hasPin),
       // no-store: a live share blob changes on every Push Update; never serve a cached copy.
       'Cache-Control': 'no-store',
     },

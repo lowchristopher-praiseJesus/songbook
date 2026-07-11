@@ -439,3 +439,60 @@ describe('POST /share/upload — X-Lock-Pin header', () => {
     expect(rightUnlock.status).toBe(200);
   });
 });
+
+describe('HEAD/GET /share/:code — X-Share-Has-Pin header', () => {
+  it('HEAD exposes X-Share-Has-Pin: false by default', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('false');
+  });
+
+  it('HEAD exposes X-Share-Has-Pin: true after locking with a pin', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('true');
+  });
+
+  it('X-Share-Has-Pin stays true after unlocking (the pin is remembered)', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('true');
+    expect(res.headers.get('X-Share-Locked')).toBe('false');
+  });
+
+  it('GET exposes X-Share-Has-Pin and Access-Control-Expose-Headers includes it', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      headers: { Origin: ORIGIN },
+    });
+    const exposeHeaders = res.headers.get('Access-Control-Expose-Headers') ?? '';
+    const hasPin = res.headers.get('X-Share-Has-Pin');
+    await res.arrayBuffer();
+    expect(hasPin).toBe('false');
+    expect(exposeHeaders).toContain('X-Share-Has-Pin');
+  });
+});
