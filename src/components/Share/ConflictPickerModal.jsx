@@ -64,7 +64,7 @@ export function ConflictPickerModal({ conflicts, onApply, onCancel }) {
                         type="button"
                         aria-label="Keep mine"
                         onClick={() => pick(conflict.localId, field.key, 'mine')}
-                        className={`flex-1 text-left p-2 rounded border text-sm transition-colors ${
+                        className={`flex-1 min-w-0 text-left p-2 rounded border text-sm transition-colors ${
                           choice === 'mine'
                             ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                             : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
@@ -79,7 +79,7 @@ export function ConflictPickerModal({ conflicts, onApply, onCancel }) {
                         type="button"
                         aria-label="Use theirs"
                         onClick={() => pick(conflict.localId, field.key, 'theirs')}
-                        className={`flex-1 text-left p-2 rounded border text-sm transition-colors ${
+                        className={`flex-1 min-w-0 text-left p-2 rounded border text-sm transition-colors ${
                           choice === 'theirs'
                             ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                             : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
