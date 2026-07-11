@@ -3,26 +3,63 @@ import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 const MIN_FONT = 10
 const MAX_FONT = 28
 const MAX_COLS = 4
+const STEP = 2
 const DEBOUNCE_MS = 100
 
 export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
-  const [result, setResult] = useState({ fitFontSize: null, fitColumns: null })
+  const [state, setState] = useState({
+    fitFontSize: null,
+    fitColumns: null,
+    canIncrease: false,
+    canDecrease: false,
+  })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
+  const rafRef = useRef(null)
   const measureRef = useRef(null)
+  const modeRef = useRef('auto')
 
-  measureRef.current = function measure() {
+  function getAvailableHeight() {
     const container = containerRef?.current
     const body = bodyRef?.current
-    const shadow = shadowRef?.current
-    if (!container || !body || !shadow) return
+    if (!container || !body) return null
 
     const containerRect = container.getBoundingClientRect()
     const bodyRect = body.getBoundingClientRect()
     // Absolute offset of body from container top (scroll-independent)
     const bodyTopInContainer = bodyRect.top - containerRect.top + container.scrollTop
     const availableHeight = container.clientHeight - bodyTopInContainer
-    if (availableHeight <= 0) return
+    return availableHeight > 0 ? availableHeight : null
+  }
+
+  // For a fixed font size, find the smallest column count (1..MAX_COLS) whose
+  // balanced-column height fits the available space. Returns null if none fit.
+  function deriveColumnsForFont(fontSize, availableHeight) {
+    const shadow = shadowRef?.current
+    if (!shadow) return null
+
+    shadow.style.height = 'auto'
+    shadow.style.setProperty('--fit-fs', `${fontSize}px`)
+
+    for (let cols = 1; cols <= MAX_COLS; cols++) {
+      shadow.style.columnCount = cols
+      const h = shadow.getBoundingClientRect().height
+      if (h <= availableHeight) return cols
+    }
+    return null
+  }
+
+  function computeFlags(fontSize, availableHeight) {
+    const canDecrease = fontSize > MIN_FONT
+    const canIncrease =
+      fontSize < MAX_FONT &&
+      deriveColumnsForFont(Math.min(fontSize + STEP, MAX_FONT), availableHeight) !== null
+    return { canIncrease, canDecrease }
+  }
+
+  measureRef.current = function measureAuto() {
+    const availableHeight = getAvailableHeight()
+    if (availableHeight === null) return
 
     let best = null
 
@@ -31,6 +68,8 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
     // to the right), making scrollHeight === clientHeight regardless of content
     // size — the check is blind. With height:auto + column-fill:balance (default),
     // the rendered height ≈ total_content / N, which we compare to availableHeight.
+    const shadow = shadowRef?.current
+    if (!shadow) return
     shadow.style.height = 'auto'
 
     for (let cols = 1; cols <= MAX_COLS; cols++) {
@@ -60,25 +99,73 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
       }
     }
 
-    setResult(best ?? { fitFontSize: MIN_FONT, fitColumns: MAX_COLS })
+    const result = best ?? { fitFontSize: MIN_FONT, fitColumns: MAX_COLS }
+    modeRef.current = 'auto'
+    setState({ ...result, ...computeFlags(result.fitFontSize, availableHeight) })
+  }
+
+  function increaseFontSize() {
+    setState(prev => {
+      if (!prev.canIncrease || prev.fitFontSize === null) return prev
+      const availableHeight = getAvailableHeight()
+      if (availableHeight === null) return prev
+      const nextFont = Math.min(prev.fitFontSize + STEP, MAX_FONT)
+      const cols = deriveColumnsForFont(nextFont, availableHeight)
+      if (cols === null) return prev
+      modeRef.current = 'manual'
+      return { fitFontSize: nextFont, fitColumns: cols, ...computeFlags(nextFont, availableHeight) }
+    })
+  }
+
+  function decreaseFontSize() {
+    setState(prev => {
+      if (!prev.canDecrease || prev.fitFontSize === null) return prev
+      const availableHeight = getAvailableHeight()
+      if (availableHeight === null) return prev
+      const nextFont = Math.max(prev.fitFontSize - STEP, MIN_FONT)
+      const cols = deriveColumnsForFont(nextFont, availableHeight) ?? MAX_COLS
+      modeRef.current = 'manual'
+      return { fitFontSize: nextFont, fitColumns: cols, ...computeFlags(nextFont, availableHeight) }
+    })
   }
 
   // Re-measure when enabled state or lyricsOnly changes
   useLayoutEffect(() => {
     if (!enabled) {
-      setResult({ fitFontSize: null, fitColumns: null })
+      setState({ fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false })
       return
     }
     measureRef.current()
+    // Guard against transitional layout on the very first pass (e.g. a freshly
+    // mounted `fixed inset-0` overlay tree). Re-measure once a full layout+paint
+    // cycle has actually completed, and correct the result if it changed.
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = requestAnimationFrame(() => measureRef.current())
+    })
+    return () => cancelAnimationFrame(rafRef.current)
   }, [enabled, lyricsOnly])
 
-  // ResizeObserver: re-measure on container size changes (debounced)
+  // ResizeObserver: re-measure on container size changes (debounced).
+  // In manual mode, keep the user's pinned font and only re-derive columns;
+  // in auto mode, re-run the full auto-fit search as before.
   useEffect(() => {
     if (!enabled || !containerRef?.current) return
     const el = containerRef.current
     const observer = new ResizeObserver(() => {
       clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => measureRef.current(), DEBOUNCE_MS)
+      timerRef.current = setTimeout(() => {
+        if (modeRef.current === 'manual') {
+          setState(prev => {
+            if (prev.fitFontSize === null) return prev
+            const availableHeight = getAvailableHeight()
+            if (availableHeight === null) return prev
+            const cols = deriveColumnsForFont(prev.fitFontSize, availableHeight) ?? MAX_COLS
+            return { fitFontSize: prev.fitFontSize, fitColumns: cols, ...computeFlags(prev.fitFontSize, availableHeight) }
+          })
+        } else {
+          measureRef.current()
+        }
+      }, DEBOUNCE_MS)
     })
     observer.observe(el)
     return () => {
@@ -87,5 +174,13 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
     }
   }, [enabled])
 
-  return { fitFontSize: result.fitFontSize, fitColumns: result.fitColumns, shadowRef }
+  return {
+    fitFontSize: state.fitFontSize,
+    fitColumns: state.fitColumns,
+    canIncrease: state.canIncrease,
+    canDecrease: state.canDecrease,
+    increaseFontSize,
+    decreaseFontSize,
+    shadowRef,
+  }
 }

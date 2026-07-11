@@ -17,14 +17,6 @@ vi.mock('../../../hooks/useTranspose', () => ({
   })),
 }))
 
-vi.mock('../../../hooks/useFitToScreen', () => ({
-  useFitToScreen: vi.fn(() => ({
-    fitFontSize: 18,
-    fitColumns: 2,
-    shadowRef: { current: null },
-  })),
-}))
-
 vi.mock('../../../lib/exportPdf', () => ({ exportLyricsPdf: vi.fn() }))
 
 vi.mock('../../../hooks/useRecording', () => ({
@@ -77,6 +69,10 @@ describe('SongList fitMode', () => {
         onEdit={vi.fn()}
         isFit={true}
         containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={2}
+        shadowRef={{ current: null }}
       />
     )
     expect(getByRole('heading', { name: 'Test' })).not.toBeNull()
@@ -97,6 +93,10 @@ describe('SongList fitMode', () => {
         onEdit={vi.fn()}
         isFit={true}
         containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={2}
+        shadowRef={{ current: null }}
       />
     )
     expect(getAllByRole('heading', { name: 'Test' })).toHaveLength(1)
@@ -115,6 +115,10 @@ describe('SongList fitMode', () => {
         onEdit={vi.fn()}
         isFit={true}
         containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={2}
+        shadowRef={{ current: null }}
       />
     )
     // Shadow div has position absolute and top -9999px

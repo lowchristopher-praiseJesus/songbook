@@ -16,6 +16,10 @@ export function SongView({
   onEdit,
   isFit,
   containerRef,
+  bodyRef,
+  fitFontSize,
+  fitColumns,
+  shadowRef,
 }) {
   const [sidebarOpen, setSidebarOpen] = useLocalStorage('songsheet_sections_panel_open', false)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -118,6 +122,10 @@ export function SongView({
             containerRef={containerRef}
             sectionRefs={sectionRefs.current}
             headerRef={headerRef}
+            bodyRef={bodyRef}
+            fitFontSize={fitFontSize}
+            fitColumns={fitColumns}
+            shadowRef={shadowRef}
           />
         </div>
       </div>

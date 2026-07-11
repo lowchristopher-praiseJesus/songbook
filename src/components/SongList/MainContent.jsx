@@ -4,6 +4,7 @@ import { useLibraryStore } from '../../store/libraryStore'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
+import { useFitToScreen } from '../../hooks/useFitToScreen'
 import { EmptyState } from './EmptyState'
 import { SongView } from './SongView'
 import { Modal } from '../UI/Modal'
@@ -53,6 +54,16 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
+  const bodyRef = useRef(null)
+  const {
+    fitFontSize,
+    fitColumns,
+    shadowRef,
+    canIncrease,
+    canDecrease,
+    increaseFontSize,
+    decreaseFontSize,
+  } = useFitToScreen({ enabled: isFit, containerRef, bodyRef, lyricsOnly })
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
 
@@ -258,14 +269,32 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          <button
-            type="button"
-            onClick={() => setIsFit(false)}
-            className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Exit maximize"
-          >
-            <ArrowsPointingInIcon className="w-5 h-5" />
-          </button>
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+            <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
+              <button
+                type="button"
+                onClick={increaseFontSize}
+                disabled={!canIncrease}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                aria-label="Increase font size"
+              >+</button>
+              <button
+                type="button"
+                onClick={decreaseFontSize}
+                disabled={!canDecrease}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                aria-label="Decrease font size"
+              >−</button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFit(false)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Exit maximize"
+            >
+              <ArrowsPointingInIcon className="w-5 h-5" />
+            </button>
+          </div>
           <div
             key={activeSongId}
             className={`h-full overflow-x-hidden
@@ -286,6 +315,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
               onEdit={() => setEditingSongId(activeSongId)}
               isFit={true}
               containerRef={containerRef}
+              bodyRef={bodyRef}
+              fitFontSize={fitFontSize}
+              fitColumns={fitColumns}
+              shadowRef={shadowRef}
             />
           </div>
         </div>

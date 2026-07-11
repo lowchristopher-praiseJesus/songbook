@@ -48,6 +48,10 @@ const baseProps = {
   onEdit: vi.fn(),
   isFit: false,
   containerRef: { current: null },
+  bodyRef: { current: null },
+  fitFontSize: null,
+  fitColumns: null,
+  shadowRef: { current: null },
 }
 
 describe('SongView', () => {

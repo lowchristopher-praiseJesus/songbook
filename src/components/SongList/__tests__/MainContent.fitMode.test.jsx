@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MainContent } from '../MainContent'
 
@@ -46,6 +46,22 @@ vi.mock('../../../hooks/useAutoScroll', () => ({
   useAutoScroll: vi.fn(() => ({ isScrolling: false, start: vi.fn(), stop: vi.fn() })),
 }))
 
+const mockIncreaseFontSize = vi.fn()
+const mockDecreaseFontSize = vi.fn()
+let fitToScreenMock = {
+  fitFontSize: 18,
+  fitColumns: 2,
+  shadowRef: { current: null },
+  canIncrease: true,
+  canDecrease: true,
+  increaseFontSize: mockIncreaseFontSize,
+  decreaseFontSize: mockDecreaseFontSize,
+}
+
+vi.mock('../../../hooks/useFitToScreen', () => ({
+  useFitToScreen: vi.fn(() => fitToScreenMock),
+}))
+
 // Stub SongView to avoid deep rendering
 vi.mock('../SongView', () => ({
   SongView: vi.fn(({ isFit }) => <div data-testid="song-view" data-is-fit={String(isFit)} />),
@@ -56,6 +72,20 @@ vi.mock('../PerformanceMode/PerformanceModal', () => ({
 }))
 
 describe('MainContent maximize button', () => {
+  beforeEach(() => {
+    fitToScreenMock = {
+      fitFontSize: 18,
+      fitColumns: 2,
+      shadowRef: { current: null },
+      canIncrease: true,
+      canDecrease: true,
+      increaseFontSize: mockIncreaseFontSize,
+      decreaseFontSize: mockDecreaseFontSize,
+    }
+    mockIncreaseFontSize.mockClear()
+    mockDecreaseFontSize.mockClear()
+  })
+
   it('renders the maximize button when a song is active', () => {
     render(
       <MainContent
@@ -98,7 +128,7 @@ describe('MainContent maximize button', () => {
     expect(screen.getByTestId('song-view').dataset.isFit).toBe('true')
   })
 
-  it('hides the floating controls pill while fit mode is active', () => {
+  it('hides the draggable floating controls pill while fit mode is active', () => {
     render(
       <MainContent
         onAddToast={vi.fn()}
@@ -109,8 +139,71 @@ describe('MainContent maximize button', () => {
       />
     )
     fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    expect(screen.queryByLabelText('Increase font size')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Decrease font size')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Fit song to screen')).not.toBeInTheDocument()
+  })
+
+  it('shows an active font-size pill next to the exit button while maximized', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(screen.getByLabelText('Increase font size')).toBeInTheDocument()
+    expect(screen.getByLabelText('Decrease font size')).toBeInTheDocument()
+  })
+
+  it('calls increaseFontSize/decreaseFontSize when the maximize-mode pill buttons are clicked', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    fireEvent.click(screen.getByLabelText('Increase font size'))
+    expect(mockIncreaseFontSize).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByLabelText('Decrease font size'))
+    expect(mockDecreaseFontSize).toHaveBeenCalledTimes(1)
+  })
+
+  it('disables the increase button when canIncrease is false', () => {
+    fitToScreenMock = { ...fitToScreenMock, canIncrease: false }
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(screen.getByLabelText('Increase font size')).toBeDisabled()
+    expect(screen.getByLabelText('Decrease font size')).not.toBeDisabled()
+  })
+
+  it('disables the decrease button when canDecrease is false', () => {
+    fitToScreenMock = { ...fitToScreenMock, canDecrease: false }
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(screen.getByLabelText('Decrease font size')).toBeDisabled()
+    expect(screen.getByLabelText('Increase font size')).not.toBeDisabled()
   })
 
   it('shows an exit maximize button in the overlay while fit mode is active', () => {

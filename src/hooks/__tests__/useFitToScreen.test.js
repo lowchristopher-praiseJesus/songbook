@@ -23,6 +23,30 @@ function makeShadowEl({ fits = true } = {}) {
   return el
 }
 
+// A mock shadow whose reported height depends on the currently-set --fit-fs value,
+// so tests can simulate "this exact font size fits at N columns" scenarios.
+function makeFontAwareShadowEl({ fitsBelow } = { fitsBelow: 20 }) {
+  let currentFont = 16
+  const el = {
+    style: {
+      columnCount: 1,
+      height: '',
+      setProperty: vi.fn((prop, value) => {
+        if (prop === '--fit-fs') currentFont = parseInt(value, 10)
+      }),
+    },
+    getBoundingClientRect: () => ({ height: currentFont <= fitsBelow ? 0 : 9999 }),
+  }
+  return el
+}
+
+async function flushRaf() {
+  await act(async () => {
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    await new Promise(resolve => requestAnimationFrame(resolve))
+  })
+}
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', vi.fn(() => ({
     observe: vi.fn(),
@@ -137,5 +161,138 @@ describe('useFitToScreen', () => {
 
     unmount()
     expect(disconnectSpy).toHaveBeenCalled()
+  })
+
+  it('self-corrects a transitional first-pass measurement via double rAF', async () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+      { initialProps: { enabled: false } }
+    )
+
+    // First synchronous measurement reports "doesn't fit" (transitional layout);
+    // by the time the rAF-deferred re-measure runs, geometry has "settled" and fits.
+    // `passCount` increments each time the column sweep restarts at cols=1, which
+    // happens exactly once per top-level measure invocation (measureAuto or
+    // deriveColumnsForFont) — so the first full measureAuto pass (plus its
+    // trailing canIncrease probe) accounts for passCount values 1 and 2, and the
+    // rAF-deferred re-measure is the first pass to see passCount > 2.
+    let passCount = 0
+    let col = 1
+    result.current.shadowRef.current = {
+      style: {
+        height: '',
+        setProperty: vi.fn(),
+        get columnCount() { return col },
+        set columnCount(v) {
+          col = v
+          if (v === 1) passCount += 1
+        },
+      },
+      getBoundingClientRect: () => ({ height: passCount > 2 ? 0 : 9999 }),
+    }
+
+    act(() => rerender({ enabled: true }))
+    expect(result.current.fitFontSize).toBe(10)
+    expect(result.current.fitColumns).toBe(4)
+
+    await flushRaf()
+
+    expect(result.current.fitFontSize).toBeGreaterThan(10)
+    expect(result.current.fitColumns).toBe(1)
+  })
+
+  describe('manual font-size override', () => {
+    function setup({ fitsBelow = 20 } = {}) {
+      const containerRef = makeContainerRef()
+      const bodyRef = makeBodyRef()
+      const { result, rerender } = renderHook(
+        ({ enabled }) =>
+          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        { initialProps: { enabled: false } }
+      )
+      result.current.shadowRef.current = makeFontAwareShadowEl({ fitsBelow })
+      act(() => rerender({ enabled: true }))
+      return { result, rerender }
+    }
+
+    it('increaseFontSize bumps the font and re-derives columns for it', async () => {
+      const { result } = setup({ fitsBelow: 30 }) // everything fits at 1 column initially
+      await flushRaf()
+      const before = result.current.fitFontSize
+      act(() => result.current.increaseFontSize())
+      expect(result.current.fitFontSize).toBe(Math.min(before + 2, 28))
+      expect(result.current.fitColumns).toBe(1)
+    })
+
+    it('decreaseFontSize lowers the font and re-derives columns for it', async () => {
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      const before = result.current.fitFontSize
+      act(() => result.current.decreaseFontSize())
+      expect(result.current.fitFontSize).toBe(before - 2)
+    })
+
+    it('canIncrease is false once the font is at MAX_FONT', async () => {
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      // Keep increasing until we hit the ceiling
+      for (let i = 0; i < 20 && result.current.canIncrease; i++) {
+        act(() => result.current.increaseFontSize())
+      }
+      expect(result.current.fitFontSize).toBe(28)
+      expect(result.current.canIncrease).toBe(false)
+    })
+
+    it('canDecrease is false once the font is at MIN_FONT', async () => {
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      for (let i = 0; i < 20 && result.current.canDecrease; i++) {
+        act(() => result.current.decreaseFontSize())
+      }
+      expect(result.current.fitFontSize).toBe(10)
+      expect(result.current.canDecrease).toBe(false)
+    })
+
+    it('canIncrease is false when no column count fits the next font step', async () => {
+      // Only fonts <= 16 fit at any column count
+      const { result } = setup({ fitsBelow: 16 })
+      await flushRaf()
+      expect(result.current.fitFontSize).toBeLessThanOrEqual(16)
+      expect(result.current.canIncrease).toBe(false)
+    })
+
+    it('resize while in manual mode re-derives columns for the pinned font instead of re-running full auto search', async () => {
+      const containerRef = makeContainerRef()
+      const bodyRef = makeBodyRef()
+      let resizeCallback = null
+      vi.stubGlobal('ResizeObserver', vi.fn((cb) => {
+        resizeCallback = cb
+        return { observe: vi.fn(), disconnect: vi.fn() }
+      }))
+
+      const { result, rerender } = renderHook(
+        ({ enabled }) =>
+          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        { initialProps: { enabled: false } }
+      )
+      result.current.shadowRef.current = makeFontAwareShadowEl({ fitsBelow: 30 })
+      act(() => rerender({ enabled: true }))
+      await flushRaf()
+
+      act(() => result.current.increaseFontSize())
+      const pinnedFont = result.current.fitFontSize
+
+      act(() => resizeCallback())
+      // Advance past the debounce delay (real timers are used in this suite)
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 150))
+      })
+
+      expect(result.current.fitFontSize).toBe(pinnedFont)
+    })
   })
 })

@@ -1,6 +1,5 @@
-import { useRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
-import { useFitToScreen } from '../../hooks/useFitToScreen'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
@@ -30,21 +29,18 @@ export function SongList({
   containerRef,
   sectionRefs,
   headerRef,
+  bodyRef,
+  fitFontSize,
+  fitColumns,
+  shadowRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
   }, [fontSize])
-  const bodyRef = useRef(null)
   const [annotationsVisible, setAnnotationsVisible] = useLocalStorage('songsheet_annotations_visible', true)
   const [panelOpen, setPanelOpen] = useState(false)
-  const { fitFontSize, fitColumns, shadowRef } = useFitToScreen({
-    enabled: isFit,
-    containerRef,
-    bodyRef,
-    lyricsOnly,
-  })
 
   const recording = useRecording({
     songId: song.id ?? '',
