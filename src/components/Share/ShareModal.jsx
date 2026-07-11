@@ -223,6 +223,10 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       return;
     }
     if (locked) {
+      if (!hasPin) {
+        setPinError('This link predates PIN protection and can\'t be unlocked. Use "New Link" instead.');
+        return;
+      }
       setPinInputMode('enter');
       return;
     }
@@ -293,6 +297,11 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
         setPinAttempts(a => a + 1);
         setPinError('Incorrect PIN.');
         setPinValue('');
+        setLockStatus('idle');
+      } else if (err.code === 'pin_required') {
+        setPinInputMode('none');
+        setPinValue('');
+        setPinError('This link predates PIN protection and can\'t be unlocked. Use "New Link" instead.');
         setLockStatus('idle');
       } else {
         console.error('[ShareModal] unlock failed:', err);

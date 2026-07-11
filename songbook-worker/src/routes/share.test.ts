@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 
 const ORIGIN = 'http://localhost:5173';
 
@@ -249,6 +249,19 @@ describe('PATCH /share/:code/lock', () => {
     });
     const buf = new Uint8Array(await getRes.arrayBuffer());
     expect(buf).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it('returns 400 when trying to unlock a legacy locked share with no pin ever set', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('legacy-locked-no-pin', new Uint8Array([1, 2, 3]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), version: '1', locked: 'true' },
+    });
+    const res = await SELF.fetch('http://localhost/share/legacy-locked-no-pin/lock', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    expect(res.status).toBe(400);
   });
 });
 

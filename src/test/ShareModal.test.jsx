@@ -239,6 +239,19 @@ describe('ShareModal — update mode', () => {
     expect(screen.getByText(/push update is disabled — this link is locked/i)).toBeInTheDocument();
   });
 
+  it('clicking Lock link on a legacy locked share with no pin shows an explanatory message instead of a PIN entry', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: false });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    expect(screen.getByText(/predates pin protection/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText('PIN')).not.toBeInTheDocument();
+    expect(setShareLocked).not.toHaveBeenCalled();
+  });
+
   it('clicking Lock link on a never-locked share opens an inline PIN entry instead of calling setShareLocked', async () => {
     checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: false });
     renderWithLicense(
