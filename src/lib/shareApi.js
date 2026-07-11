@@ -3,15 +3,18 @@ if (!WORKER_URL && import.meta.env.DEV) {
   console.warn('VITE_WORKER_URL is not set. Create .env.local with VITE_WORKER_URL=https://...');
 }
 
-export async function uploadShare(blob, expiresInDays = 7, turnstileToken, locked = false) {
+export async function uploadShare(blob, expiresInDays = 7, turnstileToken, locked = false, pin = null) {
+  const headers = {
+    'Content-Type': 'application/zip',
+    'X-Expires-In-Days': String(expiresInDays),
+    'X-Turnstile-Token': turnstileToken,
+    'X-Locked': String(locked),
+  };
+  if (locked && pin) headers['X-Lock-Pin'] = pin;
+
   const res = await fetch(`${WORKER_URL}/share/upload`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/zip',
-      'X-Expires-In-Days': String(expiresInDays),
-      'X-Turnstile-Token': turnstileToken,
-      'X-Locked': String(locked),
-    },
+    headers,
     body: blob,
   });
   if (!res.ok) {
@@ -41,7 +44,8 @@ export async function checkShareVersion(shareCode) {
   if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });
   const version = Number(res.headers.get('X-Share-Version') ?? 1);
   const locked = res.headers.get('X-Share-Locked') === 'true';
-  return { version, locked };
+  const hasPin = res.headers.get('X-Share-Has-Pin') === 'true';
+  return { version, locked, hasPin };
 }
 
 export async function updateShare(shareCode, blob) {
@@ -57,14 +61,16 @@ export async function updateShare(shareCode, blob) {
   return res.json();
 }
 
-export async function setShareLocked(shareCode, locked) {
+export async function setShareLocked(shareCode, locked, pin = null) {
   const res = await fetch(`${WORKER_URL}/share/${shareCode}/lock`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ locked }),
+    body: JSON.stringify(pin ? { locked, pin } : { locked }),
   });
   if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
+  if (res.status === 403) throw Object.assign(new Error('invalid_pin'), { code: 'invalid_pin' });
+  if (res.status === 400) throw Object.assign(new Error('pin_required'), { code: 'pin_required' });
   if (!res.ok) throw Object.assign(new Error('lock_failed'), { code: 'lock_failed' });
   return res.json();
 }
