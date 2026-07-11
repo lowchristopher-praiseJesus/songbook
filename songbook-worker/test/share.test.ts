@@ -104,6 +104,72 @@ describe('getShareIfValid — locked field', () => {
   });
 });
 
+describe('putShare — pin metadata', () => {
+  it('does not write pinHash/pinSalt when not passed', async () => {
+    const body = new Uint8Array([1, 2, 3]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await putShare(env.R2_BUCKET, 'test-put-no-pin', body, expiresAt);
+
+    const obj = await env.R2_BUCKET.head('test-put-no-pin');
+    expect(obj?.customMetadata?.pinHash).toBeUndefined();
+    expect(obj?.customMetadata?.pinSalt).toBeUndefined();
+  });
+
+  it('writes pinHash/pinSalt when passed', async () => {
+    const body = new Uint8Array([1, 2, 3]);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await putShare(env.R2_BUCKET, 'test-put-pin', body, expiresAt, 1, true, 'somehash', 'somesalt');
+
+    const obj = await env.R2_BUCKET.head('test-put-pin');
+    expect(obj?.customMetadata?.pinHash).toBe('somehash');
+    expect(obj?.customMetadata?.pinSalt).toBe('somesalt');
+  });
+});
+
+describe('headShare — pin fields', () => {
+  it('returns hasPin: false and no pinHash/pinSalt when none stored', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('head-no-pin', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString() },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-no-pin');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.hasPin).toBe(false);
+      expect(result.pinHash).toBeUndefined();
+    }
+  });
+
+  it('returns hasPin: true and the stored pinHash/pinSalt', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('head-pin', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), pinHash: 'abc', pinSalt: 'def' },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-pin');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.hasPin).toBe(true);
+      expect(result.pinHash).toBe('abc');
+      expect(result.pinSalt).toBe('def');
+    }
+  });
+});
+
+describe('getShareIfValid — hasPin field', () => {
+  it('surfaces hasPin from the underlying head', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('valid-pin', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), pinHash: 'abc', pinSalt: 'def' },
+    });
+    const result = await getShareIfValid(env.R2_BUCKET, 'valid-pin');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.hasPin).toBe(true);
+      await result.object.arrayBuffer(); // consume stream to avoid isolated-storage leak
+    }
+  });
+});
+
 describe('POST /share/upload', () => {
   it('stores blob and returns shareCode, shareUrl, expiresAt', async () => {
     const res = await SELF.fetch('http://example.com/share/upload', {

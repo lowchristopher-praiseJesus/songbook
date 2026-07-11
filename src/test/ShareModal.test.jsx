@@ -10,7 +10,7 @@ vi.mock('../hooks/useTurnstile', () => ({
 vi.mock('../lib/shareApi', () => ({
   uploadShare: vi.fn(),
   updateShare: vi.fn(),
-  checkShareVersion: vi.fn().mockResolvedValue({ version: 1, locked: false }),
+  checkShareVersion: vi.fn().mockResolvedValue({ version: 1, locked: false, hasPin: false }),
   setShareLocked: vi.fn().mockResolvedValue({ locked: true }),
 }));
 vi.mock('../lib/exportSbp', () => ({ exportSongsAsSbp: vi.fn(), computeExportId: vi.fn().mockReturnValue(1) }));
@@ -146,7 +146,7 @@ describe('ShareModal', () => {
     expect(toggle).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('passes locked=true to uploadShare when "Lock link" is checked before Create link', async () => {
+  it('passes locked=true and the pin to uploadShare after setting a PIN and clicking Create link', async () => {
     uploadShare.mockResolvedValue({
       shareCode: 'x',
       shareUrl: 'http://app?share=x',
@@ -154,9 +154,11 @@ describe('ShareModal', () => {
     });
     renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('switch', { name: /lock link/i }));
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lock' }));
     fireEvent.click(screen.getByText('Create link'));
     await screen.findByDisplayValue('http://app?share=x');
-    expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 7, 'mock-token', true);
+    expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 7, 'mock-token', true, '1234');
   });
 });
 
@@ -202,6 +204,10 @@ describe('ShareModal — self-direct conductor path', () => {
 
 describe('ShareModal — update mode', () => {
   beforeEach(() => {
+    // Several tests in this block assert exact call counts (e.g. `not.toHaveBeenCalled()`)
+    // on shareApi mocks — clear call history (not implementations) so tests are order-independent.
+    setShareLocked.mockClear();
+    checkShareVersion.mockClear();
     useLibraryStore.setState({
       collections: [{
         id: 'coll-1',
@@ -233,17 +239,74 @@ describe('ShareModal — update mode', () => {
     expect(screen.getByText(/push update is disabled — this link is locked/i)).toBeInTheDocument();
   });
 
-  it('toggling "Lock link" in update mode calls setShareLocked immediately', async () => {
+  it('clicking Lock link on a legacy locked share with no pin shows an explanatory message instead of a PIN entry', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: false });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    expect(screen.getByText(/predates pin protection/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText('PIN')).not.toBeInTheDocument();
+    expect(setShareLocked).not.toHaveBeenCalled();
+  });
+
+  it('clicking Lock link on a never-locked share opens an inline PIN entry instead of calling setShareLocked', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: false });
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
     );
     const toggle = await screen.findByRole('switch', { name: /lock link/i });
     await waitFor(() => expect(toggle).not.toBeDisabled());
     fireEvent.click(toggle);
+    expect(screen.getByLabelText('PIN')).toBeInTheDocument();
+    expect(setShareLocked).not.toHaveBeenCalled();
+  });
+
+  it('submitting a valid PIN locks a never-locked share', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: false });
+    setShareLocked.mockResolvedValueOnce({ locked: true });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).not.toBeDisabled());
+    fireEvent.click(toggle);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lock' }));
+    await waitFor(() => expect(setShareLocked).toHaveBeenCalledWith('abc-123', true, '1234'));
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+  });
+
+  it('shows a format error for a non-4-digit PIN without calling the server', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: false });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).not.toBeDisabled());
+    fireEvent.click(toggle);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lock' }));
+    expect(screen.getByText(/enter a 4-digit pin/i)).toBeInTheDocument();
+    expect(setShareLocked).not.toHaveBeenCalled();
+  });
+
+  it('toggling Lock link on a previously-PIN-protected, currently-unlocked share re-locks silently', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: true });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).not.toBeDisabled());
+    fireEvent.click(toggle);
+    expect(screen.queryByLabelText('PIN')).not.toBeInTheDocument();
     await waitFor(() => expect(setShareLocked).toHaveBeenCalledWith('abc-123', true));
   });
 
-  it('reverts the toggle and shows an error if setShareLocked fails', async () => {
+  it('reverts the toggle and shows an error if the silent re-lock fails', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: true });
     setShareLocked.mockRejectedValueOnce(Object.assign(new Error('lock_failed'), { code: 'lock_failed' }));
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
@@ -253,6 +316,54 @@ describe('ShareModal — update mode', () => {
     fireEvent.click(toggle);
     await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'false'));
     expect(screen.getByText(/couldn't update lock/i)).toBeInTheDocument();
+  });
+
+  it('unlocking with the correct PIN clears the lock and enables Push Update', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: true });
+    setShareLocked.mockResolvedValueOnce({ locked: false });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    await waitFor(() => expect(setShareLocked).toHaveBeenCalledWith('abc-123', false, '1234'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+  });
+
+  it('unlocking with the wrong PIN shows an inline error and keeps the link locked', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: true });
+    setShareLocked.mockRejectedValueOnce(Object.assign(new Error('invalid_pin'), { code: 'invalid_pin' }));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9999' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    expect(await screen.findByText(/incorrect pin/i)).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByLabelText('PIN')).toBeInTheDocument();
+  });
+
+  it('shows a hint to use New Link after 3 wrong PIN attempts', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: true });
+    setShareLocked.mockRejectedValue(Object.assign(new Error('invalid_pin'), { code: 'invalid_pin' }));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    for (let i = 0; i < 3; i++) {
+      fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9999' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+      await screen.findByText(/incorrect pin/i);
+    }
+    expect(screen.getByText(/forgot your pin/i)).toBeInTheDocument();
   });
 
   it('shows a locked-specific error when Push Update hits a 423 mid-flight', async () => {
@@ -309,5 +420,53 @@ describe('ShareModal — update mode', () => {
     fireEvent.click(screen.getByRole('button', { name: /new link/i }));
     await waitFor(() => expect(uploadShare).toHaveBeenCalled());
     expect(await screen.findByDisplayValue('http://app?share=new-code')).toBeInTheDocument();
+  });
+
+  it('shows "re-locked" message when Push Update response includes locked: true', async () => {
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString(), locked: true });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    expect(await screen.findByText(/link updated and re-locked/i)).toBeInTheDocument();
+  });
+
+  it('New Link resets lock state to unlocked even if the current link is locked', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: true });
+    uploadShare.mockResolvedValue({
+      shareCode: 'new-code',
+      shareUrl: 'http://app?share=new-code',
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+    });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('switch', { name: /lock link/i })).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(screen.getByRole('button', { name: /new link/i }));
+    await waitFor(() => expect(uploadShare).toHaveBeenCalled());
+    expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 7, 'mock-token', false, null);
+  });
+
+  it('closing the modal after unlocking without pushing re-locks the share silently', async () => {
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true, hasPin: true });
+    setShareLocked.mockResolvedValueOnce({ locked: false });
+    const onClose = vi.fn();
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={onClose} />
+    );
+    const toggle = await screen.findByRole('switch', { name: /lock link/i });
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+    fireEvent.click(toggle);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'false'));
+
+    setShareLocked.mockResolvedValueOnce({ locked: true });
+    fireEvent.click(screen.getByText('Cancel'));
+    await waitFor(() => expect(setShareLocked).toHaveBeenCalledWith('abc-123', true));
+    expect(onClose).toHaveBeenCalled();
   });
 });

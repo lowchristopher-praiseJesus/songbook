@@ -5,13 +5,19 @@ export async function putShare(
   expiresAt: Date,
   version = 1,
   locked = false,
+  pinHash?: string,
+  pinSalt?: string,
 ): Promise<void> {
+  const customMetadata: Record<string, string> = {
+    expiresAt: expiresAt.toISOString(),
+    version: String(version),
+    locked: String(locked),
+  };
+  if (pinHash) customMetadata.pinHash = pinHash;
+  if (pinSalt) customMetadata.pinSalt = pinSalt;
+
   await bucket.put(shareCode, body, {
-    customMetadata: {
-      expiresAt: expiresAt.toISOString(),
-      version: String(version),
-      locked: String(locked),
-    },
+    customMetadata,
     httpMetadata: { contentType: 'application/zip' },
   });
 }
@@ -20,7 +26,8 @@ export async function headShare(
   bucket: R2Bucket,
   shareCode: string,
 ): Promise<
-  { version: number; expiresAt: Date; locked: boolean } | { error: 'not_found' | 'expired' }
+  | { version: number; expiresAt: Date; locked: boolean; hasPin: boolean; pinHash?: string; pinSalt?: string }
+  | { error: 'not_found' | 'expired' }
 > {
   const head = await bucket.head(shareCode);
   if (!head) return { error: 'not_found' };
@@ -30,10 +37,16 @@ export async function headShare(
     return { error: 'expired' };
   }
 
+  const pinHash = head.customMetadata?.pinHash;
+  const pinSalt = head.customMetadata?.pinSalt;
+
   return {
     version: Number(head.customMetadata?.version ?? 1),
     expiresAt,
     locked: head.customMetadata?.locked === 'true',
+    hasPin: pinHash != null,
+    pinHash,
+    pinSalt,
   };
 }
 
@@ -41,14 +54,14 @@ export async function getShareIfValid(
   bucket: R2Bucket,
   shareCode: string,
 ): Promise<
-  { object: R2ObjectBody; version: number; locked: boolean } | { error: 'not_found' | 'expired' }
+  { object: R2ObjectBody; version: number; locked: boolean; hasPin: boolean } | { error: 'not_found' | 'expired' }
 > {
   const head = await headShare(bucket, shareCode);
   if ('error' in head) return head;
 
   const object = await bucket.get(shareCode);
   if (!object) return { error: 'not_found' };
-  return { object, version: head.version, locked: head.locked };
+  return { object, version: head.version, locked: head.locked, hasPin: head.hasPin };
 }
 
 // ── Album helpers ────────────────────────────────────────────────────────────

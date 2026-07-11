@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 
 const ORIGIN = 'http://localhost:5173';
 
@@ -84,13 +84,33 @@ describe('GET /share/:code', () => {
 });
 
 describe('PATCH /share/:code/lock', () => {
-  it('locks a share and PUT is then rejected with 423', async () => {
+  it('requires a pin to lock a never-locked share', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a malformed pin when locking', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: 'abcd' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('locks a share with a valid pin and PUT is then rejected with 423', async () => {
     const { shareCode } = await createShare();
 
     const lockRes = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
-      body: JSON.stringify({ locked: true }),
+      body: JSON.stringify({ locked: true, pin: '1234' }),
     });
     expect(lockRes.status).toBe(200);
     expect(await lockRes.json()).toEqual({ locked: true });
@@ -104,18 +124,60 @@ describe('PATCH /share/:code/lock', () => {
     expect(await putRes.json()).toEqual({ error: 'locked' });
   });
 
-  it('unlocks a share and PUT succeeds again', async () => {
+  it('rejects unlock with no pin', async () => {
     const { shareCode } = await createShare();
     await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
-      body: JSON.stringify({ locked: true }),
+      body: JSON.stringify({ locked: true, pin: '1234' }),
     });
-    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
       body: JSON.stringify({ locked: false }),
     });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects unlock with the wrong pin, share stays locked', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+
+    const wrongRes = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '9999' }),
+    });
+    expect(wrongRes.status).toBe(403);
+    expect(await wrongRes.json()).toEqual({ error: 'invalid_pin' });
+
+    const putRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/zip', Origin: ORIGIN },
+      body: new Uint8Array([4, 5, 6]),
+    });
+    expect(putRes.status).toBe(423);
+  });
+
+  it('unlocks a share with the correct pin and PUT succeeds again', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    const unlockRes = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    expect(unlockRes.status).toBe(200);
+    expect(await unlockRes.json()).toEqual({ locked: false });
 
     const putRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
       method: 'PUT',
@@ -125,11 +187,41 @@ describe('PATCH /share/:code/lock', () => {
     expect(putRes.status).toBe(200);
   });
 
+  it('re-locking an already-PIN-protected share does not require a pin', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+
+    const relockRes = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true }),
+    });
+    expect(relockRes.status).toBe(200);
+    expect(await relockRes.json()).toEqual({ locked: true });
+
+    // The original pin still works to unlock it again.
+    const unlockRes = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    expect(unlockRes.status).toBe(200);
+  });
+
   it('returns 404 for a non-existent share code', async () => {
     const res = await SELF.fetch('http://localhost/share/does-not-exist/lock', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
-      body: JSON.stringify({ locked: true }),
+      body: JSON.stringify({ locked: true, pin: '1234' }),
     });
     expect(res.status).toBe(404);
   });
@@ -144,12 +236,12 @@ describe('PATCH /share/:code/lock', () => {
     expect(res.status).toBe(400);
   });
 
-  it('preserves the stored blob content after a lock toggle', async () => {
+  it('preserves the stored blob content after a lock/unlock cycle', async () => {
     const { shareCode } = await createShare();
     await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
-      body: JSON.stringify({ locked: true }),
+      body: JSON.stringify({ locked: true, pin: '1234' }),
     });
 
     const getRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
@@ -157,6 +249,19 @@ describe('PATCH /share/:code/lock', () => {
     });
     const buf = new Uint8Array(await getRes.arrayBuffer());
     expect(buf).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it('returns 400 when trying to unlock a legacy locked share with no pin ever set', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('legacy-locked-no-pin', new Uint8Array([1, 2, 3]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), version: '1', locked: 'true' },
+    });
+    const res = await SELF.fetch('http://localhost/share/legacy-locked-no-pin/lock', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    expect(res.status).toBe(400);
   });
 });
 
@@ -175,7 +280,7 @@ describe('HEAD/GET /share/:code — X-Share-Locked header', () => {
     await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
-      body: JSON.stringify({ locked: true }),
+      body: JSON.stringify({ locked: true, pin: '1234' }),
     });
     const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
       method: 'HEAD',
@@ -198,8 +303,8 @@ describe('HEAD/GET /share/:code — X-Share-Locked header', () => {
 });
 
 describe('POST /share/upload — X-Locked header', () => {
-  it('creates a pre-locked share when X-Locked: true is sent', async () => {
-    const { shareCode } = await createShare({ 'X-Locked': 'true' });
+  it('creates a pre-locked share when X-Locked: true is sent with a PIN', async () => {
+    const { shareCode } = await createShare({ 'X-Locked': 'true', 'X-Lock-Pin': '5678' });
     const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
       method: 'HEAD',
       headers: { Origin: ORIGIN },
@@ -214,5 +319,193 @@ describe('POST /share/upload — X-Locked header', () => {
       headers: { Origin: ORIGIN },
     });
     expect(headRes.headers.get('X-Share-Locked')).toBe('false');
+  });
+});
+
+describe('PUT /share/:code — auto re-lock for PIN-protected shares', () => {
+  it('auto re-locks after a successful push and returns locked: true', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+
+    const putRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/zip', Origin: ORIGIN },
+      body: new Uint8Array([4, 5, 6]),
+    });
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({ locked: true });
+
+    const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(headRes.headers.get('X-Share-Locked')).toBe('true');
+  });
+
+  it('does not auto re-lock a share that has never been PIN-protected', async () => {
+    const { shareCode } = await createShare();
+    const putRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/zip', Origin: ORIGIN },
+      body: new Uint8Array([4, 5, 6]),
+    });
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({ locked: false });
+  });
+
+  it('a re-locked share requires the same pin to unlock again', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/zip', Origin: ORIGIN },
+      body: new Uint8Array([4, 5, 6]),
+    });
+
+    const wrongUnlock = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '9999' }),
+    });
+    expect(wrongUnlock.status).toBe(403);
+
+    const rightUnlock = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    expect(rightUnlock.status).toBe(200);
+  });
+});
+
+describe('POST /share/upload — X-Lock-Pin header', () => {
+  it('creates a pre-locked share with a pin when X-Locked: true and X-Lock-Pin are sent', async () => {
+    const { shareCode } = await createShare({ 'X-Locked': 'true', 'X-Lock-Pin': '1234' });
+    const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(headRes.headers.get('X-Share-Locked')).toBe('true');
+  });
+
+  it('returns 400 when X-Locked: true is sent without X-Lock-Pin', async () => {
+    const res = await SELF.fetch('http://localhost/share/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/zip',
+        Origin: ORIGIN,
+        'X-Turnstile-Token': 'test-token',
+        'X-Locked': 'true',
+      },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when X-Lock-Pin is not 4 digits', async () => {
+    const res = await SELF.fetch('http://localhost/share/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/zip',
+        Origin: ORIGIN,
+        'X-Turnstile-Token': 'test-token',
+        'X-Locked': 'true',
+        'X-Lock-Pin': 'abcd',
+      },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('a pre-locked share requires the pin set at creation to unlock', async () => {
+    const { shareCode } = await createShare({ 'X-Locked': 'true', 'X-Lock-Pin': '4321' });
+    const wrongUnlock = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '0000' }),
+    });
+    expect(wrongUnlock.status).toBe(403);
+
+    const rightUnlock = await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '4321' }),
+    });
+    expect(rightUnlock.status).toBe(200);
+  });
+});
+
+describe('HEAD/GET /share/:code — X-Share-Has-Pin header', () => {
+  it('HEAD exposes X-Share-Has-Pin: false by default', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('false');
+  });
+
+  it('HEAD exposes X-Share-Has-Pin: true after locking with a pin', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('true');
+  });
+
+  it('X-Share-Has-Pin stays true after unlocking (the pin is remembered)', async () => {
+    const { shareCode } = await createShare();
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: true, pin: '1234' }),
+    });
+    await SELF.fetch(`http://localhost/share/${shareCode}/lock`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ locked: false, pin: '1234' }),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Has-Pin')).toBe('true');
+    expect(res.headers.get('X-Share-Locked')).toBe('false');
+  });
+
+  it('GET exposes X-Share-Has-Pin and Access-Control-Expose-Headers includes it', async () => {
+    const { shareCode } = await createShare();
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      headers: { Origin: ORIGIN },
+    });
+    const exposeHeaders = res.headers.get('Access-Control-Expose-Headers') ?? '';
+    const hasPin = res.headers.get('X-Share-Has-Pin');
+    await res.arrayBuffer();
+    expect(hasPin).toBe('false');
+    expect(exposeHeaders).toContain('X-Share-Has-Pin');
   });
 });
