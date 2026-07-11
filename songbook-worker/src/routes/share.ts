@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../types';
 import { putShare, getShareIfValid, headShare } from '../lib/r2';
 import { verifyTurnstile } from '../middleware/turnstile';
+import { isValidPinFormat, generateSalt, hashPin } from '../lib/pin';
 
 const share = new Hono<{ Bindings: Env }>();
 
@@ -91,7 +92,7 @@ share.patch('/:code/lock', async (c) => {
     return c.json({ error: existing.error }, status);
   }
 
-  let payload: { locked?: unknown };
+  let payload: { locked?: unknown; pin?: unknown };
   try {
     payload = await c.req.json();
   } catch {
@@ -105,9 +106,33 @@ share.patch('/:code/lock', async (c) => {
   if (!object) return c.json({ error: 'not_found' }, 404);
   const body = await object.arrayBuffer();
 
-  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, payload.locked);
+  if (payload.locked === false) {
+    // Unlocking always requires the correct pin.
+    if (!existing.pinHash || !existing.pinSalt || !isValidPinFormat(payload.pin)) {
+      return c.json({ error: 'pin_required' }, 400);
+    }
+    const suppliedHash = await hashPin(payload.pin, existing.pinSalt);
+    if (suppliedHash !== existing.pinHash) {
+      return c.json({ error: 'invalid_pin' }, 403);
+    }
+    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, false, existing.pinHash, existing.pinSalt);
+    return c.json({ locked: false });
+  }
 
-  return c.json({ locked: payload.locked });
+  // Locking: re-locking a share that already has a pin reuses the existing hash silently.
+  if (existing.hasPin) {
+    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, true, existing.pinHash, existing.pinSalt);
+    return c.json({ locked: true });
+  }
+
+  // First-ever lock on this share: a pin must be supplied and stored.
+  if (!isValidPinFormat(payload.pin)) {
+    return c.json({ error: 'pin_required' }, 400);
+  }
+  const pinSalt = generateSalt();
+  const pinHash = await hashPin(payload.pin, pinSalt);
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, true, pinHash, pinSalt);
+  return c.json({ locked: true });
 });
 
 export default share;
