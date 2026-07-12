@@ -28,7 +28,7 @@ share.post('/upload', verifyTurnstile, async (c) => {
   if (body.byteLength > 10 * 1024 * 1024) return c.json({ error: 'too_large' }, 413);
 
   const shareCode = crypto.randomUUID();
-  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, 1, locked, pinHash, pinSalt);
+  await putShare(c.env.R2_BUCKET, shareCode, body, expiresAt, new Date(), 1, locked, pinHash, pinSalt);
 
   const shareUrl = `${c.env.APP_ORIGIN}?share=${shareCode}`;
   return c.json({ shareCode, shareUrl, expiresAt: expiresAt.toISOString() });
@@ -94,7 +94,7 @@ share.put('/:code', async (c) => {
   // A PIN-protected share re-locks itself on every successful push, so the
   // next push needs the PIN entered again too.
   const relock = existing.hasPin;
-  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, newVersion, relock, existing.pinHash, existing.pinSalt);
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.createdAt, newVersion, relock, existing.pinHash, existing.pinSalt);
 
   return c.json({ version: newVersion, updatedAt: updatedAt.toISOString(), locked: relock });
 });
@@ -131,13 +131,13 @@ share.patch('/:code/lock', async (c) => {
     if (suppliedHash !== existing.pinHash) {
       return c.json({ error: 'invalid_pin' }, 403);
     }
-    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, false, existing.pinHash, existing.pinSalt);
+    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.createdAt, existing.version, false, existing.pinHash, existing.pinSalt);
     return c.json({ locked: false });
   }
 
   // Locking: re-locking a share that already has a pin reuses the existing hash silently.
   if (existing.hasPin) {
-    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, true, existing.pinHash, existing.pinSalt);
+    await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.createdAt, existing.version, true, existing.pinHash, existing.pinSalt);
     return c.json({ locked: true });
   }
 
@@ -147,7 +147,7 @@ share.patch('/:code/lock', async (c) => {
   }
   const pinSalt = generateSalt();
   const pinHash = await hashPin(payload.pin, pinSalt);
-  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.version, true, pinHash, pinSalt);
+  await putShare(c.env.R2_BUCKET, shareCode, body, existing.expiresAt, existing.createdAt, existing.version, true, pinHash, pinSalt);
   return c.json({ locked: true });
 });
 

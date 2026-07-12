@@ -8,11 +8,13 @@ describe('putShare', () => {
   it('writes blob to R2 with expiresAt metadata', async () => {
     const body = new Uint8Array([1, 2, 3]);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await putShare(env.R2_BUCKET, 'test-put', body, expiresAt);
+    const createdAt = new Date();
+    await putShare(env.R2_BUCKET, 'test-put', body, expiresAt, createdAt);
 
     const obj = await env.R2_BUCKET.head('test-put');
     expect(obj).not.toBeNull();
     expect(obj?.customMetadata?.expiresAt).toBe(expiresAt.toISOString());
+    expect(obj?.customMetadata?.createdAt).toBe(createdAt.toISOString());
     expect(obj?.httpMetadata?.contentType).toBe('application/zip');
   });
 });
@@ -21,7 +23,7 @@ describe('putShare — locked metadata', () => {
   it('defaults locked to false when not passed', async () => {
     const body = new Uint8Array([1, 2, 3]);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await putShare(env.R2_BUCKET, 'test-put-default-lock', body, expiresAt);
+    await putShare(env.R2_BUCKET, 'test-put-default-lock', body, expiresAt, new Date());
 
     const obj = await env.R2_BUCKET.head('test-put-default-lock');
     expect(obj?.customMetadata?.locked).toBe('false');
@@ -30,7 +32,7 @@ describe('putShare — locked metadata', () => {
   it('writes locked: true when passed', async () => {
     const body = new Uint8Array([1, 2, 3]);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await putShare(env.R2_BUCKET, 'test-put-locked', body, expiresAt, 1, true);
+    await putShare(env.R2_BUCKET, 'test-put-locked', body, expiresAt, new Date(), 1, true);
 
     const obj = await env.R2_BUCKET.head('test-put-locked');
     expect(obj?.customMetadata?.locked).toBe('true');
@@ -89,6 +91,29 @@ describe('headShare — locked field', () => {
   });
 });
 
+describe('headShare — createdAt field', () => {
+  it('returns the stored createdAt when present', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const createdAt = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    await env.R2_BUCKET.put('head-created', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString(), createdAt: createdAt.toISOString() },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-created');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.createdAt.toISOString()).toBe(createdAt.toISOString());
+  });
+
+  it('falls back to the R2 upload timestamp for legacy shares with no createdAt metadata', async () => {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const putResult = await env.R2_BUCKET.put('head-legacy-created', new Uint8Array([1]), {
+      customMetadata: { expiresAt: expiresAt.toISOString() },
+    });
+    const result = await headShare(env.R2_BUCKET, 'head-legacy-created');
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.createdAt.toISOString()).toBe(putResult.uploaded.toISOString());
+  });
+});
+
 describe('getShareIfValid — locked field', () => {
   it('surfaces locked from the underlying head', async () => {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -108,7 +133,7 @@ describe('putShare — pin metadata', () => {
   it('does not write pinHash/pinSalt when not passed', async () => {
     const body = new Uint8Array([1, 2, 3]);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await putShare(env.R2_BUCKET, 'test-put-no-pin', body, expiresAt);
+    await putShare(env.R2_BUCKET, 'test-put-no-pin', body, expiresAt, new Date());
 
     const obj = await env.R2_BUCKET.head('test-put-no-pin');
     expect(obj?.customMetadata?.pinHash).toBeUndefined();
@@ -118,7 +143,7 @@ describe('putShare — pin metadata', () => {
   it('writes pinHash/pinSalt when passed', async () => {
     const body = new Uint8Array([1, 2, 3]);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await putShare(env.R2_BUCKET, 'test-put-pin', body, expiresAt, 1, true, 'somehash', 'somesalt');
+    await putShare(env.R2_BUCKET, 'test-put-pin', body, expiresAt, new Date(), 1, true, 'somehash', 'somesalt');
 
     const obj = await env.R2_BUCKET.head('test-put-pin');
     expect(obj?.customMetadata?.pinHash).toBe('somehash');
@@ -267,5 +292,23 @@ describe('GET /share/:code', () => {
     });
     expect(res.status).toBe(410);
     expect(await res.json()).toMatchObject({ error: 'expired' });
+  });
+});
+
+describe('PUT /share/:code — createdAt preservation', () => {
+  it('keeps the original createdAt across a push update', async () => {
+    const createdAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await putShare(env.R2_BUCKET, 'push-preserve', new Uint8Array([1]), expiresAt, createdAt);
+
+    const res = await SELF.fetch('http://example.com/share/push-preserve', {
+      method: 'PUT',
+      body: new Uint8Array([2, 2]),
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.status).toBe(200);
+
+    const obj = await env.R2_BUCKET.head('push-preserve');
+    expect(obj?.customMetadata?.createdAt).toBe(createdAt.toISOString());
   });
 });

@@ -3,6 +3,7 @@ export async function putShare(
   shareCode: string,
   body: ArrayBuffer | Uint8Array | ReadableStream,
   expiresAt: Date,
+  createdAt: Date,
   version = 1,
   locked = false,
   pinHash?: string,
@@ -10,6 +11,7 @@ export async function putShare(
 ): Promise<void> {
   const customMetadata: Record<string, string> = {
     expiresAt: expiresAt.toISOString(),
+    createdAt: createdAt.toISOString(),
     version: String(version),
     locked: String(locked),
   };
@@ -26,7 +28,7 @@ export async function headShare(
   bucket: R2Bucket,
   shareCode: string,
 ): Promise<
-  | { version: number; expiresAt: Date; locked: boolean; hasPin: boolean; pinHash?: string; pinSalt?: string }
+  | { version: number; expiresAt: Date; createdAt: Date; locked: boolean; hasPin: boolean; pinHash?: string; pinSalt?: string }
   | { error: 'not_found' | 'expired' }
 > {
   const head = await bucket.head(shareCode);
@@ -40,9 +42,16 @@ export async function headShare(
   const pinHash = head.customMetadata?.pinHash;
   const pinSalt = head.customMetadata?.pinSalt;
 
+  // Shares written before the createdAt field existed fall back to R2's own
+  // upload timestamp — the best available approximation for those legacy
+  // objects until they're next written (which stamps a real createdAt).
+  const storedCreatedAt = new Date(head.customMetadata?.createdAt ?? '');
+  const createdAt = isNaN(storedCreatedAt.getTime()) ? head.uploaded : storedCreatedAt;
+
   return {
     version: Number(head.customMetadata?.version ?? 1),
     expiresAt,
+    createdAt,
     locked: head.customMetadata?.locked === 'true',
     hasPin: pinHash != null,
     pinHash,
