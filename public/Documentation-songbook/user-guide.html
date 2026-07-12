@@ -435,23 +435,6 @@
       margin: 24px auto;
     }
 
-    /* Screenshot filename label (for recapture reference) */
-    .screenshot-filename {
-      display: block;
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .72rem;
-      color: #fff;
-      background: #4338ca;
-      opacity: .85;
-      padding: 2px 8px;
-      border-radius: 20px;
-      width: fit-content;
-      margin: -14px auto 24px;
-      position: relative;
-      z-index: 1;
-    }
-
     /* Side-by-side screenshot pair */
     .screenshot-pair {
       display: flex;
@@ -888,7 +871,6 @@
         <p>Everything lives in your browser; there is no account to create and no data is sent to any server.</p>
 
         <img src="images/SS-01.png" alt="Full app interface overview — top navigation bar, sidebar with a collection open and a song selected, Import/Export/Search UG buttons at the bottom" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-01.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Interface Overview</h3>
@@ -943,7 +925,6 @@
           <h3 class="subsection-title">Search</h3>
           <p>Type in the search bar at the top of the sidebar to filter songs by <strong>title</strong> or <strong>artist</strong>. The list updates instantly as you type. Clear the search field to return to the full library view.</p>
           <img src="images/SS-02.png" alt="Sidebar search — 'Jesus' typed in the search bar with two matching songs filtered: Jesus Paid It All and Yeshua" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-02.png</div>
         </div>
 
         <div class="subsection" id="view-modes">
@@ -992,12 +973,10 @@
           <div class="screenshot-pair">
             <div class="screenshot-pair-item">
               <img src="images/SS-03-01.png" alt="Collections list — Daniel Choy, Ultimate Guitar, Campus Family Worship Night 26 June (selected), and Easter collections" />
-              <div class="screenshot-filename">images/SS-03-01.png</div>
               <div class="screenshot-pair-caption">1 — Tap a collection to open it</div>
             </div>
             <div class="screenshot-pair-item">
               <img src="images/SS-03.png" alt="Collection detail view — 'Campus Family Worship Night 26 June 2026' with Add Songs, Search UG, Rename, Duplicate, Check for Updates, and Delete Collection buttons, plus the 10-song list below" />
-              <div class="screenshot-filename">images/SS-03.png</div>
               <div class="screenshot-pair-caption">2 — Collection detail view</div>
             </div>
           </div>
@@ -1024,7 +1003,6 @@
             <li><strong>Drag & Drop</strong> — Drag files from your computer and drop them anywhere on the main content area. The area highlights in blue when a drag is detected.</li>
           </ul>
           <img src="images/SS-04.png" alt="Empty state — 'No songs yet. Drag a file here to get started' with an Import File button" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-04.png</div>
         </div>
 
         <div class="subsection" id="duplicates">
@@ -1036,7 +1014,6 @@
             <li><strong>Skip</strong> — Ignores the duplicate and does not import it.</li>
           </ul>
           <img src="images/SS-05.png" alt="Duplicate Song dialog — 'A song titled Emmanuel already exists. What would you like to do?' with Replace, Keep Both, and Skip buttons" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-05.png</div>
         </div>
 
         <div class="subsection" id="ug-search">
@@ -1076,12 +1053,10 @@
           <div class="screenshot-pair">
             <div class="screenshot-pair-item">
               <img src="images/SS-06-1.png" alt="Search Songs modal — 'Silent night' typed in the search field with the Search button" />
-              <div class="screenshot-filename">images/SS-06-1.png</div>
               <div class="screenshot-pair-caption">1 — Enter a song title</div>
             </div>
             <div class="screenshot-pair-item">
               <img src="images/SS-06-2.png" alt="Search results — multiple versions of Silent Night chord charts listed, tagged with UG and DC badges" />
-              <div class="screenshot-filename">images/SS-06-2.png</div>
               <div class="screenshot-pair-caption">2 — Select from results</div>
             </div>
           </div>
@@ -1104,7 +1079,6 @@
         <p>Click any song in the sidebar to open it in the main content area.</p>
 
         <img src="images/SS-07.png" alt="Full song view — 'Thou Art A Shield For Me' showing the song header with key, capo, info and edit controls, chord strip with Am/G/F diagrams, and lyrics with inline chords" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-07.png</div>
 
         <div class="subsection" id="song-header">
           <h3 class="subsection-title">Song Header & Info Panel</h3>
@@ -1114,7 +1088,6 @@
             <li>Click <strong>Info ▲</strong> to collapse it again.</li>
           </ul>
           <img src="images/SS-08.png" alt="Song header with Info panel expanded — showing Key: C and Capo: 3 beneath the title and controls" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-08.png</div>
         </div>
 
         <div class="subsection" id="chord-strip">
@@ -1126,7 +1099,6 @@
             <li>The chord strip is hidden in Lyrics Only mode.</li>
           </ul>
           <img src="images/SS-09.png" alt="Chord strip open — Am, G, and F chord diagrams displayed below the song header with the Chords toggle button" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-09.png</div>
         </div>
 
         <div class="subsection" id="section-jump">
@@ -1150,7 +1122,6 @@
           </ul>
           <p>Font size preference is saved across sessions.</p>
           <img src="images/SS-10.png" alt="Floating display controls — arrow pointing to the bottom-right cluster of ⛶ fit, + and − font size, and ▶ auto-scroll buttons" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-10.png</div>
         </div>
 
         <div class="subsection" id="metronome">
@@ -1191,7 +1162,6 @@
           <h3 class="subsection-title">Transpose</h3>
           <p>A <strong>key dropdown</strong> in the song header lists all 12 major (or minor) keys. Selecting a different key instantly transposes every chord in the song. The original key stored in the file is never modified — transpose is non-destructive.</p>
           <img src="images/SS-11.png" alt="Transpose key dropdown open — all 12 major keys listed with C ticked as the current key" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-11.png</div>
         </div>
 
         <div class="subsection">
@@ -1216,12 +1186,10 @@
         <div class="screenshot-pair">
           <div class="screenshot-pair-item">
             <img src="images/SS-12-1.png" alt="Auto-scroll running — floating toolbar showing the fit-to-screen icon, font size + and −, the 1:30 duration pill, and the blue ⏹ stop button" />
-            <div class="screenshot-filename">images/SS-12-1.png</div>
             <div class="screenshot-pair-caption">1 — Auto-scroll running; tap the duration pill to adjust speed</div>
           </div>
           <div class="screenshot-pair-item">
             <img src="images/SS-12.png" alt="Speed adjuster open — + button, 1:30 duration, − button, and a Done button to collapse it" />
-            <div class="screenshot-filename">images/SS-12.png</div>
             <div class="screenshot-pair-caption">2 — Speed adjuster</div>
           </div>
         </div>
@@ -1287,7 +1255,6 @@
         <p style="margin-top:14px">After navigating, a brief <strong>swipe hint</strong> appears at the bottom of the screen showing the direction and the title of the song you've moved to.</p>
 
         <img src="images/SS-13.png" alt="Swipe navigation hint — '← Yeshua' pill toast appearing at the bottom of the screen after swiping to the previous song" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-13.png</div>
       </section>
 
       <!-- ══════════════════════════════════════════════ -->
@@ -1320,7 +1287,6 @@
         </div>
 
         <img src="images/SS-14.png" alt="Performance Mode — 'Yeshua' by Jesus Image in full-screen view with large text, INTRO and VERSE section headers, sticky title bar with Exit button, and auto-scroll button bottom right" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-14.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Keyboard Navigation in Performance Mode</h3>
@@ -1358,7 +1324,6 @@
         <p>Click the <span class="btn-replica">Edit</span> button in the song header to open the built-in editor. The main content area switches to an edit view with metadata fields at the top and a raw-text content editor below.</p>
 
         <img src="images/SS-15.png" alt="Song editor open — 'Yeshua' with Title, Artist, Key, Capo, Tempo and Time Sig fields, and the raw content textarea showing {c:} section headers and [Chord] inline syntax" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-15.png</div>
 
         <div class="subsection" id="new-song">
           <h3 class="subsection-title">Creating a Blank Song</h3>
@@ -1487,7 +1452,6 @@
           </div>
 
           <img src="images/SS-28.png" alt="Annotations visible in the song view — a song-level note below the title, a section-level note after the CHORUS header, and a line-level note after a lyric line, all rendered in grey italic" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-28.png</div>
 
           <p style="margin-top:18px"><strong>Showing and hiding annotations:</strong></p>
           <ul class="feature-list">
@@ -1497,7 +1461,6 @@
           </ul>
 
           <img src="images/SS-29.png" alt="The annotation toggle button (💬) in the song header bar, highlighted in indigo to show annotations are visible" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-29.png</div>
 
           <div class="callout tip">
             <span class="callout-icon">💡</span>
@@ -1516,7 +1479,6 @@
           </ul>
 
           <img src="images/SS-30.png" alt="The Annotations row in Settings → Display, showing font, size, and colour customisation controls" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-30.png</div>
 
           <p style="margin-top:18px"><strong>Export behaviour:</strong></p>
           <ul class="feature-list">
@@ -1589,7 +1551,6 @@
         </div>
 
         <img src="images/SS-16.png" alt="Export mode — 3 songs selected (Emmanuel, For You Alone, Give Me This Mountain) highlighted in indigo, with '3 selected · Export · Cancel' bar at the bottom" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-16.png</div>
 
         <div class="subsection" id="export-sbp">
           <h3 class="subsection-title">Download .sbp</h3>
@@ -1607,13 +1568,40 @@
           </ul>
 
           <img src="images/SS-17.png" alt="Share via Link modal — 3 songs will be shared, collection name field, link expires in 7 days dropdown, Share lyrics only toggle, and Create link button" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-17.png</div>
 
           <p>Once the link is created, you have two ways to share it with your congregation:</p>
           <ul class="feature-list">
             <li><strong>Copy the URL</strong> — Tap <strong>Copy</strong> next to the link and paste it into a group chat, email, or bulletin. Anyone who opens it is taken straight to the import screen.</li>
             <li><strong>Share the QR code</strong> — A QR code for the link is generated automatically below the URL. Tap <strong>Save QR Code</strong> to download it as a PNG — the image includes the collection name and expiry date. Print it in your service bulletin, project it on screen, or send it digitally so your congregation can scan it with their phone camera to open the link instantly.</li>
           </ul>
+
+          <p style="margin-top:16px">A share link stays "live" for its collection: reopening <strong>Share via Link</strong> for a collection that already has one switches the modal to <strong>update mode</strong>, where you can <strong>Push Update</strong> to overwrite the shared content with your current songs (recipients get a <a href="#collections" style="color:var(--accent)">Check for Updates</a> prompt), or tap <strong>New Link</strong> to generate a separate, independent URL instead.</p>
+        </div>
+
+        <div class="subsection" id="export-share-lock">
+          <h3 class="subsection-title">Lock Link &amp; PIN Protection</h3>
+          <p>Because a share link can be updated at any time, the <strong>Lock link</strong> toggle lets you protect it from further changes — useful once a set list is finalised and you don't want it edited again, accidentally or otherwise.</p>
+          <ul class="feature-list">
+            <li><strong>Lock link</strong> — A toggle beneath "Share lyrics only", available both when creating a link and in update mode. Turning it on requires setting a <strong>4-digit PIN</strong>. Once locked, <strong>no one — including you</strong> — can push updates until the link is unlocked; the <strong>Push Update</strong> button is disabled and shows "this link is locked".</li>
+            <li><strong>Setting the PIN</strong> — Switching the toggle on reveals a 4-digit PIN field. Enter a PIN and tap <strong>Lock</strong> to confirm.</li>
+          </ul>
+
+          <img src="images/SS-17b.png" alt="Share via Link modal — Lock link toggle switched on with a 4-digit PIN field, Lock button, and Cancel button" class="screenshot-img" />
+
+          <ul class="feature-list">
+            <li><strong>Unlocking</strong> — Switch the toggle off, enter the same PIN, and tap <strong>Unlock</strong>. An incorrect PIN shows <strong>"Incorrect PIN"</strong>; after 3 failed attempts a hint appears suggesting <strong>New Link</strong> if you've forgotten it.</li>
+            <li><strong>Auto re-lock</strong> — A PIN-protected link automatically re-locks after a successful <strong>Push Update</strong>, and again if you close the Share modal while it's still unlocked — so it never accidentally sits open.</li>
+          </ul>
+
+          <img src="images/SS-17c.png" alt="Share via Link modal in update mode — Lock link toggle on, Incorrect PIN error shown, with a hint to use New Link if the PIN is forgotten, and Push Update disabled" class="screenshot-img" />
+
+          <div class="callout warn">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body">
+              <strong>Forgot your PIN?</strong>
+              There's no recovery — a locked link can't be unlocked or updated without the correct PIN. Tap <strong>New Link</strong> to share a fresh URL instead; the old (locked) link keeps working for anyone who already has it, it just can't receive further updates. The same applies to links that were locked before PIN protection existed — they have no PIN on file and can only be replaced with a New Link.
+            </div>
+          </div>
         </div>
 
         <div class="subsection" id="export-pdf">
@@ -1702,7 +1690,6 @@
         </div>
 
         <img src="images/SS-18.png" alt="Import confirmation modal — 'Shared Songbook' listing Emmanuel, For You Alone, and Give Me This Mountain, with a lyrics-only notice and 'Will be added to collection: Worship Night', Cancel and Import All buttons" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-18.png</div>
 
         <div class="callout warn">
           <span class="callout-icon">⚠️</span>
@@ -1722,14 +1709,12 @@
         <p>Open Settings by clicking the <strong>⚙️</strong> button in the top-right corner of the app. Press <span class="key">Esc</span> to close. Settings has two tabs: <strong>General</strong> and <strong>Display</strong>.</p>
 
         <img src="images/SS-19.png" alt="Settings panel — General tab showing Light theme selected, Lyrics only toggle off, Firecrawl API key field with masked key, Library showing 32 songs with storage bar, and Clear All Data button" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-19.png</div>
 
         <div class="subsection" id="settings-display">
           <h3 class="subsection-title">Display Tab</h3>
           <p>Switch to the <strong>Display</strong> tab to customise how song content is rendered. Each display element — <strong>Song Title</strong>, <strong>Artist</strong>, <strong>Lyrics</strong>, <strong>Chords</strong>, <strong>Sections</strong>, and <strong>Annotations</strong> — has its own collapsible row where you can adjust font, size, and colour independently.</p>
 
           <img src="images/SS-31.png" alt="Settings Display tab — six collapsible rows for Song Title, Artist, Lyrics, Chords, Sections, and Annotations, each showing font, size, and colour controls" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-31.png</div>
 
           <ul class="feature-list">
             <li><strong>Font</strong> — Choose from System Default, Georgia, Times New Roman, Helvetica Neue, Arial, Courier New, Menlo, or Monaco. Each element can use a different font.</li>
@@ -1814,14 +1799,12 @@
         <p>Common uses: finalising a set list during rehearsal with your band, letting a team member transpose a song for their instrument, or having a vocalist follow the same chord chart as the leader during a service.</p>
 
         <img src="images/SS-20.png" alt="Session view — leader perspective — set list panel on the left, song viewer with chords and lyrics on the right, green Live badge in the header" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-20.png</div>
 
         <div class="subsection" id="session-starting">
           <h3 class="subsection-title">Starting a Session (Leader)</h3>
           <p>Click the <span class="btn-replica">🎙 Live Session</span> button at the bottom of the sidebar to open the Live Session modal.</p>
 
           <img src="images/SS-21.png" alt="Live Session modal — session name field pre-filled with today's date, Create and Enter button, and Recent Sessions list above" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-21.png</div>
 
           <div class="steps">
             <div class="step">
@@ -1877,7 +1860,6 @@
           </div>
 
           <img src="images/SS-22.png" alt="Session view — set list on the left with a song highlighted in indigo, chord chart for the selected song on the right with key dropdown and capo controls in the sub-header" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-22.png</div>
 
           <p>The header bar shows the session name and a pulsing green <strong>Live</strong> badge while connected. If the session is approaching expiry, a coloured countdown badge also appears.</p>
 
@@ -1895,7 +1877,6 @@
           <p>Any participant can edit a song's content directly within the session — useful for on-the-fly lyric corrections or chord adjustments during rehearsal.</p>
 
           <img src="images/SS-23.png" alt="Song editor modal inside a session — Song name, Singer/Artist, Key dropdown, Capo field, and Lyrics and chords textarea, with Save and Cancel buttons at the bottom right" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-23.png</div>
 
           <div class="steps">
             <div class="step">
@@ -1919,7 +1900,6 @@
           </div>
 
           <img src="images/SS-24.png" alt="Edit lock indicator — a song in the set list showing the lock icon and the warning Someone is editing this song beneath it" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-24.png</div>
 
           <p>If someone else is already editing a song, its ✏️ button is replaced by a <strong>🔒</strong> icon and a warning appears beneath the row. The lock is released automatically when they save or cancel.</p>
 
@@ -1950,7 +1930,6 @@
           </div>
 
           <img src="images/SS-25.png" alt="Join by code — Live Session modal with Join with a different code expanded, showing a monospaced 6-character input field and the Join button" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-25.png</div>
 
           <p>Once joined, you see the same set list and can view any song, transpose for your own instrument, and edit songs (subject to edit locking). As a member you cannot reorder the set list or end the session.</p>
 
@@ -1959,7 +1938,6 @@
             <p>The Live Session modal tracks sessions you've previously joined or created. Each time you open the modal, it checks which of those sessions are still active and shows them under <strong>Recent Sessions</strong>. Tap any listed session to jump straight back in — as leader or member, depending on your original role.</p>
 
             <img src="images/SS-26.png" alt="Recent Sessions list — two sessions listed with their role, date joined, expiry badge, Enter button, and copy link icon" class="screenshot-img" />
-            <div class="screenshot-filename">images/SS-26.png</div>
 
             <p>Sessions that have already ended are removed from the list automatically. An amber or red <strong>Expires in Nd</strong> badge warns you when a session is approaching its expiry date (amber ≤ 7 days, red ≤ 3 days).</p>
           </div>
@@ -1970,7 +1948,6 @@
           <p>When the session is over, click <strong>End</strong> in the top-right of the session header. If the set list contains songs that haven't been saved to your library yet, a confirmation modal appears with three choices:</p>
 
           <img src="images/SS-27.png" alt="End Live Session confirmation modal — showing the number of songs, collection name pre-filled with the session name, and three buttons: Save as collection and End session, End without saving, and Cancel" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-27.png</div>
 
           <ul class="feature-list">
             <li><strong>Save as collection &amp; End session</strong> — Adds all songs in the set list to your personal library as a new collection named after the session, then closes the session for everyone.</li>
@@ -2213,7 +2190,6 @@
         </div>
 
         <img src="images/SS-32.png" alt="Recording in progress — red pulsing dot, elapsed timer showing 0:42, Pause and Stop buttons visible in the song header toolbar" class="screenshot-img" />
-        <div class="screenshot-filename">images/SS-32.png</div>
 
         <div class="subsection">
           <h3 class="subsection-title">Pause & Resume</h3>
@@ -2232,7 +2208,6 @@
           </ul>
 
           <img src="images/SS-33.png" alt="Recordings panel — modal listing recordings for a song with play, download, rename, and delete controls, storage indicator at the top" class="screenshot-img" />
-          <div class="screenshot-filename">images/SS-33.png</div>
 
           <p>A storage indicator at the top of the panel shows how much space your recordings are using.</p>
         </div>
