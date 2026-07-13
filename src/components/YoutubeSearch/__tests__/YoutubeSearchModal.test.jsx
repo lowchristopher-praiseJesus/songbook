@@ -92,40 +92,36 @@ describe('YoutubeSearchModal', () => {
     )
   })
 
-  it('remains in playing state when parent re-renders with updated initialVideoId while isOpen stays true', async () => {
-    searchYoutube.mockResolvedValue([
-      { videoId: 'abc12345678', title: 'El Shaddai (Live)', url: 'https://www.youtube.com/watch?v=abc12345678' },
-    ])
-    const onVideoPicked = vi.fn()
-    const { rerender } = renderIt({ onVideoPicked })
-
-    // Search and pick a result
-    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
-    const row = await screen.findByText('El Shaddai (Live)')
-    fireEvent.click(row)
-
-    // Verify we're now playing that video
+  it('ignores an initialVideoId prop change while open if local state has since diverged (regression guard for the isOpen-only effect)', async () => {
+    const { rerender } = renderIt({ initialVideoId: 'video1existing' })
+    // Mounts directly into playing state showing the existing pick.
     expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
-      'src', 'https://www.youtube.com/embed/abc12345678',
+      'src', 'https://www.youtube.com/embed/video1existing',
     )
-    expect(screen.queryByPlaceholderText(/Song title or artist/i)).not.toBeInTheDocument()
 
-    // Simulate parent re-rendering with updated initialVideoId while isOpen stays true
+    // User navigates away from playback locally (e.g. to search for a
+    // different video), diverging local state from what initialVideoId says.
+    fireEvent.click(screen.getByRole('button', { name: /Search again/i }))
+    expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
+
+    // Parent re-renders with a DIFFERENT initialVideoId while isOpen stays
+    // true (isOpen itself does not change here). If the effect incorrectly
+    // depended on initialVideoId, it would re-fire here and snap the modal
+    // back to "playing" with the new prop value -- it must not: the effect
+    // is keyed only on isOpen, so this render should leave the user's local
+    // "Search again" navigation untouched.
     rerender(
       <YoutubeSearchModal
         isOpen
         onClose={vi.fn()}
         title="El Shaddai"
         artist="Amy Grant"
-        initialVideoId="abc12345678"
-        onVideoPicked={onVideoPicked}
+        initialVideoId="video2different"
+        onVideoPicked={vi.fn()}
       />,
     )
 
-    // Modal should still show the video, not reset to search
-    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
-      'src', 'https://www.youtube.com/embed/abc12345678',
-    )
-    expect(screen.queryByPlaceholderText(/Song title or artist/i)).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
+    expect(screen.queryByTitle('YouTube video player')).not.toBeInTheDocument()
   })
 })
