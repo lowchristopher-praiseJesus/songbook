@@ -1,0 +1,103 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import {
+  searchCommunity, fetchCommunityArrangement, recordCommunityImport,
+  reportCommunityArrangement, publishCollection,
+} from '../communityClient'
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+})
+
+function mockFetch(body, ok = true, status = 200) {
+  global.fetch = vi.fn(() => Promise.resolve({
+    ok, status, json: () => Promise.resolve(body),
+  }))
+}
+
+describe('searchCommunity', () => {
+  it('tags results with source and a synthetic url key', async () => {
+    mockFetch({ results: [{
+      id: 'a1', title: 'Oceans', artist: 'Hillsong', keyIndex: 2, capo: 2, tempo: 70,
+      collectionName: 'Judah', publisherName: 'Chris', importCount: 5,
+    }] })
+
+    const results = await searchCommunity('oceans')
+    expect(results).toEqual([{
+      id: 'a1',
+      url: 'community:a1',
+      source: 'community',
+      title: 'Oceans',
+      artist: 'Hillsong',
+      description: 'Key D · capo 2 · from "Judah" · 5 imports',
+      keyIndex: 2, capo: 2, tempo: 70,
+      collectionName: 'Judah', publisherName: 'Chris', importCount: 5,
+    }])
+  })
+
+  it('returns [] for a blank query without hitting the network', async () => {
+    global.fetch = vi.fn()
+    expect(await searchCommunity('   ')).toEqual([])
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('throws on a network failure so the caller can report the source as failed', async () => {
+    mockFetch({}, false, 500)
+    await expect(searchCommunity('oceans')).rejects.toThrow()
+  })
+})
+
+describe('fetchCommunityArrangement', () => {
+  it('returns the arrangement', async () => {
+    mockFetch({ id: 'a1', title: 'Oceans', artist: 'Hillsong', body: 'la', keyIndex: 2, capo: 2 })
+    const a = await fetchCommunityArrangement('a1')
+    expect(a).toMatchObject({ id: 'a1', title: 'Oceans', body: 'la' })
+  })
+
+  it('throws not_found on 404', async () => {
+    mockFetch({ error: 'not_found' }, false, 404)
+    await expect(fetchCommunityArrangement('nope')).rejects.toMatchObject({ code: 'not_found' })
+  })
+})
+
+describe('recordCommunityImport', () => {
+  it('never throws, even when the network fails — a counter must not break an import', async () => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('offline')))
+    await expect(recordCommunityImport('a1')).resolves.toBeUndefined()
+  })
+})
+
+describe('reportCommunityArrangement', () => {
+  it('posts the reason', async () => {
+    mockFetch({ ok: true }, true, 201)
+    await reportCommunityArrangement('a1', 'copyright')
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/community/arrangement/a1/report'),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ reason: 'copyright' }) }),
+    )
+  })
+})
+
+describe('publishCollection', () => {
+  it('sends the turnstile token and returns the publish token', async () => {
+    mockFetch({ publicationId: 'p1', publishToken: 't1', published: 3, alreadyInPool: 1 }, true, 201)
+    const out = await publishCollection({
+      collectionName: 'Judah', publisherName: 'Chris',
+      songs: [{ title: 'T', artist: 'A', body: 'la' }],
+      turnstileToken: 'ts',
+    })
+    expect(out).toEqual({ publicationId: 'p1', publishToken: 't1', published: 3, alreadyInPool: 1 })
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/community/publish'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'X-Turnstile-Token': 'ts' }),
+      }),
+    )
+  })
+
+  it('throws rate_limited on 429', async () => {
+    mockFetch({ error: 'rate_limited' }, false, 429)
+    await expect(publishCollection({ collectionName: 'C', songs: [], turnstileToken: 't' }))
+      .rejects.toMatchObject({ code: 'rate_limited' })
+  })
+})
