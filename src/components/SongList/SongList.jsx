@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
+import { useLibraryStore } from '../../store/libraryStore'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
@@ -35,6 +36,7 @@ export function SongList({
   shadowRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
+  const setSongYoutubeVideo = useLibraryStore(s => s.setSongYoutubeVideo)
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
@@ -93,6 +95,7 @@ export function SongList({
                   songId={song.id}
                   recording={recording}
                   onPanelOpen={() => setPanelOpen(true)}
+                  onYoutubeVideoPicked={videoId => setSongYoutubeVideo(song.id, videoId)}
                 />
                 {!lyricsOnly && !hideChordDiagram && (
                   <ChordStrip

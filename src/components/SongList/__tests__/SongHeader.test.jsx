@@ -1,9 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SongHeader } from '../SongHeader'
+import { getFirecrawlKey } from '../../../lib/storage'
 
 vi.mock('../../../lib/recorderFeatureDetect', () => ({
   checkRecorderSupport: vi.fn(() => ({ supported: true })),
+}))
+vi.mock('../../../lib/storage', () => ({ getFirecrawlKey: vi.fn(() => null) }))
+vi.mock('../../YoutubeSearch/YoutubeSearchModal', () => ({
+  YoutubeSearchModal: ({ isOpen, initialVideoId }) =>
+    isOpen ? <div data-testid="yt-modal">{initialVideoId ?? 'no-pick'}</div> : null,
 }))
 
 const baseRecording = {
@@ -102,6 +108,10 @@ const recorderProps = {
   onPanelOpen: vi.fn(),
 }
 
+beforeEach(() => {
+  getFirecrawlKey.mockReturnValue(null)
+})
+
 describe('SongHeader recorder integration', () => {
   it('renders the record button when songId is provided', () => {
     render(<SongHeader {...recorderProps} />)
@@ -128,5 +138,45 @@ describe('SongHeader recorder integration', () => {
     render(<SongHeader {...recorderProps} recording={{ ...baseRecording, status: 'recording' }} />)
     expect(screen.queryByRole('button', { name: /start recording/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /pause recording/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('SongHeader YouTube control — no Firecrawl key', () => {
+  it('renders a plain link to YouTube search', () => {
+    render(<SongHeader {...baseProps} />)
+    const link = screen.getByRole('link', { name: /youtube/i })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/results?search_query=Amazing%20Grace%20John%20Newton',
+    )
+  })
+
+  it('does not render a YouTube modal-trigger button', () => {
+    render(<SongHeader {...baseProps} />)
+    expect(screen.queryByRole('button', { name: /youtube/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('SongHeader YouTube control — Firecrawl key present', () => {
+  beforeEach(() => {
+    getFirecrawlKey.mockReturnValue('KEY')
+  })
+
+  it('renders a button instead of a link', () => {
+    render(<SongHeader {...baseProps} />)
+    expect(screen.getByRole('button', { name: /youtube/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /youtube/i })).not.toBeInTheDocument()
+  })
+
+  it('clicking YouTube opens the search modal with no initial pick', () => {
+    render(<SongHeader {...baseProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    expect(screen.getByTestId('yt-modal')).toHaveTextContent('no-pick')
+  })
+
+  it('opens the modal with the saved videoId when meta.youtubeVideoId is set', () => {
+    render(<SongHeader {...baseProps} meta={{ ...baseProps.meta, youtubeVideoId: 'abc12345678' }} />)
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    expect(screen.getByTestId('yt-modal')).toHaveTextContent('abc12345678')
   })
 })
