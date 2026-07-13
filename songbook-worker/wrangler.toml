@@ -21,5 +21,5 @@ preview_id = "ba821b606a42491893ccb6138f028435"
 [[d1_databases]]
 binding = "DB"
 database_name = "songbook-community"
-database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
+database_id = "c5191dd2-c473-4a53-bcce-bf110610c36b"
 migrations_dir = "migrations"
