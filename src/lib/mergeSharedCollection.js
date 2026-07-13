@@ -7,6 +7,7 @@ const TRACKED_FIELDS = [
   { key: 'key',      label: 'Key name',                     norm: v => v ?? '' },
   { key: 'capo',     label: 'Capo',                         norm: v => v ?? 0 },
   { key: 'tempo',    label: 'Tempo' },                      // preserve undefined — matches buildBaseline
+  { key: 'youtubeVideoId', label: 'YouTube Video' },         // preserve undefined — matches buildBaseline
   { key: 'rawText',  label: 'Lyrics / Chords', isTopLevel: true },
 ];
 
@@ -19,6 +20,7 @@ export function buildBaseline(song) {
     key:      song.meta.key ?? '',
     capo:     song.meta.capo ?? 0,
     tempo:    song.meta.tempo,  // preserve undefined — songs without tempo must not compare as changed
+    youtubeVideoId: song.meta.youtubeVideoId,  // preserve undefined — songs without a pick must not compare as changed
   };
 }
 

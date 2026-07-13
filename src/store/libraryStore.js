@@ -130,6 +130,7 @@ export const useLibraryStore = create((set, get) => ({
             key:      song.meta.key ?? '',
             capo:     song.meta.capo ?? 0,
             tempo:    song.meta.tempo,  // preserve undefined — must match buildBaseline exactly
+            youtubeVideoId: song.meta.youtubeVideoId,  // preserve undefined — must match buildBaseline exactly
           },
         }
       }
@@ -576,6 +577,7 @@ export const useLibraryStore = create((set, get) => ({
           key:      song.meta.key      ?? '',
           capo:     song.meta.capo     ?? 0,
           tempo:    song.meta.tempo,
+          youtubeVideoId: song.meta.youtubeVideoId,
         },
       },
     })

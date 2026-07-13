@@ -37,6 +37,16 @@ describe('buildBaseline', () => {
     const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, tempo: undefined } };
     expect(buildBaseline(song).tempo).toBeUndefined();
   });
+
+  it('extracts youtubeVideoId', () => {
+    const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, youtubeVideoId: 'abc12345678' } };
+    expect(buildBaseline(song).youtubeVideoId).toBe('abc12345678');
+  });
+
+  it('preserves undefined youtubeVideoId rather than coercing to a default', () => {
+    const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, youtubeVideoId: undefined } };
+    expect(buildBaseline(song).youtubeVideoId).toBeUndefined();
+  });
 });
 
 describe('mergeSharedCollection', () => {
@@ -178,6 +188,40 @@ describe('mergeSharedCollection', () => {
       sections: [],
     };
     const server = { rawText: 'Hello', meta: { title: 'Song', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: undefined, sbpId: 'S1' }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.conflicts).toHaveLength(0);
+    expect(result.autoApplied).toHaveLength(0);
+  });
+
+  it('auto-applies a changed youtubeVideoId from the server when local is unchanged', () => {
+    // Reproduces: sharer picks a new YouTube video and pushes an update; a
+    // recipient who never touched the video pick locally should receive it
+    // via "Check for updates".
+    const baselineWithVideo = { ...baseline, youtubeVideoId: 'oldVideoId1' };
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: 'oldVideoId1', sharedBaseline: baselineWithVideo },
+      sections: [],
+    };
+    const server = { rawText: 'Hello', meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: 'newVideoId2' }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.autoApplied).toHaveLength(1);
+    expect(result.autoApplied[0].metaUpdates.youtubeVideoId).toBe('newVideoId2');
+    expect(result.conflicts).toHaveLength(0);
+  });
+
+  it('does not produce a false youtubeVideoId conflict when both sides have undefined youtubeVideoId', () => {
+    const baselineNoVideo = { ...baseline, youtubeVideoId: undefined };
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: undefined, sharedBaseline: baselineNoVideo },
+      sections: [],
+    };
+    const server = { rawText: 'Hello', meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: undefined }, sections: [] };
 
     const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
 
