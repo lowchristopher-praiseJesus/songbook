@@ -14,7 +14,7 @@
 
 - **Publish is opt-in, default OFF.** A share must never silently list itself in the community.
 - **A failed publish must never break the share link.** Publish is called *after* the R2 upload succeeds, and its failure is swallowed.
-- **Imported community songs carry no `sbpId` baseline and no `shareCode`** — only `meta.communitySource`. This is what makes `mergeSharedCollection` skip them (snapshot semantics). Task 16 guards this.
+- **Imported community songs carry no `sbpId` baseline and no `shareCode`** — only `meta.communitySource`. This is what makes `mergeSharedCollection` skip them (snapshot semantics). Task 15 guards this.
 - **`artist` is required to publish.** Reject with `missing_artist` if absent.
 - **`{note:}` tokens are stripped from every published body.** Notes hold private team chatter.
 - **Community must work with no Firecrawl API key.** It is the only zero-config source, and that is a headline benefit.
@@ -388,7 +388,7 @@ function toHex(buf: ArrayBuffer): string {
 
 /** Byte-identical charts from two publishers produce the same hash → exact-duplicate collapse. */
 export async function contentHash(title: string, artist: string, body: string): Promise<string> {
-  const material = `${normalizeField(title)} ${normalizeField(artist)} ${normalizeBody(body)}`;
+  const material = `${normalizeField(title)} ${normalizeField(artist)} ${normalizeBody(body)}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
   return toHex(digest);
 }
