@@ -104,6 +104,10 @@ CREATE TABLE songs (
   tempo              INTEGER,
   time_sig           TEXT,
   body               TEXT NOT NULL,      -- rawText, {note:} tokens stripped
+  -- Denormalized display provenance: written once at first publish, never rewritten
+  -- ("first publisher wins"). See "Why provenance is denormalized" below.
+  publisher_name     TEXT NOT NULL DEFAULT 'Anonymous',
+  collection_name    TEXT NOT NULL DEFAULT '',
   first_published_at INTEGER NOT NULL,
   import_count       INTEGER NOT NULL DEFAULT 0,
   status             TEXT NOT NULL       -- 'live' | 'removed'
@@ -135,6 +139,22 @@ CREATE TABLE reports (
 );
 ```
 
+### Why provenance is denormalized
+
+`song_publications` → `publications` is the source of truth for which sets a song appears in.
+But the *display* strings — publisher name and source collection name — are copied onto the
+`songs` row at first publish.
+
+D1 bills **rows scanned, not rows returned**, and the free tier allows 5M rows read per day.
+Deriving those two strings per search hit means two correlated subqueries on every row of
+every result set — roughly 5–10x the read cost of a search, on the one metric this feature
+could plausibly approach. Two columns on a rare write buy a cheap read forever.
+
+They are written once and never rewritten: **first publisher wins**. A consequence worth
+naming — if the first publisher later unlists their set while the arrangement survives via
+someone else's publication, the credit still names the original (now unlisted) set. The
+stamp remains factually true, and re-deriving it on every unlist is not worth the machinery.
+
 ### `{note:}` tokens are stripped on publish
 
 `exportSbp.js` already has `stripNoteTokens`. Notes are where teams put private
@@ -146,6 +166,24 @@ published chart. Reuse the existing function.
 With no accounts there is nothing to verify. The field is a self-declared string,
 optional, defaulting to "Anonymous". Being honest about this is better than implying an
 identity guarantee that does not exist.
+
+## Cost: this fits the Cloudflare free tier
+
+Workers Free D1 limits: **5M rows read/day, 100k rows written/day, 5 GB total storage,
+500 MB max database size.** D1 supports FTS5.
+
+- **Storage.** A chart body is ~3–5 KB. The standalone FTS table stores a second copy of the
+  text plus the inverted index. At 5,000 arrangements that is roughly **50–60 MB** — about
+  10% of the 500 MB per-database cap. The cap is reached around 50,000 arrangements.
+- **Writes.** Publishing a 12-song set is ~37 logical row writes, amplified by FTS5 shadow
+  tables to a few hundred. 100k/day is several hundred publishes per day; publishing is rare
+  and rate-limited to 5/hour/IP regardless.
+- **Reads.** The binding constraint. With provenance denormalized (above), a search costs on
+  the order of **100–300 rows read**, so 5M/day is comfortably tens of thousands of searches
+  per day.
+
+These are estimates from documented limits, not measurements. D1's dashboard reports rows
+read directly — check it after seeding rather than trusting the arithmetic.
 
 ## Worker API
 

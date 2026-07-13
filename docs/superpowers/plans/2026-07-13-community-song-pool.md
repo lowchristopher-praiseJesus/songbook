@@ -100,6 +100,13 @@ CREATE TABLE songs (
   tempo              INTEGER,
   time_sig           TEXT,
   body               TEXT NOT NULL,
+  -- Denormalized display provenance, written once at first publish and never overwritten
+  -- ("first publisher wins"). D1 bills rows *scanned*, and deriving these by joining
+  -- song_publications -> publications on every search hit costs two correlated subqueries
+  -- per row. The join is still available via song_publications when full provenance is
+  -- needed; these two columns exist purely to keep search cheap.
+  publisher_name     TEXT NOT NULL DEFAULT 'Anonymous',
+  collection_name    TEXT NOT NULL DEFAULT '',
   first_published_at INTEGER NOT NULL,
   import_count       INTEGER NOT NULL DEFAULT 0,
   status             TEXT NOT NULL DEFAULT 'live'
@@ -483,9 +490,23 @@ describe('POST /community/publish', () => {
     expect(row!.body).toContain('a');
   });
 
+  it('denormalizes the publisher and collection onto the song row', async () => {
+    await publish({ collectionName: 'Judah 15Apr26', publisherName: 'Chris', songs: [song({ title: 'Credited' })] });
+    const row = await env.DB.prepare('SELECT publisher_name, collection_name FROM songs WHERE title = ?')
+      .bind('Credited').first();
+    expect(row).toMatchObject({ publisher_name: 'Chris', collection_name: 'Judah 15Apr26' });
+  });
+
+  it('defaults an omitted publisher name to Anonymous', async () => {
+    await publish({ collectionName: 'C', songs: [song({ title: 'Anon' })] });
+    const row = await env.DB.prepare('SELECT publisher_name FROM songs WHERE title = ?')
+      .bind('Anon').first<{ publisher_name: string }>();
+    expect(row!.publisher_name).toBe('Anonymous');
+  });
+
   it('collapses an exact duplicate instead of creating a second song row', async () => {
-    await publish({ collectionName: 'A', songs: [song({ title: 'Dup' })] });
-    const res = await publish({ collectionName: 'B', songs: [song({ title: 'Dup' })] });
+    await publish({ collectionName: 'A', publisherName: 'First', songs: [song({ title: 'Dup' })] });
+    const res = await publish({ collectionName: 'B', publisherName: 'Second', songs: [song({ title: 'Dup' })] });
     const body = await res.json() as { published: number; alreadyInPool: number };
     expect(body.published).toBe(0);
     expect(body.alreadyInPool).toBe(1);
@@ -498,6 +519,15 @@ describe('POST /community/publish', () => {
       'SELECT COUNT(*) AS n FROM song_publications sp JOIN songs s ON s.id = sp.song_id WHERE s.title = ?'
     ).bind('Dup').first<{ n: number }>();
     expect(links!.n).toBe(2);
+  });
+
+  it('first publisher wins — a duplicate publish must not steal the credit', async () => {
+    await publish({ collectionName: 'Original Set', publisherName: 'First', songs: [song({ title: 'Credit' })] });
+    await publish({ collectionName: 'Copycat Set', publisherName: 'Second', songs: [song({ title: 'Credit' })] });
+
+    const row = await env.DB.prepare('SELECT publisher_name, collection_name FROM songs WHERE title = ?')
+      .bind('Credit').first();
+    expect(row).toMatchObject({ publisher_name: 'First', collection_name: 'Original Set' });
   });
 
   it('indexes chord-stripped lyrics for full-text search', async () => {
@@ -602,13 +632,16 @@ community.post('/publish', verifyTurnstile, async (c) => {
       await c.env.DB.prepare("UPDATE songs SET status = 'live' WHERE id = ?").bind(songId).run();
     } else {
       songId = crypto.randomUUID();
+      // publisher_name / collection_name are written ONLY here, on first publish. A later
+      // duplicate publish links a new publication row but must never rewrite the credit on
+      // an existing arrangement — first publisher wins.
       await c.env.DB.prepare(
-        `INSERT INTO songs (id, content_hash, group_key, title, artist, key_index, capo, tempo, time_sig, body, first_published_at, import_count, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'live')`
+        `INSERT INTO songs (id, content_hash, group_key, title, artist, key_index, capo, tempo, time_sig, body, publisher_name, collection_name, first_published_at, import_count, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'live')`
       ).bind(
         songId, hash, groupKey(title, artist), title, artist,
         num(s.keyIndex), num(s.capo), num(s.tempo), str(s.timeSig) || null,
-        body, now,
+        body, publisherName, collectionName, now,
       ).run();
 
       await c.env.DB.prepare(
@@ -644,7 +677,7 @@ app.route('/community', community);
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `cd songbook-worker && npx vitest run test/community.publish.test.ts`
-Expected: PASS — 7 tests.
+Expected: PASS — 10 tests.
 
 - [ ] **Step 6: Commit**
 
@@ -914,19 +947,15 @@ community.get('/search', async (c) => {
   // ROW_NUMBER caps arrangements per song so one popular worship standard cannot bury the
   // Ultimate Guitar / Daniel Choy rows in the shared result list.
   // bm25() is negative and lower is better, hence ORDER BY rank ASC.
+  // publisher_name / collection_name are read straight off the songs row: D1 bills rows
+  // *scanned*, so deriving them per hit via song_publications would multiply the read cost
+  // of every search by roughly 5-10x for no user-visible gain.
   const sql = `
     WITH hits AS (
       SELECT
         s.id, s.group_key, s.title, s.artist, s.key_index, s.capo, s.tempo, s.import_count,
-        bm25(songs_fts) AS rank,
-        (SELECT p.collection_name FROM song_publications sp
-           JOIN publications p ON p.id = sp.publication_id
-          WHERE sp.song_id = s.id AND p.status = 'live'
-          ORDER BY p.created_at ASC LIMIT 1) AS collection_name,
-        (SELECT p.publisher_name FROM song_publications sp
-           JOIN publications p ON p.id = sp.publication_id
-          WHERE sp.song_id = s.id AND p.status = 'live'
-          ORDER BY p.created_at ASC LIMIT 1) AS publisher_name
+        s.publisher_name, s.collection_name,
+        bm25(songs_fts) AS rank
       FROM songs_fts
       JOIN songs s ON s.id = songs_fts.song_id
       WHERE songs_fts MATCH ?1 AND s.status = 'live'
@@ -1085,18 +1114,10 @@ interface ArrangementRow extends SearchRow {
 
 community.get('/arrangement/:id', async (c) => {
   const row = await c.env.DB.prepare(`
-    SELECT
-      s.id, s.title, s.artist, s.key_index, s.capo, s.tempo, s.time_sig, s.body, s.import_count,
-      (SELECT p.collection_name FROM song_publications sp
-         JOIN publications p ON p.id = sp.publication_id
-        WHERE sp.song_id = s.id AND p.status = 'live'
-        ORDER BY p.created_at ASC LIMIT 1) AS collection_name,
-      (SELECT p.publisher_name FROM song_publications sp
-         JOIN publications p ON p.id = sp.publication_id
-        WHERE sp.song_id = s.id AND p.status = 'live'
-        ORDER BY p.created_at ASC LIMIT 1) AS publisher_name
-    FROM songs s
-    WHERE s.id = ? AND s.status = 'live'
+    SELECT id, title, artist, key_index, capo, tempo, time_sig, body,
+           publisher_name, collection_name, import_count
+    FROM songs
+    WHERE id = ? AND status = 'live'
   `).bind(c.req.param('id')).first<ArrangementRow>();
 
   if (!row) return c.json({ error: 'not_found' }, 404);
@@ -2792,8 +2813,10 @@ If step 5.1 does not surface a `CM` row for a plausible first search, **do not s
 **Spec coverage:** every spec section maps to a task — data model (T1, T2), publish (T3, T4, T12), search (T5), arrangement fetch + import counter (T6), report + unpublish (T7), client (T8, T9), third source + badge + bucketing (T10), report UI (T11), unlist (T13), button rename (T14), snapshot invariant (T15), admin takedown (T16), copyright acknowledgement (T12 step 5), abuse limits (T4), cold start (T17).
 
 **Deviations from the spec, deliberate:**
-- The spec's `songs` table had no publisher/collection columns; search and arrangement fetch derive them with a correlated subquery over `song_publications` → `publications` (earliest live publication wins) rather than denormalizing. Keeps the schema as specced.
+- **`songs` carries denormalized `publisher_name` and `collection_name`.** The spec's schema derived these by joining `song_publications` → `publications`. D1 bills rows *scanned*, and doing that per search hit costs two correlated subqueries per row — roughly 5–10x the read cost of a search, on the one free-tier metric (5M rows read/day) that this feature could plausibly approach. They are written once at first publish and never rewritten; `song_publications` remains the source of truth for full provenance.
 - `publish_token_hash` stores `salt:hash` in one column, reusing `pin.ts`'s `generateSalt`/`hashPin` rather than adding a `publish_token_salt` column.
 - `POST /community/publish` returns **201**, not 200.
+
+**Accepted wart from the denormalization:** if the first publisher unlists their set but the arrangement survives because a second publication still references it (Task 7), the song keeps displaying the *original* publisher and collection name — a set that is no longer listed. The credit stays factually true ("first published by X"), and the alternative is re-deriving provenance on every unlist for a cosmetic string. Left as-is deliberately.
 
 **Known risk:** Task 12 depends on `ShareModal.jsx` internals (the Turnstile token variable, the collection-update action, how the collection's songs are obtained) that this plan does not quote verbatim, because the file is large and the exact names must be read at implementation time. Step 1 of that task exists to force that read before any edit.
