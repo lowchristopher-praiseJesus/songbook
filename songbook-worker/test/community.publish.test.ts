@@ -103,26 +103,24 @@ describe('POST /community/publish', () => {
     expect(await res.json()).toEqual({ error: 'no_songs' });
   });
 
-  // Two truly-simultaneous first-time publishes of identical brand-new content can't be raced
-  // from a single-threaded test, but the race's *outcome* — our SELECT finds nothing, then our
-  // INSERT collides with a content_hash UNIQUE constraint because someone else's row landed
-  // first — can be reproduced directly: pre-insert the "winner" row exactly as a concurrent
-  // request would have left it, then verify the route's fallback path takes over cleanly
-  // instead of throwing/500ing.
-  it('falls back to alreadyInPool instead of 500ing when content_hash collides on insert', async () => {
-    const s = song({ title: 'Race Condition Song' });
+  // This does NOT exercise the content_hash-collision try/catch fallback in the route (that
+  // branch only runs when the route's own INSERT throws). Pre-inserting the row and fully
+  // awaiting it before calling publish() means the route's ordinary top-of-loop SELECT finds
+  // the row directly and takes the `if (existing)` branch. What this test does verify — and
+  // what isn't covered elsewhere — is that a previously 'removed' song found via that ordinary
+  // duplicate path gets revived to 'live'.
+  it('revives a previously removed song found via the ordinary duplicate SELECT path', async () => {
+    const s = song({ title: 'Removed Song Revival' });
     const title = s.title as string;
     const artist = s.artist as string;
     const body = stripNotes(String(s.body));
     const hash = await contentHash(title, artist, body);
 
-    // Simulate a concurrent request's INSERT winning the race for this content_hash between
-    // our SELECT and our INSERT — the row exists with the same content_hash, but was
-    // previously removed, so we also confirm the fallback path revives it (status -> 'live').
+    // A pre-existing row with this exact content_hash, previously taken down ('removed').
     await env.DB.prepare(
       `INSERT INTO songs (id, content_hash, group_key, title, artist, body, first_published_at, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'removed')`
-    ).bind('racer-song-id', hash, `${title.toLowerCase()}|${artist.toLowerCase()}`, title, artist, body, Date.now()).run();
+    ).bind('preexisting-song-id', hash, `${title.toLowerCase()}|${artist.toLowerCase()}`, title, artist, body, Date.now()).run();
 
     const res = await publish({ collectionName: 'C', songs: [s] });
     expect(res.status).toBe(201);
@@ -130,18 +128,80 @@ describe('POST /community/publish', () => {
     expect(resBody.published).toBe(0);
     expect(resBody.alreadyInPool).toBe(1);
 
-    // No duplicate row was created — the pre-existing "winner" row is the only one, and it's
-    // been revived to 'live' by the fallback path (same as the ordinary existing-song branch).
+    // No duplicate row was created — the pre-existing row is the only one, and it's been
+    // revived to 'live'.
     const { results } = await env.DB.prepare('SELECT id, status FROM songs WHERE content_hash = ?')
       .bind(hash).all();
     expect(results.length).toBe(1);
-    expect((results[0] as { id: string; status: string }).id).toBe('racer-song-id');
+    expect((results[0] as { id: string; status: string }).id).toBe('preexisting-song-id');
     expect((results[0] as { id: string; status: string }).status).toBe('live');
 
     // It's still linked to this publication despite not being "published" by this request.
     const link = await env.DB.prepare(
       'SELECT COUNT(*) AS n FROM song_publications WHERE song_id = ?'
-    ).bind('racer-song-id').first<{ n: number }>();
+    ).bind('preexisting-song-id').first<{ n: number }>();
     expect(link!.n).toBe(1);
+  });
+
+  // Genuine concurrency test for the content_hash-collision try/catch fallback in the route
+  // (src/routes/community.ts, new-song branch): fire two REAL concurrent SELF.fetch() requests
+  // at /community/publish, both publishing identical brand-new content that neither call has
+  // ever published before. Cloudflare Workers run single-threaded with cooperative scheduling
+  // at `await` boundaries, so two requests issued together via Promise.all genuinely interleave
+  // — both requests' initial `SELECT id FROM songs WHERE content_hash = ?` can run (and find
+  // nothing) before either request's `songs` INSERT commits. Whichever request's INSERT commits
+  // second then collides with the content_hash UNIQUE constraint the first request just
+  // satisfied, and must take the route's catch-and-re-SELECT fallback instead of 500ing.
+  //
+  // We assert only the externally-observable safety properties, not which internal branch ran
+  // (that's non-deterministic and depends on runtime scheduling we don't control from the test).
+  it('resolves two truly concurrent first-time publishes of identical content without either 500ing or duplicating the song', async () => {
+    const s = song({ title: 'Concurrent Race Song', artist: 'Race Artist', body: 'The [G]lyrics of a [C]race' });
+    const title = s.title as string;
+    const artist = s.artist as string;
+    const body = stripNotes(String(s.body));
+    const hash = await contentHash(title, artist, body);
+
+    // Sanity check: nothing published yet for this content_hash.
+    const before = await env.DB.prepare('SELECT id FROM songs WHERE content_hash = ?').bind(hash).first();
+    expect(before).toBeNull();
+
+    const [res1, res2] = await Promise.all([
+      publish({ collectionName: 'Racer A', publisherName: 'Alice', songs: [s] }),
+      publish({ collectionName: 'Racer B', publisherName: 'Bob', songs: [s] }),
+    ]);
+
+    // 1. Neither response is a 500 / non-2xx — both must return 201.
+    expect(res1.status).toBe(201);
+    expect(res2.status).toBe(201);
+
+    const body1 = await res1.json() as { publicationId: string; published: number; alreadyInPool: number };
+    const body2 = await res2.json() as { publicationId: string; published: number; alreadyInPool: number };
+
+    // 2. Exactly one songs row exists for this content_hash — no duplicate row, and the UNIQUE
+    // constraint violation never surfaced to either caller.
+    const { results: songRows } = await env.DB.prepare('SELECT id FROM songs WHERE content_hash = ?')
+      .bind(hash).all();
+    expect(songRows.length).toBe(1);
+    const songId = (songRows[0] as { id: string }).id;
+
+    // 3. Exactly one winner across the two responses: one published it, the other found it
+    // already in the pool. Order between the two calls is not guaranteed, so assert on the
+    // combined/sorted outcome rather than which specific call won.
+    const outcomes = [body1, body2]
+      .map((b) => `${b.published}-${b.alreadyInPool}`)
+      .sort();
+    expect(outcomes).toEqual(['0-1', '1-0']);
+    expect(body1.published + body2.published).toBe(1);
+    expect(body1.alreadyInPool + body2.alreadyInPool).toBe(1);
+
+    // 4. Both responses link to the same song via song_publications — two rows (one per
+    // publication), both pointing at the same song_id.
+    const { results: linkRows } = await env.DB.prepare(
+      'SELECT publication_id FROM song_publications WHERE song_id = ?'
+    ).bind(songId).all();
+    expect(linkRows.length).toBe(2);
+    const linkedPublicationIds = new Set(linkRows.map((r) => (r as { publication_id: string }).publication_id));
+    expect(linkedPublicationIds).toEqual(new Set([body1.publicationId, body2.publicationId]));
   });
 });
