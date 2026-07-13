@@ -3,7 +3,7 @@ import type { Env } from '../types';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
 import { generateSalt, hashPin } from '../lib/pin';
-import { groupKey, contentHash, stripChords, stripNotes } from '../lib/songIdentity';
+import { groupKey, contentHash, stripChords, stripNotes, toFtsQuery } from '../lib/songIdentity';
 
 const community = new Hono<{ Bindings: Env }>();
 
@@ -127,6 +127,74 @@ community.post('/publish', verifyTurnstile, rateLimit({ prefix: 'cpub', limit: 5
   }
 
   return c.json({ publicationId, publishToken, published, alreadyInPool }, 201);
+});
+
+const MAX_RESULTS = 30;
+const MAX_ARRANGEMENTS_PER_SONG = 3;
+
+interface SearchRow {
+  id: string; title: string; artist: string;
+  key_index: number | null; capo: number | null; tempo: number | null;
+  collection_name: string | null; publisher_name: string | null; import_count: number;
+}
+
+community.get('/search', async (c) => {
+  const match = toFtsQuery(c.req.query('q') ?? '');
+  if (!match) return c.json({ results: [] });
+
+  // ROW_NUMBER caps arrangements per song so one popular worship standard cannot bury the
+  // Ultimate Guitar / Daniel Choy rows in the shared result list.
+  // bm25() is negative and lower is better, hence ORDER BY rank ASC.
+  // publisher_name / collection_name are read straight off the songs row: D1 bills rows
+  // *scanned*, so deriving them per hit via song_publications would multiply the read cost
+  // of every search by roughly 5-10x for no user-visible gain.
+  const sql = `
+    WITH hits AS (
+      SELECT
+        s.id, s.group_key, s.title, s.artist, s.key_index, s.capo, s.tempo, s.import_count,
+        s.publisher_name, s.collection_name,
+        bm25(songs_fts) AS rank
+      FROM songs_fts
+      JOIN songs s ON s.id = songs_fts.song_id
+      WHERE songs_fts MATCH ?1 AND s.status = 'live'
+    ),
+    ranked AS (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY group_key ORDER BY import_count DESC, rank ASC
+      ) AS rn
+      FROM hits
+    )
+    SELECT id, title, artist, key_index, capo, tempo, collection_name, publisher_name, import_count
+    FROM ranked
+    WHERE rn <= ?2
+    ORDER BY rank ASC, import_count DESC
+    LIMIT ?3
+  `;
+
+  let rows: SearchRow[];
+  try {
+    const { results } = await c.env.DB.prepare(sql)
+      .bind(match, MAX_ARRANGEMENTS_PER_SONG, MAX_RESULTS)
+      .all<SearchRow>();
+    rows = results;
+  } catch {
+    // A malformed MATCH must degrade to "no results", never to a dead search box.
+    return c.json({ results: [] });
+  }
+
+  return c.json({
+    results: rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      artist: r.artist,
+      keyIndex: r.key_index,
+      capo: r.capo,
+      tempo: r.tempo,
+      collectionName: r.collection_name ?? '',
+      publisherName: r.publisher_name ?? 'Anonymous',
+      importCount: r.import_count,
+    })),
+  });
 });
 
 export default community;
