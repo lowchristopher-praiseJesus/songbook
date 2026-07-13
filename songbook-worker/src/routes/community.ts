@@ -56,6 +56,13 @@ community.post('/publish', verifyTurnstile, async (c) => {
   let published = 0;
   let alreadyInPool = 0;
 
+  // NOTE: this request as a whole is NOT atomic across songs — if a later song in this loop
+  // throws, earlier songs in this same publish request are already durably committed and the
+  // request still returns an error. This is an accepted tradeoff: D1's `.batch()` API doesn't
+  // support the read-then-conditionally-write pattern this route needs across multiple songs,
+  // and redesigning that is out of scope for this fix. A caller that gets an error is safe to
+  // retry — already-published songs will be picked up via the content-hash dedup path below
+  // rather than duplicated.
   for (const s of songs) {
     const title = str(s.title);
     const artist = str(s.artist);
@@ -66,30 +73,51 @@ community.post('/publish', verifyTurnstile, async (c) => {
       .bind(hash).first<{ id: string }>();
 
     let songId: string;
+    let isNew = false;
+
     if (existing) {
       songId = existing.id;
+    } else {
+      const newId = crypto.randomUUID();
+      try {
+        // publisher_name / collection_name are written ONLY here, on first publish. A later
+        // duplicate publish links a new publication row but must never rewrite the credit on
+        // an existing arrangement — first publisher wins.
+        //
+        // The songs insert and its songs_fts companion are batched together so they commit or
+        // fail as one unit — a song row can never exist without a matching search index row.
+        await c.env.DB.batch([
+          c.env.DB.prepare(
+            `INSERT INTO songs (id, content_hash, group_key, title, artist, key_index, capo, tempo, time_sig, body, publisher_name, collection_name, first_published_at, import_count, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'live')`
+          ).bind(
+            newId, hash, groupKey(title, artist), title, artist,
+            num(s.keyIndex), num(s.capo), num(s.tempo), str(s.timeSig) || null,
+            body, publisherName, collectionName, now,
+          ),
+          c.env.DB.prepare(
+            'INSERT INTO songs_fts (song_id, title, artist, lyrics_only) VALUES (?, ?, ?, ?)'
+          ).bind(newId, title, artist, stripChords(body)),
+        ]);
+        songId = newId;
+        isNew = true;
+      } catch (err) {
+        // A concurrent publish of this exact content won the race for content_hash (which is
+        // UNIQUE) between our SELECT and INSERT. Re-select to pick up the winner's row and fall
+        // through to the "existing" behavior below rather than 500ing.
+        const winner = await c.env.DB.prepare('SELECT id FROM songs WHERE content_hash = ?')
+          .bind(hash).first<{ id: string }>();
+        if (!winner) throw err;
+        songId = winner.id;
+      }
+    }
+
+    if (isNew) {
+      published++;
+    } else {
       alreadyInPool++;
       // A previously removed arrangement republished by someone else comes back to life.
       await c.env.DB.prepare("UPDATE songs SET status = 'live' WHERE id = ?").bind(songId).run();
-    } else {
-      songId = crypto.randomUUID();
-      // publisher_name / collection_name are written ONLY here, on first publish. A later
-      // duplicate publish links a new publication row but must never rewrite the credit on
-      // an existing arrangement — first publisher wins.
-      await c.env.DB.prepare(
-        `INSERT INTO songs (id, content_hash, group_key, title, artist, key_index, capo, tempo, time_sig, body, publisher_name, collection_name, first_published_at, import_count, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'live')`
-      ).bind(
-        songId, hash, groupKey(title, artist), title, artist,
-        num(s.keyIndex), num(s.capo), num(s.tempo), str(s.timeSig) || null,
-        body, publisherName, collectionName, now,
-      ).run();
-
-      await c.env.DB.prepare(
-        'INSERT INTO songs_fts (song_id, title, artist, lyrics_only) VALUES (?, ?, ?, ?)'
-      ).bind(songId, title, artist, stripChords(body)).run();
-
-      published++;
     }
 
     await c.env.DB.prepare(

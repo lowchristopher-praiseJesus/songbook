@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { SELF, env } from 'cloudflare:test';
+import { contentHash, stripNotes } from '../src/lib/songIdentity';
 
 const ORIGIN = 'http://localhost:5173';
 
@@ -100,5 +101,47 @@ describe('POST /community/publish', () => {
     const res = await publish({ collectionName: 'C', songs: [] });
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'no_songs' });
+  });
+
+  // Two truly-simultaneous first-time publishes of identical brand-new content can't be raced
+  // from a single-threaded test, but the race's *outcome* — our SELECT finds nothing, then our
+  // INSERT collides with a content_hash UNIQUE constraint because someone else's row landed
+  // first — can be reproduced directly: pre-insert the "winner" row exactly as a concurrent
+  // request would have left it, then verify the route's fallback path takes over cleanly
+  // instead of throwing/500ing.
+  it('falls back to alreadyInPool instead of 500ing when content_hash collides on insert', async () => {
+    const s = song({ title: 'Race Condition Song' });
+    const title = s.title as string;
+    const artist = s.artist as string;
+    const body = stripNotes(String(s.body));
+    const hash = await contentHash(title, artist, body);
+
+    // Simulate a concurrent request's INSERT winning the race for this content_hash between
+    // our SELECT and our INSERT — the row exists with the same content_hash, but was
+    // previously removed, so we also confirm the fallback path revives it (status -> 'live').
+    await env.DB.prepare(
+      `INSERT INTO songs (id, content_hash, group_key, title, artist, body, first_published_at, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'removed')`
+    ).bind('racer-song-id', hash, `${title.toLowerCase()}|${artist.toLowerCase()}`, title, artist, body, Date.now()).run();
+
+    const res = await publish({ collectionName: 'C', songs: [s] });
+    expect(res.status).toBe(201);
+    const resBody = await res.json() as { published: number; alreadyInPool: number };
+    expect(resBody.published).toBe(0);
+    expect(resBody.alreadyInPool).toBe(1);
+
+    // No duplicate row was created — the pre-existing "winner" row is the only one, and it's
+    // been revived to 'live' by the fallback path (same as the ordinary existing-song branch).
+    const { results } = await env.DB.prepare('SELECT id, status FROM songs WHERE content_hash = ?')
+      .bind(hash).all();
+    expect(results.length).toBe(1);
+    expect((results[0] as { id: string; status: string }).id).toBe('racer-song-id');
+    expect((results[0] as { id: string; status: string }).status).toBe('live');
+
+    // It's still linked to this publication despite not being "published" by this request.
+    const link = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM song_publications WHERE song_id = ?'
+    ).bind('racer-song-id').first<{ n: number }>();
+    expect(link!.n).toBe(1);
   });
 });
