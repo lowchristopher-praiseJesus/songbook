@@ -20,7 +20,7 @@ function buildDeepSearch(name, author, subTitle) {
   return out
 }
 
-function stripNoteTokens(content) {
+export function stripNoteTokens(content) {
   // Remove each {note:} line including its trailing newline so no blank line
   // is left in its place, preserving the original spacing between other lines.
   return content.replace(/\{note:[^}]*\}[^\n]*\n?/g, '')

@@ -3,7 +3,8 @@ import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare, updateShare, checkShareVersion, setShareLocked } from '../../lib/shareApi';
-import { exportSongsAsSbp, computeExportId } from '../../lib/exportSbp';
+import { exportSongsAsSbp, computeExportId, stripNoteTokens } from '../../lib/exportSbp';
+import { publishCollection } from '../../lib/communityImport/communityClient';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
 import { loadSong, getTransposeState } from '../../lib/storage';
@@ -36,6 +37,10 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     if (isOpen) setNameValue(collectionName ?? '')
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
   const [expiresInDays, setExpiresInDays] = useState(7);
+  const [listInCommunity, setListInCommunity] = useState(false);
+  const [publisherName, setPublisherName] = useState('');
+  const [copyrightAck, setCopyrightAck] = useState(false);
+  const [publishError, setPublishError] = useState(null);
   const [shareUrl, setShareUrl] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
@@ -83,11 +88,26 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     }
   }, [step, shareUrl, conductorData]);
 
+  // Build the community-pool payload from the same `songs` prop the export/upload path uses.
+  // {note:} tokens are private annotations and must never reach the shared pool.
+  function buildCommunitySongs() {
+    return songs.map(s => ({
+      title: s.meta.title,
+      artist: s.meta.artist ?? '',
+      keyIndex: s.meta.keyIndex,
+      capo: s.meta.capo,
+      tempo: s.meta.tempo,
+      timeSig: s.meta.timeSig,
+      body: stripNoteTokens(s.rawText ?? ''),
+    }))
+  }
+
   async function handleCreateLink(options = {}) {
     const lockedForThisLink = options.forceUnlocked ? false : locked
     const pinForThisLink = lockedForThisLink ? pinValue : null
     setStep('uploading')
     setErrorMessage('')
+    setPublishError(null)
     try {
       let conductorCode = null
       let directorToken = null
@@ -158,6 +178,31 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       }
       setExpiresAt(result.expiresAt)
       setStep('done')
+
+      // Opt-in Community listing. The share link already exists and is the thing the
+      // user came for — a listing failure is reported softly and never rolls it back.
+      if (listInCommunity) {
+        try {
+          // Turnstile tokens are single-use; the one consumed by uploadShare cannot be
+          // replayed here, so fetch a fresh token for this second protected call.
+          const publishToken = await getToken()
+          const pub = await publishCollection({
+            collectionName: collection?.name || nameValue.trim() || collectionName || 'Untitled',
+            publisherName: publisherName.trim() || 'Anonymous',
+            songs: buildCommunitySongs(),
+            turnstileToken: publishToken,
+          })
+          if (collectionId) {
+            updateCollection(collectionId, {
+              communityPublicationId: pub.publicationId,
+              communityPublishToken: pub.publishToken,
+            })
+          }
+        } catch (err) {
+          console.error('[ShareModal] community publish failed:', err)
+          setPublishError("Couldn't list this in the Community — the link still works.")
+        }
+      }
     } catch (err) {
       console.error('[ShareModal] unexpected error:', err)
       setErrorMessage('An unexpected error occurred. Please try again.')
@@ -374,6 +419,10 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setErrorMessage('');
     setNameValue(collectionName ?? '');
     setExpiresInDays(7);
+    setListInCommunity(false);
+    setPublisherName('');
+    setCopyrightAck(false);
+    setPublishError(null);
     setShareUrl('');
     setCopied(false);
     setShareLyricsOnly(false);
@@ -459,6 +508,41 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               ))}
             </select>
           </div>
+          {!isUpdateMode && (
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={listInCommunity}
+                  onChange={e => setListInCommunity(e.target.checked)}
+                />
+                Also list in Community
+              </label>
+
+              {listInCommunity && (
+                <div className="mt-2 space-y-2 pl-6">
+                  <input
+                    type="text"
+                    value={publisherName}
+                    onChange={e => setPublisherName(e.target.value)}
+                    placeholder="Your name or church (optional)"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+                  />
+                  <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={copyrightAck}
+                      onChange={e => setCopyrightAck(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      I have the right to share these charts. Published songs are visible to other SongSheet users.
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <button
               type="button"
@@ -621,7 +705,13 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 </Button>
               </>
             ) : (
-              <Button variant="primary" onClick={handleCreateLink}>Create link</Button>
+              <Button
+                variant="primary"
+                onClick={handleCreateLink}
+                disabled={listInCommunity && !copyrightAck}
+              >
+                Create link
+              </Button>
             )}
           </div>
         </div>
@@ -639,6 +729,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Link expires {new Date(expiresAt).toLocaleDateString()}.
           </p>
+          {publishError && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">{publishError}</p>
+          )}
 
           {/* Member link */}
           <div>

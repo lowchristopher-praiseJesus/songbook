@@ -78,7 +78,8 @@ export function setTransposeState(songId, state) {
  *   shareCode?,        ← opaque share token the collection was imported from
  *   conductorCode?, conductorRole?, conductorDirectorToken?, conductorToken?,
  *   conductorShareCode?, conductorBroadcastTime?, conductorCreatedAt?,
- *   conductorExpiresAt?, conductorEnded? }
+ *   conductorExpiresAt?, conductorEnded?,
+ *   communityPublicationId?, communityPublishToken?  ← set when listed in the Community pool }
  */
 export function loadCollections() {
   const raw = localStorage.getItem(COLLECTIONS_KEY)
