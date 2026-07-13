@@ -6,6 +6,7 @@ import session from './routes/session';
 import conductor from './routes/conductor';
 import album from './routes/album';
 import license from './routes/license';
+import community from './routes/community';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -50,5 +51,6 @@ app.route('/session', session);
 app.route('/conductor', conductor);
 app.route('/album', album);
 app.route('/license', license);
+app.route('/community', community);
 
 export default app;
