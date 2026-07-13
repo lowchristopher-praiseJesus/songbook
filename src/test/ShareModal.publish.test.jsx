@@ -6,8 +6,12 @@ import { LicenseContext } from '../contexts/LicenseContext';
 
 // Store-mock / render setup mirrors src/test/ShareModal.test.jsx verbatim, plus the
 // community publish mock this feature introduces.
+const { getTokenMock } = vi.hoisted(() => {
+  return { getTokenMock: vi.fn(async () => 'mock-token') };
+});
+
 vi.mock('../hooks/useTurnstile', () => ({
-  default: () => ({ getToken: async () => 'mock-token' }),
+  default: () => ({ getToken: getTokenMock }),
 }));
 vi.mock('../lib/shareApi', () => ({
   uploadShare: vi.fn(),
@@ -108,6 +112,8 @@ describe('ShareModal — community publish', () => {
     fireEvent.click(screen.getByRole('button', { name: /create link/i }));
 
     await waitFor(() => expect(publishCollection).toHaveBeenCalled());
+    // Verify getToken was called exactly twice (once for share upload, once for publish).
+    expect(getTokenMock).toHaveBeenCalledTimes(2);
     // The token must have been passed (a distinct getToken() invocation from uploadShare's).
     expect(publishCollection.mock.calls[0][0].turnstileToken).toBe('mock-token');
   });
