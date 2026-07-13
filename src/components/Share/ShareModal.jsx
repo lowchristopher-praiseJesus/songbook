@@ -4,7 +4,7 @@ import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
 import { uploadShare, updateShare, checkShareVersion, setShareLocked } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId, stripNoteTokens } from '../../lib/exportSbp';
-import { publishCollection } from '../../lib/communityImport/communityClient';
+import { publishCollection, unpublishCollection } from '../../lib/communityImport/communityClient';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
 import { loadSong, getTransposeState } from '../../lib/storage';
@@ -41,6 +41,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const [publisherName, setPublisherName] = useState('');
   const [copyrightAck, setCopyrightAck] = useState(false);
   const [publishError, setPublishError] = useState(null);
+  const [unlisting, setUnlisting] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
@@ -54,6 +55,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const collections = useLibraryStore(s => s.collections)
   const collection = collectionId ? collections.find(c => c.id === collectionId) : null
   const isUpdateMode = !!collection?.shareCode
+  const isListed = !!collection?.communityPublicationId
   const existingShareUrl = isUpdateMode
     ? `${window.location.origin}/?share=${collection.shareCode}`
     : ''
@@ -207,6 +209,23 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       console.error('[ShareModal] unexpected error:', err)
       setErrorMessage('An unexpected error occurred. Please try again.')
       setStep('error')
+    }
+  }
+
+  async function handleUnlist() {
+    setUnlisting(true)
+    setPublishError(null)
+    try {
+      await unpublishCollection(collection.communityPublicationId, collection.communityPublishToken)
+      updateCollection(collectionId, {
+        communityPublicationId: undefined,
+        communityPublishToken: undefined,
+      })
+    } catch (err) {
+      console.error('[ShareModal] unlist failed:', err)
+      setPublishError("Couldn't unlist this — try again.")
+    } finally {
+      setUnlisting(false)
     }
   }
 
@@ -423,6 +442,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setPublisherName('');
     setCopyrightAck(false);
     setPublishError(null);
+    setUnlisting(false);
     setShareUrl('');
     setCopied(false);
     setShareLyricsOnly(false);
@@ -508,7 +528,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               ))}
             </select>
           </div>
-          {!isUpdateMode && (
+          {!isUpdateMode && !isListed && (
             <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
@@ -540,6 +560,19 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                     </span>
                   </label>
                 </div>
+              )}
+            </div>
+          )}
+          {isListed && (
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <p className="text-xs text-amber-800 dark:text-amber-300">✅ Listed in Community</p>
+                <Button variant="ghost" className="text-xs" onClick={handleUnlist} disabled={unlisting}>
+                  {unlisting ? 'Unlisting…' : 'Unlist'}
+                </Button>
+              </div>
+              {publishError && (
+                <p className="text-xs text-red-500 mt-1">{publishError}</p>
               )}
             </div>
           )}

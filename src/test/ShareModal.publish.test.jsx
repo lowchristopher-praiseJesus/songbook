@@ -38,7 +38,7 @@ vi.mock('../lib/conductorApi', () => ({
 
 import { uploadShare } from '../lib/shareApi';
 import { exportSongsAsSbp } from '../lib/exportSbp';
-import { publishCollection } from '../lib/communityImport/communityClient';
+import { publishCollection, unpublishCollection } from '../lib/communityImport/communityClient';
 
 const defaultSongs = [{ id: '1', meta: { title: 'El Shaddai', artist: 'Amy Grant' }, rawText: 'verse one\nverse two' }];
 
@@ -148,5 +148,57 @@ describe('ShareModal — community publish', () => {
     });
     renderShareModal({ collectionId: 'coll-1', collectionName: 'Set' });
     expect(screen.queryByLabelText(/also list in community/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('ShareModal — unlist', () => {
+  it('shows the listed state and unlists on click', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1', name: 'Judah', createdAt: '', songIds: [],
+        communityPublicationId: 'p1', communityPublishToken: 't1',
+      }],
+    });
+    renderShareModal({ collectionId: 'coll-1', collectionName: 'Judah' });
+
+    expect(screen.getByText(/listed in community/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /unlist/i }));
+
+    await waitFor(() => expect(unpublishCollection).toHaveBeenCalledWith('p1', 't1'));
+    await waitFor(() => {
+      const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-1');
+      expect(col.communityPublicationId).toBeUndefined();
+      expect(col.communityPublishToken).toBeUndefined();
+    });
+  });
+
+  it('does not show the community checkbox for an already-listed collection', () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1', name: 'Judah', createdAt: '', songIds: [],
+        communityPublicationId: 'p1', communityPublishToken: 't1',
+      }],
+    });
+    renderShareModal({ collectionId: 'coll-1', collectionName: 'Judah' });
+    expect(screen.queryByLabelText(/also list in community/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a soft error and keeps the listed banner when unlisting fails', async () => {
+    unpublishCollection.mockRejectedValueOnce(new Error('network'));
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1', name: 'Judah', createdAt: '', songIds: [],
+        communityPublicationId: 'p1', communityPublishToken: 't1',
+      }],
+    });
+    renderShareModal({ collectionId: 'coll-1', collectionName: 'Judah' });
+
+    fireEvent.click(screen.getByRole('button', { name: /unlist/i }));
+
+    expect(await screen.findByText(/couldn't unlist/i)).toBeInTheDocument();
+    // The banner is still there — the collection is still listed since unlisting failed.
+    expect(screen.getByText(/listed in community/i)).toBeInTheDocument();
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-1');
+    expect(col.communityPublicationId).toBe('p1');
   });
 });
