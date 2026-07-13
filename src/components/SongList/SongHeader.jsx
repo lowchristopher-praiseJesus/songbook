@@ -4,12 +4,14 @@ import {
   ArrowsPointingOutIcon,
   ChatBubbleLeftEllipsisIcon,
   MusicalNoteIcon,
+  PlayCircleIcon,
   ChevronUpIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline'
 import { TransposeControl } from './TransposeControl'
 import { RecorderButton } from '../Recorder/RecorderButton'
 import { checkRecorderSupport } from '../../lib/recorderFeatureDetect'
+import { youtubeSearchUrl } from '../../lib/youtubeSearch'
 
 const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
 
@@ -101,75 +103,82 @@ export function SongHeader({
       </div>
 
       {/* Row 2: Secondary/utility controls */}
-      {(hasInfo || lyricsOnly || onAnnotationsToggle || (songId && RECORDER_SUPPORTED)) && (
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          {hasInfo && (
-            <button
-              type="button"
-              onClick={() => setInfoOpen(o => !o)}
-              className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
-              aria-expanded={infoOpen}
-            >
-              Info {infoOpen ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
-            </button>
-          )}
-          {lyricsOnly && (
-            <button
-              type="button"
-              onClick={onExportPdf}
-              className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
-            >
-              ↓ PDF
-            </button>
-          )}
-          {onAnnotationsToggle && (
-            <button
-              type="button"
-              onClick={onAnnotationsToggle}
-              className={`flex items-center p-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer ${
-                annotationsVisible
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
-              }`}
-              aria-label={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
-              title={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
-            >
-              <ChatBubbleLeftEllipsisIcon className="w-4 h-4" />
-            </button>
-          )}
-          {songId && RECORDER_SUPPORTED && recording && (
-            <>
-              {/* Rec button only shown when idle — active controls live in the sticky bar */}
-              {!isActiveRecording && (
-                <RecorderButton
-                  status={recording.status}
-                  onStart={recording.startRecording}
-                  onStop={recording.stopRecording}
-                  onPause={recording.pauseRecording}
-                  onResume={recording.resumeRecording}
+      <div className="flex flex-wrap items-center gap-2 mt-2">
+        <a
+          href={youtubeSearchUrl(meta.title, meta.artist)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
+        >
+          <PlayCircleIcon className="w-3.5 h-3.5" />
+          YouTube
+        </a>
+        {hasInfo && (
+          <button
+            type="button"
+            onClick={() => setInfoOpen(o => !o)}
+            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+            aria-expanded={infoOpen}
+          >
+            Info {infoOpen ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
+          </button>
+        )}
+        {lyricsOnly && (
+          <button
+            type="button"
+            onClick={onExportPdf}
+            className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
+          >
+            ↓ PDF
+          </button>
+        )}
+        {onAnnotationsToggle && (
+          <button
+            type="button"
+            onClick={onAnnotationsToggle}
+            className={`flex items-center p-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer ${
+              annotationsVisible
+                ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            }`}
+            aria-label={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
+            title={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
+          >
+            <ChatBubbleLeftEllipsisIcon className="w-4 h-4" />
+          </button>
+        )}
+        {songId && RECORDER_SUPPORTED && recording && (
+          <>
+            {/* Rec button only shown when idle — active controls live in the sticky bar */}
+            {!isActiveRecording && (
+              <RecorderButton
+                status={recording.status}
+                onStart={recording.startRecording}
+                onStop={recording.stopRecording}
+                onPause={recording.pauseRecording}
+                onResume={recording.resumeRecording}
+              />
+            )}
+            <div className="relative inline-flex">
+              <button
+                type="button"
+                onClick={onPanelOpen}
+                aria-label={recording.hasRecordings ? 'Recordings available' : 'Recordings'}
+                title={recording.hasRecordings ? 'View recordings - this song has recordings' : 'View recordings'}
+                className="flex items-center gap-1.5 text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
+              >
+                <MusicalNoteIcon className="w-3.5 h-3.5" /> Recordings
+              </button>
+              {recording.hasRecordings && (
+                <span
+                  className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900"
+                  aria-hidden="true"
                 />
               )}
-              <div className="relative inline-flex">
-                <button
-                  type="button"
-                  onClick={onPanelOpen}
-                  aria-label={recording.hasRecordings ? 'Recordings available' : 'Recordings'}
-                  title={recording.hasRecordings ? 'View recordings - this song has recordings' : 'View recordings'}
-                  className="flex items-center gap-1.5 text-sm px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
-                >
-                  <MusicalNoteIcon className="w-3.5 h-3.5" /> Recordings
-                </button>
-                {recording.hasRecordings && (
-                  <span
-                    className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+            </div>
+          </>
+        )}
+      </div>
 
       {infoOpen && (
         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-600 dark:text-gray-400">

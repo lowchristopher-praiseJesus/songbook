@@ -42,6 +42,25 @@ const baseProps = {
   annotationsVisible: true,
 }
 
+describe('SongHeader YouTube link', () => {
+  it('links to a YouTube search for the song title and artist', () => {
+    render(<SongHeader {...baseProps} />)
+    const link = screen.getByRole('link', { name: /youtube/i })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/results?search_query=Amazing%20Grace%20John%20Newton'
+    )
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
+  it('omits the artist from the search query when absent', () => {
+    render(<SongHeader {...baseProps} meta={{ ...baseProps.meta, artist: undefined }} />)
+    const link = screen.getByRole('link', { name: /youtube/i })
+    expect(link).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=Amazing%20Grace')
+  })
+})
+
 describe('SongHeader annotation', () => {
   it('renders song-level annotation when annotationsVisible is true', () => {
     render(<SongHeader {...baseProps} meta={{ ...baseProps.meta, annotation: 'sing joyfully' }} />)
