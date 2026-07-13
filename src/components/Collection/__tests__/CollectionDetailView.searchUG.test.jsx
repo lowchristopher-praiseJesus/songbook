@@ -40,31 +40,31 @@ const defaultProps = {
   onOpenSidebar: vi.fn(),
 }
 
-describe('CollectionDetailView Search UG button', () => {
+describe('CollectionDetailView Search Songs button', () => {
   beforeEach(() => {
     mockSetSelectedCollectionId.mockReset()
   })
 
-  it('does not show the Search UG modal by default', () => {
+  it('does not show the Search Songs modal by default', () => {
     render(<CollectionDetailView {...defaultProps} />)
     expect(screen.queryByTestId('ug-search-modal')).not.toBeInTheDocument()
   })
 
-  it('renders a "Search UG" button', () => {
+  it('renders a "Search Songs" button', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    expect(screen.getByRole('button', { name: 'Search UG' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Search Songs' })).toBeInTheDocument()
   })
 
-  it('clicking "Search UG" opens the modal scoped to the current collection', () => {
+  it('clicking "Search Songs" opens the modal scoped to the current collection', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search UG' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Search Songs' }))
     const modal = screen.getByTestId('ug-search-modal')
     expect(modal).toHaveAttribute('data-collection-id', 'c1')
   })
 
   it('a successful import navigates away from the collection screen', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search UG' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Search Songs' }))
     fireEvent.click(screen.getByText('trigger-song-select'))
     expect(mockSetSelectedCollectionId).toHaveBeenCalledWith(null)
   })

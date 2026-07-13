@@ -326,7 +326,7 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
               text-gray-700 dark:text-gray-300 text-sm font-medium
               hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Search UG
+            Search Songs
           </button>
 
           {renaming ? null : (

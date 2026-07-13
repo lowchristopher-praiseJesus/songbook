@@ -452,7 +452,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
                 className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
               >
                 <MagnifyingGlassIcon className="w-4 h-4" />
-                <span className="text-[10px] font-medium">Search UG</span>
+                <span className="text-[10px] font-medium">Search Songs</span>
               </button>
               <button
                 type="button"
