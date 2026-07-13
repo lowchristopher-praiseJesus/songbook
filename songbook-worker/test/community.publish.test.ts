@@ -207,4 +207,17 @@ describe('POST /community/publish', () => {
     const linkedPublicationIds = new Set(linkRows.map((r) => (r as { publication_id: string }).publication_id));
     expect(linkedPublicationIds).toEqual(new Set([body1.publicationId, body2.publicationId]));
   });
+
+  it('rejects a request body over 10MB with 413 too_large', async () => {
+    // Create a body that exceeds 10MB (10 * 1024 * 1024 = 10485760 bytes)
+    const largeBody = 'x'.repeat(11 * 1024 * 1024); // 11MB of 'x'
+    const res = await publish({ collectionName: 'C', publisherName: 'P', songs: [song({ body: largeBody })] });
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: 'too_large' });
+  });
+
+  it('still accepts a normal-sized request after size validation', async () => {
+    const res = await publish({ collectionName: 'Normal', publisherName: 'P', songs: [song()] });
+    expect(res.status).toBe(201);
+  });
 });

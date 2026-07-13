@@ -23,9 +23,15 @@ const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFi
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
 community.post('/publish', verifyTurnstile, rateLimit({ prefix: 'cpub', limit: 5, windowSeconds: 3600 }), async (c) => {
+  // Read raw body to enforce 10MB size cap before parsing JSON.
+  const rawBody = await c.req.arrayBuffer();
+  if (rawBody.byteLength > 10 * 1024 * 1024) return c.json({ error: 'too_large' }, 413);
+
   let payload: { collectionName?: unknown; publisherName?: unknown; songs?: unknown };
   try {
-    payload = await c.req.json();
+    // Parse the ArrayBuffer as text then JSON.
+    const text = new TextDecoder().decode(rawBody);
+    payload = JSON.parse(text);
   } catch {
     return c.json({ error: 'invalid_body' }, 400);
   }
