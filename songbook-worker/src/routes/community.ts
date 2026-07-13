@@ -240,4 +240,62 @@ community.post('/arrangement/:id/import', async (c) => {
   return c.json({ ok: true });
 });
 
+const VALID_REASONS = new Set(['copyright', 'inappropriate', 'wrong-or-broken']);
+
+community.post('/arrangement/:id/report', async (c) => {
+  let payload: { reason?: unknown };
+  try {
+    payload = await c.req.json();
+  } catch {
+    return c.json({ error: 'invalid_body' }, 400);
+  }
+  if (typeof payload.reason !== 'string' || !VALID_REASONS.has(payload.reason)) {
+    return c.json({ error: 'invalid_reason' }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO reports (id, song_id, reason, created_at, status) VALUES (?, ?, ?, ?, 'open')"
+  ).bind(crypto.randomUUID(), c.req.param('id'), payload.reason, Date.now()).run();
+
+  return c.json({ ok: true }, 201);
+});
+
+community.delete('/publication/:id', async (c) => {
+  const publicationId = c.req.param('id');
+  const token = c.req.header('X-Publish-Token') ?? '';
+
+  const pub = await c.env.DB.prepare(
+    "SELECT publish_token_hash FROM publications WHERE id = ? AND status = 'live'"
+  ).bind(publicationId).first<{ publish_token_hash: string }>();
+  if (!pub) return c.json({ error: 'not_found' }, 404);
+
+  const [salt, expected] = pub.publish_token_hash.split(':');
+  if (!salt || !expected || (await hashPin(token, salt)) !== expected) {
+    return c.json({ error: 'invalid_token' }, 403);
+  }
+
+  await c.env.DB.prepare("UPDATE publications SET status = 'removed' WHERE id = ?")
+    .bind(publicationId).run();
+
+  // Only orphan the songs that no *other* live publication still references — one church
+  // unlisting its set must not yank a shared arrangement out from under everyone else.
+  const { results: orphans } = await c.env.DB.prepare(`
+    SELECT sp.song_id AS id
+    FROM song_publications sp
+    WHERE sp.publication_id = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM song_publications sp2
+        JOIN publications p2 ON p2.id = sp2.publication_id
+        WHERE sp2.song_id = sp.song_id AND p2.status = 'live'
+      )
+  `).bind(publicationId).all<{ id: string }>();
+
+  for (const { id } of orphans) {
+    await c.env.DB.prepare("UPDATE songs SET status = 'removed' WHERE id = ?").bind(id).run();
+    await c.env.DB.prepare('DELETE FROM songs_fts WHERE song_id = ?').bind(id).run();
+  }
+
+  return c.json({ unlisted: orphans.length });
+});
+
 export default community;

@@ -27,7 +27,7 @@ app.use('*', async (c, next) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? requestOrigin : '',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token, X-License-Token, X-Turnstile-Token, X-Locked, X-Lock-Pin',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Expires-In-Days, X-Leader-Token, X-Director-Token, X-Conductor-Token, X-Creator-Token, X-License-Token, X-Turnstile-Token, X-Locked, X-Lock-Pin, X-Publish-Token',
         'Access-Control-Max-Age': '86400',
       },
     });
