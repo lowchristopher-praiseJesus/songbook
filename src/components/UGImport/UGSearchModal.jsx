@@ -6,6 +6,7 @@ import { getFirecrawlKey } from '../../lib/storage'
 import { searchUG } from '../../lib/ugImport/firecrawlClient'
 import { fetchAndParseSong } from '../../lib/ugImport/fetchSong'
 import { searchDanielChoy } from '../../lib/danielchoyImport/danielchoyClient'
+import { searchCommunity, recordCommunityImport } from '../../lib/communityImport/communityClient'
 import { UGPreviewModal } from './UGPreviewModal'
 
 function errorMessage(err) {
@@ -46,25 +47,31 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     setStatus('searching')
     setError(null)
     try {
-      const [ugOutcome, dcOutcome] = await Promise.allSettled([
+      const [cmOutcome, ugOutcome, dcOutcome] = await Promise.allSettled([
+        searchCommunity(query.trim()),
         apiKey ? searchUG(query.trim(), apiKey) : Promise.resolve([]),
         searchDanielChoy(query.trim(), apiKey),
       ])
+      const cmItems = cmOutcome.status === 'fulfilled' ? cmOutcome.value : []
       const ugItems = ugOutcome.status === 'fulfilled' ? ugOutcome.value : []
       const dcItems = dcOutcome.status === 'fulfilled' ? dcOutcome.value : []
       const combined = [
+        // Community first: it is our own pool, it needs no API key, and its metadata is
+        // richer (key, capo, import count) than a scraped web result.
+        ...cmItems,
         ...ugItems.map(r => ({ ...r, source: 'ug' })),
         ...dcItems.map(r => ({ ...r, source: 'danielchoy' })),
       ]
       setResults(combined)
       setStatus('results')
-      // Surface an error only when all searched sources failed
+      // Surface an error only when every source that was actually searched failed
+      const cmFailed = cmOutcome.status === 'rejected'
       const ugFailed = ugOutcome.status === 'rejected'
       const dcFailed = dcOutcome.status === 'rejected'
       const ugSkipped = !apiKey  // UG not searched (no key)
-      if ((ugFailed || ugSkipped) && dcFailed) {
+      if (cmFailed && (ugFailed || ugSkipped) && dcFailed) {
         setStatus('idle')
-        setError(ugFailed ? errorMessage(ugOutcome.reason) : errorMessage(dcOutcome.reason))
+        setError(errorMessage(cmOutcome.reason))
       }
     } catch (err) {
       setStatus('idle')
@@ -90,7 +97,9 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
       return
     }
 
-    const sourceLabel = result.source === 'danielchoy' ? 'Daniel Choy' : 'Ultimate Guitar'
+    const SOURCE_LABELS = { community: 'Community', danielchoy: 'Daniel Choy', ug: 'Ultimate Guitar' }
+    const sourceKey = result.source ?? 'ug'
+    const sourceLabel = SOURCE_LABELS[sourceKey] ?? 'Ultimate Guitar'
 
     // Duplicate check
     const index = useLibraryStore.getState().index
@@ -114,7 +123,6 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     }
 
     const idsBefore = new Set(useLibraryStore.getState().index.map(e => e.id))
-    const sourceKey = result.source === 'danielchoy' ? 'danielchoy' : 'ug'
     try {
       addSongs([song], sourceLabel, sourceKey)
     } catch (e) {
@@ -129,11 +137,13 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
     const newEntry = useLibraryStore.getState().index.find(e => !idsBefore.has(e.id))
     if (newEntry && collectionId) addSongToCollection(newEntry.id, collectionId)
     if (newEntry) selectSong(newEntry.id)
+    // Fire-and-forget: the song is already in the library, so a failed counter must not surface.
+    if (result.source === 'community') recordCommunityImport(result.id)
     onSongSelect()
     onImportSuccess?.()
     onAddToast(`Imported: ${song.meta.title}`, 'success')
     resetAndClose()
-  }, [addSongs, replaceSong, selectSong, addSongToCollection, collectionId, onDuplicateCheck, onSongSelect, onImportSuccess, onAddToast, resetAndClose])
+  }, [addSongs, replaceSong, selectSong, addSongToCollection, collectionId, onDuplicateCheck, onSongSelect, onImportSuccess, onAddToast, resetAndClose, recordCommunityImport])
 
   const handleSelect = useCallback(async (result) => {
     if (importingRef.current) return
@@ -170,7 +180,7 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
             />
             {!apiKey && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Add a Firecrawl API key in <strong>Settings</strong> to also search Ultimate Guitar.
+                Searching the <strong>Community</strong> pool and Daniel Choy. Add a Firecrawl API key in <strong>Settings</strong> to also search Ultimate Guitar.
               </p>
             )}
             {error && <p className="text-sm text-red-500">{error}</p>}
@@ -213,6 +223,13 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
                     .replace(/\s+[Cc]hords?\s+by\s+.*$/g, '')
                     .trim()
                   const isDC = r.source === 'danielchoy'
+                  const isCM = r.source === 'community'
+                  const badge = isCM ? 'CM' : isDC ? 'DC' : 'UG'
+                  const badgeClass = isCM
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                    : isDC
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                      : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400'
                   return (
                     <li key={r.url} className="flex items-stretch gap-1">
                       <div
@@ -232,18 +249,14 @@ export function UGSearchModal({ isOpen, onClose, onSongSelect, onImportSuccess, 
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-medium flex-1 min-w-0 truncate">{displayTitle || r.title}</span>
-                          <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                            isDC
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                              : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400'
-                          }`}>
-                            {isDC ? 'DC' : 'UG'}
+                          <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${badgeClass}`}>
+                            {badge}
                           </span>
                         </div>
                         {r.description && (
                           <div className="text-xs text-gray-400 truncate mt-0.5">{r.description}</div>
                         )}
-                        {isDC && r.artist && (
+                        {(isDC || isCM) && r.artist && (
                           <div className="text-xs text-gray-400 truncate mt-0.5">{r.artist}</div>
                         )}
                       </div>
