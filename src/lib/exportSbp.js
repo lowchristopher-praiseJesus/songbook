@@ -127,6 +127,7 @@ function songToSbpJson(song, stripAppSyntax = false) {
     DeepSearch: buildDeepSearch(name, author, subTitle),
     Copyright: meta.copyright ?? '',
     NotesText: meta.annotation ?? '',
+    YoutubeVideoId: meta.youtubeVideoId ?? null,
     appKeyIndex: meta.keyIndex ?? 0,
     Zoom: 1.0,
     SectionOrder: '',

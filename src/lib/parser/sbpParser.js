@@ -168,6 +168,7 @@ function songFromJson(s, setEntry = null) {
       timeSignature: s.timeSig || undefined,
       copyright: s.Copyright || undefined,
       annotation: s.NotesText || undefined,
+      youtubeVideoId: s.YoutubeVideoId || undefined,
       ccli: s.ccli ?? undefined,
       subTitle: s.subTitle || undefined,
       // Original SBP fields preserved verbatim so exportSbp can reproduce

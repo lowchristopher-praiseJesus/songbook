@@ -194,6 +194,20 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
     expect(json.songs[0].NotesText).toBe('')
   })
 
+  it('maps meta.youtubeVideoId to YoutubeVideoId', async () => {
+    const songWithVideo = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0, youtubeVideoId: 'abc12345678' },
+      rawText: '{c: Verse}\nHello world',
+    }
+    const { json } = await parseZip([songWithVideo])
+    expect(json.songs[0].YoutubeVideoId).toBe('abc12345678')
+  })
+
+  it('writes null to YoutubeVideoId when meta.youtubeVideoId is absent', async () => {
+    const { json } = await parseZip([mockSong])
+    expect(json.songs[0].YoutubeVideoId).toBeNull()
+  })
+
   describe('SBP round-trip (preserves original fields)', () => {
     // Songs imported from .sbp carry sbpXxx meta fields; export must write
     // the original key/KeyShift/Capo/content back verbatim so SBP interprets
@@ -373,5 +387,23 @@ describe('conductorCode round-trip', () => {
     const buf = await zip.generateAsync({ type: 'arraybuffer' })
     const { conductorCode } = await parseSbpFile(buf)
     expect(conductorCode).toBeNull()
+  })
+})
+
+describe('youtubeVideoId round-trip', () => {
+  it('preserves youtubeVideoId through export → parse', async () => {
+    const songWithVideo = {
+      meta: { title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0, youtubeVideoId: 'abc12345678' },
+      rawText: '{c: Verse}\nHello world',
+    }
+    const buf = await buildSbpZip([songWithVideo]).generateAsync({ type: 'arraybuffer' })
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.youtubeVideoId).toBe('abc12345678')
+  })
+
+  it('leaves youtubeVideoId undefined when never set', async () => {
+    const buf = await buildSbpZip([mockSong]).generateAsync({ type: 'arraybuffer' })
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.youtubeVideoId).toBeUndefined()
   })
 })
