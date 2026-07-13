@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   searchCommunity, fetchCommunityArrangement, recordCommunityImport,
-  reportCommunityArrangement, publishCollection,
+  reportCommunityArrangement, publishCollection, unpublishCollection,
 } from '../communityClient'
 
 beforeEach(() => {
@@ -32,6 +32,9 @@ describe('searchCommunity', () => {
       keyIndex: 2, capo: 2, tempo: 70,
       collectionName: 'Judah', publisherName: 'Chris', importCount: 5,
     }])
+    const callUrl = global.fetch.mock.calls[0][0]
+    expect(callUrl).toContain('/community/search')
+    expect(callUrl).toContain('q=oceans')
   })
 
   it('returns [] for a blank query without hitting the network', async () => {
@@ -42,7 +45,7 @@ describe('searchCommunity', () => {
 
   it('throws on a network failure so the caller can report the source as failed', async () => {
     mockFetch({}, false, 500)
-    await expect(searchCommunity('oceans')).rejects.toThrow()
+    await expect(searchCommunity('oceans')).rejects.toMatchObject({ code: 'network_error' })
   })
 })
 
@@ -51,11 +54,15 @@ describe('fetchCommunityArrangement', () => {
     mockFetch({ id: 'a1', title: 'Oceans', artist: 'Hillsong', body: 'la', keyIndex: 2, capo: 2 })
     const a = await fetchCommunityArrangement('a1')
     expect(a).toMatchObject({ id: 'a1', title: 'Oceans', body: 'la' })
+    const callUrl = global.fetch.mock.calls[0][0]
+    expect(callUrl).toContain('/community/arrangement/a1')
   })
 
   it('throws not_found on 404', async () => {
     mockFetch({ error: 'not_found' }, false, 404)
     await expect(fetchCommunityArrangement('nope')).rejects.toMatchObject({ code: 'not_found' })
+    const callUrl = global.fetch.mock.calls[0][0]
+    expect(callUrl).toContain('/community/arrangement/nope')
   })
 })
 
@@ -63,6 +70,10 @@ describe('recordCommunityImport', () => {
   it('never throws, even when the network fails — a counter must not break an import', async () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('offline')))
     await expect(recordCommunityImport('a1')).resolves.toBeUndefined()
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/import'),
+      expect.objectContaining({ method: 'POST' }),
+    )
   })
 })
 
@@ -80,9 +91,10 @@ describe('reportCommunityArrangement', () => {
 describe('publishCollection', () => {
   it('sends the turnstile token and returns the publish token', async () => {
     mockFetch({ publicationId: 'p1', publishToken: 't1', published: 3, alreadyInPool: 1 }, true, 201)
+    const songs = [{ title: 'T', artist: 'A', body: 'la' }]
     const out = await publishCollection({
       collectionName: 'Judah', publisherName: 'Chris',
-      songs: [{ title: 'T', artist: 'A', body: 'la' }],
+      songs,
       turnstileToken: 'ts',
     })
     expect(out).toEqual({ publicationId: 'p1', publishToken: 't1', published: 3, alreadyInPool: 1 })
@@ -91,6 +103,7 @@ describe('publishCollection', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ 'X-Turnstile-Token': 'ts' }),
+        body: JSON.stringify({ collectionName: 'Judah', publisherName: 'Chris', songs }),
       }),
     )
   })
@@ -99,5 +112,28 @@ describe('publishCollection', () => {
     mockFetch({ error: 'rate_limited' }, false, 429)
     await expect(publishCollection({ collectionName: 'C', songs: [], turnstileToken: 't' }))
       .rejects.toMatchObject({ code: 'rate_limited' })
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/community/publish'),
+      expect.anything(),
+    )
+  })
+})
+
+describe('unpublishCollection', () => {
+  it('sends a DELETE request with the publish token', async () => {
+    mockFetch({}, true, 200)
+    await unpublishCollection('p1', 'token123')
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/community/publication/p1'),
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({ 'X-Publish-Token': 'token123' }),
+      }),
+    )
+  })
+
+  it('throws invalid_token on 403', async () => {
+    mockFetch({ error: 'invalid_token' }, false, 403)
+    await expect(unpublishCollection('p1', 'bad')).rejects.toMatchObject({ code: 'invalid_token' })
   })
 })
