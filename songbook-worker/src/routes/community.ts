@@ -230,9 +230,13 @@ community.get('/arrangement/:id', async (c) => {
 community.post('/arrangement/:id/import', async (c) => {
   // Deliberately always 200: this is a fire-and-forget popularity counter, and a failure
   // here must never surface to a user who has already successfully imported the song.
-  await c.env.DB.prepare(
-    "UPDATE songs SET import_count = import_count + 1 WHERE id = ? AND status = 'live'"
-  ).bind(c.req.param('id')).run();
+  try {
+    await c.env.DB.prepare(
+      "UPDATE songs SET import_count = import_count + 1 WHERE id = ? AND status = 'live'"
+    ).bind(c.req.param('id')).run();
+  } catch {
+    // Suppress DB errors; a counter bump failure must never interrupt an import.
+  }
   return c.json({ ok: true });
 });
 
