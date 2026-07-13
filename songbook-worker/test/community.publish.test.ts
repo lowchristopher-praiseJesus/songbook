@@ -146,15 +146,18 @@ describe('POST /community/publish', () => {
   // Genuine concurrency test for the content_hash-collision try/catch fallback in the route
   // (src/routes/community.ts, new-song branch): fire two REAL concurrent SELF.fetch() requests
   // at /community/publish, both publishing identical brand-new content that neither call has
-  // ever published before. Cloudflare Workers run single-threaded with cooperative scheduling
-  // at `await` boundaries, so two requests issued together via Promise.all genuinely interleave
-  // — both requests' initial `SELECT id FROM songs WHERE content_hash = ?` can run (and find
-  // nothing) before either request's `songs` INSERT commits. Whichever request's INSERT commits
-  // second then collides with the content_hash UNIQUE constraint the first request just
-  // satisfied, and must take the route's catch-and-re-SELECT fallback instead of 500ing.
-  //
-  // We assert only the externally-observable safety properties, not which internal branch ran
-  // (that's non-deterministic and depends on runtime scheduling we don't control from the test).
+  // ever published before. In production, two requests hitting this route at once could genuinely
+  // interleave at their async I/O boundaries, letting both SELECTs miss before either INSERT
+  // commits — which is exactly the race the catch-and-re-SELECT fallback in the route handles.
+  // In this local test harness, though, we've verified via instrumentation that Miniflare's D1
+  // binding effectively serializes these two SELF.fetch() calls: request 2's ordinary SELECT
+  // always finds request 1's already-committed row, so the catch branch is never actually
+  // reached here. This test therefore cannot prove the catch branch specifically fires — it
+  // asserts the externally observable safety properties instead (both responses succeed, exactly
+  // one songs row exists, the published/alreadyInPool counts are consistent, and both
+  // publications correctly link to the same song), which hold regardless of which internal
+  // branch runs and would still catch a regression that broke concurrent-publish safety in
+  // general.
   it('resolves two truly concurrent first-time publishes of identical content without either 500ing or duplicating the song', async () => {
     const s = song({ title: 'Concurrent Race Song', artist: 'Race Artist', body: 'The [G]lyrics of a [C]race' });
     const title = s.title as string;
