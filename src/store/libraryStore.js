@@ -543,6 +543,20 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
+   * Persist the user's chosen YouTube video for a song, so reopening the
+   * in-app YouTube search jumps straight to playback instead of a fresh search.
+   */
+  setSongYoutubeVideo(id, videoId) {
+    const song = loadSong(id)
+    if (!song) return
+    const updated = { ...song, meta: { ...song.meta, youtubeVideoId: videoId } }
+    saveSong(updated)
+    if (get().activeSongId === id) {
+      set({ activeSong: updated })
+    }
+  },
+
+  /**
    * Stamp sharedBaseline on a song from its current localStorage state.
    * Called after creating or pushing a share so the sharer can receive
    * updates pushed by recipients via the 3-way merge.
