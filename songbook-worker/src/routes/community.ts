@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../types';
 import { verifyTurnstile } from '../middleware/turnstile';
+import { rateLimit } from '../middleware/rateLimit';
 import { generateSalt, hashPin } from '../lib/pin';
 import { groupKey, contentHash, stripChords, stripNotes } from '../lib/songIdentity';
 
@@ -21,7 +22,7 @@ interface IncomingSong {
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
-community.post('/publish', verifyTurnstile, async (c) => {
+community.post('/publish', verifyTurnstile, rateLimit({ prefix: 'cpub', limit: 5, windowSeconds: 3600 }), async (c) => {
   let payload: { collectionName?: unknown; publisherName?: unknown; songs?: unknown };
   try {
     payload = await c.req.json();
