@@ -3,6 +3,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { SongBody } from '../SongList/SongBody'
 import { fetchAndParseSong } from '../../lib/ugImport/fetchSong'
+import { reportCommunityArrangement } from '../../lib/communityImport/communityClient'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -16,6 +17,20 @@ export function UGPreviewModal({ result, apiKey, isOpen, onClose, onImported }) 
   const [song, setSong] = useState(null)
   const [error, setError] = useState(null)
   const [importing, setImporting] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reported, setReported] = useState(false)
+
+  const isCommunity = result?.source === 'community'
+
+  async function submitReport(reason) {
+    setReportOpen(false)
+    setReported(true)
+    try {
+      await reportCommunityArrangement(result.id, reason)
+    } catch {
+      // Swallow: the user has done their part, and a failed report must not become their problem.
+    }
+  }
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -95,6 +110,28 @@ export function UGPreviewModal({ result, apiKey, isOpen, onClose, onImported }) 
           <div className="mb-4">
             <SongBody sections={song.sections} fontSize={16} />
           </div>
+          {isCommunity && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              {reported ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Thanks — we'll take a look.</p>
+              ) : reportOpen ? (
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Report this chart:</span>
+                  <Button variant="ghost" className="text-xs" onClick={() => submitReport('copyright')}>Copyright</Button>
+                  <Button variant="ghost" className="text-xs" onClick={() => submitReport('inappropriate')}>Inappropriate</Button>
+                  <Button variant="ghost" className="text-xs" onClick={() => submitReport('wrong-or-broken')}>Wrong or broken</Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setReportOpen(true)}
+                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:underline"
+                >
+                  Report
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
     </Modal>
