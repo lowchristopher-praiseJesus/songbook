@@ -197,4 +197,43 @@ community.get('/search', async (c) => {
   });
 });
 
+interface ArrangementRow extends SearchRow {
+  time_sig: string | null;
+  body: string;
+}
+
+community.get('/arrangement/:id', async (c) => {
+  const row = await c.env.DB.prepare(`
+    SELECT id, title, artist, key_index, capo, tempo, time_sig, body,
+           publisher_name, collection_name, import_count
+    FROM songs
+    WHERE id = ? AND status = 'live'
+  `).bind(c.req.param('id')).first<ArrangementRow>();
+
+  if (!row) return c.json({ error: 'not_found' }, 404);
+
+  return c.json({
+    id: row.id,
+    title: row.title,
+    artist: row.artist,
+    keyIndex: row.key_index,
+    capo: row.capo,
+    tempo: row.tempo,
+    timeSig: row.time_sig,
+    body: row.body,
+    collectionName: row.collection_name ?? '',
+    publisherName: row.publisher_name ?? 'Anonymous',
+    importCount: row.import_count,
+  });
+});
+
+community.post('/arrangement/:id/import', async (c) => {
+  // Deliberately always 200: this is a fire-and-forget popularity counter, and a failure
+  // here must never surface to a user who has already successfully imported the song.
+  await c.env.DB.prepare(
+    "UPDATE songs SET import_count = import_count + 1 WHERE id = ? AND status = 'live'"
+  ).bind(c.req.param('id')).run();
+  return c.json({ ok: true });
+});
+
 export default community;
