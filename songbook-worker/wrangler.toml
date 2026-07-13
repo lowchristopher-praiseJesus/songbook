@@ -16,3 +16,10 @@ bucket_name = "songbook-shares"
 binding = "SESSION_KV"
 id = "4db84560ebae40cf90fb142ee84c8562"
 preview_id = "ba821b606a42491893ccb6138f028435"
+
+# COMMUNITY_DB: run `wrangler d1 create songbook-community` and paste the returned id below
+[[d1_databases]]
+binding = "DB"
+database_name = "songbook-community"
+database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
+migrations_dir = "migrations"
