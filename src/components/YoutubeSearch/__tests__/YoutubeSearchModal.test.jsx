@@ -91,4 +91,41 @@ describe('YoutubeSearchModal', () => {
       'href', 'https://www.youtube.com/watch?v=abc12345678',
     )
   })
+
+  it('remains in playing state when parent re-renders with updated initialVideoId while isOpen stays true', async () => {
+    searchYoutube.mockResolvedValue([
+      { videoId: 'abc12345678', title: 'El Shaddai (Live)', url: 'https://www.youtube.com/watch?v=abc12345678' },
+    ])
+    const onVideoPicked = vi.fn()
+    const { rerender } = renderIt({ onVideoPicked })
+
+    // Search and pick a result
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    const row = await screen.findByText('El Shaddai (Live)')
+    fireEvent.click(row)
+
+    // Verify we're now playing that video
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678',
+    )
+    expect(screen.queryByPlaceholderText(/Song title or artist/i)).not.toBeInTheDocument()
+
+    // Simulate parent re-rendering with updated initialVideoId while isOpen stays true
+    rerender(
+      <YoutubeSearchModal
+        isOpen
+        onClose={vi.fn()}
+        title="El Shaddai"
+        artist="Amy Grant"
+        initialVideoId="abc12345678"
+        onVideoPicked={onVideoPicked}
+      />,
+    )
+
+    // Modal should still show the video, not reset to search
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678',
+    )
+    expect(screen.queryByPlaceholderText(/Song title or artist/i)).not.toBeInTheDocument()
+  })
 })
