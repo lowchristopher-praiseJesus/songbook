@@ -3,6 +3,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
 import { searchYoutube, parseYouTubeVideoId } from '../../lib/youtubeImport/youtubeClient'
+import { youtubeSearchUrl } from '../../lib/youtubeSearch'
 import { YoutubePlayerBar } from './YoutubePlayerBar'
 
 function errorMessage(err) {
@@ -63,6 +64,13 @@ export function YoutubeSearchModal({
       setStatus('playing')
       onExpand?.()
       onVideoPicked(linkedId)
+      return
+    }
+
+    // Without a Firecrawl key, in-app search isn't available — fall back to
+    // opening a YouTube search in a new tab, same as the toolbar button does.
+    if (!getFirecrawlKey()) {
+      window.open(youtubeSearchUrl(value), '_blank', 'noopener,noreferrer')
       return
     }
 
