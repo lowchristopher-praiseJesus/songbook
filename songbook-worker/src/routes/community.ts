@@ -203,6 +203,42 @@ community.get('/search', async (c) => {
   });
 });
 
+interface CollectionSearchRow {
+  id: string; collection_name: string; publisher_name: string;
+  created_at: number; song_count: number;
+}
+
+community.get('/collections/search', async (c) => {
+  const q = (c.req.query('q') ?? '').trim();
+  if (!q) return c.json({ results: [] });
+
+  const like = `%${q}%`;
+  const sql = `
+    SELECT p.id, p.collection_name, p.publisher_name, p.created_at,
+           COUNT(sp.song_id) AS song_count
+    FROM publications p
+    JOIN song_publications sp ON sp.publication_id = p.id
+    JOIN songs s ON s.id = sp.song_id AND s.status = 'live'
+    WHERE p.status = 'live' AND (p.collection_name LIKE ?1 OR p.publisher_name LIKE ?1)
+    GROUP BY p.id
+    HAVING song_count > 0
+    ORDER BY song_count DESC, p.created_at DESC
+    LIMIT 20
+  `;
+
+  const { results } = await c.env.DB.prepare(sql).bind(like).all<CollectionSearchRow>();
+
+  return c.json({
+    results: results.map(r => ({
+      id: r.id,
+      collectionName: r.collection_name,
+      publisherName: r.publisher_name,
+      songCount: r.song_count,
+      createdAt: r.created_at,
+    })),
+  });
+});
+
 interface ArrangementRow extends SearchRow {
   time_sig: string | null;
   body: string;
