@@ -1,9 +1,10 @@
 // src/components/Settings/SettingsPanel.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLicense } from '../../contexts/LicenseContext'
 import { useLibraryStore } from '../../store/libraryStore'
 import { getStorageStats, getFirecrawlKey, setFirecrawlKey } from '../../lib/storage'
+import { getCreditUsage } from '../../lib/ugImport/firecrawlClient'
 import { Button } from '../UI/Button'
 import { DisplayTab } from './DisplayTab'
 
@@ -15,6 +16,8 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
   const stats = getStorageStats()
   const [firecrawlKey, setFirecrawlKeyState] = useState(getFirecrawlKey)
   const [showKey, setShowKey] = useState(false)
+  const [creditUsage, setCreditUsage] = useState({ status: 'idle', data: null, error: null })
+  const creditsTimerRef = useRef(null)
   const { licenseKey, setLicenseKey, licenseStatus } = useLicense()
   const [licenseInput, setLicenseInput] = useState(licenseKey ?? '')
   const [showLicenseKey, setShowLicenseKey] = useState(false)
@@ -49,6 +52,22 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  useEffect(() => {
+    const trimmed = firecrawlKey.trim()
+    clearTimeout(creditsTimerRef.current)
+    if (!trimmed) {
+      setCreditUsage({ status: 'idle', data: null, error: null })
+      return
+    }
+    creditsTimerRef.current = setTimeout(() => {
+      setCreditUsage({ status: 'loading', data: null, error: null })
+      getCreditUsage(trimmed)
+        .then(data => setCreditUsage({ status: 'success', data, error: null }))
+        .catch(err => setCreditUsage({ status: 'error', data: null, error: err.message }))
+    }, 600)
+    return () => clearTimeout(creditsTimerRef.current)
+  }, [firecrawlKey])
 
   function clearAll() {
     if (!window.confirm('Delete ALL songs? This cannot be undone.')) return
@@ -183,6 +202,30 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
               How to get a Firecrawl API key
             </a>
           </p>
+          {creditUsage.status === 'loading' && (
+            <p className="mt-2 text-xs text-gray-400">Checking credit balance…</p>
+          )}
+          {creditUsage.status === 'success' && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {`${creditUsage.data.remainingCredits.toLocaleString()} / ${creditUsage.data.planCredits.toLocaleString()} credits remaining`}
+              </p>
+              <div className="mt-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  data-testid="firecrawl-credit-bar"
+                  className="h-full bg-indigo-600 rounded-full"
+                  style={{ width: `${Math.min(100, ((creditUsage.data.planCredits - creditUsage.data.remainingCredits) / creditUsage.data.planCredits) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {creditUsage.status === 'error' && (
+            <p className={`mt-2 text-xs ${creditUsage.error === 'UNAUTHORIZED' ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>
+              {creditUsage.error === 'UNAUTHORIZED' && 'Invalid API key'}
+              {creditUsage.error === 'NOT_FOUND' && 'Credit usage not available for this key'}
+              {creditUsage.error === 'NETWORK_ERROR' && 'Could not check credit balance'}
+            </p>
+          )}
         </div>
 
         {/* Conductor Broadcast License */}

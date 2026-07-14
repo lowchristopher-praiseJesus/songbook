@@ -40,10 +40,17 @@ vi.mock('../../../lib/storage', () => ({
   setFirecrawlKey: (...args) => mockSetFirecrawlKey(...args),
 }))
 
+// Mock firecrawlClient
+const mockGetCreditUsage = vi.fn()
+vi.mock('../../../lib/ugImport/firecrawlClient', () => ({
+  getCreditUsage: (...args) => mockGetCreditUsage(...args),
+}))
+
 describe('SettingsPanel', () => {
   let onClose
 
   beforeEach(() => {
+    vi.useFakeTimers()
     onClose = vi.fn()
     mockTheme = 'light'
     mockIndex = []
@@ -51,9 +58,11 @@ describe('SettingsPanel', () => {
     mockSetTheme.mockReset()
     mockSetFirecrawlKey.mockReset()
     mockGetFirecrawlKey = () => ''
+    mockGetCreditUsage.mockReset()
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -212,5 +221,78 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel onClose={onClose} />)
     const input = screen.getByPlaceholderText('fc-…')
     expect(input).toHaveValue('fc-existingkey')
+  })
+
+  // --- Firecrawl credit usage ---
+
+  it('does not fetch credit usage when no key is present', async () => {
+    mockGetFirecrawlKey = () => ''
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    expect(mockGetCreditUsage).not.toHaveBeenCalled()
+  })
+
+  it('shows "Checking credit balance…" while the fetch is pending', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockReturnValue(new Promise(() => {})) // never resolves
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByText('Checking credit balance…')).toBeInTheDocument())
+  })
+
+  it('renders the credit bar with correct width on success', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockResolvedValue({
+      remainingCredits: 400,
+      planCredits: 1000,
+      billingPeriodStart: '2026-07-01T00:00:00Z',
+      billingPeriodEnd: '2026-07-31T23:59:59Z',
+    })
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByTestId('firecrawl-credit-bar')).toBeInTheDocument())
+    const bar = screen.getByTestId('firecrawl-credit-bar')
+    expect(bar.style.width).toBe('60%')
+    expect(screen.getByText('400 / 1,000 credits remaining')).toBeInTheDocument()
+  })
+
+  it('shows "Invalid API key" and no bar on UNAUTHORIZED', async () => {
+    mockGetFirecrawlKey = () => 'fc-badkey'
+    mockGetCreditUsage.mockRejectedValue(new Error('UNAUTHORIZED'))
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByText('Invalid API key')).toBeInTheDocument())
+    expect(screen.queryByTestId('firecrawl-credit-bar')).not.toBeInTheDocument()
+  })
+
+  it('shows "Credit usage not available for this key" on NOT_FOUND', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockRejectedValue(new Error('NOT_FOUND'))
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByText('Credit usage not available for this key')).toBeInTheDocument())
+  })
+
+  it('shows "Could not check credit balance" on NETWORK_ERROR', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockRejectedValue(new Error('NETWORK_ERROR'))
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByText('Could not check credit balance')).toBeInTheDocument())
+  })
+
+  it('debounces rapid key edits into a single fetch', async () => {
+    mockGetFirecrawlKey = () => ''
+    mockGetCreditUsage.mockResolvedValue({ remainingCredits: 1, planCredits: 2, billingPeriodStart: null, billingPeriodEnd: null })
+    render(<SettingsPanel onClose={onClose} />)
+    const input = screen.getByPlaceholderText('fc-…')
+    fireEvent.change(input, { target: { value: 'fc-a' } })
+    await vi.advanceTimersByTimeAsync(200)
+    fireEvent.change(input, { target: { value: 'fc-ab' } })
+    await vi.advanceTimersByTimeAsync(200)
+    fireEvent.change(input, { target: { value: 'fc-abc' } })
+    await vi.advanceTimersByTimeAsync(600)
+    expect(mockGetCreditUsage).toHaveBeenCalledTimes(1)
+    expect(mockGetCreditUsage).toHaveBeenCalledWith('fc-abc')
   })
 })
