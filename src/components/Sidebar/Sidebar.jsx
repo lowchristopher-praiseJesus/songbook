@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { SignalIcon, MagnifyingGlassIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { SignalIcon, MagnifyingGlassIcon, XMarkIcon, ArrowUpTrayIcon, RectangleStackIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useFileImport } from '../../hooks/useFileImport'
 import { SongListItem } from './SongListItem'
@@ -7,6 +7,7 @@ import { Button } from '../UI/Button'
 import { Modal } from '../UI/Modal'
 import { buildGroups } from '../../lib/collectionUtils'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
+import { CollectionBrowseModal } from '../CommunityCollections/CollectionBrowseModal'
 import { exportSongsAsSbp, safeFilename } from '../../lib/exportSbp'
 import { loadSong, getTransposeState } from '../../lib/storage'
 import { transposeChord } from '../../lib/parser/chordUtils'
@@ -26,6 +27,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
   const [query, setQuery] = useState('')
   const [duplicateState, setDuplicateState] = useState(null)
   const [ugModalOpen, setUgModalOpen] = useState(false)
+  const [collectionBrowseModalOpen, setCollectionBrowseModalOpen] = useState(false)
   const [filenameModalOpen, setFilenameModalOpen] = useState(false)
   const [filenameInput, setFilenameInput] = useState('')
   const [choiceModalOpen, setChoiceModalOpen] = useState(false)
@@ -456,6 +458,15 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               </button>
               <button
                 type="button"
+                onClick={() => setCollectionBrowseModalOpen(true)}
+                aria-label="Browse Collections"
+                className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
+              >
+                <RectangleStackIcon className="w-4 h-4" />
+                <span className="text-[10px] font-medium">Browse Collections</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setLiveSessionModalOpen(true)}
                 aria-label="Live Session"
                 className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
@@ -589,6 +600,14 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
       <UGSearchModal
         isOpen={ugModalOpen}
         onClose={() => setUgModalOpen(false)}
+        onSongSelect={onSongSelect}
+        onImportSuccess={onImportSuccess}
+        onAddToast={onAddToast}
+      />
+
+      <CollectionBrowseModal
+        isOpen={collectionBrowseModalOpen}
+        onClose={() => setCollectionBrowseModalOpen(false)}
         onSongSelect={onSongSelect}
         onImportSuccess={onImportSuccess}
         onAddToast={onAddToast}
