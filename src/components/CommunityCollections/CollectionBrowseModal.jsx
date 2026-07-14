@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { parseContent } from '../../lib/parser/contentParser'
 import {
-  searchCommunityCollections, fetchCommunityCollection, recordCommunityImport,
+  listCommunityCollections, fetchCommunityCollection, recordCommunityImport,
 } from '../../lib/communityImport/communityClient'
 
 function toSong(row, publisherName) {
@@ -27,8 +27,7 @@ function toSong(row, publisherName) {
 }
 
 export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportSuccess, onAddToast }) {
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState('idle')  // idle | searching | results | loading | preview | importing
+  const [status, setStatus] = useState('loading')  // loading | results | preview | importing
   const [results, setResults] = useState([])
   const [collection, setCollection] = useState(null)
   const [error, setError] = useState(null)
@@ -38,28 +37,32 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
   const index = useLibraryStore(s => s.index)
 
   const resetAndClose = useCallback(() => {
-    setQuery('')
-    setStatus('idle')
+    setStatus('loading')
     setResults([])
     setCollection(null)
     setError(null)
     onClose()
   }, [onClose])
 
-  async function handleSearch(e) {
-    e.preventDefault()
-    if (!query.trim()) return
-    setStatus('searching')
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    setStatus('loading')
     setError(null)
-    try {
-      const found = await searchCommunityCollections(query.trim())
-      setResults(found)
-      setStatus('results')
-    } catch {
-      setStatus('idle')
-      setError('Connection failed — check your internet and try again')
-    }
-  }
+    listCommunityCollections()
+      .then(found => {
+        if (cancelled) return
+        setResults(found)
+        setStatus('results')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setResults([])
+        setStatus('results')
+        setError('Connection failed — check your internet and try again')
+      })
+    return () => { cancelled = true }
+  }, [isOpen])
 
   async function handleSelectCollection(result) {
     setStatus('loading')
@@ -119,35 +122,6 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
 
   return (
     <Modal isOpen={isOpen} title="Browse Collections" onClose={resetAndClose}>
-      {status === 'idle' && (
-        <form onSubmit={handleSearch} className="space-y-3">
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Collection or church name…"
-            autoFocus
-            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-              focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button type="submit" variant="primary" className="w-full" disabled={!query.trim()}>
-            Search
-          </Button>
-        </form>
-      )}
-
-      {status === 'searching' && (
-        <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
-          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
-          <span className="text-sm">Searching…</span>
-        </div>
-      )}
-
       {status === 'loading' && (
         <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
           <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
@@ -160,17 +134,10 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
 
       {status === 'results' && (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => { setStatus('idle'); setError(null) }}
-            className="text-sm text-indigo-500 hover:underline"
-          >
-            ← Back
-          </button>
-          {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           {results.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-              No collections found — try a different search
+              No collections available yet
             </p>
           ) : (
             <ul className="mt-2 space-y-1">

@@ -19,13 +19,13 @@ vi.mock('../../../store/libraryStore', () => ({
 }))
 
 vi.mock('../../../lib/communityImport/communityClient', () => ({
-  searchCommunityCollections: vi.fn(),
+  listCommunityCollections: vi.fn(),
   fetchCommunityCollection: vi.fn(),
   recordCommunityImport: vi.fn(() => Promise.resolve()),
 }))
 
 import {
-  searchCommunityCollections, fetchCommunityCollection, recordCommunityImport,
+  listCommunityCollections, fetchCommunityCollection, recordCommunityImport,
 } from '../../../lib/communityImport/communityClient'
 import { CollectionBrowseModal } from '../CollectionBrowseModal'
 
@@ -44,11 +44,6 @@ function renderModal(props = {}) {
   )
 }
 
-async function search(term = 'judah') {
-  fireEvent.change(screen.getByPlaceholderText(/collection or church name/i), { target: { value: term } })
-  fireEvent.click(screen.getByRole('button', { name: /^search$/i }))
-}
-
 const oneCollectionResult = [{
   id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
   songCount: 2, createdAt: 1234567890,
@@ -65,29 +60,35 @@ const collectionDetail = {
 beforeEach(() => {
   storeState.index.length = 0
   vi.clearAllMocks()
-  searchCommunityCollections.mockResolvedValue(oneCollectionResult)
+  listCommunityCollections.mockResolvedValue(oneCollectionResult)
   fetchCommunityCollection.mockResolvedValue(collectionDetail)
 })
 
 describe('CollectionBrowseModal', () => {
-  it('shows search results after a search', async () => {
+  it('lists collections immediately on open, with no search step', async () => {
     renderModal()
-    await search()
     await waitFor(() => expect(screen.getByText('Judah Worship Set')).toBeInTheDocument())
     expect(screen.getByText(/First Baptist/)).toBeInTheDocument()
-    expect(searchCommunityCollections).toHaveBeenCalledWith('judah')
+    expect(listCommunityCollections).toHaveBeenCalledWith()
+    expect(screen.queryByPlaceholderText(/collection or church name/i)).not.toBeInTheDocument()
   })
 
-  it('shows "no collections found" when the search returns nothing', async () => {
-    searchCommunityCollections.mockResolvedValueOnce([])
+  it('shows "no collections available yet" when the list is empty', async () => {
+    listCommunityCollections.mockResolvedValueOnce([])
     renderModal()
-    await search()
-    await waitFor(() => expect(screen.getByText(/no collections found/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/no collections available yet/i)).toBeInTheDocument())
+  })
+
+  it('shows a connection error and an empty list when the initial load fails', async () => {
+    listCommunityCollections.mockRejectedValueOnce(new Error('offline'))
+    renderModal()
+    await waitFor(() => expect(
+      screen.getByText(/connection failed.*check your internet/i),
+    ).toBeInTheDocument())
   })
 
   it('shows a preview of every song after picking a collection', async () => {
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
 
@@ -99,7 +100,6 @@ describe('CollectionBrowseModal', () => {
   it('marks a song already in the library as a duplicate in the preview', async () => {
     storeState.index.push({ id: 'existing', title: 'Oceans' })
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
 
@@ -109,7 +109,6 @@ describe('CollectionBrowseModal', () => {
 
   it('imports every non-duplicate song as one new collection on Import All', async () => {
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText('Oceans'))
@@ -126,14 +125,12 @@ describe('CollectionBrowseModal', () => {
 
   it('selects the newly created collection after import', async () => {
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText('Oceans'))
 
     fireEvent.click(screen.getByRole('button', { name: /import all/i }))
 
-    // mockAddSongs returns { newSongIds, collectionId: `col-${collectionSource}` }
     await waitFor(() => expect(mockSelectSong).toHaveBeenCalledWith(
       expect.any(String), 'col-community-collection:p1',
     ))
@@ -143,7 +140,6 @@ describe('CollectionBrowseModal', () => {
     storeState.index.push({ id: 'existing', title: 'Oceans' })
     const onAddToast = vi.fn()
     renderModal({ onAddToast })
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText('Oceans'))
@@ -161,7 +157,6 @@ describe('CollectionBrowseModal', () => {
 
   it('bumps the import counter for every imported song', async () => {
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText('Oceans'))
@@ -175,7 +170,6 @@ describe('CollectionBrowseModal', () => {
   it('disables Import All when every song in the collection is already a duplicate', async () => {
     storeState.index.push({ id: 'e1', title: 'Oceans' }, { id: 'e2', title: 'Yeshua' })
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText(/all 2 songs are already in your library/i))
@@ -186,7 +180,6 @@ describe('CollectionBrowseModal', () => {
   it('shows an error when the collection is no longer available', async () => {
     fetchCommunityCollection.mockRejectedValueOnce(Object.assign(new Error('gone'), { code: 'not_found' }))
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
 
@@ -198,7 +191,6 @@ describe('CollectionBrowseModal', () => {
       throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' })
     })
     renderModal()
-    await search()
     await waitFor(() => screen.getByText('Judah Worship Set'))
     fireEvent.click(screen.getByText('Judah Worship Set'))
     await waitFor(() => screen.getByText('Oceans'))
@@ -209,7 +201,6 @@ describe('CollectionBrowseModal', () => {
       screen.getByText(/storage full.*delete some songs before importing/i),
     ).toBeInTheDocument())
 
-    // Stays in the preview state — song list and Import All button still present/interactable
     expect(screen.getByText('Oceans')).toBeInTheDocument()
     expect(screen.getByText('Yeshua')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /import all/i })).toBeEnabled()
