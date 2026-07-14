@@ -2,9 +2,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../../lib/storage', () => ({ getFirecrawlKey: () => 'KEY' }))
-vi.mock('../../../lib/youtubeImport/youtubeClient', () => ({
-  searchYoutube: vi.fn(),
-}))
+vi.mock('../../../lib/youtubeImport/youtubeClient', async () => {
+  const actual = await vi.importActual('../../../lib/youtubeImport/youtubeClient')
+  return { ...actual, searchYoutube: vi.fn() }
+})
 
 import { searchYoutube } from '../../../lib/youtubeImport/youtubeClient'
 import { YoutubeSearchModal } from '../YoutubeSearchModal'
@@ -30,14 +31,14 @@ describe('YoutubeSearchModal', () => {
 
   it('pre-fills the search box with title and artist when there is no prior pick', () => {
     renderIt()
-    expect(screen.getByPlaceholderText(/Song title or artist/i)).toHaveValue('El Shaddai Amy Grant')
+    expect(screen.getByPlaceholderText(/paste a YouTube link/i)).toHaveValue('El Shaddai Amy Grant')
   })
 
   it('opens directly to playback when initialVideoId is already set', () => {
     renderIt({ initialVideoId: 'abc12345678' })
     const iframe = screen.getByTitle('YouTube video player')
     expect(iframe).toHaveAttribute('src', 'https://www.youtube.com/embed/abc12345678')
-    expect(screen.queryByPlaceholderText(/Song title or artist/i)).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(/paste a YouTube link/i)).not.toBeInTheDocument()
   })
 
   it('shows results after searching', async () => {
@@ -65,6 +66,45 @@ describe('YoutubeSearchModal', () => {
     )
   })
 
+  it('plays a pasted YouTube watch link directly without searching', async () => {
+    const onVideoPicked = vi.fn()
+    searchYoutube.mockResolvedValue([])
+    renderIt({ onVideoPicked })
+    const input = screen.getByPlaceholderText(/paste a YouTube link/i)
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=direct12345' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+
+    expect(searchYoutube).not.toHaveBeenCalled()
+    expect(onVideoPicked).toHaveBeenCalledWith('direct12345')
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/direct12345',
+    )
+  })
+
+  it('plays a youtu.be short link directly without searching', async () => {
+    const onVideoPicked = vi.fn()
+    searchYoutube.mockResolvedValue([])
+    renderIt({ onVideoPicked })
+    const input = screen.getByPlaceholderText(/paste a YouTube link/i)
+    fireEvent.change(input, { target: { value: 'https://youtu.be/short123456' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+
+    expect(searchYoutube).not.toHaveBeenCalled()
+    expect(onVideoPicked).toHaveBeenCalledWith('short123456')
+  })
+
+  it('falls back to search when the input is not a YouTube link', async () => {
+    searchYoutube.mockResolvedValue([
+      { videoId: 'abc12345678', title: 'El Shaddai (Live)', url: 'https://www.youtube.com/watch?v=abc12345678' },
+    ])
+    renderIt()
+    const input = screen.getByPlaceholderText(/paste a YouTube link/i)
+    fireEvent.change(input, { target: { value: 'El Shaddai Amy Grant' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    await screen.findByText('El Shaddai (Live)')
+    expect(searchYoutube).toHaveBeenCalledWith('El Shaddai Amy Grant', 'KEY')
+  })
+
   it('shows "No videos found" for an empty result set', async () => {
     searchYoutube.mockResolvedValue([])
     renderIt()
@@ -82,7 +122,7 @@ describe('YoutubeSearchModal', () => {
   it('"Search again" from playback returns to the search box', () => {
     renderIt({ initialVideoId: 'abc12345678' })
     fireEvent.click(screen.getByRole('button', { name: /Search again/i }))
-    expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/paste a YouTube link/i)).toBeInTheDocument()
   })
 
   it('includes an "Open on YouTube" fallback link while playing', () => {
@@ -128,7 +168,7 @@ describe('YoutubeSearchModal', () => {
     // User navigates away from playback locally (e.g. to search for a
     // different video), diverging local state from what initialVideoId says.
     fireEvent.click(screen.getByRole('button', { name: /Search again/i }))
-    expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/paste a YouTube link/i)).toBeInTheDocument()
 
     // Parent re-renders with a DIFFERENT initialVideoId while isOpen stays
     // true (isOpen itself does not change here). If the effect incorrectly
@@ -147,7 +187,7 @@ describe('YoutubeSearchModal', () => {
       />,
     )
 
-    expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/paste a YouTube link/i)).toBeInTheDocument()
     expect(screen.queryByTitle('YouTube video player')).not.toBeInTheDocument()
   })
 

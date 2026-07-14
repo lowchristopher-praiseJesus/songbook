@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
-import { searchYoutube } from '../../lib/youtubeImport/youtubeClient'
+import { searchYoutube, parseYouTubeVideoId } from '../../lib/youtubeImport/youtubeClient'
 import { YoutubePlayerBar } from './YoutubePlayerBar'
 
 function errorMessage(err) {
@@ -50,11 +50,26 @@ export function YoutubeSearchModal({
 
   async function handleSearch(e) {
     e.preventDefault()
-    if (!query.trim()) return
+    const value = query.trim()
+    if (!value) return
+
+    // If the user pasted a YouTube link, go straight to that video instead
+    // of searching — search results sometimes don't surface the exact video.
+    const linkedId = parseYouTubeVideoId(value)
+    if (linkedId) {
+      setResults([])
+      setError(null)
+      setVideoId(linkedId)
+      setStatus('playing')
+      onExpand?.()
+      onVideoPicked(linkedId)
+      return
+    }
+
     setStatus('searching')
     setError(null)
     try {
-      const items = await searchYoutube(query.trim(), getFirecrawlKey())
+      const items = await searchYoutube(value, getFirecrawlKey())
       setResults(items)
       setStatus('results')
     } catch (err) {
@@ -106,7 +121,7 @@ export function YoutubeSearchModal({
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Song title or artist…"
+            placeholder="Search, or paste a YouTube link…"
             autoFocus
             className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
