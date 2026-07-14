@@ -208,15 +208,19 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
           {creditUsage.status === 'success' && (
             <div className="mt-2">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {`${creditUsage.data.remainingCredits.toLocaleString()} / ${creditUsage.data.planCredits.toLocaleString()} credits remaining`}
+                {creditUsage.data.remainingCredits > creditUsage.data.planCredits
+                  ? `${creditUsage.data.remainingCredits.toLocaleString()} credits remaining`
+                  : `${creditUsage.data.remainingCredits.toLocaleString()} / ${creditUsage.data.planCredits.toLocaleString()} credits remaining`}
               </p>
-              <div className="mt-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  data-testid="firecrawl-credit-bar"
-                  className="h-full bg-indigo-600 rounded-full"
-                  style={{ width: `${creditUsage.data.planCredits > 0 ? Math.max(0, Math.min(100, ((creditUsage.data.planCredits - creditUsage.data.remainingCredits) / creditUsage.data.planCredits) * 100)) : 0}%` }}
-                />
-              </div>
+              {creditUsage.data.remainingCredits <= creditUsage.data.planCredits && (
+                <div className="mt-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    data-testid="firecrawl-credit-bar"
+                    className="h-full bg-indigo-600 rounded-full"
+                    style={{ width: `${creditUsage.data.planCredits > 0 ? Math.max(0, Math.min(100, ((creditUsage.data.planCredits - creditUsage.data.remainingCredits) / creditUsage.data.planCredits) * 100)) : 0}%` }}
+                  />
+                </div>
+              )}
             </div>
           )}
           {creditUsage.status === 'error' && (
