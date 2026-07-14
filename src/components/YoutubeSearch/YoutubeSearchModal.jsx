@@ -3,6 +3,7 @@ import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
 import { searchYoutube } from '../../lib/youtubeImport/youtubeClient'
+import { YoutubePlayerBar } from './YoutubePlayerBar'
 
 function errorMessage(err) {
   if (err?.message === 'UNAUTHORIZED') return 'Invalid API key — check Settings'
@@ -13,7 +14,17 @@ function thumbnailUrl(videoId) {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
 }
 
-export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVideoId, onVideoPicked }) {
+export function YoutubeSearchModal({
+  isOpen,
+  onClose,
+  title,
+  artist,
+  initialVideoId,
+  onVideoPicked,
+  minimized = false,
+  onMinimize,
+  onExpand,
+}) {
   const [status, setStatus] = useState('idle') // idle | searching | results | playing
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -55,6 +66,7 @@ export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVide
   function handlePick(result) {
     setVideoId(result.videoId)
     setStatus('playing')
+    onExpand?.()
     onVideoPicked(result.videoId)
   }
 
@@ -68,8 +80,26 @@ export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVide
     setStatus('results')
   }
 
+  if (!isOpen) return null
+
+  if (status === 'playing' && videoId) {
+    return (
+      <YoutubePlayerBar
+        videoId={videoId}
+        label={[title, artist].filter(Boolean).join(' — ')}
+        minimized={minimized}
+        hasResults={results.length > 0}
+        onMinimize={onMinimize}
+        onExpand={onExpand}
+        onSearchAgain={handleSearchAgain}
+        onBackToResults={handleBackToResults}
+        onClose={onClose}
+      />
+    )
+  }
+
   return (
-    <Modal isOpen={isOpen} title="Search YouTube" onClose={onClose}>
+    <Modal isOpen title="Search YouTube" onClose={onClose}>
       {status === 'idle' && (
         <form onSubmit={handleSearch} className="space-y-3">
           <input
@@ -136,38 +166,6 @@ export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVide
               ))}
             </ul>
           )}
-        </div>
-      )}
-
-      {status === 'playing' && videoId && (
-        <div className="space-y-2">
-          <iframe
-            title="YouTube video player"
-            src={`https://www.youtube.com/embed/${videoId}`}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            className="w-full aspect-video rounded-lg"
-          />
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-3">
-              {results.length > 0 && (
-                <button type="button" onClick={handleBackToResults} className="text-indigo-500 hover:underline">
-                  ← Back to results
-                </button>
-              )}
-              <button type="button" onClick={handleSearchAgain} className="text-indigo-500 hover:underline">
-                ← Search again
-              </button>
-            </div>
-            <a
-              href={`https://www.youtube.com/watch?v=${videoId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 dark:text-gray-400 hover:underline"
-            >
-              Open on YouTube ↗
-            </a>
-          </div>
         </div>
       )}
     </Modal>
