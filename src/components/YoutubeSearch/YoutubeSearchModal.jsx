@@ -64,6 +64,10 @@ export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVide
     setError(null)
   }
 
+  function handleBackToResults() {
+    setStatus('results')
+  }
+
   return (
     <Modal isOpen={isOpen} title="Search YouTube" onClose={onClose}>
       {status === 'idle' && (
@@ -145,9 +149,16 @@ export function YoutubeSearchModal({ isOpen, onClose, title, artist, initialVide
             className="w-full aspect-video rounded-lg"
           />
           <div className="flex items-center justify-between text-sm">
-            <button type="button" onClick={handleSearchAgain} className="text-indigo-500 hover:underline">
-              ← Search again
-            </button>
+            <div className="flex items-center gap-3">
+              {results.length > 0 && (
+                <button type="button" onClick={handleBackToResults} className="text-indigo-500 hover:underline">
+                  ← Back to results
+                </button>
+              )}
+              <button type="button" onClick={handleSearchAgain} className="text-indigo-500 hover:underline">
+                ← Search again
+              </button>
+            </div>
             <a
               href={`https://www.youtube.com/watch?v=${videoId}`}
               target="_blank"

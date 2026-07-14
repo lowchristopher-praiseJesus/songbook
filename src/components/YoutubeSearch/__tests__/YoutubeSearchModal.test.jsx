@@ -92,6 +92,32 @@ describe('YoutubeSearchModal', () => {
     )
   })
 
+  it('has no "Back to results" link when playback was opened directly from a saved pick', () => {
+    renderIt({ initialVideoId: 'abc12345678' })
+    expect(screen.queryByRole('button', { name: /Back to results/i })).not.toBeInTheDocument()
+  })
+
+  it('"Back to results" returns to the same results list without searching again', async () => {
+    searchYoutube.mockResolvedValue([
+      { videoId: 'abc12345678', title: 'El Shaddai (Live)', url: 'https://www.youtube.com/watch?v=abc12345678' },
+      { videoId: 'def12345678', title: 'El Shaddai (Studio)', url: 'https://www.youtube.com/watch?v=def12345678' },
+    ])
+    renderIt()
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    const row = await screen.findByText('El Shaddai (Live)')
+    fireEvent.click(row)
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Back to results/i }))
+
+    expect(screen.getByText('El Shaddai (Live)')).toBeInTheDocument()
+    expect(screen.getByText('El Shaddai (Studio)')).toBeInTheDocument()
+    expect(screen.queryByTitle('YouTube video player')).not.toBeInTheDocument()
+    expect(searchYoutube).toHaveBeenCalledTimes(1)
+  })
+
   it('ignores an initialVideoId prop change while open if local state has since diverged (regression guard for the isOpen-only effect)', async () => {
     const { rerender } = renderIt({ initialVideoId: 'video1existing' })
     // Mounts directly into playing state showing the existing pick.
