@@ -83,3 +83,20 @@ export async function unpublishCollection(publicationId, publishToken) {
   if (res.status === 403) throw err('invalid_token')
   if (!res.ok) throw err('unpublish_failed')
 }
+
+export async function searchCommunityCollections(query) {
+  if (!query?.trim()) return []
+
+  const res = await fetch(`${WORKER_URL}/community/collections/search?q=${encodeURIComponent(query.trim())}`)
+  if (!res.ok) throw err('network_error')
+
+  const { results } = await res.json()
+  return results ?? []
+}
+
+export async function fetchCommunityCollection(id) {
+  const res = await fetch(`${WORKER_URL}/community/collections/${id}`)
+  if (res.status === 404) throw err('not_found')
+  if (!res.ok) throw err('network_error')
+  return res.json()
+}

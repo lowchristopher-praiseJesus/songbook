@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   searchCommunity, fetchCommunityArrangement, recordCommunityImport,
   reportCommunityArrangement, publishCollection, unpublishCollection,
+  searchCommunityCollections, fetchCommunityCollection,
 } from '../communityClient'
 
 beforeEach(() => {
@@ -135,5 +136,58 @@ describe('unpublishCollection', () => {
   it('throws invalid_token on 403', async () => {
     mockFetch({ error: 'invalid_token' }, false, 403)
     await expect(unpublishCollection('p1', 'bad')).rejects.toMatchObject({ code: 'invalid_token' })
+  })
+})
+
+describe('searchCommunityCollections', () => {
+  it('returns collection results', async () => {
+    mockFetch({ results: [{
+      id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
+      songCount: 2, createdAt: 1234567890,
+    }] })
+
+    const results = await searchCommunityCollections('judah')
+    expect(results).toEqual([{
+      id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
+      songCount: 2, createdAt: 1234567890,
+    }])
+    const callUrl = global.fetch.mock.calls[0][0]
+    expect(callUrl).toContain('/community/collections/search')
+    expect(callUrl).toContain('q=judah')
+  })
+
+  it('returns [] for a blank query without hitting the network', async () => {
+    global.fetch = vi.fn()
+    expect(await searchCommunityCollections('   ')).toEqual([])
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('throws on a network failure', async () => {
+    mockFetch({}, false, 500)
+    await expect(searchCommunityCollections('judah')).rejects.toMatchObject({ code: 'network_error' })
+  })
+})
+
+describe('fetchCommunityCollection', () => {
+  it('returns the collection with its songs', async () => {
+    mockFetch({
+      id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
+      songs: [{ id: 's1', title: 'Oceans', artist: 'Hillsong', body: 'la', keyIndex: 2, capo: 0 }],
+    })
+    const collection = await fetchCommunityCollection('p1')
+    expect(collection).toMatchObject({ id: 'p1', collectionName: 'Judah Worship Set' })
+    expect(collection.songs).toHaveLength(1)
+    const callUrl = global.fetch.mock.calls[0][0]
+    expect(callUrl).toContain('/community/collections/p1')
+  })
+
+  it('throws not_found on 404', async () => {
+    mockFetch({ error: 'not_found' }, false, 404)
+    await expect(fetchCommunityCollection('nope')).rejects.toMatchObject({ code: 'not_found' })
+  })
+
+  it('throws network_error on a 500', async () => {
+    mockFetch({}, false, 500)
+    await expect(fetchCommunityCollection('p1')).rejects.toMatchObject({ code: 'network_error' })
   })
 })
