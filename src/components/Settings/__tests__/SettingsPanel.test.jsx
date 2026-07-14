@@ -256,6 +256,34 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('400 / 1,000 credits remaining')).toBeInTheDocument()
   })
 
+  it('clamps the credit bar width to 0 when remainingCredits exceeds planCredits', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockResolvedValue({
+      remainingCredits: 1200,
+      planCredits: 1000,
+      billingPeriodStart: null,
+      billingPeriodEnd: null,
+    })
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByTestId('firecrawl-credit-bar')).toBeInTheDocument())
+    expect(screen.getByTestId('firecrawl-credit-bar').style.width).toBe('0%')
+  })
+
+  it('renders a 0% bar instead of NaN when planCredits is 0', async () => {
+    mockGetFirecrawlKey = () => 'fc-existingkey'
+    mockGetCreditUsage.mockResolvedValue({
+      remainingCredits: 0,
+      planCredits: 0,
+      billingPeriodStart: null,
+      billingPeriodEnd: null,
+    })
+    render(<SettingsPanel onClose={onClose} />)
+    await vi.advanceTimersByTimeAsync(600)
+    await vi.waitFor(() => expect(screen.getByTestId('firecrawl-credit-bar')).toBeInTheDocument())
+    expect(screen.getByTestId('firecrawl-credit-bar').style.width).toBe('0%')
+  })
+
   it('shows "Invalid API key" and no bar on UNAUTHORIZED', async () => {
     mockGetFirecrawlKey = () => 'fc-badkey'
     mockGetCreditUsage.mockRejectedValue(new Error('UNAUTHORIZED'))
