@@ -239,6 +239,48 @@ community.get('/collections/search', async (c) => {
   });
 });
 
+interface CollectionSongRow {
+  id: string; title: string; artist: string;
+  key_index: number | null; capo: number | null; tempo: number | null;
+  time_sig: string | null; body: string; import_count: number;
+}
+
+community.get('/collections/:id', async (c) => {
+  const id = c.req.param('id');
+
+  const pub = await c.env.DB.prepare(
+    "SELECT id, collection_name, publisher_name FROM publications WHERE id = ? AND status = 'live'"
+  ).bind(id).first<{ id: string; collection_name: string; publisher_name: string }>();
+  if (!pub) return c.json({ error: 'not_found' }, 404);
+
+  const { results } = await c.env.DB.prepare(`
+    SELECT s.id, s.title, s.artist, s.key_index, s.capo, s.tempo, s.time_sig, s.body, s.import_count
+    FROM songs s
+    JOIN song_publications sp ON sp.song_id = s.id
+    WHERE sp.publication_id = ? AND s.status = 'live'
+    ORDER BY s.title
+  `).bind(id).all<CollectionSongRow>();
+
+  if (results.length === 0) return c.json({ error: 'not_found' }, 404);
+
+  return c.json({
+    id: pub.id,
+    collectionName: pub.collection_name,
+    publisherName: pub.publisher_name,
+    songs: results.map(r => ({
+      id: r.id,
+      title: r.title,
+      artist: r.artist,
+      keyIndex: r.key_index,
+      capo: r.capo,
+      tempo: r.tempo,
+      timeSig: r.time_sig,
+      body: r.body,
+      importCount: r.import_count,
+    })),
+  });
+});
+
 interface ArrangementRow extends SearchRow {
   time_sig: string | null;
   body: string;
