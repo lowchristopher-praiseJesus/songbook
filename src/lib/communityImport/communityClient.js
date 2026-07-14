@@ -84,10 +84,8 @@ export async function unpublishCollection(publicationId, publishToken) {
   if (!res.ok) throw err('unpublish_failed')
 }
 
-export async function searchCommunityCollections(query) {
-  if (!query?.trim()) return []
-
-  const res = await fetch(`${WORKER_URL}/community/collections/search?q=${encodeURIComponent(query.trim())}`)
+export async function listCommunityCollections() {
+  const res = await fetch(`${WORKER_URL}/community/collections`)
   if (!res.ok) throw err('network_error')
 
   const { results } = await res.json()

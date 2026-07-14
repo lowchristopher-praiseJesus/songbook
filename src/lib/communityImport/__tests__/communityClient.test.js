@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   searchCommunity, fetchCommunityArrangement, recordCommunityImport,
   reportCommunityArrangement, publishCollection, unpublishCollection,
-  searchCommunityCollections, fetchCommunityCollection,
+  listCommunityCollections, fetchCommunityCollection,
 } from '../communityClient'
 
 beforeEach(() => {
@@ -139,32 +139,26 @@ describe('unpublishCollection', () => {
   })
 })
 
-describe('searchCommunityCollections', () => {
+describe('listCommunityCollections', () => {
   it('returns collection results', async () => {
     mockFetch({ results: [{
       id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
       songCount: 2, createdAt: 1234567890,
     }] })
 
-    const results = await searchCommunityCollections('judah')
+    const results = await listCommunityCollections()
     expect(results).toEqual([{
       id: 'p1', collectionName: 'Judah Worship Set', publisherName: 'First Baptist',
       songCount: 2, createdAt: 1234567890,
     }])
     const callUrl = global.fetch.mock.calls[0][0]
-    expect(callUrl).toContain('/community/collections/search')
-    expect(callUrl).toContain('q=judah')
-  })
-
-  it('returns [] for a blank query without hitting the network', async () => {
-    global.fetch = vi.fn()
-    expect(await searchCommunityCollections('   ')).toEqual([])
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(callUrl).toContain('/community/collections')
+    expect(callUrl).not.toContain('/collections/search')
   })
 
   it('throws on a network failure', async () => {
     mockFetch({}, false, 500)
-    await expect(searchCommunityCollections('judah')).rejects.toMatchObject({ code: 'network_error' })
+    await expect(listCommunityCollections()).rejects.toMatchObject({ code: 'network_error' })
   })
 })
 
