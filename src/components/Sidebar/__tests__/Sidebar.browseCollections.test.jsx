@@ -38,12 +38,12 @@ vi.mock('../../CommunityCollections/CollectionBrowseModal', () => ({
   CollectionBrowseModal: (props) => { capturedProps = props; return props.isOpen ? <div data-testid="collection-browse-modal" /> : null },
 }))
 
-describe('Sidebar — Browse Collections', () => {
-  it('opens CollectionBrowseModal when the Browse Collections button is clicked', () => {
+describe('Sidebar — Browse Communities', () => {
+  it('opens CollectionBrowseModal when the Browse Communities button is clicked', () => {
     render(<Sidebar isOpen onAddToast={vi.fn()} onSongSelect={vi.fn()} onClose={vi.fn()} onImportSuccess={vi.fn()} />)
 
     expect(screen.queryByTestId('collection-browse-modal')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /browse collections/i }))
+    fireEvent.click(screen.getByRole('button', { name: /browse communities/i }))
     expect(screen.getByTestId('collection-browse-modal')).toBeInTheDocument()
   })
 
@@ -52,7 +52,7 @@ describe('Sidebar — Browse Collections', () => {
     const onImportSuccess = vi.fn()
     render(<Sidebar isOpen onAddToast={onAddToast} onSongSelect={vi.fn()} onClose={vi.fn()} onImportSuccess={onImportSuccess} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /browse collections/i }))
+    fireEvent.click(screen.getByRole('button', { name: /browse communities/i }))
     expect(capturedProps.onAddToast).toBe(onAddToast)
     expect(capturedProps.onImportSuccess).toBe(onImportSuccess)
   })

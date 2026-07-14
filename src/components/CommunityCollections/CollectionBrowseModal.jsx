@@ -126,7 +126,7 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
   const allDuplicates = collection && duplicateCount === collection.songs.length
 
   return (
-    <Modal isOpen={isOpen} title="Browse Collections" onClose={resetAndClose}>
+    <Modal isOpen={isOpen} title="Browse Communities" onClose={resetAndClose}>
       {status === 'loading' && (
         <div className="flex items-center justify-center gap-2 py-8 text-gray-500 dark:text-gray-400">
           <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
