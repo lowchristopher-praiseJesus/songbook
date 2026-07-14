@@ -192,4 +192,26 @@ describe('CollectionBrowseModal', () => {
 
     await waitFor(() => expect(screen.getByText(/no longer available/i)).toBeInTheDocument())
   })
+
+  it('shows a storage-full error and stays in preview when addSongs throws QuotaExceededError', async () => {
+    mockAddSongs.mockImplementationOnce(() => {
+      throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' })
+    })
+    renderModal()
+    await search()
+    await waitFor(() => screen.getByText('Judah Worship Set'))
+    fireEvent.click(screen.getByText('Judah Worship Set'))
+    await waitFor(() => screen.getByText('Oceans'))
+
+    fireEvent.click(screen.getByRole('button', { name: /import all/i }))
+
+    await waitFor(() => expect(
+      screen.getByText(/storage full.*delete some songs before importing/i),
+    ).toBeInTheDocument())
+
+    // Stays in the preview state — song list and Import All button still present/interactable
+    expect(screen.getByText('Oceans')).toBeInTheDocument()
+    expect(screen.getByText('Yeshua')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /import all/i })).toBeEnabled()
+  })
 })

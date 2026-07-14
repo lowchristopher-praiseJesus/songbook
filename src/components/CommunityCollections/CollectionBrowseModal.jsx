@@ -87,7 +87,17 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
 
     setStatus('importing')
     const songs = accepted.map(row => toSong(row, collection.publisherName))
-    const { newSongIds, collectionId } = addSongs(songs, collection.collectionName, `community-collection:${collection.id}`)
+    let newSongIds, collectionId
+    try {
+      ({ newSongIds, collectionId } = addSongs(songs, collection.collectionName, `community-collection:${collection.id}`))
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        setStatus('preview')
+        setError('Storage full — delete some songs before importing')
+        return
+      }
+      throw e
+    }
     if (newSongIds.length > 0) selectSong(newSongIds[0], collectionId)
 
     for (const row of accepted) {
@@ -191,6 +201,7 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {collection.collectionName} — {collection.publisherName}
           </p>
+          {error && <p className="text-sm text-red-500">{error}</p>}
           {allDuplicates && (
             <p className="text-xs text-amber-600 dark:text-amber-400">
               All {collection.songs.length} songs are already in your library
