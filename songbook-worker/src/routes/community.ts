@@ -208,25 +208,21 @@ interface CollectionSearchRow {
   created_at: number; song_count: number;
 }
 
-community.get('/collections/search', async (c) => {
-  const q = (c.req.query('q') ?? '').trim();
-  if (!q) return c.json({ results: [] });
-
-  const like = `%${q}%`;
+community.get('/collections', async (c) => {
   const sql = `
     SELECT p.id, p.collection_name, p.publisher_name, p.created_at,
            COUNT(sp.song_id) AS song_count
     FROM publications p
     JOIN song_publications sp ON sp.publication_id = p.id
     JOIN songs s ON s.id = sp.song_id AND s.status = 'live'
-    WHERE p.status = 'live' AND (p.collection_name LIKE ?1 OR p.publisher_name LIKE ?1)
+    WHERE p.status = 'live'
     GROUP BY p.id
     HAVING song_count > 0
     ORDER BY song_count DESC, p.created_at DESC
     LIMIT 20
   `;
 
-  const { results } = await c.env.DB.prepare(sql).bind(like).all<CollectionSearchRow>();
+  const { results } = await c.env.DB.prepare(sql).all<CollectionSearchRow>();
 
   return c.json({
     results: results.map(r => ({
