@@ -127,7 +127,7 @@ export function SongHeader({
 
       {/* Row 2: Secondary/utility controls */}
       <div className="flex flex-wrap items-center gap-2 mt-2">
-        {getFirecrawlKey() ? (
+        {(meta.youtubeVideoId || getFirecrawlKey()) ? (
           <button
             type="button"
             onClick={() => { setYtModalOpen(true); setYtMinimized(false) }}
