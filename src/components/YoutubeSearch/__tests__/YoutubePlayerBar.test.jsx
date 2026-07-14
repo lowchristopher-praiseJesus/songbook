@@ -73,7 +73,7 @@ describe('YoutubePlayerBar', () => {
 
   it('renders the label and Expand/Close controls in the minimized variant, without dialog controls', () => {
     renderIt({ minimized: true })
-    expect(screen.getByText('▶ El Shaddai — Amy Grant')).toBeInTheDocument()
+    expect(screen.getByText(/El Shaddai — Amy Grant/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Expand$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Close$/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Search again/i })).not.toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('YoutubePlayerBar', () => {
 
   it('falls back to "YouTube" when label is empty', () => {
     renderIt({ minimized: true, label: '' })
-    expect(screen.getByText('▶ YouTube')).toBeInTheDocument()
+    expect(screen.getByText(/YouTube/)).toBeInTheDocument()
   })
 
   it('calls onExpand when Expand is clicked in the minimized variant', () => {

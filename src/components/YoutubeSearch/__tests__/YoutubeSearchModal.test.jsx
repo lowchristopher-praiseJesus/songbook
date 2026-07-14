@@ -171,7 +171,7 @@ describe('YoutubeSearchModal', () => {
 
     it('renders the minimized bar with the title/artist label when minimized is true', () => {
       renderIt({ initialVideoId: 'abc12345678', minimized: true, title: 'El Shaddai', artist: 'Amy Grant' })
-      expect(screen.getByText('▶ El Shaddai — Amy Grant')).toBeInTheDocument()
+      expect(screen.getByText(/El Shaddai — Amy Grant/)).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Search again/i })).not.toBeInTheDocument()
     })
 

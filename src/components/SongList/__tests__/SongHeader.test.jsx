@@ -209,4 +209,29 @@ describe('SongHeader YouTube control — minimize/expand', () => {
     fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
     expect(screen.queryByTestId('yt-min-indicator')).not.toBeInTheDocument()
   })
+
+  it('exposes the minimized state as a CSS variable so the lyrics area can pad around the bar', () => {
+    render(<SongHeader {...baseProps} songId="song-1" />)
+    // Before opening, no bar height is reserved (the effect initializes to 0px).
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).toBe('0px')
+
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    fireEvent.click(screen.getByText('mock-minimize'))
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).not.toBe('')
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).not.toBe('0px')
+
+    // Re-expanding clears the reservation so lyrics use their normal padding again.
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).toBe('0px')
+  })
+
+  it('clears the bar-height CSS variable when the song changes', () => {
+    const { rerender } = render(<SongHeader {...baseProps} songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    fireEvent.click(screen.getByText('mock-minimize'))
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).not.toBe('0px')
+
+    rerender(<SongHeader {...baseProps} songId="song-2" />)
+    expect(document.documentElement.style.getPropertyValue('--yt-min-bar-h')).toBe('0px')
+  })
 })

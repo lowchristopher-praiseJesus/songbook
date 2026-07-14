@@ -41,6 +41,19 @@ export function SongHeader({
     setYtMinimized(false)
   }, [songId])
 
+  // Expose the minimized bar's height as a CSS variable on the root so the
+  // lyrics scroll area (an ancestor, in SongView/SongList) can reserve bottom
+  // padding and keep the last lines visible above the fixed bottom bar.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--yt-min-bar-h',
+      ytMinimized ? '3.5rem' : '0px',
+    )
+    return () => {
+      document.documentElement.style.setProperty('--yt-min-bar-h', '0px')
+    }
+  }, [ytMinimized])
+
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
 
   const isActiveRecording = recording

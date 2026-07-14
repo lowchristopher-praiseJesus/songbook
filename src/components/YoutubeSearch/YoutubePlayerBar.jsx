@@ -43,7 +43,7 @@ export function YoutubePlayerBar({
       >
         {minimized ? (
           <span className="text-sm truncate text-gray-700 dark:text-gray-200">
-            ▶ {label || 'YouTube'}
+            <span aria-hidden="true">▶ </span>{label || 'YouTube'}
           </span>
         ) : (
           <h2 id="youtube-player-title" className="text-lg font-semibold mb-4 dark:text-white">Search YouTube</h2>
@@ -51,6 +51,7 @@ export function YoutubePlayerBar({
 
         <iframe
           title="YouTube video player"
+          aria-hidden={minimized}
           src={`https://www.youtube.com/embed/${videoId}`}
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen={!minimized}
