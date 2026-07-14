@@ -1,4 +1,5 @@
 const FIRECRAWL_BASE = 'https://api.firecrawl.dev/v1'
+const FIRECRAWL_V2_BASE = 'https://api.firecrawl.dev/v2'
 
 // Accepts UG chord chart URLs:
 //   modern: tabs.ultimate-guitar.com/tab/{artist}/{song}-chords-{id}
@@ -22,6 +23,25 @@ async function firecrawlPost(endpoint, body, apiKey) {
   if (res.status === 401) throw new Error('UNAUTHORIZED')
   if (!res.ok) throw new Error('NETWORK_ERROR')
   return res.json()
+}
+
+/**
+ * Fetch remaining/total Firecrawl credits for the current billing period.
+ */
+export async function getCreditUsage(apiKey) {
+  let res
+  try {
+    res = await fetch(`${FIRECRAWL_V2_BASE}/team/credit-usage`, {
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+    })
+  } catch {
+    throw new Error('NETWORK_ERROR')
+  }
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (res.status === 404) throw new Error('NOT_FOUND')
+  if (!res.ok) throw new Error('NETWORK_ERROR')
+  const { data } = await res.json()
+  return data
 }
 
 /**
