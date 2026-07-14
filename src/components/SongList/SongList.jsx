@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
 import { useLibraryStore } from '../../store/libraryStore'
 import { SongHeader } from './SongHeader'
@@ -51,34 +51,61 @@ export function SongList({
 
   const isActiveRecording = recording.status === 'recording' || recording.status === 'paused'
 
+  // Height of the pinned active-recording bar. The bar is sticky on every
+  // viewport (its whole purpose is to stay visible while lyrics scroll), while
+  // the song header below is only sticky on desktop. On desktop we offset the
+  // header's sticky `top` by this height so the two stack instead of overlap.
+  const recBarRef = useRef(null)
+  const [recBarH, setRecBarH] = useState(0)
+  useEffect(() => {
+    if (!isActiveRecording) {
+      setRecBarH(0)
+      return
+    }
+    const el = recBarRef.current
+    if (!el) return
+    const measure = () => setRecBarH(el.getBoundingClientRect().height)
+    measure()
+    const obs = new ResizeObserver(measure)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [isActiveRecording])
+
   return (
     <>
-      {/* Sticky top region — on desktop (md+), the active recording bar and the song
-          header (title + controls + chord strip) stay pinned while the song body
-          scrolls beneath. On mobile the header takes up too much of the viewport, so
-          it scrolls away with the rest of the content instead. */}
-      {!isFit && (
-        <div className="md:sticky md:top-0 md:z-10">
-          {RECORDER_SUPPORTED && isActiveRecording && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-red-200 dark:border-red-800 shadow-sm">
-              {recording.status === 'recording' && (
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true" />
-              )}
-              <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
-              {recording.channels != null && (
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
-                  {recording.channels >= 2 ? 'Stereo' : 'Mono'}
-                </span>
-              )}
-              <RecorderButton
-                status={recording.status}
-                onStart={recording.startRecording}
-                onStop={recording.stopRecording}
-                onPause={recording.pauseRecording}
-                onResume={recording.resumeRecording}
-              />
-            </div>
+      {/* Active-recording bar — pinned at the top on every viewport so it stays
+          visible while the song scrolls. (The song header below is only pinned on
+          desktop, since on mobile it would eat too much viewport.) On desktop the
+          header sticks just beneath this bar via the measured `top` offset. */}
+      {!isFit && RECORDER_SUPPORTED && isActiveRecording && (
+        <div
+          ref={recBarRef}
+          className="sticky top-0 z-20 flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-red-200 dark:border-red-800 shadow-sm"
+        >
+          {recording.status === 'recording' && (
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true" />
           )}
+          <RecordingTimer elapsedMs={recording.elapsedMs} status={recording.status} />
+          {recording.channels != null && (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
+              {recording.channels >= 2 ? 'Stereo' : 'Mono'}
+            </span>
+          )}
+          <RecorderButton
+            status={recording.status}
+            onStart={recording.startRecording}
+            onStop={recording.stopRecording}
+            onPause={recording.pauseRecording}
+            onResume={recording.resumeRecording}
+          />
+        </div>
+      )}
+      {/* Sticky song header (title + controls + chord strip) — desktop only.
+          `top` is the height of the pinned recording bar above (0 when not
+          recording), so the header stacks beneath it instead of overlapping.
+          On mobile this is non-sticky, so `top` has no effect. */}
+      {!isFit && (
+        <div className="md:sticky md:z-10" style={{ top: `${recBarH}px` }}>
           {/* Full-width surface so scrolling lyrics don't show through beside the centered column */}
           <div className="bg-white dark:bg-gray-900">
             <div className="max-w-2xl mx-auto px-4 pt-6">
