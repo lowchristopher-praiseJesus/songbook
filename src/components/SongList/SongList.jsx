@@ -112,7 +112,14 @@ export function SongList({
 
       <div
         className={`w-full relative px-4 ${isFit ? 'py-6' : 'max-w-2xl mx-auto pb-6'}`}
-        style={isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : undefined}
+        style={{
+          ...(isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : {}),
+          // Reserve room above the minimized YouTube bar so the last lyric
+          // lines stay scrollable into view. --yt-min-bar-h is 0px unless a
+          // video is minimized (set by SongHeader); the pb-6 above supplies
+          // the base 1.5rem this calc builds on.
+          paddingBottom: 'calc(1.5rem + var(--yt-min-bar-h, 0px))',
+        }}
       >
         {isFit && (
           <div className="mb-4">

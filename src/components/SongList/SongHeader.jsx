@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   PencilIcon,
   ArrowsPointingOutIcon,
@@ -34,6 +34,25 @@ export function SongHeader({
 }) {
   const [infoOpen, setInfoOpen] = useState(false)
   const [ytModalOpen, setYtModalOpen] = useState(false)
+  const [ytMinimized, setYtMinimized] = useState(false)
+
+  useEffect(() => {
+    setYtModalOpen(false)
+    setYtMinimized(false)
+  }, [songId])
+
+  // Expose the minimized bar's height as a CSS variable on the root so the
+  // lyrics scroll area (an ancestor, in SongView/SongList) can reserve bottom
+  // padding and keep the last lines visible above the fixed bottom bar.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--yt-min-bar-h',
+      ytMinimized ? '3.5rem' : '0px',
+    )
+    return () => {
+      document.documentElement.style.setProperty('--yt-min-bar-h', '0px')
+    }
+  }, [ytMinimized])
 
   const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
 
@@ -111,7 +130,7 @@ export function SongHeader({
         {getFirecrawlKey() ? (
           <button
             type="button"
-            onClick={() => setYtModalOpen(true)}
+            onClick={() => { setYtModalOpen(true); setYtMinimized(false) }}
             className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer"
           >
             <PlayCircleIcon className="w-3.5 h-3.5" />
@@ -208,7 +227,10 @@ export function SongHeader({
 
       <YoutubeSearchModal
         isOpen={ytModalOpen}
-        onClose={() => setYtModalOpen(false)}
+        minimized={ytMinimized}
+        onMinimize={() => setYtMinimized(true)}
+        onExpand={() => setYtMinimized(false)}
+        onClose={() => { setYtModalOpen(false); setYtMinimized(false) }}
         title={meta.title}
         artist={meta.artist}
         initialVideoId={meta.youtubeVideoId}

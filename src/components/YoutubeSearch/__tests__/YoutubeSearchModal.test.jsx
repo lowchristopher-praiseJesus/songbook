@@ -150,4 +150,77 @@ describe('YoutubeSearchModal', () => {
     expect(screen.getByPlaceholderText(/Song title or artist/i)).toBeInTheDocument()
     expect(screen.queryByTitle('YouTube video player')).not.toBeInTheDocument()
   })
+
+  describe('minimize / expand', () => {
+    it('shows a minimize button while playing', () => {
+      renderIt({ initialVideoId: 'abc12345678' })
+      expect(screen.getByRole('button', { name: /minimize/i })).toBeInTheDocument()
+    })
+
+    it('does not show a minimize button while idle', () => {
+      renderIt()
+      expect(screen.queryByRole('button', { name: /minimize/i })).not.toBeInTheDocument()
+    })
+
+    it('calls onMinimize when the minimize button is clicked', () => {
+      const onMinimize = vi.fn()
+      renderIt({ initialVideoId: 'abc12345678', onMinimize })
+      fireEvent.click(screen.getByRole('button', { name: /minimize/i }))
+      expect(onMinimize).toHaveBeenCalledOnce()
+    })
+
+    it('renders the minimized bar with the title/artist label when minimized is true', () => {
+      renderIt({ initialVideoId: 'abc12345678', minimized: true, title: 'El Shaddai', artist: 'Amy Grant' })
+      expect(screen.getByText(/El Shaddai — Amy Grant/)).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Search again/i })).not.toBeInTheDocument()
+    })
+
+    it('calls onExpand when Expand is clicked in the minimized bar', () => {
+      const onExpand = vi.fn()
+      renderIt({ initialVideoId: 'abc12345678', minimized: true, onExpand })
+      fireEvent.click(screen.getByRole('button', { name: /^Expand$/i }))
+      expect(onExpand).toHaveBeenCalledOnce()
+    })
+
+    it('calls onClose when Close is clicked in the minimized bar', () => {
+      const onClose = vi.fn()
+      renderIt({ initialVideoId: 'abc12345678', minimized: true, onClose })
+      fireEvent.click(screen.getByRole('button', { name: /^Close$/i }))
+      expect(onClose).toHaveBeenCalledOnce()
+    })
+
+    it('keeps the same iframe DOM node mounted when the minimized prop toggles', () => {
+      const { rerender } = renderIt({ initialVideoId: 'abc12345678', minimized: false })
+      const iframeBefore = screen.getByTitle('YouTube video player')
+
+      rerender(
+        <YoutubeSearchModal
+          isOpen
+          onClose={vi.fn()}
+          title="El Shaddai"
+          artist="Amy Grant"
+          initialVideoId="abc12345678"
+          onVideoPicked={vi.fn()}
+          minimized
+        />,
+      )
+      expect(screen.getByTitle('YouTube video player')).toBe(iframeBefore)
+    })
+
+    it('un-minimizes when a newly picked video starts playing', async () => {
+      searchYoutube.mockResolvedValue([
+        { videoId: 'newvideo1234', title: 'New Pick', url: 'https://www.youtube.com/watch?v=newvideo1234' },
+      ])
+      const onExpand = vi.fn()
+      renderIt({ minimized: true, onExpand })
+      // Starts idle (no initialVideoId), so the minimized bar shouldn't render yet.
+      expect(screen.queryByText(/▶/)).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+      const row = await screen.findByText('New Pick')
+      fireEvent.click(row)
+
+      expect(onExpand).toHaveBeenCalledOnce()
+    })
+  })
 })
