@@ -8,8 +8,13 @@ vi.mock('../../../lib/recorderFeatureDetect', () => ({
 }))
 vi.mock('../../../lib/storage', () => ({ getFirecrawlKey: vi.fn(() => null) }))
 vi.mock('../../YoutubeSearch/YoutubeSearchModal', () => ({
-  YoutubeSearchModal: ({ isOpen, initialVideoId }) =>
-    isOpen ? <div data-testid="yt-modal">{initialVideoId ?? 'no-pick'}</div> : null,
+  YoutubeSearchModal: ({ isOpen, initialVideoId, minimized, onMinimize }) =>
+    isOpen ? (
+      <div data-testid="yt-modal">
+        {initialVideoId ?? 'no-pick'}{minimized ? <span data-testid="yt-min-indicator">-min</span> : ''}
+        <button onClick={onMinimize}>mock-minimize</button>
+      </div>
+    ) : null,
 }))
 
 const baseRecording = {
@@ -178,5 +183,30 @@ describe('SongHeader YouTube control — Firecrawl key present', () => {
     render(<SongHeader {...baseProps} meta={{ ...baseProps.meta, youtubeVideoId: 'abc12345678' }} />)
     fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
     expect(screen.getByTestId('yt-modal')).toHaveTextContent('abc12345678')
+  })
+})
+
+describe('SongHeader YouTube control — minimize/expand', () => {
+  beforeEach(() => {
+    getFirecrawlKey.mockReturnValue('KEY')
+  })
+
+  it('resets the YouTube modal when the song changes', () => {
+    const { rerender } = render(<SongHeader {...baseProps} songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    expect(screen.getByTestId('yt-modal')).toBeInTheDocument()
+
+    rerender(<SongHeader {...baseProps} songId="song-2" />)
+    expect(screen.queryByTestId('yt-modal')).not.toBeInTheDocument()
+  })
+
+  it('re-expands the modal when YouTube is clicked again after minimizing', () => {
+    render(<SongHeader {...baseProps} songId="song-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    fireEvent.click(screen.getByText('mock-minimize'))
+    expect(screen.getByTestId('yt-min-indicator')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /youtube/i }))
+    expect(screen.queryByTestId('yt-min-indicator')).not.toBeInTheDocument()
   })
 })
