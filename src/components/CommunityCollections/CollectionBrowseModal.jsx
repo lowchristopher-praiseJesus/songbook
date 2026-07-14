@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
@@ -44,25 +44,30 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
     onClose()
   }, [onClose])
 
-  useEffect(() => {
-    if (!isOpen) return
-    let cancelled = false
+  const fetchIdRef = useRef(0)
+
+  const loadCollections = useCallback(() => {
+    const id = ++fetchIdRef.current
     setStatus('loading')
     setError(null)
     listCommunityCollections()
       .then(found => {
-        if (cancelled) return
+        if (fetchIdRef.current !== id) return
         setResults(found)
         setStatus('results')
       })
       .catch(() => {
-        if (cancelled) return
+        if (fetchIdRef.current !== id) return
         setResults([])
         setStatus('results')
         setError('Connection failed — check your internet and try again')
       })
-    return () => { cancelled = true }
-  }, [isOpen])
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    loadCollections()
+  }, [isOpen, loadCollections])
 
   async function handleSelectCollection(result) {
     setStatus('loading')
@@ -136,9 +141,14 @@ export function CollectionBrowseModal({ isOpen, onClose, onSongSelect, onImportS
         <div className="space-y-2">
           {error && <p className="text-sm text-red-500">{error}</p>}
           {results.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-              No collections available yet
-            </p>
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {error ? 'Could not load collections' : 'No collections available yet'}
+              </p>
+              {error && (
+                <Button variant="secondary" onClick={loadCollections}>Retry</Button>
+              )}
+            </div>
           ) : (
             <ul className="mt-2 space-y-1">
               {results.map(r => (

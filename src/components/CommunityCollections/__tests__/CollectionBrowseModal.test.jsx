@@ -85,6 +85,17 @@ describe('CollectionBrowseModal', () => {
     await waitFor(() => expect(
       screen.getByText(/connection failed.*check your internet/i),
     ).toBeInTheDocument())
+    expect(screen.queryByText(/no collections available yet/i)).not.toBeInTheDocument()
+  })
+
+  it('shows a Retry button on initial-load failure and successfully retries', async () => {
+    listCommunityCollections.mockRejectedValueOnce(new Error('offline'))
+    renderModal()
+    await waitFor(() => expect(screen.getByText(/connection failed.*check your internet/i)).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /retry/i }))
+
+    await waitFor(() => expect(screen.getByText('Judah Worship Set')).toBeInTheDocument())
   })
 
   it('shows a preview of every song after picking a collection', async () => {
