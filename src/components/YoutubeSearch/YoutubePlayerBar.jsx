@@ -75,11 +75,11 @@ export function YoutubePlayerBar({
             <div className="flex items-center gap-3">
               {hasResults && (
                 <button type="button" onClick={onBackToResults} className="text-indigo-500 hover:underline">
-                  Back to results
+                  ← Back to results
                 </button>
               )}
-              <button type="button" onClick={onSearchAgain} className="text-indigo-500 hover:underline">
-                Search again
+              <button type="button" onClick={onSearchAgain} aria-label="Search again" className="text-indigo-500 hover:underline">
+                ← Search again
               </button>
             </div>
             <a
