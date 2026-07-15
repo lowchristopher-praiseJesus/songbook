@@ -72,7 +72,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     canDecrease,
     increaseFontSize,
     decreaseFontSize,
-  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly })
+  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.

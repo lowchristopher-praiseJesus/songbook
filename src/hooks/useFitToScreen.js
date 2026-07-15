@@ -6,7 +6,7 @@ const MAX_COLS = 4
 const STEP = 2
 const DEBOUNCE_MS = 100
 
-export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
+export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId }) {
   const [state, setState] = useState({
     fitFontSize: null,
     fitColumns: null,
@@ -129,12 +129,16 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
     })
   }
 
-  // Re-measure when enabled state or lyricsOnly changes
+  // Re-measure when enabled state, lyricsOnly, or the active song changes.
+  // Song changes must force a fresh auto-fit rather than keep a manually
+  // pinned font size, since a size that fit the previous song's content may
+  // not fit (or may under-fill) the new song's.
   useLayoutEffect(() => {
     if (!enabled) {
       setState({ fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false })
       return
     }
+    modeRef.current = 'auto'
     measureRef.current()
     // Guard against transitional layout on the very first pass (e.g. a freshly
     // mounted `fixed inset-0` overlay tree). Re-measure once a full layout+paint
@@ -143,7 +147,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly }) {
       rafRef.current = requestAnimationFrame(() => measureRef.current())
     })
     return () => cancelAnimationFrame(rafRef.current)
-  }, [enabled, lyricsOnly])
+  }, [enabled, lyricsOnly, songId])
 
   // ResizeObserver: re-measure on container size changes (debounced).
   // In manual mode, keep the user's pinned font and only re-derive columns;
