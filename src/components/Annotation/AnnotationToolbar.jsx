@@ -17,7 +17,8 @@ export function AnnotationToolbar() {
   const undoLastStroke = useAnnotationStore(s => s.undoLastStroke)
   const clearAllAnnotations = useAnnotationStore(s => s.clearAllAnnotations)
 
-  const { pillRef, position, gripProps } = useDraggablePill('songsheet_annotation_pill_pos')
+  const { pillRef, position, orientation, gripProps } = useDraggablePill('songsheet_annotation_pill_pos')
+  const isHorizontal = orientation === 'horizontal'
 
   const [confirmingReset, setConfirmingReset] = useState(false)
   const confirmTimerRef = useRef(null)
@@ -38,9 +39,10 @@ export function AnnotationToolbar() {
     <div
       ref={pillRef}
       data-pill-root
-      className="fixed z-20 flex flex-col items-center gap-2
+      className={`fixed z-20 flex items-center gap-2
         bg-white/25 dark:bg-gray-900/25 backdrop-blur-xl rounded-2xl shadow-lg
-        border border-gray-200/40 dark:border-gray-700/30 py-2 px-1.5"
+        border border-gray-200/40 dark:border-gray-700/30
+        ${isHorizontal ? 'flex-row px-2 py-1.5' : 'flex-col py-2 px-1.5'}`}
       style={
         position
           ? { left: `${position.x}px`, top: `${position.y}px` }
@@ -50,17 +52,18 @@ export function AnnotationToolbar() {
       {/* Drag handle */}
       <div
         {...gripProps}
-        className="w-full flex justify-center pt-0.5 pb-1 cursor-grab active:cursor-grabbing touch-none select-none"
+        className={`flex cursor-grab active:cursor-grabbing touch-none select-none
+          ${isHorizontal ? 'h-full flex-col justify-center pl-0.5 pr-1' : 'w-full justify-center pt-0.5 pb-1'}`}
         aria-label="Drag to reposition toolbar"
       >
-        <div className="flex flex-col gap-[3px]">
-          <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
-          <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
+        <div className={`flex gap-[3px] ${isHorizontal ? 'flex-row' : 'flex-col'}`}>
+          <div className={isHorizontal ? 'h-4 w-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50' : 'w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50'} />
+          <div className={isHorizontal ? 'h-4 w-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50' : 'w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50'} />
         </div>
       </div>
 
       {/* Pen / eraser */}
-      <div className="flex flex-col gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5">
+      <div className={`flex gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5 ${isHorizontal ? 'flex-row' : 'flex-col'}`}>
         <button
           type="button"
           onClick={() => setTool('pen')}
@@ -84,7 +87,7 @@ export function AnnotationToolbar() {
       </div>
 
       {/* Color swatches */}
-      <div className="grid grid-cols-2 gap-1 py-1">
+      <div data-testid="color-swatches" className={`grid gap-1 py-1 ${isHorizontal ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {COLORS.map(c => (
           <button
             key={c}
@@ -100,7 +103,7 @@ export function AnnotationToolbar() {
       </div>
 
       {/* Layers */}
-      <div className="flex flex-col gap-1 py-1">
+      <div className={`flex gap-1 py-1 ${isHorizontal ? 'flex-row' : 'flex-col'}`}>
         {Array.from({ length: MAX_LAYERS }, (_, i) => {
           const layer = layers[i]
           const isActive = i === activeLayer
@@ -132,7 +135,7 @@ export function AnnotationToolbar() {
       </div>
 
       {/* Undo / reset */}
-      <div className="flex flex-col gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5">
+      <div className={`flex gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5 ${isHorizontal ? 'flex-row' : 'flex-col'}`}>
         <button
           type="button"
           onClick={undoLastStroke}

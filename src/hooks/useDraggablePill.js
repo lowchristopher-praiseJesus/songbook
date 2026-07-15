@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react'
 
 const MARGIN = 8
 
@@ -55,6 +55,25 @@ export function useDraggablePill(storageKey) {
       window.removeEventListener('pointerup', activeDragRef.current.onUp)
     }
   }, [])
+
+  useLayoutEffect(() => {
+    if (!pillRef.current) return
+    const next = computeOrientation(position, pillRef.current, orientationRef.current)
+    if (next !== orientationRef.current) {
+      orientationRef.current = next
+      setOrientation(next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useLayoutEffect(() => {
+    setPosition(prev => {
+      if (!prev) return prev
+      const next = clamp(prev, pillRef.current)
+      return (next.x === prev.x && next.y === prev.y) ? prev : next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation])
 
   const startDrag = useCallback((e) => {
     e.preventDefault()
