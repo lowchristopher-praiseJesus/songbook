@@ -6,6 +6,12 @@ const FIRECRAWL_V2_BASE = 'https://api.firecrawl.dev/v2'
 //   legacy: ultimate-guitar.com/guitar-chords/... or .../chords/...
 const UG_CHORD_URL_RE = /ultimate-guitar\.com\/(guitar-chords|chords\/|tab\/[^?#]+-chords)/i
 
+// UG can't build an artist/song slug for titles with no Latin characters (e.g. Chinese
+// song names), so it falls back to a bare tab/{id} permalink with no "-chords" marker.
+// We only trust these when the result title itself says "chords", to avoid pulling in
+// bass/pro/ukulele tabs that use the same bare-ID URL shape.
+const UG_BARE_TAB_URL_RE = /ultimate-guitar\.com\/tab\/\d+(?:[?#]|$)/i
+
 async function firecrawlPost(endpoint, body, apiKey) {
   let res
   try {
@@ -58,7 +64,10 @@ export async function firecrawlSearch(query, apiKey, limit = 8) {
  */
 export async function searchUG(query, apiKey) {
   const items = await firecrawlSearch(`site:ultimate-guitar.com ${query} chords`, apiKey)
-  return items.filter(item => UG_CHORD_URL_RE.test(item.url))
+  return items.filter(item =>
+    UG_CHORD_URL_RE.test(item.url) ||
+    (UG_BARE_TAB_URL_RE.test(item.url) && /chord/i.test(item.title ?? ''))
+  )
 }
 
 /**

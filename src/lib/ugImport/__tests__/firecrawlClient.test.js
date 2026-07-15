@@ -40,6 +40,27 @@ describe('searchUG', () => {
     expect(results[0].url).toContain('-chords-')
   })
 
+  it('accepts bare numeric tab URL when title confirms it is a chord chart (non-Latin title, e.g. Chinese song)', async () => {
+    mockFetch(200, {
+      data: [
+        { url: 'https://tabs.ultimate-guitar.com/tab/2498334', title: '耶稣爱我 Chords by Unknown', description: '' },
+      ]
+    })
+    const results = await searchUG('耶稣爱我', 'test-key')
+    expect(results).toHaveLength(1)
+    expect(results[0].url).toBe('https://tabs.ultimate-guitar.com/tab/2498334')
+  })
+
+  it('rejects bare numeric tab URL when title does not indicate a chord chart', async () => {
+    mockFetch(200, {
+      data: [
+        { url: 'https://tabs.ultimate-guitar.com/tab/2498334', title: '耶稣爱我 Bass Tab by Unknown', description: '' },
+      ]
+    })
+    const results = await searchUG('耶稣爱我', 'test-key')
+    expect(results).toHaveLength(0)
+  })
+
   it('sends correct query and auth header', async () => {
     mockFetch(200, { data: [] })
     await searchUG('amazing grace', 'my-api-key')
