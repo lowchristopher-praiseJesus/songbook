@@ -108,6 +108,11 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   async function handleCreateLink(options = {}) {
     const lockedForThisLink = options.forceUnlocked ? false : locked
     const pinForThisLink = lockedForThisLink ? pinValue : null
+    // "New link" from an existing share: match the original link's expiry date rather
+    // than the create-mode dropdown (which is hidden and irrelevant in update mode).
+    const effectiveExpiresInDays = isUpdateMode && expiresAt
+      ? Math.min(30, Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000)))
+      : expiresInDays
     setStep('uploading')
     setErrorMessage('')
     setPublishError(null)
@@ -134,7 +139,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       let result
       try {
         const shareToken = await getToken();
-        result = await uploadShare(blob, expiresInDays, shareToken, lockedForThisLink, pinForThisLink)
+        result = await uploadShare(blob, effectiveExpiresInDays, shareToken, lockedForThisLink, pinForThisLink)
       } catch (err) {
         console.error('[ShareModal] upload failed:', err)
         setErrorMessage('Upload failed. Please check your connection and try again.')
@@ -741,7 +746,12 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
             <Button variant="ghost" onClick={handleClose}>Cancel</Button>
             {isUpdateMode ? (
               <>
-                <Button variant="secondary" onClick={() => handleCreateLink({ forceUnlocked: true })} aria-label="New link">
+                <Button
+                  variant="secondary"
+                  onClick={() => handleCreateLink({ forceUnlocked: true })}
+                  aria-label="New link"
+                  disabled={lockStatus === 'checking'}
+                >
                   New link
                 </Button>
                 <Button variant="primary" onClick={handlePushUpdate} aria-label="Push Update" disabled={locked || lockStatus === 'checking'}>

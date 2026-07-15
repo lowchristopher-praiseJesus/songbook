@@ -434,6 +434,7 @@ describe('ShareModal — update mode', () => {
     renderWithLicense(
       <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
     );
+    await waitFor(() => expect(screen.getByRole('button', { name: /new link/i })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /new link/i }));
     await waitFor(() => expect(uploadShare).toHaveBeenCalled());
     expect(await screen.findByDisplayValue('http://app?share=new-code')).toBeInTheDocument();
@@ -465,6 +466,40 @@ describe('ShareModal — update mode', () => {
     fireEvent.click(screen.getByRole('button', { name: /new link/i }));
     await waitFor(() => expect(uploadShare).toHaveBeenCalled());
     expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 7, 'mock-token', false, null);
+  });
+
+  it('"New link" matches the original link\'s expiry date instead of defaulting to 7 days', async () => {
+    const originalExpiresAt = new Date(Date.now() + 12.5 * 86_400_000).toISOString();
+    checkShareVersion.mockResolvedValueOnce({ version: 1, locked: false, hasPin: false, expiresAt: originalExpiresAt });
+    uploadShare.mockResolvedValue({
+      shareCode: 'new-code',
+      shareUrl: 'http://app?share=new-code',
+      expiresAt: originalExpiresAt,
+    });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => {
+      expect(screen.getByText(new Date(originalExpiresAt).toLocaleDateString())).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /new link/i }));
+    await waitFor(() => expect(uploadShare).toHaveBeenCalled());
+    // 12.5 days rounds up to 13 so the new link never expires before the original did.
+    expect(uploadShare).toHaveBeenCalledWith(expect.anything(), 13, 'mock-token', false, null);
+  });
+
+  it('"New link" falls back to the 7-day default if the original expiry has not loaded yet', async () => {
+    checkShareVersion.mockReturnValueOnce(new Promise(() => {})); // never resolves
+    uploadShare.mockResolvedValue({
+      shareCode: 'new-code',
+      shareUrl: 'http://app?share=new-code',
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+    });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    expect(await screen.findByRole('button', { name: /new link/i })).toBeDisabled();
   });
 
   it('closing the modal after unlocking without pushing re-locks the share silently', async () => {
