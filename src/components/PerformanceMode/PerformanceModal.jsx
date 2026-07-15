@@ -9,7 +9,7 @@ import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 
-export function PerformanceModal({ song: initialSong, sections: initialSections, lyricsOnly = false, onClose }) {
+export function PerformanceModal({ song: initialSong, sections: initialSections, lyricsOnly = false, hideChordDiagram = false, onClose }) {
   const index = useLibraryStore(s => s.index)
   const selectSong = useLibraryStore(s => s.selectSong)
 
@@ -123,11 +123,13 @@ export function PerformanceModal({ song: initialSong, sections: initialSections,
       </div>
 
       {/* Chord diagram strip */}
-      <ChordStrip
-        sections={sections}
-        open={chordsOpen}
-        onToggle={() => setChordsOpen(o => !o)}
-      />
+      {!lyricsOnly && !hideChordDiagram && (
+        <ChordStrip
+          sections={sections}
+          open={chordsOpen}
+          onToggle={() => setChordsOpen(o => !o)}
+        />
+      )}
 
       {/* Song content — keyed so animation restarts on each song change */}
       <div
