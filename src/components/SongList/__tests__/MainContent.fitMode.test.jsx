@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MainContent } from '../MainContent'
+import { useAnnotationStore } from '../../../store/annotationStore'
 
 // Stub every store/hook dependency MainContent uses
 vi.mock('../../../store/libraryStore', () => ({
@@ -234,5 +235,23 @@ describe('MainContent maximize button', () => {
     fireEvent.click(screen.getByLabelText('Exit maximize'))
     expect(screen.queryByLabelText('Exit maximize')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Fit song to screen')).toBeInTheDocument()
+  })
+
+  it('turns off annotate mode when exiting maximize via the exit button', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    fireEvent.click(screen.getByLabelText('Annotate'))
+    expect(useAnnotationStore.getState().annotateMode).toBe(true)
+
+    fireEvent.click(screen.getByLabelText('Exit maximize'))
+    expect(useAnnotationStore.getState().annotateMode).toBe(false)
   })
 })

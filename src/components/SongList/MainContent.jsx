@@ -215,6 +215,11 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
   const handleClosePerformance = useCallback(() => setPerformanceSections(null), [])
 
+  function exitMaximize() {
+    setIsFit(false)
+    setAnnotateMode(false)
+  }
+
   function handleFileInput(e) {
     importFiles(Array.from(e.target.files))
     e.target.value = ''
@@ -338,7 +343,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
             </button>
             <button
               type="button"
-              onClick={() => setIsFit(false)}
+              onClick={exitMaximize}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Exit maximize"
             >
