@@ -5,6 +5,7 @@ import {
   loadIndex, saveIndex, getLastSongId, setLastSongId, clearLastSongId,
   loadCollections, saveCollections, getViewMode, saveViewMode,
   getTransposeState, setTransposeState,
+  deleteAnnotations,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
 import { resolveSaveAsTitle } from '../lib/saveAsTitle'
@@ -207,6 +208,7 @@ export const useLibraryStore = create((set, get) => ({
    */
   deleteSong(id) {
     deleteFromStorage(id)
+    deleteAnnotations(id)
     const newIndex = get().index.filter(e => e.id !== id)
     saveIndex(newIndex)
 

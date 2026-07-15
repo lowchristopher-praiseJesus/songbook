@@ -13,6 +13,7 @@ import { RecorderButton } from '../Recorder/RecorderButton'
 import { NamingDialog } from '../Recorder/NamingDialog'
 import { RecordingErrorDialog } from '../Recorder/RecordingErrorDialog'
 import { RecordingsPanel } from '../Recorder/RecordingsPanel'
+import { AnnotatedMaximizeView } from '../Annotation/AnnotatedMaximizeView'
 
 const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
 
@@ -163,17 +164,30 @@ export function SongList({
             )}
           </div>
         )}
-        <div ref={bodyRef}>
-          <SongBody
+        {isFit ? (
+          <AnnotatedMaximizeView
             sections={transpose.transposedSections}
             fontSize={fontSize}
             lyricsOnly={lyricsOnly}
-            fitMode={isFit && fitFontSize !== null}
-            fitColumns={fitColumns}
             annotationsVisible={annotationsVisible}
             sectionRefs={sectionRefs}
+            bodyRef={bodyRef}
+            fitFontSize={fitFontSize}
+            fitColumns={fitColumns}
+            containerRef={containerRef}
           />
-        </div>
+        ) : (
+          <div ref={bodyRef}>
+            <SongBody
+              sections={transpose.transposedSections}
+              fontSize={fontSize}
+              lyricsOnly={lyricsOnly}
+              fitMode={false}
+              annotationsVisible={annotationsVisible}
+              sectionRefs={sectionRefs}
+            />
+          </div>
+        )}
         {isFit && (
           <div
             ref={shadowRef}

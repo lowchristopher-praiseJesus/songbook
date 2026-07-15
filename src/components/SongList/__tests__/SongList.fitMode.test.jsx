@@ -55,6 +55,12 @@ const song = {
 
 const containerRef = { current: document.createElement('div') }
 
+vi.stubGlobal('ResizeObserver', vi.fn(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+})))
+
 describe('SongList fitMode', () => {
   it('shows the song title, key, and tempo at the top when isFit is true', () => {
     const { getByRole, getByText } = render(

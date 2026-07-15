@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline'
+import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon, PencilIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
+import { useAnnotationStore } from '../../store/annotationStore'
+import { AnnotationToolbar } from '../Annotation/AnnotationToolbar'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
@@ -55,6 +57,13 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
   const bodyRef = useRef(null)
+  const annotationBaseline = useAnnotationStore(s => s.baseline)
+  const annotateMode = useAnnotationStore(s => s.annotateMode)
+  const userZoom = useAnnotationStore(s => s.userZoom)
+  const setAnnotateMode = useAnnotationStore(s => s.setAnnotateMode)
+  const setUserZoom = useAnnotationStore(s => s.setUserZoom)
+  const resetAnnotationZoom = useAnnotationStore(s => s.resetZoom)
+  const loadAnnotationsForSong = useAnnotationStore(s => s.loadForSong)
   const {
     fitFontSize,
     fitColumns,
@@ -63,7 +72,13 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     canDecrease,
     increaseFontSize,
     decreaseFontSize,
-  } = useFitToScreen({ enabled: isFit, containerRef, bodyRef, lyricsOnly })
+  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly })
+
+  // Keep the annotation layer's stroke/baseline data in sync with whichever
+  // song is active, regardless of whether Maximize mode is currently open.
+  useEffect(() => {
+    if (activeSongId) loadAnnotationsForSong(activeSongId)
+  }, [activeSongId, loadAnnotationsForSong])
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
 
@@ -168,8 +183,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   // Desktop arrow-key navigation (skip when a modal is open or user is typing)
   useEffect(() => {
     function onKey(e) {
+      if (e.key === 'Escape' && isFit && annotateMode) { setAnnotateMode(false); return }
       if (e.key === 'Escape' && isFit) { setIsFit(false); return }
-      if (performanceSections || editingSongId) return
+      if (performanceSections || editingSongId || annotateMode) return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
       if (e.key === 'ArrowRight') { e.preventDefault(); goNext() }
@@ -177,7 +193,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goNext, goPrev, performanceSections, editingSongId, isFit])
+  }, [goNext, goPrev, performanceSections, editingSongId, isFit, annotateMode, setAnnotateMode])
 
   function onDuplicateCheck(title) {
     return new Promise(resolve => setDuplicateState({ title, resolve }))
@@ -266,26 +282,60 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       {isFit && activeSong && (
         <div
           className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col overflow-hidden"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          onTouchStart={annotateMode ? undefined : onTouchStart}
+          onTouchEnd={annotateMode ? undefined : onTouchEnd}
         >
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
-              <button
-                type="button"
-                onClick={increaseFontSize}
-                disabled={!canIncrease}
-                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
-                aria-label="Increase font size"
-              >+</button>
-              <button
-                type="button"
-                onClick={decreaseFontSize}
-                disabled={!canDecrease}
-                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
-                aria-label="Decrease font size"
-              >−</button>
+              {annotationBaseline ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setUserZoom(userZoom + 0.25)}
+                    disabled={userZoom >= 4}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                    aria-label="Zoom in"
+                  ><MagnifyingGlassPlusIcon className="w-5 h-5" /></button>
+                  <button
+                    type="button"
+                    onClick={() => (userZoom > 1 ? setUserZoom(userZoom - 0.25) : resetAnnotationZoom())}
+                    disabled={userZoom <= 1}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                    aria-label="Zoom out"
+                  ><MagnifyingGlassMinusIcon className="w-5 h-5" /></button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={increaseFontSize}
+                    disabled={!canIncrease}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                    aria-label="Increase font size"
+                  >+</button>
+                  <button
+                    type="button"
+                    onClick={decreaseFontSize}
+                    disabled={!canDecrease}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 text-lg font-light select-none hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                    aria-label="Decrease font size"
+                  >−</button>
+                </>
+              )}
             </div>
+            <button
+              type="button"
+              onClick={() => setAnnotateMode(!annotateMode)}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors
+                ${annotateMode
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              aria-label={annotateMode ? 'Stop annotating' : 'Annotate'}
+              aria-pressed={annotateMode}
+            >
+              <PencilIcon className="w-5 h-5" />
+            </button>
             <button
               type="button"
               onClick={() => setIsFit(false)}
@@ -295,6 +345,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
               <ArrowsPointingInIcon className="w-5 h-5" />
             </button>
           </div>
+          {annotateMode && <AnnotationToolbar />}
           <div
             key={activeSongId}
             className={`h-full overflow-x-hidden

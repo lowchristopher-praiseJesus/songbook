@@ -3,6 +3,7 @@ import {
   saveSong, loadSong, deleteSong, loadIndex, saveIndex,
   getTheme, setTheme, getLastSongId, setLastSongId, getStorageStats,
   getViewMode, saveViewMode,
+  getAnnotations, setAnnotations, deleteAnnotations,
 } from '../storage'
 
 beforeEach(() => {
@@ -117,5 +118,38 @@ describe('viewMode', () => {
   it('ignores unknown values and returns "collections"', () => {
     localStorage.setItem('songsheet_view_mode', 'garbage')
     expect(getViewMode()).toBe('collections')
+  })
+})
+
+describe('annotations', () => {
+  const mockAnnotations = {
+    baseline: { fontSize: 18, columns: 2, width: 800, height: 1200 },
+    layers: [{ visible: true, strokes: [{ id: 's1', color: '#000', width: 2, points: [{ x: 1, y: 2, pressure: 0.5 }] }] }],
+    activeLayer: 0,
+  }
+
+  it('returns null when no annotations exist', () => {
+    expect(getAnnotations('song-1')).toBeNull()
+  })
+
+  it('saves and loads annotations by song id', () => {
+    setAnnotations('song-1', mockAnnotations)
+    expect(getAnnotations('song-1')).toEqual(mockAnnotations)
+  })
+
+  it('keeps annotations for different songs independent', () => {
+    setAnnotations('song-1', mockAnnotations)
+    expect(getAnnotations('song-2')).toBeNull()
+  })
+
+  it('deletes annotations', () => {
+    setAnnotations('song-1', mockAnnotations)
+    deleteAnnotations('song-1')
+    expect(getAnnotations('song-1')).toBeNull()
+  })
+
+  it('returns null for corrupt JSON', () => {
+    localStorage.setItem('songsheet_annotations_song-1', 'not json')
+    expect(getAnnotations('song-1')).toBeNull()
   })
 })

@@ -3,6 +3,7 @@ const INDEX_KEY = 'songsheet_index'
 const THEME_KEY = 'songsheet_theme'
 const LAST_SONG_KEY = 'songsheet_last_song_id'
 const TRANSPOSE_PREFIX = 'songsheet_transpose_'
+const ANNOTATION_PREFIX = 'songsheet_annotations_'
 const COLLECTIONS_KEY = 'songsheet_collections'
 const FIRECRAWL_KEY = 'songsheet_firecrawl_key'
 const VIEW_MODE_KEY = 'songsheet_view_mode'
@@ -70,6 +71,25 @@ export function getTransposeState(songId) {
 
 export function setTransposeState(songId, state) {
   localStorage.setItem(TRANSPOSE_PREFIX + songId, JSON.stringify(state))
+}
+
+/**
+ * Annotation shape: { baseline: { fontSize, columns, width, height } | null,
+ *   layers: [{ visible, strokes: [{ id, color, width, points: [{x, y, pressure}] }] }],
+ *   activeLayer }
+ */
+export function getAnnotations(songId) {
+  const raw = localStorage.getItem(ANNOTATION_PREFIX + songId)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+export function setAnnotations(songId, data) {
+  localStorage.setItem(ANNOTATION_PREFIX + songId, JSON.stringify(data))
+}
+
+export function deleteAnnotations(songId) {
+  localStorage.removeItem(ANNOTATION_PREFIX + songId)
 }
 
 /**
