@@ -25,10 +25,29 @@ function clamp(next, pillEl) {
   }
 }
 
+const ORIENTATION_FLIP_MARGIN = 24
+
+function computeOrientation(position, pillEl, prevOrientation) {
+  if (!position || !pillEl) return 'vertical'
+  const width = pillEl.offsetWidth ?? 0
+  const height = pillEl.offsetHeight ?? 0
+  const centerX = position.x + width / 2
+  const centerY = position.y + height / 2
+  const distHorizontal = Math.min(centerY, window.innerHeight - centerY)
+  const distVertical = Math.min(centerX, window.innerWidth - centerX)
+  const candidate = distHorizontal < distVertical ? 'horizontal' : 'vertical'
+  if (candidate === prevOrientation) return prevOrientation
+  const candidateDist = candidate === 'horizontal' ? distHorizontal : distVertical
+  const prevDist = prevOrientation === 'horizontal' ? distHorizontal : distVertical
+  return prevDist - candidateDist > ORIENTATION_FLIP_MARGIN ? candidate : prevOrientation
+}
+
 export function useDraggablePill(storageKey) {
   const pillRef = useRef(null)
   const activeDragRef = useRef(null)
+  const orientationRef = useRef('vertical')
   const [position, setPosition] = useState(() => readStoredPosition(storageKey))
+  const [orientation, setOrientation] = useState('vertical')
 
   useEffect(() => () => {
     if (activeDragRef.current) {
@@ -48,7 +67,13 @@ export function useDraggablePill(storageKey) {
     function onMove(ev) {
       const deltaX = ev.clientX - startClientX
       const deltaY = ev.clientY - startClientY
-      setPosition(clamp({ x: startLeft + deltaX, y: startTop + deltaY }, pillRef.current))
+      const next = clamp({ x: startLeft + deltaX, y: startTop + deltaY }, pillRef.current)
+      setPosition(next)
+      const nextOrientation = computeOrientation(next, pillRef.current, orientationRef.current)
+      if (nextOrientation !== orientationRef.current) {
+        orientationRef.current = nextOrientation
+        setOrientation(nextOrientation)
+      }
     }
 
     function onUp() {
@@ -72,5 +97,5 @@ export function useDraggablePill(storageKey) {
     window.addEventListener('pointerup', onUp)
   }, [storageKey])
 
-  return { pillRef, position, gripProps: { onPointerDown: startDrag } }
+  return { pillRef, position, orientation, gripProps: { onPointerDown: startDrag } }
 }

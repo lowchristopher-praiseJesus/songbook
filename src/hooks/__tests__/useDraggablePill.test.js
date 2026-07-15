@@ -122,4 +122,69 @@ describe('useDraggablePill', () => {
     expect(removeSpy).toHaveBeenCalledWith('pointerup', expect.any(Function))
     removeSpy.mockRestore()
   })
+
+  it('defaults to vertical orientation before any drag', () => {
+    const { result } = renderHook(() => useDraggablePill(KEY))
+    expect(result.current.orientation).toBe('vertical')
+  })
+
+  it('flips to horizontal orientation when dragged near the top edge', () => {
+    const { result } = renderHook(() => useDraggablePill(KEY))
+    result.current.pillRef.current = mockPillEl({ left: 100, top: 100, width: 200, height: 100 })
+
+    act(() => {
+      result.current.gripProps.onPointerDown({ preventDefault: vi.fn(), clientX: 200, clientY: 200 })
+    })
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 500, clientY: 110 }))
+    })
+
+    expect(result.current.position).toEqual({ x: 400, y: 10 })
+    expect(result.current.orientation).toBe('horizontal')
+  })
+
+  it('stays vertical when dragged near the left edge', () => {
+    const { result } = renderHook(() => useDraggablePill(KEY))
+    result.current.pillRef.current = mockPillEl({ left: 100, top: 100, width: 200, height: 100 })
+
+    act(() => {
+      result.current.gripProps.onPointerDown({ preventDefault: vi.fn(), clientX: 200, clientY: 200 })
+    })
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 110, clientY: 500 }))
+    })
+
+    expect(result.current.position).toEqual({ x: 10, y: 400 })
+    expect(result.current.orientation).toBe('vertical')
+  })
+
+  it('applies hysteresis so a marginal geometry change does not flip orientation, but a clear one does', () => {
+    const { result } = renderHook(() => useDraggablePill(KEY))
+    result.current.pillRef.current = mockPillEl({ left: 100, top: 100, width: 200, height: 100 })
+
+    act(() => {
+      result.current.gripProps.onPointerDown({ preventDefault: vi.fn(), clientX: 200, clientY: 200 })
+    })
+
+    // Move 1: solidly near the top edge -> flips to horizontal.
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 500, clientY: 110 }))
+    })
+    expect(result.current.orientation).toBe('horizontal')
+
+    // Move 2: raw geometry now marginally favors vertical (by 10px, under the
+    // 24px margin) -> stays horizontal.
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 300, clientY: 360 }))
+    })
+    expect(result.current.position).toEqual({ x: 200, y: 260 })
+    expect(result.current.orientation).toBe('horizontal')
+
+    // Move 3: clearly vertical-favoring (by 84px, over the margin) -> flips.
+    act(() => {
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 300, clientY: 434 }))
+    })
+    expect(result.current.position).toEqual({ x: 200, y: 334 })
+    expect(result.current.orientation).toBe('vertical')
+  })
 })
