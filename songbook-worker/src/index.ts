@@ -39,8 +39,8 @@ app.use('*', async (c, next) => {
     c.res.headers.set('Access-Control-Allow-Origin', requestOrigin);
     c.res.headers.set('Vary', 'Origin');
     // Expose custom response headers so browser JS can read them. Without this,
-    // X-Share-Version/X-Share-Locked/X-Share-Has-Pin are hidden from fetch() and the client falls back to defaults.
-    c.res.headers.set('Access-Control-Expose-Headers', 'X-Share-Version, X-Share-Locked, X-Share-Has-Pin');
+    // X-Share-Version/X-Share-Locked/X-Share-Has-Pin/X-Share-Expires-At are hidden from fetch() and the client falls back to defaults.
+    c.res.headers.set('Access-Control-Expose-Headers', 'X-Share-Version, X-Share-Locked, X-Share-Has-Pin, X-Share-Expires-At');
   }
 });
 

@@ -45,7 +45,8 @@ export async function checkShareVersion(shareCode) {
   const version = Number(res.headers.get('X-Share-Version') ?? 1);
   const locked = res.headers.get('X-Share-Locked') === 'true';
   const hasPin = res.headers.get('X-Share-Has-Pin') === 'true';
-  return { version, locked, hasPin };
+  const expiresAt = res.headers.get('X-Share-Expires-At') ?? null;
+  return { version, locked, hasPin, expiresAt };
 }
 
 export async function updateShare(shareCode, blob) {

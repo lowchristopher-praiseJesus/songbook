@@ -34,24 +34,10 @@ share.post('/upload', verifyTurnstile, async (c) => {
   return c.json({ shareCode, shareUrl, expiresAt: expiresAt.toISOString() });
 });
 
-share.on('HEAD', '/:code', async (c) => {
-  const shareCode = c.req.param('code');
-  const result = await headShare(c.env.R2_BUCKET, shareCode);
-
-  if ('error' in result) {
-    const status = result.error === 'not_found' ? 404 : 410;
-    return c.body(null, status);
-  }
-
-  return c.body(null, 200, {
-    'X-Share-Version': String(result.version),
-    'X-Share-Locked': String(result.locked),
-    'X-Share-Has-Pin': String(result.hasPin),
-    // no-store: a live share is mutable; clients must always read the current version.
-    'Cache-Control': 'no-store',
-  });
-});
-
+// Hono's dispatcher rewrites every HEAD request into a GET internally and just
+// strips the body (see #dispatch in hono-base.js), so a route registered with
+// `.on('HEAD', ...)` is never actually reached — this GET handler is what serves
+// both `GET /share/:code` and `HEAD /share/:code`.
 share.get('/:code', async (c) => {
   const shareCode = c.req.param('code');
   const result = await getShareIfValid(c.env.R2_BUCKET, shareCode);
@@ -67,6 +53,7 @@ share.get('/:code', async (c) => {
       'X-Share-Version': String(result.version),
       'X-Share-Locked': String(result.locked),
       'X-Share-Has-Pin': String(result.hasPin),
+      'X-Share-Expires-At': result.expiresAt.toISOString(),
       // no-store: a live share blob changes on every Push Update; never serve a cached copy.
       'Cache-Control': 'no-store',
     },

@@ -137,7 +137,7 @@ describe('checkShareVersion', () => {
       text: async () => '',
     });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 3, locked: false, hasPin: false });
+    expect(result).toEqual({ version: 3, locked: false, hasPin: false, expiresAt: null });
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/share/abc-123'),
       expect.objectContaining({ method: 'HEAD', cache: 'no-store' }),
@@ -157,7 +157,7 @@ describe('checkShareVersion', () => {
   it('defaults to version 1 when X-Share-Version header is absent', async () => {
     fetch.mockResolvedValue({ status: 200, ok: true, headers: { get: () => null }, text: async () => '' });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 1, locked: false, hasPin: false });
+    expect(result).toEqual({ version: 1, locked: false, hasPin: false, expiresAt: null });
   });
 
   it('returns locked: true from X-Share-Locked header', async () => {
@@ -168,7 +168,7 @@ describe('checkShareVersion', () => {
       text: async () => '',
     });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 3, locked: true, hasPin: false });
+    expect(result).toEqual({ version: 3, locked: true, hasPin: false, expiresAt: null });
   });
 
   it('defaults locked to false when X-Share-Locked header is absent', async () => {
@@ -179,7 +179,7 @@ describe('checkShareVersion', () => {
       text: async () => '',
     });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 1, locked: false, hasPin: false });
+    expect(result).toEqual({ version: 1, locked: false, hasPin: false, expiresAt: null });
   });
 
   it('returns hasPin: true from X-Share-Has-Pin header', async () => {
@@ -190,7 +190,18 @@ describe('checkShareVersion', () => {
       text: async () => '',
     });
     const result = await checkShareVersion('abc-123');
-    expect(result).toEqual({ version: 1, locked: false, hasPin: true });
+    expect(result).toEqual({ version: 1, locked: false, hasPin: true, expiresAt: null });
+  });
+
+  it('returns expiresAt from X-Share-Expires-At header', async () => {
+    fetch.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: { get: (h) => (h === 'X-Share-Expires-At' ? '2026-08-14T00:00:00.000Z' : null) },
+      text: async () => '',
+    });
+    const result = await checkShareVersion('abc-123');
+    expect(result).toEqual({ version: 1, locked: false, hasPin: false, expiresAt: '2026-08-14T00:00:00.000Z' });
   });
 });
 

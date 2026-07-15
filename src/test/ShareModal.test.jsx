@@ -220,6 +220,23 @@ describe('ShareModal — update mode', () => {
     });
   });
 
+  it('shows the real server-side expiry date instead of the create-mode 7-day default', async () => {
+    checkShareVersion.mockResolvedValueOnce({
+      version: 1,
+      locked: false,
+      hasPin: false,
+      expiresAt: '2026-08-14T00:00:00.000Z',
+    });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => {
+      expect(screen.getByText(new Date('2026-08-14T00:00:00.000Z').toLocaleDateString())).toBeInTheDocument();
+    });
+    expect(screen.queryByDisplayValue('7 days')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Link expires in')).not.toBeInTheDocument();
+  });
+
   it('checks live lock state on open and reflects it on the toggle', async () => {
     checkShareVersion.mockResolvedValueOnce({ version: 1, locked: true });
     renderWithLicense(

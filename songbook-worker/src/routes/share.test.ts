@@ -302,6 +302,33 @@ describe('HEAD/GET /share/:code — X-Share-Locked header', () => {
   });
 });
 
+describe('HEAD /share/:code — X-Share-Expires-At header', () => {
+  it('exposes the expiry timestamp set at upload, not a default', async () => {
+    const { shareCode, expiresAt } = await createShare({ 'X-Expires-In-Days': '30' });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Expires-At')).toBe(expiresAt);
+    const exposeHeaders = res.headers.get('Access-Control-Expose-Headers') ?? '';
+    expect(exposeHeaders).toContain('X-Share-Expires-At');
+  });
+
+  it('keeps the original expiry after a Push Update (PUT)', async () => {
+    const { shareCode, expiresAt } = await createShare({ 'X-Expires-In-Days': '30' });
+    await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/zip', Origin: ORIGIN },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    const res = await SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'HEAD',
+      headers: { Origin: ORIGIN },
+    });
+    expect(res.headers.get('X-Share-Expires-At')).toBe(expiresAt);
+  });
+});
+
 describe('POST /share/upload — X-Locked header', () => {
   it('creates a pre-locked share when X-Locked: true is sent with a PIN', async () => {
     const { shareCode } = await createShare({ 'X-Locked': 'true', 'X-Lock-Pin': '5678' });

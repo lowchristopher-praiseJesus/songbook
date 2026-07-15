@@ -63,14 +63,15 @@ export async function getShareIfValid(
   bucket: R2Bucket,
   shareCode: string,
 ): Promise<
-  { object: R2ObjectBody; version: number; locked: boolean; hasPin: boolean } | { error: 'not_found' | 'expired' }
+  | { object: R2ObjectBody; version: number; expiresAt: Date; locked: boolean; hasPin: boolean }
+  | { error: 'not_found' | 'expired' }
 > {
   const head = await headShare(bucket, shareCode);
   if ('error' in head) return head;
 
   const object = await bucket.get(shareCode);
   if (!object) return { error: 'not_found' };
-  return { object, version: head.version, locked: head.locked, hasPin: head.hasPin };
+  return { object, version: head.version, expiresAt: head.expiresAt, locked: head.locked, hasPin: head.hasPin };
 }
 
 // ── Album helpers ────────────────────────────────────────────────────────────
