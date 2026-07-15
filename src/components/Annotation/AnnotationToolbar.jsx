@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { PencilIcon, EyeIcon, EyeSlashIcon, ArrowUturnLeftIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { useAnnotationStore, MAX_LAYERS } from '../../store/annotationStore'
+import { useDraggablePill } from '../../hooks/useDraggablePill'
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#111827']
 
@@ -15,6 +16,8 @@ export function AnnotationToolbar() {
   const toggleLayerVisibility = useAnnotationStore(s => s.toggleLayerVisibility)
   const undoLastStroke = useAnnotationStore(s => s.undoLastStroke)
   const clearAllAnnotations = useAnnotationStore(s => s.clearAllAnnotations)
+
+  const { pillRef, position, gripProps } = useDraggablePill('songsheet_annotation_pill_pos')
 
   const [confirmingReset, setConfirmingReset] = useState(false)
   const confirmTimerRef = useRef(null)
@@ -33,10 +36,29 @@ export function AnnotationToolbar() {
 
   return (
     <div
-      className="fixed left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2
+      ref={pillRef}
+      data-pill-root
+      className="fixed z-20 flex flex-col items-center gap-2
         bg-white/25 dark:bg-gray-900/25 backdrop-blur-xl rounded-2xl shadow-lg
         border border-gray-200/40 dark:border-gray-700/30 py-2 px-1.5"
+      style={
+        position
+          ? { left: `${position.x}px`, top: `${position.y}px` }
+          : { left: '1rem', top: '50%', transform: 'translateY(-50%)' }
+      }
     >
+      {/* Drag handle */}
+      <div
+        {...gripProps}
+        className="w-full flex justify-center pt-0.5 pb-1 cursor-grab active:cursor-grabbing touch-none select-none"
+        aria-label="Drag to reposition toolbar"
+      >
+        <div className="flex flex-col gap-[3px]">
+          <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
+          <div className="w-4 h-[2px] rounded-full bg-gray-400/60 dark:bg-gray-500/50" />
+        </div>
+      </div>
+
       {/* Pen / eraser */}
       <div className="flex flex-col gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5">
         <button
