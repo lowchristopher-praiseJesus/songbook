@@ -87,6 +87,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     canDecrease,
     increaseFontSize,
     decreaseFontSize,
+    settled,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
@@ -158,44 +159,24 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
   // Reset (or, when arriving via a backward page-cross, jump to the last page
   // of) the current page whenever the song, lyrics-only mode, or the fit
-  // result changes. This can fire more than once for the same song — e.g.
-  // useFitToScreen's double-rAF self-correction re-measures and changes
-  // totalPages shortly after the initial pass — so the "land on last page"
-  // intent stays armed (and gets recomputed against the latest totalPages)
-  // until the auto-clear effect below expires it.
+  // result changes. Gated on useFitToScreen's own `settled` flag rather than
+  // guessing its internal rAF timing: the hook reports `settled: false` for
+  // its transitional first-pass measurement and `settled: true` once its
+  // double-rAF self-correction has actually landed, so this effect ignores
+  // the unsettled re-fire entirely and only acts once the hook says the
+  // result is final — at which point it's safe to tell a same-song
+  // self-correction (still armed → land on the corrected last page) apart
+  // from a genuine later user action, like a manual font-size change (ref no
+  // longer armed for this song → normal reset to page 0).
   useEffect(() => {
-    const landOnLastPage = landOnLastPageRef.current === activeSongId
-    setCurrentPage(landOnLastPage ? Math.max(0, totalPages - 1) : 0)
-    if (!landOnLastPage) landOnLastPageRef.current = null
-  }, [activeSongId, lyricsOnly, totalPages, fitFontSize])
-
-  // Bound how long the "land on last page" intent stays armed to
-  // useFitToScreen's own double-rAF settling window (see its layout effect,
-  // which re-measures via two nested requestAnimationFrames after every
-  // songId change and self-corrects the result). That window is the real
-  // signal distinguishing "this re-fire is the self-correction settling in"
-  // from "this is a genuine later user action" (e.g. a manual font-size
-  // change) — both look identical at the effect-dependency level, so we
-  // scope the ref's lifetime to elapsed animation frames instead. Re-arms on
-  // every totalPages/fitFontSize change for the same song, so a further
-  // self-correction keeps the window open; once nothing changes for two
-  // frames, the ref clears and later re-fires fall through to a normal
-  // page-0 reset.
-  useEffect(() => {
-    if (landOnLastPageRef.current !== activeSongId) return
-    let raf2 = null
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        if (landOnLastPageRef.current === activeSongId) {
-          landOnLastPageRef.current = null
-        }
-      })
-    })
-    return () => {
-      cancelAnimationFrame(raf1)
-      if (raf2 !== null) cancelAnimationFrame(raf2)
+    if (!settled) return
+    if (landOnLastPageRef.current === activeSongId) {
+      setCurrentPage(Math.max(0, totalPages - 1))
+      landOnLastPageRef.current = null
+    } else {
+      setCurrentPage(0)
     }
-  }, [activeSongId, totalPages, fitFontSize])
+  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled])
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)

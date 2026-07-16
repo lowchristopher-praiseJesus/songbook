@@ -19,6 +19,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     totalPages: 1,
     pageColWidth: null,
     fitAvailableHeight: null,
+    settled: false,
   })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
@@ -132,7 +133,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     return { canIncrease, canDecrease }
   }
 
-  measureRef.current = function measureAuto() {
+  measureRef.current = function measureAuto(settled = true) {
     const availableHeight = getAvailableHeight()
     const availableWidth = getAvailableWidth()
     if (availableHeight === null || availableWidth === null) return
@@ -184,7 +185,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     }
 
     modeRef.current = 'auto'
-    setState({ ...result, ...computeFlags(result.fitFontSize) })
+    setState({ ...result, ...computeFlags(result.fitFontSize), settled })
   }
 
   function increaseFontSize() {
@@ -197,7 +198,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
       if (result === null) return prev
-      return { ...result, ...computeFlags(result.fitFontSize) }
+      return { ...result, ...computeFlags(result.fitFontSize), settled: true }
     })
   }
 
@@ -211,7 +212,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
       if (result === null) return prev
-      return { ...result, ...computeFlags(result.fitFontSize) }
+      return { ...result, ...computeFlags(result.fitFontSize), settled: true }
     })
   }
 
@@ -224,16 +225,19 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       setState({
         fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false,
         paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null,
+        settled: false,
       })
       return
     }
     modeRef.current = 'auto'
-    measureRef.current()
-    // Guard against transitional layout on the very first pass (e.g. a freshly
-    // mounted `fixed inset-0` overlay tree). Re-measure once a full layout+paint
-    // cycle has actually completed, and correct the result if it changed.
+    // The synchronous first pass may run against transitional layout (e.g. a
+    // freshly mounted `fixed inset-0` overlay tree), so it's reported as
+    // unsettled. Re-measure once a full layout+paint cycle has actually
+    // completed, and correct the result if it changed — that second pass is
+    // the settled one consumers can rely on for anything timing-sensitive.
+    measureRef.current(false)
     rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = requestAnimationFrame(() => measureRef.current())
+      rafRef.current = requestAnimationFrame(() => measureRef.current(true))
     })
     return () => cancelAnimationFrame(rafRef.current)
   }, [enabled, lyricsOnly, songId])
@@ -255,7 +259,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
             if (availableHeight === null || availableWidth === null) return prev
             const result = resultForFont(prev.fitFontSize, availableWidth, availableHeight)
             if (result === null) return prev
-            return { ...result, ...computeFlags(result.fitFontSize) }
+            return { ...result, ...computeFlags(result.fitFontSize), settled: true }
           })
         } else {
           measureRef.current()
@@ -282,5 +286,6 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     increaseFontSize,
     decreaseFontSize,
     shadowRef,
+    settled: state.settled,
   }
 }

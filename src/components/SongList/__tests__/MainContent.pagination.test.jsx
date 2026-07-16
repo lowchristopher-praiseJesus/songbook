@@ -1,16 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MainContent } from '../MainContent'
-
-// Mirrors the flushRaf helper in useFitToScreen.test.js — awaits two real
-// animation frames, matching the double-rAF settling window that both
-// useFitToScreen and MainContent's landOnLastPageRef auto-clear effect use.
-async function flushRaf() {
-  await act(async () => {
-    await new Promise(resolve => requestAnimationFrame(resolve))
-    await new Promise(resolve => requestAnimationFrame(resolve))
-  })
-}
 
 const songs = {
   'song-1': { id: 'song-1', meta: { title: 'Song One', keyIndex: 0 }, sections: [] },
@@ -68,36 +58,43 @@ const fitStateBySong = {
     fitFontSize: 20, fitColumns: 3, paginated: true, totalColumns: 6, totalPages: 2,
     pageColWidth: 250, fitAvailableHeight: 600, shadowRef: { current: null },
     canIncrease: true, canDecrease: false, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
+    settled: true,
   },
   'song-2': {
     fitFontSize: 20, fitColumns: 3, paginated: true, totalColumns: 9, totalPages: 3,
     pageColWidth: 250, fitAvailableHeight: 600, shadowRef: { current: null },
     canIncrease: true, canDecrease: false, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
+    settled: true,
   },
   'song-3': {
     fitFontSize: 22, fitColumns: 2, paginated: false, totalColumns: null, totalPages: 1,
     pageColWidth: null, fitAvailableHeight: null, shadowRef: { current: null },
     canIncrease: true, canDecrease: true, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
+    settled: true,
   },
 }
 
-// Simulates useFitToScreen's own double-rAF self-correction, and a later,
-// genuine user-initiated re-measurement (e.g. a font-size change), on
-// 'song-1' specifically: the mock can report a first-pass totalPages that
-// later changes to a corrected totalPages for the *same* song (no
-// song-cross in between), and later still to a third value representing an
-// unrelated re-measurement well after the correction window has elapsed.
-let song1Phase = 'first' // 'first' | 'corrected' | 'laterChange'
-const song1FirstPass = fitStateBySong['song-1']
-const song1Corrected = { ...song1FirstPass, totalColumns: 12, totalPages: 4 }
-const song1LaterChange = { ...song1FirstPass, fitFontSize: 24, totalColumns: 15, totalPages: 5 }
+// Simulates useFitToScreen's own settled/unsettled reporting for 'song-1'
+// specifically: a transitional first-pass measurement (settled: false), the
+// self-corrected settled measurement that follows it (settled: true, per
+// useFitToScreen's double-rAF correction), and a later, genuine
+// user-initiated re-measurement (also settled: true) representing e.g. a
+// font-size change well after the song first settled — MainContent must
+// tell these two "settled: true" cases apart via landOnLastPageRef, not via
+// settled alone.
+let song1Phase = 'first' // 'first' | 'unsettled' | 'corrected' | 'laterChange'
+const song1Base = fitStateBySong['song-1']
+const song1Unsettled = { ...song1Base, totalColumns: 6, totalPages: 2, settled: false }
+const song1Corrected = { ...song1Base, totalColumns: 12, totalPages: 4, settled: true }
+const song1LaterChange = { ...song1Base, fitFontSize: 24, totalColumns: 15, totalPages: 5, settled: true }
 
 vi.mock('../../../hooks/useFitToScreen', () => ({
   useFitToScreen: vi.fn(({ songId }) => {
     if (songId === 'song-1') {
+      if (song1Phase === 'unsettled') return song1Unsettled
       if (song1Phase === 'corrected') return song1Corrected
       if (song1Phase === 'laterChange') return song1LaterChange
-      return song1FirstPass
+      return song1Base
     }
     return fitStateBySong[songId] ?? fitStateBySong['song-2']
   }),
@@ -164,18 +161,19 @@ describe('MainContent maximize-mode pagination', () => {
     expect(screen.queryByTestId('page-indicator')).not.toBeInTheDocument()
   })
 
-  it('keeps landing on the last page when useFitToScreen self-corrects totalPages for the same song (double-rAF race)', () => {
+  it('keeps landing on the last page once useFitToScreen settles its self-correction for the same song', () => {
     const { rerender } = renderMaximized()
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 3')
 
-    // Cross backward into song-1 while it's still reporting its first-pass
-    // measurement (totalPages: 2) — should land on page 2 of 2.
+    // Cross backward into song-1 while it's still reporting its
+    // transitional, unsettled first-pass measurement (totalPages: 2,
+    // settled: false) — the reset effect must not act on this yet.
+    song1Phase = 'unsettled'
     fireEvent.keyDown(window, { key: 'ArrowLeft' })
     expect(mockSelectSong).toHaveBeenCalledWith('song-1')
-    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 2')
 
-    // Simulate useFitToScreen's double-rAF self-correction: totalPages
-    // changes for the *same* song (song-1) without any further song-cross.
+    // Simulate useFitToScreen's own double-rAF self-correction completing:
+    // totalPages changes for the *same* song and settled flips to true.
     song1Phase = 'corrected'
     rerender(
       <MainContent
@@ -187,31 +185,30 @@ describe('MainContent maximize-mode pagination', () => {
       />
     )
 
-    // Must still land on the (now corrected) last page, 4 of 4 — not reset
-    // to page 1 just because the reset effect fired a second time for the
-    // same song.
+    // Must land on the corrected last page, 4 of 4 — not the unsettled
+    // measurement's last page, and not reset to page 1.
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 4 of 4')
   })
 
-  it('does not re-snap to the last page for a genuine same-song re-measurement after the double-rAF window has elapsed', async () => {
+  it('does not re-snap to the last page for a genuine same-song re-measurement once already settled', () => {
     const { rerender } = renderMaximized()
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 3')
 
-    // Cross backward into song-1 (first-pass totalPages: 2) — lands on
-    // page 2 of 2.
+    // Cross backward into song-1 with the hook already settled (no
+    // transitional first pass in this scenario) — lands on the last page,
+    // 4 of 4, and landOnLastPageRef is cleared immediately since it acted.
+    song1Phase = 'corrected'
     fireEvent.keyDown(window, { key: 'ArrowLeft' })
     expect(mockSelectSong).toHaveBeenCalledWith('song-1')
-    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 2')
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 4 of 4')
 
-    // Let the double-rAF settling window fully elapse without anything else
-    // changing — this is what actually clears landOnLastPageRef.
-    await flushRaf()
-    // Page should be untouched by the window elapsing on its own.
-    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 2')
-
-    // Now simulate a genuine, later user action on the *same* song — e.g.
-    // clicking font-size +/- — which also changes fitFontSize/totalPages
-    // and re-fires the reset effect, but long after the correction window.
+    // Now simulate a genuine, later user action on the *same* song (e.g.
+    // clicking font-size +/-), which also changes fitFontSize/totalPages
+    // and re-fires the reset effect while settled stays true throughout.
+    // Because landOnLastPageRef was already cleared above, this must
+    // behave like a normal reset (page 1 of 5) — NOT re-land on the new
+    // last page (page 5 of 5). This is the exact scenario round 1's fix
+    // broke and round 2's timing-based auto-clear failed to actually fix.
     song1Phase = 'laterChange'
     rerender(
       <MainContent
@@ -223,8 +220,6 @@ describe('MainContent maximize-mode pagination', () => {
       />
     )
 
-    // Must behave like a normal reset (page 1 of 5, i.e. currentPage 0) —
-    // NOT re-land on the new last page (page 5 of 5).
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 5')
   })
 })

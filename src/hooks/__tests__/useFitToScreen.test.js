@@ -274,12 +274,19 @@ describe('useFitToScreen', () => {
     act(() => rerender({ enabled: true }))
     expect(result.current.fitFontSize).toBe(20)
     expect(result.current.paginated).toBe(true)
+    // The synchronous first pass is reported as not yet settled — consumers
+    // that care about the double-rAF correction window (e.g. MainContent's
+    // page-navigation logic) rely on this to distinguish "still settling"
+    // from a genuine later update.
+    expect(result.current.settled).toBe(false)
 
     await flushRaf()
 
     expect(result.current.paginated).toBe(false)
     expect(result.current.fitFontSize).toBeGreaterThan(20)
     expect(result.current.fitColumns).toBe(1)
+    // Once the rAF-deferred correction pass has run, the result is settled.
+    expect(result.current.settled).toBe(true)
   })
 
   describe('manual font-size override', () => {
@@ -305,12 +312,28 @@ describe('useFitToScreen', () => {
       expect(result.current.fitColumns).toBe(1)
     })
 
+    it('increaseFontSize reports settled:true immediately (never part of the initial settling window)', async () => {
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      expect(result.current.settled).toBe(true)
+      act(() => result.current.increaseFontSize())
+      expect(result.current.settled).toBe(true)
+    })
+
     it('decreaseFontSize lowers the font and re-derives columns for it', async () => {
       const { result } = setup({ fitsBelow: 30 })
       await flushRaf()
       const before = result.current.fitFontSize
       act(() => result.current.decreaseFontSize())
       expect(result.current.fitFontSize).toBe(before - 2)
+    })
+
+    it('decreaseFontSize reports settled:true immediately (never part of the initial settling window)', async () => {
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      expect(result.current.settled).toBe(true)
+      act(() => result.current.decreaseFontSize())
+      expect(result.current.settled).toBe(true)
     })
 
     it('canIncrease is false once the font is at MAX_FONT', async () => {
@@ -403,6 +426,9 @@ describe('useFitToScreen', () => {
       })
 
       expect(result.current.fitFontSize).toBe(pinnedFont)
+      // A resize-triggered manual-mode update is never part of the initial
+      // settling window, so it reports settled:true immediately.
+      expect(result.current.settled).toBe(true)
     })
   })
 })
