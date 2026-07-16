@@ -384,6 +384,26 @@ describe('useFitToScreen', () => {
     expect(result.current.fitFontSize).toBe(15)
   })
 
+  it('clamps an out-of-range minFontSize into [8, MAX_FONT] before using it', () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 999 }),
+      { initialProps: { enabled: false } }
+    )
+
+    result.current.shadowRef.current = makePaginatingShadowEl({ totalColumns: 7 })
+    act(() => rerender({ enabled: true }))
+
+    // 999 must be clamped down to MAX_FONT (28), not passed through raw —
+    // an unclamped 999 would make the binary search's `lo` (999) exceed
+    // `hi` (MAX_FONT, 28), which would never find a fit and could produce
+    // NaN/undefined results instead of a sane pagination-fallback value.
+    expect(result.current.fitFontSize).toBe(28)
+  })
+
   describe('manual font-size override', () => {
     function setup({ fitsBelow = 20 } = {}) {
       const containerRef = makeContainerRef()
