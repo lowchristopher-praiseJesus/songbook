@@ -98,6 +98,7 @@ describe('useFitToScreen', () => {
         containerRef: makeContainerRef(),
         bodyRef: makeBodyRef(),
         lyricsOnly: false,
+        minFontSize: 20,
       })
     )
     expect(result.current.fitFontSize).toBeNull()
@@ -111,6 +112,7 @@ describe('useFitToScreen', () => {
         containerRef: makeContainerRef(),
         bodyRef: makeBodyRef(),
         lyricsOnly: false,
+        minFontSize: 20,
       })
     )
     expect(result.current.shadowRef).toBeDefined()
@@ -122,7 +124,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
 
@@ -141,7 +143,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
 
@@ -159,7 +161,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
 
@@ -179,7 +181,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
 
@@ -196,7 +198,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
 
@@ -219,7 +221,7 @@ describe('useFitToScreen', () => {
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: observeSpy, disconnect: vi.fn() })))
 
     renderHook(() =>
-      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false })
+      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 })
     )
 
     expect(observeSpy).toHaveBeenCalledWith(containerRef.current)
@@ -232,7 +234,7 @@ describe('useFitToScreen', () => {
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: disconnectSpy })))
 
     const { unmount } = renderHook(() =>
-      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false })
+      useFitToScreen({ enabled: true, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 })
     )
 
     unmount()
@@ -285,7 +287,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
       { initialProps: { enabled: false } }
     )
     result.current.shadowRef.current = shadow
@@ -314,7 +316,7 @@ describe('useFitToScreen', () => {
 
     const { result, rerender } = renderHook(
       ({ enabled, songId }) =>
-        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, songId }),
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, songId, minFontSize: 20 }),
       { initialProps: { enabled: false, songId: 'song-a' } }
     )
     result.current.shadowRef.current = makeShadowEl({ fits: true })
@@ -340,13 +342,55 @@ describe('useFitToScreen', () => {
     expect(result.current.settled).toBe(true)
   })
 
+  it('uses a non-default minFontSize as the pagination-fallback floor', () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 14 }),
+      { initialProps: { enabled: false } }
+    )
+
+    result.current.shadowRef.current = makePaginatingShadowEl({ totalColumns: 7 })
+    act(() => rerender({ enabled: true }))
+
+    // With nothing fitting at any column count, the pagination fallback pins
+    // fitFontSize at minFontSize (14), not the old hardcoded 20.
+    expect(result.current.fitFontSize).toBe(14)
+    expect(result.current.paginated).toBe(true)
+  })
+
+  it('re-runs auto-fit when minFontSize changes while already enabled', async () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled, minFontSize }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize }),
+      { initialProps: { enabled: false, minFontSize: 20 } }
+    )
+
+    result.current.shadowRef.current = makePaginatingShadowEl({ totalColumns: 7 })
+    act(() => rerender({ enabled: true, minFontSize: 20 }))
+    await flushRaf()
+    expect(result.current.fitFontSize).toBe(20)
+
+    // Changing minFontSize while already enabled must re-trigger the
+    // measurement effect (it's in the effect's dependency array), landing
+    // the pagination-fallback font on the new floor.
+    act(() => rerender({ enabled: true, minFontSize: 15 }))
+    await flushRaf()
+    expect(result.current.fitFontSize).toBe(15)
+  })
+
   describe('manual font-size override', () => {
     function setup({ fitsBelow = 20 } = {}) {
       const containerRef = makeContainerRef()
       const bodyRef = makeBodyRef()
       const { result, rerender } = renderHook(
         ({ enabled }) =>
-          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
         { initialProps: { enabled: false } }
       )
       result.current.shadowRef.current = makeFontAwareShadowEl({ fitsBelow })
@@ -460,7 +504,7 @@ describe('useFitToScreen', () => {
 
       const { result, rerender } = renderHook(
         ({ enabled }) =>
-          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+          useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
         { initialProps: { enabled: false } }
       )
       result.current.shadowRef.current = makeFontAwareShadowEl({ fitsBelow: 30 })

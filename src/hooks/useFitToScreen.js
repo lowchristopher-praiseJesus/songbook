@@ -1,6 +1,5 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 
-const MIN_FONT = 20
 const MAX_FONT = 28
 const MAX_COLS = 3
 const STEP = 2
@@ -8,7 +7,7 @@ const DEBOUNCE_MS = 100
 export const COLUMN_GAP_PX = 32
 export { MAX_COLS }
 
-export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId }) {
+export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId, minFontSize }) {
   const [state, setState] = useState({
     fitFontSize: null,
     fitColumns: null,
@@ -167,7 +166,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
   }
 
   function computeFlags(fontSize) {
-    const canDecrease = fontSize > MIN_FONT
+    const canDecrease = fontSize > minFontSize
     const canIncrease = fontSize < MAX_FONT
     return { canIncrease, canDecrease }
   }
@@ -185,7 +184,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     for (let cols = 1; cols <= MAX_COLS; cols++) {
       shadow.style.columnCount = cols
 
-      let lo = MIN_FONT
+      let lo = minFontSize
       let hi = MAX_FONT
       let colBest = null
 
@@ -211,9 +210,9 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     if (best) {
       result = { ...best, paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null }
     } else {
-      const pagination = measurePagination(MIN_FONT, availableWidth, availableHeight)
+      const pagination = measurePagination(minFontSize, availableWidth, availableHeight)
       result = {
-        fitFontSize: MIN_FONT,
+        fitFontSize: minFontSize,
         fitColumns: MAX_COLS,
         paginated: true,
         totalColumns: pagination.totalColumns,
@@ -247,7 +246,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       const availableHeight = getAvailableHeight()
       const availableWidth = getAvailableWidth()
       if (availableHeight === null || availableWidth === null) return prev
-      const nextFont = Math.max(prev.fitFontSize - STEP, MIN_FONT)
+      const nextFont = Math.max(prev.fitFontSize - STEP, minFontSize)
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
       if (result === null) return prev
@@ -279,7 +278,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       rafRef.current = requestAnimationFrame(() => measureRef.current(true))
     })
     return () => cancelAnimationFrame(rafRef.current)
-  }, [enabled, lyricsOnly, songId])
+  }, [enabled, lyricsOnly, songId, minFontSize])
 
   // ResizeObserver: re-measure on container size changes (debounced).
   // In manual mode, keep the user's pinned font and only re-derive columns;
