@@ -323,6 +323,11 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
           onTouchStart={annotateMode ? undefined : onTouchStart}
           onTouchEnd={annotateMode ? undefined : onTouchEnd}
         >
+          {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'fullscreen' && (
+            <div className="absolute bottom-1 left-1 z-50 text-[10px] leading-tight font-mono bg-black/80 text-lime-300 px-1.5 py-1 pointer-events-none whitespace-pre">
+              {`fullscreenSupported: ${String(fullscreenSupported)}\ndocument.fullscreenEnabled: ${String(document.fullscreenEnabled)}\ntypeof requestFullscreen: ${typeof document.documentElement.requestFullscreen}\ndocument.fullscreenElement: ${String(!!document.fullscreenElement)}\nUA: ${navigator.userAgent}`}
+            </div>
+          )}
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
               {annotationBaseline ? (
