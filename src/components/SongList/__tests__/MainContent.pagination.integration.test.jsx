@@ -97,6 +97,15 @@ function makePaginatingShadowObj({ totalColumns = 7 } = {}) {
       const colWidth = parseFloat(el.style.columnWidth) || 0
       return { height: 9999, width: totalColumns * (colWidth + 32) }
     },
+    // Simulates a real browser's scrollWidth in pagination-measurement mode
+    // (box constrained to one column, content overflows): full N-column content
+    // width = N*colWidth + (N-1)*gap. measurePagination reads scrollWidth, not
+    // getBoundingClientRect width.
+    get scrollWidth() {
+      if (typeof el.style.columnCount === 'number') return 0
+      const colWidth = parseFloat(el.style.columnWidth) || 0
+      return totalColumns * colWidth + (totalColumns - 1) * 32
+    },
   }
   return el
 }

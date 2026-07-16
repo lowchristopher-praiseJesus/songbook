@@ -88,10 +88,21 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     shadow.style.columnGap = `${COLUMN_GAP_PX}px`
     shadow.style.columnFill = 'auto'
     shadow.style.height = `${availableHeight}px`
-    shadow.style.width = 'max-content'
+    // Constrain the shadow to a single column's width. With column-fill:auto and
+    // a fixed height, the content then overflows into as many columns as it needs
+    // beyond that one-column box, and `scrollWidth` reports the full laid-out
+    // content width (every column, including the overflow). `width: max-content`
+    // does NOT work here: on a multicol container it resolves to ~one column's
+    // intrinsic width, not the full content width, so it dramatically
+    // underreports and the song never paginates (the user sees one clipped page
+    // and swiping crosses to the next song). Verified empirically in a real
+    // browser — jsdom can't exercise this since it doesn't do layout, so the
+    // unit-test mocks simulate `scrollWidth` instead.
+    shadow.style.width = `${colWidth}px`
 
-    const measuredWidth = shadow.getBoundingClientRect().width
-    const totalColumns = Math.max(1, Math.round(measuredWidth / (colWidth + COLUMN_GAP_PX)))
+    const measuredWidth = shadow.scrollWidth
+    // scrollWidth = N*colWidth + (N-1)*gap for N columns; invert to recover N.
+    const totalColumns = Math.max(1, Math.round((measuredWidth + COLUMN_GAP_PX) / (colWidth + COLUMN_GAP_PX)))
     const totalPages = Math.ceil(totalColumns / MAX_COLS)
 
     // Restore the shadow to its normal (balanced, height:auto) measurement mode

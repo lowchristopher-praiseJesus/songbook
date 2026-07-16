@@ -59,6 +59,17 @@ function makePaginatingShadowEl({ totalColumns = 7 } = {}) {
       const colWidth = parseFloat(el.style.columnWidth) || 0
       return { height: 9999, width: totalColumns * (colWidth + 32) }
     },
+    // Simulates a real browser's scrollWidth in pagination-measurement mode:
+    // with the box constrained to one column (width:colWidth) and column-fill:auto
+    // + fixed height, all content overflows and scrollWidth reports the full
+    // N-column content width = N*colWidth + (N-1)*gap. (getBoundingClientRect width
+    // is not used by measurePagination anymore — it reads scrollWidth — but kept
+    // for the single-page fit-search path.)
+    get scrollWidth() {
+      if (typeof el.style.columnCount === 'number') return 0
+      const colWidth = parseFloat(el.style.columnWidth) || 0
+      return totalColumns * colWidth + (totalColumns - 1) * 32
+    },
   }
   return el
 }
@@ -261,6 +272,14 @@ describe('useFitToScreen', () => {
         }
         const colWidth = parseFloat(shadow.style.columnWidth) || 0
         return { height: fits ? 0 : 9999, width: 5 * (colWidth + 32) }
+      },
+      // measurePagination reads scrollWidth (not getBoundingClientRect width);
+      // report 5 columns' worth of full content width so the first, unsettled
+      // pass produces paginated:true.
+      get scrollWidth() {
+        if (typeof shadow.style.columnCount === 'number') return 0
+        const colWidth = parseFloat(shadow.style.columnWidth) || 0
+        return 5 * colWidth + 4 * 32
       },
     }
 
