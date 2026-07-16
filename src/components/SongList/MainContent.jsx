@@ -79,6 +79,20 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     onExit: exitMaximize,
   })
 
+  // iPhone Safari has no Fullscreen API for page content in a regular tab, but it
+  // collapses its address bar to a thin sliver once the page is scrolled — nudging
+  // that here is the closest approximation to hiding chrome available on that browser.
+  useEffect(() => {
+    if (!isFit || fullscreenSupported) return
+    const docEl = document.documentElement
+    const previousMinHeight = docEl.style.minHeight
+    docEl.style.minHeight = 'calc(100dvh + 1px)'
+    window.scrollTo(0, 1)
+    return () => {
+      docEl.style.minHeight = previousMinHeight
+    }
+  }, [isFit, fullscreenSupported])
+
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.
   useEffect(() => {
