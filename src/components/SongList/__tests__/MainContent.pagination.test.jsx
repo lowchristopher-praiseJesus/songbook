@@ -71,8 +71,20 @@ const fitStateBySong = {
   },
 }
 
+// Simulates useFitToScreen's own double-rAF self-correction: on 'song-1'
+// specifically, the mock can report a first-pass totalPages that later
+// changes to a corrected totalPages for the *same* song, without any
+// song-cross in between — mirroring the real hook re-measuring shortly
+// after mount/song-switch and updating its return value.
+let song1Phase = 'first' // 'first' | 'corrected'
+const song1FirstPass = fitStateBySong['song-1']
+const song1Corrected = { ...song1FirstPass, totalColumns: 12, totalPages: 4 }
+
 vi.mock('../../../hooks/useFitToScreen', () => ({
-  useFitToScreen: vi.fn(({ songId }) => fitStateBySong[songId] ?? fitStateBySong['song-2']),
+  useFitToScreen: vi.fn(({ songId }) => {
+    if (songId === 'song-1') return song1Phase === 'corrected' ? song1Corrected : song1FirstPass
+    return fitStateBySong[songId] ?? fitStateBySong['song-2']
+  }),
 }))
 
 vi.mock('../SongView', () => ({
@@ -84,7 +96,7 @@ vi.mock('../PerformanceMode/PerformanceModal', () => ({
 }))
 
 function renderMaximized() {
-  render(
+  const result = render(
     <MainContent
       onAddToast={vi.fn()}
       fontSize={16}
@@ -94,12 +106,14 @@ function renderMaximized() {
     />
   )
   fireEvent.click(screen.getByLabelText('Fit song to screen'))
+  return result
 }
 
 describe('MainContent maximize-mode pagination', () => {
   beforeEach(() => {
     currentSongId = 'song-2'
     mockSelectSong.mockClear()
+    song1Phase = 'first'
   })
 
   it('shows a page indicator and pages forward before crossing to the next song', () => {
@@ -132,5 +146,34 @@ describe('MainContent maximize-mode pagination', () => {
     currentSongId = 'song-3'
     renderMaximized()
     expect(screen.queryByTestId('page-indicator')).not.toBeInTheDocument()
+  })
+
+  it('keeps landing on the last page when useFitToScreen self-corrects totalPages for the same song (double-rAF race)', () => {
+    const { rerender } = renderMaximized()
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 3')
+
+    // Cross backward into song-1 while it's still reporting its first-pass
+    // measurement (totalPages: 2) — should land on page 2 of 2.
+    fireEvent.keyDown(window, { key: 'ArrowLeft' })
+    expect(mockSelectSong).toHaveBeenCalledWith('song-1')
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 2')
+
+    // Simulate useFitToScreen's double-rAF self-correction: totalPages
+    // changes for the *same* song (song-1) without any further song-cross.
+    song1Phase = 'corrected'
+    rerender(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+
+    // Must still land on the (now corrected) last page, 4 of 4 — not reset
+    // to page 1 just because the reset effect fired a second time for the
+    // same song.
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 4 of 4')
   })
 })

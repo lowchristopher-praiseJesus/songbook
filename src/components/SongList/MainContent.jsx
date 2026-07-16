@@ -54,7 +54,15 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
-  const landOnLastPageRef = useRef(false)
+  // Holds the song id we're mid-cross into when paging backward past the
+  // first page of a song (so we should land on its *last* page instead of
+  // its first) — null otherwise. Keyed to song identity rather than a plain
+  // boolean so it survives useFitToScreen's own re-measurement of the same
+  // song (e.g. its self-correcting double-rAF pass): as long as the ref
+  // still points at the currently active song, the reset effect below keeps
+  // recomputing the last page against whatever totalPages currently is,
+  // instead of one-shot-clearing the intent on the first re-fire.
+  const landOnLastPageRef = useRef(null)
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
@@ -150,10 +158,15 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
   // Reset (or, when arriving via a backward page-cross, jump to the last page
   // of) the current page whenever the song, lyrics-only mode, or the fit
-  // result changes.
+  // result changes. This can fire more than once for the same song — e.g.
+  // useFitToScreen's double-rAF self-correction re-measures and changes
+  // totalPages shortly after the initial pass — so the "land on last page"
+  // intent stays armed (and gets recomputed against the latest totalPages)
+  // until we've actually moved on to a different song.
   useEffect(() => {
-    setCurrentPage(landOnLastPageRef.current ? Math.max(0, totalPages - 1) : 0)
-    landOnLastPageRef.current = false
+    const landOnLastPage = landOnLastPageRef.current === activeSongId
+    setCurrentPage(landOnLastPage ? Math.max(0, totalPages - 1) : 0)
+    if (!landOnLastPage) landOnLastPageRef.current = null
   }, [activeSongId, lyricsOnly, totalPages, fitFontSize])
 
   function showHint(title, direction) {
@@ -180,7 +193,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       return
     }
     if (!nextEntry) return
-    landOnLastPageRef.current = false
+    landOnLastPageRef.current = null
     setSwipeDir('left')
     selectSong(nextEntry.id)
     showHint(nextEntry.title, 'left')
@@ -193,7 +206,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       return
     }
     if (!prevEntry) return
-    landOnLastPageRef.current = true
+    landOnLastPageRef.current = prevEntry.id
     setSwipeDir('right')
     selectSong(prevEntry.id)
     showHint(prevEntry.title, 'right')
