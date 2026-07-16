@@ -326,7 +326,7 @@ export default function App() {
                 conductorSync={conductorSync}
                 isAutoClosing={autoClosingSidebar}
               />
-              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} hideChordDiagram={hideChordDiagram} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} onOpenSidebar={() => setSidebarOpen(true)} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} />
+              <MainContent onAddToast={addToast} lyricsOnly={effectiveLyricsOnly} hideChordDiagram={hideChordDiagram} fontSize={fontSize} onFontSizeChange={setFontSize} onImportSuccess={() => { if (window.innerWidth < 768) setSidebarOpen(true) }} onOpenSidebar={() => setSidebarOpen(true)} metronomeEnabled={metronomeEnabled} onMetronomeToggle={() => setMetronomeEnabled(e => !e)} metronomeBpm={metronomeBpm} onMetronomeBpmChange={setMetronomeBpm} maximizeMinFontSize={displaySettings.settings.maximizeMinFontSize} />
             </>
           )}
         </div>
