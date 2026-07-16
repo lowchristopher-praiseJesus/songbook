@@ -54,6 +54,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
+  const [debugSnapshot, setDebugSnapshot] = useState(null)
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
@@ -88,7 +89,18 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     const previousMinHeight = docEl.style.minHeight
     docEl.style.minHeight = 'calc(100dvh + 1px)'
     window.scrollTo(0, 1)
+    const debugTimer = setTimeout(() => {
+      setDebugSnapshot({
+        afterMinHeight: docEl.style.minHeight,
+        afterScrollY: window.scrollY,
+        docScrollHeight: docEl.scrollHeight,
+        bodyScrollHeight: document.body.scrollHeight,
+        innerHeight: window.innerHeight,
+        visualViewportHeight: window.visualViewport ? window.visualViewport.height : 'n/a',
+      })
+    }, 300)
     return () => {
+      clearTimeout(debugTimer)
       docEl.style.minHeight = previousMinHeight
     }
   }, [isFit, fullscreenSupported])
@@ -325,7 +337,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
         >
           {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'fullscreen' && (
             <div className="absolute bottom-1 left-1 z-50 text-[10px] leading-tight font-mono bg-black/80 text-lime-300 px-1.5 py-1 pointer-events-none whitespace-pre">
-              {`fullscreenSupported: ${String(fullscreenSupported)}\ndocument.fullscreenEnabled: ${String(document.fullscreenEnabled)}\ntypeof requestFullscreen: ${typeof document.documentElement.requestFullscreen}\ndocument.fullscreenElement: ${String(!!document.fullscreenElement)}\nUA: ${navigator.userAgent}`}
+              {`fullscreenSupported: ${String(fullscreenSupported)}\ndocument.fullscreenEnabled: ${String(document.fullscreenEnabled)}\ntypeof requestFullscreen: ${typeof document.documentElement.requestFullscreen}\ndocument.fullscreenElement: ${String(!!document.fullscreenElement)}\nUA: ${navigator.userAgent}\n${debugSnapshot ? `--- 300ms after nudge ---\nminHeight: ${debugSnapshot.afterMinHeight}\nscrollY: ${debugSnapshot.afterScrollY}\ndocScrollHeight: ${debugSnapshot.docScrollHeight}\nbodyScrollHeight: ${debugSnapshot.bodyScrollHeight}\ninnerHeight: ${debugSnapshot.innerHeight}\nvisualViewportH: ${debugSnapshot.visualViewportHeight}` : '(waiting for snapshot...)'}`}
             </div>
           )}
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
