@@ -114,6 +114,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       }
     }
     const pagination = measurePagination(fontSize, availableWidth, availableHeight)
+    if (pagination === null) return null
     return {
       fitFontSize: fontSize,
       fitColumns: MAX_COLS,
@@ -195,6 +196,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       const nextFont = Math.min(prev.fitFontSize + STEP, MAX_FONT)
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
+      if (result === null) return prev
       return { ...result, ...computeFlags(result.fitFontSize) }
     })
   }
@@ -208,6 +210,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       const nextFont = Math.max(prev.fitFontSize - STEP, MIN_FONT)
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
+      if (result === null) return prev
       return { ...result, ...computeFlags(result.fitFontSize) }
     })
   }
@@ -251,6 +254,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
             const availableWidth = getAvailableWidth()
             if (availableHeight === null || availableWidth === null) return prev
             const result = resultForFont(prev.fitFontSize, availableWidth, availableHeight)
+            if (result === null) return prev
             return { ...result, ...computeFlags(result.fitFontSize) }
           })
         } else {

@@ -334,6 +334,47 @@ describe('useFitToScreen', () => {
       expect(result.current.canDecrease).toBe(false)
     })
 
+    it('increaseFontSize does not throw and leaves state unchanged when shadowRef.current is transiently null during a pagination fallback', async () => {
+      // Only fonts <= 20 fit at any column count, so the initial auto-fit lands
+      // exactly at MIN_FONT/1-column (not yet paginated) with canIncrease still
+      // true. If the shadow ref then goes transiently null (e.g. the shadow DOM
+      // node unmounts/remounts) right as the user taps "+", `resultForFont`'s
+      // single-page search reports null (shadow missing, not "found a fit"),
+      // falls through to `measurePagination`, which also reports null for the
+      // same reason — this must not crash on a null dereference, and the state
+      // should be left unchanged (matching the pre-existing "nothing fits"
+      // guard behavior).
+      const { result } = setup({ fitsBelow: 20 })
+      await flushRaf()
+      const before = { ...result.current }
+      expect(before.canIncrease).toBe(true)
+
+      result.current.shadowRef.current = null
+
+      expect(() => act(() => result.current.increaseFontSize())).not.toThrow()
+      expect(result.current.fitFontSize).toBe(before.fitFontSize)
+      expect(result.current.fitColumns).toBe(before.fitColumns)
+      expect(result.current.paginated).toBe(before.paginated)
+      expect(result.current.totalPages).toBe(before.totalPages)
+    })
+
+    it('decreaseFontSize does not throw and leaves state unchanged when shadowRef.current is transiently null during a pagination fallback', async () => {
+      // Everything fits, so the auto-fit search lands at MAX_FONT (28) with
+      // canDecrease already true.
+      const { result } = setup({ fitsBelow: 30 })
+      await flushRaf()
+      const before = { ...result.current }
+      expect(before.canDecrease).toBe(true)
+
+      result.current.shadowRef.current = null
+
+      expect(() => act(() => result.current.decreaseFontSize())).not.toThrow()
+      expect(result.current.fitFontSize).toBe(before.fitFontSize)
+      expect(result.current.fitColumns).toBe(before.fitColumns)
+      expect(result.current.paginated).toBe(before.paginated)
+      expect(result.current.totalPages).toBe(before.totalPages)
+    })
+
     it('resize while in manual mode re-derives columns for the pinned font instead of re-running full auto search', async () => {
       const containerRef = makeContainerRef()
       const bodyRef = makeBodyRef()
