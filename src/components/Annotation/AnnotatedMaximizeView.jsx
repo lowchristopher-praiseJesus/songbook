@@ -33,6 +33,11 @@ export function AnnotatedMaximizeView({
   bodyRef,
   fitFontSize,
   fitColumns,
+  paginated,
+  totalColumns,
+  currentPage,
+  pageColWidth,
+  fitAvailableHeight,
   containerRef,
 }) {
   const baseline = useAnnotationStore(s => s.baseline)
@@ -107,6 +112,11 @@ export function AnnotatedMaximizeView({
           lyricsOnly={lyricsOnly}
           fitMode={fitFontSize !== null}
           fitColumns={fitColumns}
+          paginated={paginated}
+          totalColumns={totalColumns}
+          currentPage={currentPage}
+          pageColWidth={pageColWidth}
+          availableHeight={fitAvailableHeight}
           annotationsVisible={annotationsVisible}
           sectionRefs={sectionRefs}
         />

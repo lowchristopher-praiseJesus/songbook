@@ -1,4 +1,5 @@
 import React from 'react'
+import { COLUMN_GAP_PX, MAX_COLS } from '../../hooks/useFitToScreen'
 
 function ChordedLine({ line, fontSize, fitMode }) {
   const text = line.content
@@ -120,7 +121,7 @@ function ChordedLine({ line, fontSize, fitMode }) {
 }
 
 const SongSection = React.forwardRef(function SongSection(
-  { section, fontSize, performanceMode, lyricsOnly, fitMode, annotationsVisible = true },
+  { section, fontSize, performanceMode, lyricsOnly, fitMode, annotationsVisible = true, paginated = false },
   ref
 ) {
   const lines = section.lines
@@ -141,7 +142,10 @@ const SongSection = React.forwardRef(function SongSection(
   return (
     <div ref={ref} className="mb-8" data-section>
       {section.label && (
-        <h3 className="mb-3">
+        <h3
+          className="mb-3"
+          style={paginated ? { breakAfter: 'avoid' } : undefined}
+        >
           <span
             className="inline-block font-semibold uppercase tracking-widest"
             style={{
@@ -242,8 +246,57 @@ const SongSection = React.forwardRef(function SongSection(
   )
 })
 
-export function SongBody({ sections, fontSize = 16, performanceMode = false, lyricsOnly = false, fitMode = false, fitColumns, annotationsVisible = true, sectionRefs }) {
+export function SongBody({
+  sections,
+  fontSize = 16,
+  performanceMode = false,
+  lyricsOnly = false,
+  fitMode = false,
+  fitColumns,
+  paginated = false,
+  totalColumns,
+  currentPage = 0,
+  pageColWidth,
+  availableHeight,
+  annotationsVisible = true,
+  sectionRefs,
+}) {
   if (!sections?.length) return null
+
+  if (fitMode && paginated && totalColumns && pageColWidth) {
+    const pageWidth = MAX_COLS * pageColWidth + (MAX_COLS - 1) * COLUMN_GAP_PX
+    const flowWidth = totalColumns * pageColWidth + (totalColumns - 1) * COLUMN_GAP_PX
+    return (
+      <div className="py-4" style={{ width: `${pageWidth}px`, overflowX: 'hidden' }}>
+        <div
+          className="transition-transform duration-200 ease-out"
+          style={{
+            width: `${flowWidth}px`,
+            columnWidth: `${pageColWidth}px`,
+            columnGap: `${COLUMN_GAP_PX}px`,
+            columnFill: 'auto',
+            height: `${availableHeight}px`,
+            transform: `translateX(-${currentPage * pageWidth}px)`,
+          }}
+        >
+          {sections.map((section, i) => (
+            <SongSection
+              key={i}
+              ref={sectionRefs?.[i]}
+              section={section}
+              fontSize={fontSize}
+              performanceMode={performanceMode}
+              lyricsOnly={lyricsOnly}
+              fitMode={fitMode}
+              annotationsVisible={annotationsVisible}
+              paginated
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="py-4"

@@ -150,4 +150,34 @@ describe('SongList fitMode', () => {
     const shadow = container.querySelector('[style*="-9999"]')
     expect(shadow).toBeNull()
   })
+
+  it('threads pagination props through to the live SongBody', () => {
+    const { container } = render(
+      <SongList
+        song={song}
+        onPerformanceMode={vi.fn()}
+        lyricsOnly={false}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        chordsOpen={true}
+        onChordsToggle={vi.fn()}
+        onEdit={vi.fn()}
+        isFit={true}
+        containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={20}
+        fitColumns={3}
+        paginated={true}
+        totalColumns={7}
+        currentPage={2}
+        pageColWidth={200}
+        fitAvailableHeight={600}
+        shadowRef={{ current: null }}
+      />
+    )
+    // pageWidth = 3*200 + 2*32 = 664; currentPage 2 -> translateX(-1328px)
+    const flow = container.querySelector('[style*="translateX"]')
+    expect(flow).not.toBeNull()
+    expect(flow.style.transform).toBe('translateX(-1328px)')
+  })
 })

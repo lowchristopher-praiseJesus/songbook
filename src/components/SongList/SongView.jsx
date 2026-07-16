@@ -19,6 +19,11 @@ export function SongView({
   bodyRef,
   fitFontSize,
   fitColumns,
+  paginated,
+  totalColumns,
+  currentPage,
+  pageColWidth,
+  fitAvailableHeight,
   shadowRef,
 }) {
   const [sidebarOpen, setSidebarOpen] = useLocalStorage('songsheet_sections_panel_open', false)
@@ -125,6 +130,11 @@ export function SongView({
             bodyRef={bodyRef}
             fitFontSize={fitFontSize}
             fitColumns={fitColumns}
+            paginated={paginated}
+            totalColumns={totalColumns}
+            currentPage={currentPage}
+            pageColWidth={pageColWidth}
+            fitAvailableHeight={fitAvailableHeight}
             shadowRef={shadowRef}
           />
         </div>

@@ -53,6 +53,16 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  // Holds the song id we're mid-cross into when paging backward past the
+  // first page of a song (so we should land on its *last* page instead of
+  // its first) — null otherwise. Keyed to song identity rather than a plain
+  // boolean so it survives useFitToScreen's own re-measurement of the same
+  // song (e.g. its self-correcting double-rAF pass): as long as the ref
+  // still points at the currently active song, the reset effect below keeps
+  // recomputing the last page against whatever totalPages currently is,
+  // instead of one-shot-clearing the intent on the first re-fire.
+  const landOnLastPageRef = useRef(null)
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
@@ -67,11 +77,18 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const {
     fitFontSize,
     fitColumns,
+    paginated,
+    totalColumns,
+    totalPages,
+    pageColWidth,
+    fitAvailableHeight,
     shadowRef,
     canIncrease,
     canDecrease,
     increaseFontSize,
     decreaseFontSize,
+    settled,
+    measuredSongId,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
@@ -141,6 +158,37 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const inCollection = !!activeSong && !!activeCollectionId
     && !performanceSections && !editingSongId && !isCreatingNewSong && !selectedCollectionId
 
+  // Reset (or, when arriving via a backward page-cross, jump to the last page
+  // of) the current page whenever the song, lyrics-only mode, or the fit
+  // result changes. Gated on useFitToScreen's own `settled` flag rather than
+  // guessing its internal rAF timing: the hook reports `settled: false` for
+  // its transitional first-pass measurement and `settled: true` once its
+  // double-rAF self-correction has actually landed, so this effect ignores
+  // the unsettled re-fire entirely and only acts once the hook says the
+  // result is final — at which point it's safe to tell a same-song
+  // self-correction (still armed → land on the corrected last page) apart
+  // from a genuine later user action, like a manual font-size change (ref no
+  // longer armed for this song → normal reset to page 0).
+  //
+  // `settled` alone isn't sufficient, though: useFitToScreen's internal
+  // state is a separate useState that can't synchronously track a songId
+  // prop change — it only catches up once the hook's own effect runs, one
+  // commit later. So right after a song switch, this effect can fire with
+  // activeSongId already pointing at the NEW song but totalPages/settled
+  // still holding the PREVIOUS (already-settled) song's values. Requiring
+  // measuredSongId === activeSongId confirms the hook's own state is
+  // actually reporting on the song we currently care about before we trust
+  // totalPages/settled at all.
+  useEffect(() => {
+    if (!settled || measuredSongId !== activeSongId) return
+    if (landOnLastPageRef.current === activeSongId) {
+      setCurrentPage(Math.max(0, totalPages - 1))
+      landOnLastPageRef.current = null
+    } else {
+      setCurrentPage(0)
+    }
+  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled, measuredSongId])
+
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
     setSwipeHint({ title, direction })
@@ -160,20 +208,30 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   }
 
   const goNext = useCallback(() => {
+    if (isFit && totalPages > 1 && currentPage < totalPages - 1) {
+      setCurrentPage(p => p + 1)
+      return
+    }
     if (!nextEntry) return
+    landOnLastPageRef.current = null
     setSwipeDir('left')
     selectSong(nextEntry.id)
     showHint(nextEntry.title, 'left')
     dismissSwipeHint()
-  }, [nextEntry, selectSong])
+  }, [isFit, totalPages, currentPage, nextEntry, selectSong])
 
   const goPrev = useCallback(() => {
+    if (isFit && totalPages > 1 && currentPage > 0) {
+      setCurrentPage(p => p - 1)
+      return
+    }
     if (!prevEntry) return
+    landOnLastPageRef.current = prevEntry.id
     setSwipeDir('right')
     selectSong(prevEntry.id)
     showHint(prevEntry.title, 'right')
     dismissSwipeHint()
-  }, [prevEntry, selectSong])
+  }, [isFit, totalPages, currentPage, prevEntry, selectSong])
 
   const { onTouchStart, onTouchEnd } = useSwipeNavigation({
     onSwipeLeft: goNext,
@@ -375,9 +433,26 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
               bodyRef={bodyRef}
               fitFontSize={fitFontSize}
               fitColumns={fitColumns}
+              paginated={paginated}
+              totalColumns={totalColumns}
+              currentPage={currentPage}
+              pageColWidth={pageColWidth}
+              fitAvailableHeight={fitAvailableHeight}
               shadowRef={shadowRef}
             />
           </div>
+
+          {paginated && totalPages > 1 && (
+            <div
+              data-testid="page-indicator"
+              className="pointer-events-none fixed bottom-20 left-1/2 -translate-x-1/2
+                px-3 py-1 rounded-full bg-gray-900/70 dark:bg-gray-100/70
+                text-white dark:text-gray-900 text-xs font-medium
+                z-30 whitespace-nowrap select-none"
+            >
+              Page {currentPage + 1} of {totalPages}
+            </div>
+          )}
         </div>
       )}
 
