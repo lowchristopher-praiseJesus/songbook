@@ -244,8 +244,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
+      onTouchStart={annotateMode ? undefined : onTouchStart}
+      onTouchEnd={annotateMode ? undefined : onTouchEnd}
     >
       {isDragging && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
