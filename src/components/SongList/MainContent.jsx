@@ -53,6 +53,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const landOnLastPageRef = useRef(false)
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
@@ -67,6 +69,11 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const {
     fitFontSize,
     fitColumns,
+    paginated,
+    totalColumns,
+    totalPages,
+    pageColWidth,
+    fitAvailableHeight,
     shadowRef,
     canIncrease,
     canDecrease,
@@ -141,6 +148,14 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const inCollection = !!activeSong && !!activeCollectionId
     && !performanceSections && !editingSongId && !isCreatingNewSong && !selectedCollectionId
 
+  // Reset (or, when arriving via a backward page-cross, jump to the last page
+  // of) the current page whenever the song, lyrics-only mode, or the fit
+  // result changes.
+  useEffect(() => {
+    setCurrentPage(landOnLastPageRef.current ? Math.max(0, totalPages - 1) : 0)
+    landOnLastPageRef.current = false
+  }, [activeSongId, lyricsOnly, totalPages, fitFontSize])
+
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
     setSwipeHint({ title, direction })
@@ -160,20 +175,30 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   }
 
   const goNext = useCallback(() => {
+    if (isFit && totalPages > 1 && currentPage < totalPages - 1) {
+      setCurrentPage(p => p + 1)
+      return
+    }
     if (!nextEntry) return
+    landOnLastPageRef.current = false
     setSwipeDir('left')
     selectSong(nextEntry.id)
     showHint(nextEntry.title, 'left')
     dismissSwipeHint()
-  }, [nextEntry, selectSong])
+  }, [isFit, totalPages, currentPage, nextEntry, selectSong])
 
   const goPrev = useCallback(() => {
+    if (isFit && totalPages > 1 && currentPage > 0) {
+      setCurrentPage(p => p - 1)
+      return
+    }
     if (!prevEntry) return
+    landOnLastPageRef.current = true
     setSwipeDir('right')
     selectSong(prevEntry.id)
     showHint(prevEntry.title, 'right')
     dismissSwipeHint()
-  }, [prevEntry, selectSong])
+  }, [isFit, totalPages, currentPage, prevEntry, selectSong])
 
   const { onTouchStart, onTouchEnd } = useSwipeNavigation({
     onSwipeLeft: goNext,
@@ -375,9 +400,26 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
               bodyRef={bodyRef}
               fitFontSize={fitFontSize}
               fitColumns={fitColumns}
+              paginated={paginated}
+              totalColumns={totalColumns}
+              currentPage={currentPage}
+              pageColWidth={pageColWidth}
+              fitAvailableHeight={fitAvailableHeight}
               shadowRef={shadowRef}
             />
           </div>
+
+          {paginated && totalPages > 1 && (
+            <div
+              data-testid="page-indicator"
+              className="pointer-events-none fixed bottom-20 left-1/2 -translate-x-1/2
+                px-3 py-1 rounded-full bg-gray-900/70 dark:bg-gray-100/70
+                text-white dark:text-gray-900 text-xs font-medium
+                z-30 whitespace-nowrap select-none"
+            >
+              Page {currentPage + 1} of {totalPages}
+            </div>
+          )}
         </div>
       )}
 
