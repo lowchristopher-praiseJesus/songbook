@@ -34,6 +34,11 @@ export function SongList({
   bodyRef,
   fitFontSize,
   fitColumns,
+  paginated,
+  totalColumns,
+  currentPage,
+  pageColWidth,
+  fitAvailableHeight,
   shadowRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
@@ -174,6 +179,11 @@ export function SongList({
             bodyRef={bodyRef}
             fitFontSize={fitFontSize}
             fitColumns={fitColumns}
+            paginated={paginated}
+            totalColumns={totalColumns}
+            currentPage={currentPage}
+            pageColWidth={pageColWidth}
+            fitAvailableHeight={fitAvailableHeight}
             containerRef={containerRef}
           />
         ) : (
