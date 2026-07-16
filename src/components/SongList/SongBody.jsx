@@ -264,7 +264,17 @@ export function SongBody({
   if (!sections?.length) return null
 
   if (fitMode && paginated && totalColumns && pageColWidth) {
+    // pageWidth = the clip width: exactly 3 columns plus the 2 internal gaps
+    // between them. overflowX:hidden shows just those 3 columns.
     const pageWidth = MAX_COLS * pageColWidth + (MAX_COLS - 1) * COLUMN_GAP_PX
+    // pageStep = how far the flow must slide to bring the NEXT page's first
+    // column to the left border. Column k starts at k*(colWidth+gap), so
+    // advancing 3 columns = 3*(colWidth+gap) = 3 columns + 3 gaps (the trailing
+    // gap after the 3rd column is part of the pitch to the 4th). pageWidth is
+    // 3 columns + only 2 gaps, so reusing it for the translate would be short
+    // by one gap per page — the first visible column would drift right by 32px
+    // each page and the last column would clip, spilling onto the next page.
+    const pageStep = MAX_COLS * (pageColWidth + COLUMN_GAP_PX)
     const flowWidth = totalColumns * pageColWidth + (totalColumns - 1) * COLUMN_GAP_PX
     return (
       <div className="py-4" style={{ width: `${pageWidth}px`, overflowX: 'hidden' }}>
@@ -276,7 +286,7 @@ export function SongBody({
             columnGap: `${COLUMN_GAP_PX}px`,
             columnFill: 'auto',
             height: `${availableHeight}px`,
-            transform: `translateX(-${currentPage * pageWidth}px)`,
+            transform: `translateX(-${currentPage * pageStep}px)`,
           }}
         >
           {sections.map((section, i) => (

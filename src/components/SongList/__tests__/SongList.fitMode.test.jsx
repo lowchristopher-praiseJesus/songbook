@@ -175,9 +175,11 @@ describe('SongList fitMode', () => {
         shadowRef={{ current: null }}
       />
     )
-    // pageWidth = 3*200 + 2*32 = 664; currentPage 2 -> translateX(-1328px)
+    // pageStep = 3 * (200 + 32) = 696 (3 column-slots, each column + trailing gap);
+    // currentPage 2 -> translateX(-1392px). The clip width stays 664px but the
+    // slide step includes the trailing gap per page so columns don't drift.
     const flow = container.querySelector('[style*="translateX"]')
     expect(flow).not.toBeNull()
-    expect(flow.style.transform).toBe('translateX(-1328px)')
+    expect(flow.style.transform).toBe('translateX(-1392px)')
   })
 })

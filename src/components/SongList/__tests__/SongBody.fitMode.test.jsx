@@ -73,11 +73,15 @@ describe('SongBody paginated mode', () => {
     expect(flow.style.height).toBe('600px')
   })
 
-  it('translates the inner flow by currentPage * pageWidth', () => {
+  it('translates the inner flow by currentPage * pageStep (3 column-slots, each column + trailing gap)', () => {
     const { container } = render(<SongBody {...paginatedProps} currentPage={2} />)
     const flow = container.firstChild.firstChild
-    // pageWidth = 664px, currentPage 2 -> translateX(-1328px)
-    expect(flow.style.transform).toBe('translateX(-1328px)')
+    // pageStep = 3 * (200 + 32) = 696px (3 column-slots, each = column + trailing gap);
+    // currentPage 2 -> translateX(-1392px). The clip width is still 664px
+    // (3 columns + 2 internal gaps), but the slide step includes the trailing
+    // gap so the next page's first column lands at the left border instead of
+    // drifting right by one gap per page.
+    expect(flow.style.transform).toBe('translateX(-1392px)')
   })
 
   it('does not apply the paginated branch when paginated is false', () => {

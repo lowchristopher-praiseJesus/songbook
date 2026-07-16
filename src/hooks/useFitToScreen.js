@@ -82,6 +82,24 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     if (!shadow) return null
     const colWidth = (availableWidth - (MAX_COLS - 1) * COLUMN_GAP_PX) / MAX_COLS
 
+    // The shadow always renders SongBody's plain (non-paginated) branch, whose
+    // root is a `py-4` div (16px top + 16px bottom padding) wrapping the
+    // multicol content. CSS multicol fragmentation applies an element's own
+    // padding once across the whole fragmented flow (top padding before the
+    // first line, bottom padding after the last) — NOT once per column — so
+    // that 32px is a one-time tax on the fixed-height column budget being
+    // measured here. The live paginated render (SongBody's dedicated
+    // paginated branch) has no such wrapper: sections are direct children of
+    // the flow, with zero internal padding. Left unaccounted for, this
+    // measured-vs-rendered structural mismatch makes the measurement need
+    // more columns than the live render actually uses, producing an empty
+    // trailing page and content that visually overflows near a column's
+    // right edge. Neutralize the wrapper's padding on the shadow before
+    // measuring so what's measured matches what's rendered.
+    const innerWrapper = shadow.firstElementChild
+    const prevInnerPadding = innerWrapper ? innerWrapper.style.padding : null
+    if (innerWrapper) innerWrapper.style.padding = '0px'
+
     shadow.style.setProperty('--fit-fs', `${fontSize}px`)
     shadow.style.columnCount = ''
     shadow.style.columnWidth = `${colWidth}px`
@@ -112,6 +130,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     shadow.style.columnWidth = ''
     shadow.style.columnGap = ''
     shadow.style.height = 'auto'
+    if (innerWrapper) innerWrapper.style.padding = prevInnerPadding
 
     return { totalColumns, totalPages, colWidth }
   }
