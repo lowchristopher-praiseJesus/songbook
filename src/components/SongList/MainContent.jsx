@@ -203,7 +203,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape' && isFit && annotateMode) { setAnnotateMode(false); return }
-      if (e.key === 'Escape' && isFit) { setIsFit(false); return }
+      if (e.key === 'Escape' && isFit) { exitMaximize(); return }
       if (performanceSections || editingSongId || annotateMode) return
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return
@@ -212,7 +212,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goNext, goPrev, performanceSections, editingSongId, isFit, annotateMode, setAnnotateMode])
+  }, [goNext, goPrev, performanceSections, editingSongId, isFit, annotateMode, setAnnotateMode, exitMaximize])
 
   function onDuplicateCheck(title) {
     return new Promise(resolve => setDuplicateState({ title, resolve }))

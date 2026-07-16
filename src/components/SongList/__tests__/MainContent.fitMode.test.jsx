@@ -383,4 +383,24 @@ describe('MainContent maximize button', () => {
     fireEvent.click(screen.getByLabelText('Exit maximize'))
     expect(document.documentElement.style.minHeight).toBe('')
   })
+
+  it('exits maximize mode and calls exitFullscreen when Escape key is pressed', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(screen.getByLabelText('Exit maximize')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(mockExitFullscreen).toHaveBeenCalledTimes(1)
+    expect(screen.queryByLabelText('Exit maximize')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Fit song to screen')).toBeInTheDocument()
+  })
 })
