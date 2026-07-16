@@ -119,7 +119,7 @@ describe('useFitToScreen', () => {
     expect(result.current.fitColumns).toBeNull()
   })
 
-  it('falls back to 4 columns at min font (10) when nothing fits', () => {
+  it('falls back to 3 columns at min font (20) when nothing fits', () => {
     const containerRef = makeContainerRef()
     const bodyRef = makeBodyRef()
 
@@ -132,8 +132,8 @@ describe('useFitToScreen', () => {
     result.current.shadowRef.current = makeShadowEl({ fits: false })
     act(() => rerender({ enabled: true }))
 
-    expect(result.current.fitFontSize).toBe(10)
-    expect(result.current.fitColumns).toBe(4)
+    expect(result.current.fitFontSize).toBe(20)
+    expect(result.current.fitColumns).toBe(3)
   })
 
   it('sets up a ResizeObserver on the container when enabled', () => {
@@ -196,8 +196,8 @@ describe('useFitToScreen', () => {
     }
 
     act(() => rerender({ enabled: true }))
-    expect(result.current.fitFontSize).toBe(10)
-    expect(result.current.fitColumns).toBe(4)
+    expect(result.current.fitFontSize).toBe(20)
+    expect(result.current.fitColumns).toBe(3)
 
     await flushRaf()
 
@@ -253,15 +253,15 @@ describe('useFitToScreen', () => {
       for (let i = 0; i < 20 && result.current.canDecrease; i++) {
         act(() => result.current.decreaseFontSize())
       }
-      expect(result.current.fitFontSize).toBe(10)
+      expect(result.current.fitFontSize).toBe(20)
       expect(result.current.canDecrease).toBe(false)
     })
 
     it('canIncrease is false when no column count fits the next font step', async () => {
-      // Only fonts <= 16 fit at any column count
-      const { result } = setup({ fitsBelow: 16 })
+      // Only fonts <= 24 fit at any column count (24 is inside the new [20,28] range)
+      const { result } = setup({ fitsBelow: 24 })
       await flushRaf()
-      expect(result.current.fitFontSize).toBeLessThanOrEqual(16)
+      expect(result.current.fitFontSize).toBeLessThanOrEqual(24)
       expect(result.current.canIncrease).toBe(false)
     })
 

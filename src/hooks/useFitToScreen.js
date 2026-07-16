@@ -1,8 +1,8 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 
-const MIN_FONT = 10
+const MIN_FONT = 20
 const MAX_FONT = 28
-const MAX_COLS = 4
+const MAX_COLS = 3
 const STEP = 2
 const DEBOUNCE_MS = 100
 
