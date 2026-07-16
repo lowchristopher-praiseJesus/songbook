@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useFitToScreen } from '../useFitToScreen'
 
-function makeContainerRef(clientHeight = 400) {
-  return { current: { clientHeight, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) } }
+function makeContainerRef(clientHeight = 400, clientWidth = 900) {
+  return { current: { clientHeight, clientWidth, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) } }
 }
 
 function makeBodyRef(offsetTop = 80) {
@@ -36,6 +36,29 @@ function makeFontAwareShadowEl({ fitsBelow } = { fitsBelow: 20 }) {
       }),
     },
     getBoundingClientRect: () => ({ height: currentFont <= fitsBelow ? 0 : 9999 }),
+  }
+  return el
+}
+
+// A shadow that never fits a single page (height always 9999), and reports a
+// width implying `totalColumns` columns once switched into pagination-measurement
+// mode (columnCount cleared to '' and columnWidth set to a px string).
+function makePaginatingShadowEl({ totalColumns = 7 } = {}) {
+  const el = {
+    style: {
+      columnCount: 1,
+      columnWidth: '',
+      columnGap: '',
+      columnFill: '',
+      width: '',
+      height: '',
+      setProperty: vi.fn(),
+    },
+    getBoundingClientRect: () => {
+      if (typeof el.style.columnCount === 'number') return { height: 9999, width: 0 }
+      const colWidth = parseFloat(el.style.columnWidth) || 0
+      return { height: 9999, width: totalColumns * (colWidth + 32) }
+    },
   }
   return el
 }
@@ -119,7 +142,7 @@ describe('useFitToScreen', () => {
     expect(result.current.fitColumns).toBeNull()
   })
 
-  it('falls back to 3 columns at min font (20) when nothing fits', () => {
+  it('enters paginated mode with totalPages when nothing fits within 3 columns at 20px', () => {
     const containerRef = makeContainerRef()
     const bodyRef = makeBodyRef()
 
@@ -129,11 +152,53 @@ describe('useFitToScreen', () => {
       { initialProps: { enabled: false } }
     )
 
-    result.current.shadowRef.current = makeShadowEl({ fits: false })
+    result.current.shadowRef.current = makePaginatingShadowEl({ totalColumns: 7 })
     act(() => rerender({ enabled: true }))
 
     expect(result.current.fitFontSize).toBe(20)
     expect(result.current.fitColumns).toBe(3)
+    expect(result.current.paginated).toBe(true)
+    expect(result.current.totalColumns).toBe(7)
+    expect(result.current.totalPages).toBe(3) // ceil(7 / 3)
+  })
+
+  it('reports paginated:false and totalPages:1 for a normal single-page fit', () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+      { initialProps: { enabled: false } }
+    )
+
+    result.current.shadowRef.current = makeShadowEl({ fits: true })
+    act(() => rerender({ enabled: true }))
+
+    expect(result.current.paginated).toBe(false)
+    expect(result.current.totalPages).toBe(1)
+  })
+
+  it('increaseFontSize keeps working (still allowed) while paginated', async () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
+      { initialProps: { enabled: false } }
+    )
+
+    result.current.shadowRef.current = makePaginatingShadowEl({ totalColumns: 7 })
+    act(() => rerender({ enabled: true }))
+    await flushRaf()
+
+    expect(result.current.paginated).toBe(true)
+    expect(result.current.canIncrease).toBe(true)
+
+    act(() => result.current.increaseFontSize())
+    expect(result.current.fitFontSize).toBe(22)
+    expect(result.current.paginated).toBe(true)
   })
 
   it('sets up a ResizeObserver on the container when enabled', () => {
@@ -167,41 +232,53 @@ describe('useFitToScreen', () => {
     const containerRef = makeContainerRef()
     const bodyRef = makeBodyRef()
 
+    // First synchronous measurement reports "doesn't fit" (transitional layout);
+    // by the time the rAF-deferred re-measure runs, geometry has "settled" and
+    // fits. `heightAutoCount` increments every time `style.height` is reset to
+    // 'auto' — once at the top of each `measureAuto` call, plus once more when
+    // a failed single-page search restores the shadow after a pagination
+    // measurement. So during the first `measureAuto` call the single-page
+    // search itself always sees a low (pre-increment) count and reports
+    // "doesn't fit" (triggering the pagination fallback), and by the time the
+    // rAF-deferred second call's single-page search runs, the count has
+    // already crossed the threshold, so every check reports "fits" and it
+    // resolves at cols=1.
+    let heightAutoCount = 0
+    let col = 1
+    const shadow = {
+      style: {
+        columnWidth: '', columnGap: '', columnFill: '', width: '',
+        setProperty: vi.fn(),
+        get columnCount() { return col },
+        set columnCount(v) { col = v },
+        get height() { return this._h },
+        set height(v) { this._h = v; if (v === 'auto') heightAutoCount += 1 },
+      },
+      getBoundingClientRect: () => {
+        const fits = heightAutoCount > 1
+        if (typeof shadow.style.columnCount === 'number') {
+          return { height: fits ? 0 : 9999, width: 0 }
+        }
+        const colWidth = parseFloat(shadow.style.columnWidth) || 0
+        return { height: fits ? 0 : 9999, width: 5 * (colWidth + 32) }
+      },
+    }
+
     const { result, rerender } = renderHook(
       ({ enabled }) =>
         useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false }),
       { initialProps: { enabled: false } }
     )
-
-    // First synchronous measurement reports "doesn't fit" (transitional layout);
-    // by the time the rAF-deferred re-measure runs, geometry has "settled" and fits.
-    // `passCount` increments each time the column sweep restarts at cols=1, which
-    // happens exactly once per top-level measure invocation (measureAuto or
-    // deriveColumnsForFont) — so the first full measureAuto pass (plus its
-    // trailing canIncrease probe) accounts for passCount values 1 and 2, and the
-    // rAF-deferred re-measure is the first pass to see passCount > 2.
-    let passCount = 0
-    let col = 1
-    result.current.shadowRef.current = {
-      style: {
-        height: '',
-        setProperty: vi.fn(),
-        get columnCount() { return col },
-        set columnCount(v) {
-          col = v
-          if (v === 1) passCount += 1
-        },
-      },
-      getBoundingClientRect: () => ({ height: passCount > 2 ? 0 : 9999 }),
-    }
+    result.current.shadowRef.current = shadow
 
     act(() => rerender({ enabled: true }))
     expect(result.current.fitFontSize).toBe(20)
-    expect(result.current.fitColumns).toBe(3)
+    expect(result.current.paginated).toBe(true)
 
     await flushRaf()
 
-    expect(result.current.fitFontSize).toBeGreaterThan(10)
+    expect(result.current.paginated).toBe(false)
+    expect(result.current.fitFontSize).toBeGreaterThan(20)
     expect(result.current.fitColumns).toBe(1)
   })
 
@@ -255,14 +332,6 @@ describe('useFitToScreen', () => {
       }
       expect(result.current.fitFontSize).toBe(20)
       expect(result.current.canDecrease).toBe(false)
-    })
-
-    it('canIncrease is false when no column count fits the next font step', async () => {
-      // Only fonts <= 24 fit at any column count (24 is inside the new [20,28] range)
-      const { result } = setup({ fitsBelow: 24 })
-      await flushRaf()
-      expect(result.current.fitFontSize).toBeLessThanOrEqual(24)
-      expect(result.current.canIncrease).toBe(false)
     })
 
     it('resize while in manual mode re-derives columns for the pinned font instead of re-running full auto search', async () => {

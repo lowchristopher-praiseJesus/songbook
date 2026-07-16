@@ -5,6 +5,8 @@ const MAX_FONT = 28
 const MAX_COLS = 3
 const STEP = 2
 const DEBOUNCE_MS = 100
+export const COLUMN_GAP_PX = 32
+export { MAX_COLS }
 
 export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId }) {
   const [state, setState] = useState({
@@ -12,6 +14,11 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     fitColumns: null,
     canIncrease: false,
     canDecrease: false,
+    paginated: false,
+    totalColumns: null,
+    totalPages: 1,
+    pageColWidth: null,
+    fitAvailableHeight: null,
   })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
@@ -26,10 +33,16 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
 
     const containerRect = container.getBoundingClientRect()
     const bodyRect = body.getBoundingClientRect()
-    // Absolute offset of body from container top (scroll-independent)
     const bodyTopInContainer = bodyRect.top - containerRect.top + container.scrollTop
     const availableHeight = container.clientHeight - bodyTopInContainer
     return availableHeight > 0 ? availableHeight : null
+  }
+
+  function getAvailableWidth() {
+    const container = containerRef?.current
+    if (!container) return null
+    const width = container.clientWidth
+    return width > 0 ? width : null
   }
 
   // For a fixed font size, find the smallest column count (1..MAX_COLS) whose
@@ -49,25 +62,81 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     return null
   }
 
-  function computeFlags(fontSize, availableHeight) {
+  // Re-measures the shadow in "flow" mode: fixed height, column-fill:auto (fills
+  // each column top-to-bottom before starting the next, instead of balancing),
+  // and width:max-content so the shadow is free to grow as wide as it needs
+  // rather than being clipped to the visible pane. The resulting rendered width
+  // tells us how many `colWidth`-wide columns the whole song needs.
+  function measurePagination(fontSize, availableWidth, availableHeight) {
+    const shadow = shadowRef?.current
+    if (!shadow) return null
+    const colWidth = (availableWidth - (MAX_COLS - 1) * COLUMN_GAP_PX) / MAX_COLS
+
+    shadow.style.setProperty('--fit-fs', `${fontSize}px`)
+    shadow.style.columnCount = ''
+    shadow.style.columnWidth = `${colWidth}px`
+    shadow.style.columnGap = `${COLUMN_GAP_PX}px`
+    shadow.style.columnFill = 'auto'
+    shadow.style.height = `${availableHeight}px`
+    shadow.style.width = 'max-content'
+
+    const measuredWidth = shadow.getBoundingClientRect().width
+    const totalColumns = Math.max(1, Math.round(measuredWidth / (colWidth + COLUMN_GAP_PX)))
+    const totalPages = Math.ceil(totalColumns / MAX_COLS)
+
+    // Restore the shadow to its normal (balanced, height:auto) measurement mode
+    // so the next single-page search isn't affected by leftover pagination styles.
+    shadow.style.columnFill = ''
+    shadow.style.width = ''
+    shadow.style.columnWidth = ''
+    shadow.style.columnGap = ''
+    shadow.style.height = 'auto'
+
+    return { totalColumns, totalPages, colWidth }
+  }
+
+  // Given an arbitrary font size, produce the full fit result for it: either a
+  // normal single-page result (found via deriveColumnsForFont), or a paginated
+  // result (via measurePagination) when nothing fits in <= MAX_COLS columns.
+  // Shared by the auto search, manual +/-, and the resize handler so all three
+  // treat "doesn't fit" the same way.
+  function resultForFont(fontSize, availableWidth, availableHeight) {
+    const cols = deriveColumnsForFont(fontSize, availableHeight)
+    if (cols !== null) {
+      return {
+        fitFontSize: fontSize,
+        fitColumns: cols,
+        paginated: false,
+        totalColumns: null,
+        totalPages: 1,
+        pageColWidth: null,
+        fitAvailableHeight: null,
+      }
+    }
+    const pagination = measurePagination(fontSize, availableWidth, availableHeight)
+    return {
+      fitFontSize: fontSize,
+      fitColumns: MAX_COLS,
+      paginated: true,
+      totalColumns: pagination.totalColumns,
+      totalPages: pagination.totalPages,
+      pageColWidth: pagination.colWidth,
+      fitAvailableHeight: availableHeight,
+    }
+  }
+
+  function computeFlags(fontSize) {
     const canDecrease = fontSize > MIN_FONT
-    const canIncrease =
-      fontSize < MAX_FONT &&
-      deriveColumnsForFont(Math.min(fontSize + STEP, MAX_FONT), availableHeight) !== null
+    const canIncrease = fontSize < MAX_FONT
     return { canIncrease, canDecrease }
   }
 
   measureRef.current = function measureAuto() {
     const availableHeight = getAvailableHeight()
-    if (availableHeight === null) return
+    const availableWidth = getAvailableWidth()
+    if (availableHeight === null || availableWidth === null) return
 
     let best = null
-
-    // Use height:auto so the browser balances content across N columns.
-    // With a fixed height, CSS multi-column overflows horizontally (extra columns
-    // to the right), making scrollHeight === clientHeight regardless of content
-    // size — the check is blind. With height:auto + column-fill:balance (default),
-    // the rendered height ≈ total_content / N, which we compare to availableHeight.
     const shadow = shadowRef?.current
     if (!shadow) return
     shadow.style.height = 'auto'
@@ -82,8 +151,6 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       while (lo <= hi) {
         const mid = Math.floor((lo + hi) / 2)
         shadow.style.setProperty('--fit-fs', `${mid}px`)
-        // getBoundingClientRect() forces synchronous layout and returns the
-        // actual rendered height of the balanced columns.
         const h = shadow.getBoundingClientRect().height
         if (h <= availableHeight) {
           colBest = mid
@@ -99,21 +166,36 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       }
     }
 
-    const result = best ?? { fitFontSize: MIN_FONT, fitColumns: MAX_COLS }
+    let result
+    if (best) {
+      result = { ...best, paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null }
+    } else {
+      const pagination = measurePagination(MIN_FONT, availableWidth, availableHeight)
+      result = {
+        fitFontSize: MIN_FONT,
+        fitColumns: MAX_COLS,
+        paginated: true,
+        totalColumns: pagination.totalColumns,
+        totalPages: pagination.totalPages,
+        pageColWidth: pagination.colWidth,
+        fitAvailableHeight: availableHeight,
+      }
+    }
+
     modeRef.current = 'auto'
-    setState({ ...result, ...computeFlags(result.fitFontSize, availableHeight) })
+    setState({ ...result, ...computeFlags(result.fitFontSize) })
   }
 
   function increaseFontSize() {
     setState(prev => {
       if (!prev.canIncrease || prev.fitFontSize === null) return prev
       const availableHeight = getAvailableHeight()
-      if (availableHeight === null) return prev
+      const availableWidth = getAvailableWidth()
+      if (availableHeight === null || availableWidth === null) return prev
       const nextFont = Math.min(prev.fitFontSize + STEP, MAX_FONT)
-      const cols = deriveColumnsForFont(nextFont, availableHeight)
-      if (cols === null) return prev
       modeRef.current = 'manual'
-      return { fitFontSize: nextFont, fitColumns: cols, ...computeFlags(nextFont, availableHeight) }
+      const result = resultForFont(nextFont, availableWidth, availableHeight)
+      return { ...result, ...computeFlags(result.fitFontSize) }
     })
   }
 
@@ -121,11 +203,12 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     setState(prev => {
       if (!prev.canDecrease || prev.fitFontSize === null) return prev
       const availableHeight = getAvailableHeight()
-      if (availableHeight === null) return prev
+      const availableWidth = getAvailableWidth()
+      if (availableHeight === null || availableWidth === null) return prev
       const nextFont = Math.max(prev.fitFontSize - STEP, MIN_FONT)
-      const cols = deriveColumnsForFont(nextFont, availableHeight) ?? MAX_COLS
       modeRef.current = 'manual'
-      return { fitFontSize: nextFont, fitColumns: cols, ...computeFlags(nextFont, availableHeight) }
+      const result = resultForFont(nextFont, availableWidth, availableHeight)
+      return { ...result, ...computeFlags(result.fitFontSize) }
     })
   }
 
@@ -135,7 +218,10 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
   // not fit (or may under-fill) the new song's.
   useLayoutEffect(() => {
     if (!enabled) {
-      setState({ fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false })
+      setState({
+        fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false,
+        paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null,
+      })
       return
     }
     modeRef.current = 'auto'
@@ -162,9 +248,10 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
           setState(prev => {
             if (prev.fitFontSize === null) return prev
             const availableHeight = getAvailableHeight()
-            if (availableHeight === null) return prev
-            const cols = deriveColumnsForFont(prev.fitFontSize, availableHeight) ?? MAX_COLS
-            return { fitFontSize: prev.fitFontSize, fitColumns: cols, ...computeFlags(prev.fitFontSize, availableHeight) }
+            const availableWidth = getAvailableWidth()
+            if (availableHeight === null || availableWidth === null) return prev
+            const result = resultForFont(prev.fitFontSize, availableWidth, availableHeight)
+            return { ...result, ...computeFlags(result.fitFontSize) }
           })
         } else {
           measureRef.current()
@@ -181,6 +268,11 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
   return {
     fitFontSize: state.fitFontSize,
     fitColumns: state.fitColumns,
+    paginated: state.paginated,
+    totalColumns: state.totalColumns,
+    totalPages: state.totalPages,
+    pageColWidth: state.pageColWidth,
+    fitAvailableHeight: state.fitAvailableHeight,
     canIncrease: state.canIncrease,
     canDecrease: state.canDecrease,
     increaseFontSize,
