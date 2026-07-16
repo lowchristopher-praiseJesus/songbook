@@ -54,7 +54,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const hintTimerRef = useRef(null)
   const [chordsOpen, setChordsOpen] = useState(true)
   const [isFit, setIsFit] = useState(false)
-  const [debugSnapshot, setDebugSnapshot] = useState(null)
   const [speedMode, setSpeedMode] = useState(false)
   const [bpmMode, setBpmMode] = useState(false)
   const containerRef = useRef(null)
@@ -75,35 +74,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     increaseFontSize,
     decreaseFontSize,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
-  const { isSupported: fullscreenSupported, requestFullscreen, exitFullscreen } = useNativeFullscreen({
+  const { requestFullscreen, exitFullscreen } = useNativeFullscreen({
     active: isFit,
     onExit: exitMaximize,
   })
-
-  // iPhone Safari has no Fullscreen API for page content in a regular tab, but it
-  // collapses its address bar to a thin sliver once the page is scrolled — nudging
-  // that here is the closest approximation to hiding chrome available on that browser.
-  useEffect(() => {
-    if (!isFit || fullscreenSupported) return
-    const docEl = document.documentElement
-    const previousMinHeight = docEl.style.minHeight
-    docEl.style.minHeight = 'calc(100dvh + 1px)'
-    window.scrollTo(0, 1)
-    const debugTimer = setTimeout(() => {
-      setDebugSnapshot({
-        afterMinHeight: docEl.style.minHeight,
-        afterScrollY: window.scrollY,
-        docScrollHeight: docEl.scrollHeight,
-        bodyScrollHeight: document.body.scrollHeight,
-        innerHeight: window.innerHeight,
-        visualViewportHeight: window.visualViewport ? window.visualViewport.height : 'n/a',
-      })
-    }, 300)
-    return () => {
-      clearTimeout(debugTimer)
-      docEl.style.minHeight = previousMinHeight
-    }
-  }, [isFit, fullscreenSupported])
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.
@@ -335,11 +309,6 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
           onTouchStart={annotateMode ? undefined : onTouchStart}
           onTouchEnd={annotateMode ? undefined : onTouchEnd}
         >
-          {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === 'fullscreen' && (
-            <div className="absolute bottom-1 left-1 z-50 text-[10px] leading-tight font-mono bg-black/80 text-lime-300 px-1.5 py-1 pointer-events-none whitespace-pre">
-              {`fullscreenSupported: ${String(fullscreenSupported)}\ndocument.fullscreenEnabled: ${String(document.fullscreenEnabled)}\ntypeof requestFullscreen: ${typeof document.documentElement.requestFullscreen}\ndocument.fullscreenElement: ${String(!!document.fullscreenElement)}\nUA: ${navigator.userAgent}\n${debugSnapshot ? `--- 300ms after nudge ---\nminHeight: ${debugSnapshot.afterMinHeight}\nscrollY: ${debugSnapshot.afterScrollY}\ndocScrollHeight: ${debugSnapshot.docScrollHeight}\nbodyScrollHeight: ${debugSnapshot.bodyScrollHeight}\ninnerHeight: ${debugSnapshot.innerHeight}\nvisualViewportH: ${debugSnapshot.visualViewportHeight}` : '(waiting for snapshot...)'}`}
-            </div>
-          )}
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
               {annotationBaseline ? (

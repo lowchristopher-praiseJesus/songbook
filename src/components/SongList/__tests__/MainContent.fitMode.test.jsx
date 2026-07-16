@@ -334,56 +334,6 @@ describe('MainContent maximize button', () => {
     expect(overlay.className).toMatch(/\bh-dvh\b/)
   })
 
-  it('nudges Safari to collapse its address bar when native fullscreen is unsupported', () => {
-    nativeFullscreenMock = { ...nativeFullscreenMock, isSupported: false }
-    const scrollToMock = vi.fn()
-    window.scrollTo = scrollToMock
-    render(
-      <MainContent
-        onAddToast={vi.fn()}
-        fontSize={16}
-        onFontSizeChange={vi.fn()}
-        lyricsOnly={false}
-        onImportSuccess={vi.fn()}
-      />
-    )
-    fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    expect(scrollToMock).toHaveBeenCalledWith(0, 1)
-    expect(document.documentElement.style.minHeight).toBe('calc(100dvh + 1px)')
-  })
-
-  it('does not run the address-bar nudge when native fullscreen is supported', () => {
-    const scrollToMock = vi.fn()
-    window.scrollTo = scrollToMock
-    render(
-      <MainContent
-        onAddToast={vi.fn()}
-        fontSize={16}
-        onFontSizeChange={vi.fn()}
-        lyricsOnly={false}
-        onImportSuccess={vi.fn()}
-      />
-    )
-    fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    expect(scrollToMock).not.toHaveBeenCalled()
-  })
-
-  it('restores the original min-height when exiting maximize mode on an unsupported browser', () => {
-    nativeFullscreenMock = { ...nativeFullscreenMock, isSupported: false }
-    render(
-      <MainContent
-        onAddToast={vi.fn()}
-        fontSize={16}
-        onFontSizeChange={vi.fn()}
-        lyricsOnly={false}
-        onImportSuccess={vi.fn()}
-      />
-    )
-    fireEvent.click(screen.getByLabelText('Fit song to screen'))
-    fireEvent.click(screen.getByLabelText('Exit maximize'))
-    expect(document.documentElement.style.minHeight).toBe('')
-  })
-
   it('exits maximize mode and calls exitFullscreen when Escape key is pressed', () => {
     render(
       <MainContent
