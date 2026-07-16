@@ -106,6 +106,7 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
           <DisplayTab
             settings={displaySettings.settings}
             updateElement={displaySettings.updateElement}
+            updateMinFontSize={displaySettings.updateMinFontSize}
             resetAll={displaySettings.resetAll}
             fontSize={fontSize}
             onFontSizeChange={onFontSizeChange}
