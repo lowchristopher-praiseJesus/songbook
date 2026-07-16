@@ -58,32 +58,44 @@ const fitStateBySong = {
     fitFontSize: 20, fitColumns: 3, paginated: true, totalColumns: 6, totalPages: 2,
     pageColWidth: 250, fitAvailableHeight: 600, shadowRef: { current: null },
     canIncrease: true, canDecrease: false, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
-    settled: true,
+    settled: true, measuredSongId: 'song-1',
   },
   'song-2': {
     fitFontSize: 20, fitColumns: 3, paginated: true, totalColumns: 9, totalPages: 3,
     pageColWidth: 250, fitAvailableHeight: 600, shadowRef: { current: null },
     canIncrease: true, canDecrease: false, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
-    settled: true,
+    settled: true, measuredSongId: 'song-2',
   },
   'song-3': {
     fitFontSize: 22, fitColumns: 2, paginated: false, totalColumns: null, totalPages: 1,
     pageColWidth: null, fitAvailableHeight: null, shadowRef: { current: null },
     canIncrease: true, canDecrease: true, increaseFontSize: vi.fn(), decreaseFontSize: vi.fn(),
-    settled: true,
+    settled: true, measuredSongId: 'song-3',
   },
 }
 
 // Simulates useFitToScreen's own settled/unsettled reporting for 'song-1'
 // specifically: a transitional first-pass measurement (settled: false), the
 // self-corrected settled measurement that follows it (settled: true, per
-// useFitToScreen's double-rAF correction), and a later, genuine
-// user-initiated re-measurement (also settled: true) representing e.g. a
-// font-size change well after the song first settled — MainContent must
-// tell these two "settled: true" cases apart via landOnLastPageRef, not via
-// settled alone.
-let song1Phase = 'first' // 'first' | 'unsettled' | 'corrected' | 'laterChange'
+// useFitToScreen's double-rAF correction), a later, genuine user-initiated
+// re-measurement (also settled: true) representing e.g. a font-size change
+// well after the song first settled, and — critically — a "stale" phase
+// modeling the real cross-hook staleness window: useFitToScreen's internal
+// useState can't synchronously track a songId prop change, so on the very
+// first render right after a song-cross, the hook can still be reporting
+// the PREVIOUS song's totalPages/settled, tagged with the PREVIOUS song's
+// measuredSongId, even though MainContent's own activeSongId has already
+// switched. MainContent must tell all of these apart via landOnLastPageRef
+// + measuredSongId, not via settled alone.
+let song1Phase = 'first' // 'first' | 'stale' | 'unsettled' | 'corrected' | 'laterChange'
 const song1Base = fitStateBySong['song-1']
+const song1Stale = {
+  ...song1Base,
+  totalColumns: fitStateBySong['song-2'].totalColumns,
+  totalPages: fitStateBySong['song-2'].totalPages,
+  settled: true,
+  measuredSongId: 'song-2', // mismatched: hook hasn't caught up to song-1 yet
+}
 const song1Unsettled = { ...song1Base, totalColumns: 6, totalPages: 2, settled: false }
 const song1Corrected = { ...song1Base, totalColumns: 12, totalPages: 4, settled: true }
 const song1LaterChange = { ...song1Base, fitFontSize: 24, totalColumns: 15, totalPages: 5, settled: true }
@@ -91,6 +103,7 @@ const song1LaterChange = { ...song1Base, fitFontSize: 24, totalColumns: 15, tota
 vi.mock('../../../hooks/useFitToScreen', () => ({
   useFitToScreen: vi.fn(({ songId }) => {
     if (songId === 'song-1') {
+      if (song1Phase === 'stale') return song1Stale
       if (song1Phase === 'unsettled') return song1Unsettled
       if (song1Phase === 'corrected') return song1Corrected
       if (song1Phase === 'laterChange') return song1LaterChange
@@ -221,5 +234,58 @@ describe('MainContent maximize-mode pagination', () => {
     )
 
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 5')
+  })
+
+  it('ignores a stale cross-hook render where activeSongId has switched but useFitToScreen still reports the previous song', () => {
+    const { rerender } = renderMaximized()
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 1 of 3')
+
+    // Cross backward into song-1. Model the real cross-hook staleness
+    // window found by the reviewer with an unmocked hook: right after the
+    // cross, useFitToScreen's own internal state (a separate useState) can
+    // still be reporting song-2's totalPages/settled — tagged with song-2's
+    // measuredSongId — even though activeSongId has already switched to
+    // song-1. If the reset effect only gated on `settled` (round 3's fix),
+    // this stale render would wrongly compute the "last page" off song-2's
+    // totalPages and clear landOnLastPageRef right then, so the real
+    // settled data for song-1 (arriving moments later) would find the ref
+    // already gone and fall through to a normal reset instead of landing
+    // on song-1's actual last page.
+    song1Phase = 'stale'
+    fireEvent.keyDown(window, { key: 'ArrowLeft' })
+    expect(mockSelectSong).toHaveBeenCalledWith('song-1')
+    // Must not have consumed the ref using song-2's stale totalPages (3) —
+    // the indicator must not reflect that wrong computation.
+    expect(screen.getByTestId('page-indicator')).not.toHaveTextContent('Page 3 of 3')
+
+    // The hook catches up: its real (still transitional) unsettled pass for
+    // song-1 lands, correctly tagged with song-1's own measuredSongId.
+    song1Phase = 'unsettled'
+    rerender(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+
+    // And then its settled, corrected pass for song-1 lands.
+    song1Phase = 'corrected'
+    rerender(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+
+    // Because the stale render never consumed the ref, it's still armed for
+    // song-1 when the real settled data arrives, and lands correctly on
+    // song-1's actual last page, 4 of 4 — not a normal reset to page 1.
+    expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 4 of 4')
   })
 })

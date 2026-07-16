@@ -88,6 +88,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     increaseFontSize,
     decreaseFontSize,
     settled,
+    measuredSongId,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
@@ -168,15 +169,25 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   // self-correction (still armed → land on the corrected last page) apart
   // from a genuine later user action, like a manual font-size change (ref no
   // longer armed for this song → normal reset to page 0).
+  //
+  // `settled` alone isn't sufficient, though: useFitToScreen's internal
+  // state is a separate useState that can't synchronously track a songId
+  // prop change — it only catches up once the hook's own effect runs, one
+  // commit later. So right after a song switch, this effect can fire with
+  // activeSongId already pointing at the NEW song but totalPages/settled
+  // still holding the PREVIOUS (already-settled) song's values. Requiring
+  // measuredSongId === activeSongId confirms the hook's own state is
+  // actually reporting on the song we currently care about before we trust
+  // totalPages/settled at all.
   useEffect(() => {
-    if (!settled) return
+    if (!settled || measuredSongId !== activeSongId) return
     if (landOnLastPageRef.current === activeSongId) {
       setCurrentPage(Math.max(0, totalPages - 1))
       landOnLastPageRef.current = null
     } else {
       setCurrentPage(0)
     }
-  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled])
+  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled, measuredSongId])
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)

@@ -289,6 +289,38 @@ describe('useFitToScreen', () => {
     expect(result.current.settled).toBe(true)
   })
 
+  it('measuredSongId echoes the songId the current state was measured for, and updates when songId changes', async () => {
+    const containerRef = makeContainerRef()
+    const bodyRef = makeBodyRef()
+
+    const { result, rerender } = renderHook(
+      ({ enabled, songId }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, songId }),
+      { initialProps: { enabled: false, songId: 'song-a' } }
+    )
+    result.current.shadowRef.current = makeShadowEl({ fits: true })
+
+    act(() => rerender({ enabled: true, songId: 'song-a' }))
+    // Even the unsettled synchronous first pass tags its result with the
+    // songId it was actually measured for.
+    expect(result.current.measuredSongId).toBe('song-a')
+    expect(result.current.settled).toBe(false)
+
+    await flushRaf()
+    expect(result.current.measuredSongId).toBe('song-a')
+    expect(result.current.settled).toBe(true)
+
+    // Switching songId re-triggers the layout effect's re-measure; the
+    // unsettled first pass for the new song already reports the new songId
+    // (never the previous song's), and the settled pass keeps reporting it.
+    act(() => rerender({ enabled: true, songId: 'song-b' }))
+    expect(result.current.measuredSongId).toBe('song-b')
+
+    await flushRaf()
+    expect(result.current.measuredSongId).toBe('song-b')
+    expect(result.current.settled).toBe(true)
+  })
+
   describe('manual font-size override', () => {
     function setup({ fitsBelow = 20 } = {}) {
       const containerRef = makeContainerRef()

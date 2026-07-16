@@ -20,12 +20,21 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     pageColWidth: null,
     fitAvailableHeight: null,
     settled: false,
+    songId: null,
   })
   const shadowRef = useRef(null)
   const timerRef = useRef(null)
   const rafRef = useRef(null)
   const measureRef = useRef(null)
   const modeRef = useRef('auto')
+  // Tracks the current songId prop for use inside callbacks/closures that
+  // don't re-run on every songId change (measureAuto is reassigned every
+  // render so it's fine, but increaseFontSize/decreaseFontSize and the
+  // ResizeObserver effect's closure are not — they'd otherwise tag state
+  // updates with a stale songId after a song switch). Updated unconditionally
+  // on every render, before any effect runs.
+  const songIdRef = useRef(songId)
+  songIdRef.current = songId
 
   function getAvailableHeight() {
     const container = containerRef?.current
@@ -185,7 +194,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     }
 
     modeRef.current = 'auto'
-    setState({ ...result, ...computeFlags(result.fitFontSize), settled })
+    setState({ ...result, ...computeFlags(result.fitFontSize), settled, songId: songIdRef.current })
   }
 
   function increaseFontSize() {
@@ -198,7 +207,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
       if (result === null) return prev
-      return { ...result, ...computeFlags(result.fitFontSize), settled: true }
+      return { ...result, ...computeFlags(result.fitFontSize), settled: true, songId: songIdRef.current }
     })
   }
 
@@ -212,7 +221,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       modeRef.current = 'manual'
       const result = resultForFont(nextFont, availableWidth, availableHeight)
       if (result === null) return prev
-      return { ...result, ...computeFlags(result.fitFontSize), settled: true }
+      return { ...result, ...computeFlags(result.fitFontSize), settled: true, songId: songIdRef.current }
     })
   }
 
@@ -225,7 +234,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       setState({
         fitFontSize: null, fitColumns: null, canIncrease: false, canDecrease: false,
         paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null,
-        settled: false,
+        settled: false, songId: null,
       })
       return
     }
@@ -259,7 +268,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
             if (availableHeight === null || availableWidth === null) return prev
             const result = resultForFont(prev.fitFontSize, availableWidth, availableHeight)
             if (result === null) return prev
-            return { ...result, ...computeFlags(result.fitFontSize), settled: true }
+            return { ...result, ...computeFlags(result.fitFontSize), settled: true, songId: songIdRef.current }
           })
         } else {
           measureRef.current()
@@ -287,5 +296,6 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     decreaseFontSize,
     shadowRef,
     settled: state.settled,
+    measuredSongId: state.songId,
   }
 }
