@@ -162,12 +162,40 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   // useFitToScreen's double-rAF self-correction re-measures and changes
   // totalPages shortly after the initial pass — so the "land on last page"
   // intent stays armed (and gets recomputed against the latest totalPages)
-  // until we've actually moved on to a different song.
+  // until the auto-clear effect below expires it.
   useEffect(() => {
     const landOnLastPage = landOnLastPageRef.current === activeSongId
     setCurrentPage(landOnLastPage ? Math.max(0, totalPages - 1) : 0)
     if (!landOnLastPage) landOnLastPageRef.current = null
   }, [activeSongId, lyricsOnly, totalPages, fitFontSize])
+
+  // Bound how long the "land on last page" intent stays armed to
+  // useFitToScreen's own double-rAF settling window (see its layout effect,
+  // which re-measures via two nested requestAnimationFrames after every
+  // songId change and self-corrects the result). That window is the real
+  // signal distinguishing "this re-fire is the self-correction settling in"
+  // from "this is a genuine later user action" (e.g. a manual font-size
+  // change) — both look identical at the effect-dependency level, so we
+  // scope the ref's lifetime to elapsed animation frames instead. Re-arms on
+  // every totalPages/fitFontSize change for the same song, so a further
+  // self-correction keeps the window open; once nothing changes for two
+  // frames, the ref clears and later re-fires fall through to a normal
+  // page-0 reset.
+  useEffect(() => {
+    if (landOnLastPageRef.current !== activeSongId) return
+    let raf2 = null
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (landOnLastPageRef.current === activeSongId) {
+          landOnLastPageRef.current = null
+        }
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      if (raf2 !== null) cancelAnimationFrame(raf2)
+    }
+  }, [activeSongId, totalPages, fitFontSize])
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
