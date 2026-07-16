@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MainContent } from '../MainContent'
 import { useAnnotationStore } from '../../../store/annotationStore'
 
@@ -63,6 +63,18 @@ vi.mock('../../../hooks/useFitToScreen', () => ({
   useFitToScreen: vi.fn(() => fitToScreenMock),
 }))
 
+const mockRequestFullscreen = vi.fn()
+const mockExitFullscreen = vi.fn()
+let nativeFullscreenMock = { isSupported: true, requestFullscreen: mockRequestFullscreen, exitFullscreen: mockExitFullscreen }
+let lastNativeFullscreenOnExit = null
+
+vi.mock('../../../hooks/useNativeFullscreen', () => ({
+  useNativeFullscreen: vi.fn(({ onExit }) => {
+    lastNativeFullscreenOnExit = onExit
+    return nativeFullscreenMock
+  }),
+}))
+
 // Stub SongView to avoid deep rendering
 vi.mock('../SongView', () => ({
   SongView: vi.fn(({ isFit }) => <div data-testid="song-view" data-is-fit={String(isFit)} />),
@@ -85,6 +97,10 @@ describe('MainContent maximize button', () => {
     }
     mockIncreaseFontSize.mockClear()
     mockDecreaseFontSize.mockClear()
+    nativeFullscreenMock = { isSupported: true, requestFullscreen: mockRequestFullscreen, exitFullscreen: mockExitFullscreen }
+    mockRequestFullscreen.mockClear()
+    mockExitFullscreen.mockClear()
+    lastNativeFullscreenOnExit = null
   })
 
   it('renders the maximize button when a song is active', () => {
@@ -253,5 +269,53 @@ describe('MainContent maximize button', () => {
 
     fireEvent.click(screen.getByLabelText('Exit maximize'))
     expect(useAnnotationStore.getState().annotateMode).toBe(false)
+  })
+
+  it('requests native fullscreen when entering maximize mode', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(mockRequestFullscreen).toHaveBeenCalledTimes(1)
+  })
+
+  it('exits native fullscreen when the exit button is clicked', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    fireEvent.click(screen.getByLabelText('Exit maximize'))
+    expect(mockExitFullscreen).toHaveBeenCalledTimes(1)
+  })
+
+  it('exits maximize mode when native fullscreen is exited externally (e.g. Escape or browser control)', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    expect(screen.getByLabelText('Exit maximize')).toBeInTheDocument()
+
+    act(() => { lastNativeFullscreenOnExit() })
+
+    expect(screen.queryByLabelText('Exit maximize')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Fit song to screen')).toBeInTheDocument()
   })
 })

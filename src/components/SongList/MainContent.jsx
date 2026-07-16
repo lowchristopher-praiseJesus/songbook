@@ -7,6 +7,7 @@ import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
 import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { useFitToScreen } from '../../hooks/useFitToScreen'
+import { useNativeFullscreen } from '../../hooks/useNativeFullscreen'
 import { EmptyState } from './EmptyState'
 import { SongView } from './SongView'
 import { Modal } from '../UI/Modal'
@@ -73,6 +74,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     increaseFontSize,
     decreaseFontSize,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
+  const { isSupported: fullscreenSupported, requestFullscreen, exitFullscreen } = useNativeFullscreen({
+    active: isFit,
+    onExit: exitMaximize,
+  })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.
@@ -215,9 +220,16 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
   const handleClosePerformance = useCallback(() => setPerformanceSections(null), [])
 
+  function handleMaximizeClick() {
+    const next = !isFit
+    setIsFit(next)
+    if (next) requestFullscreen()
+  }
+
   function exitMaximize() {
     setIsFit(false)
     setAnnotateMode(false)
+    exitFullscreen()
   }
 
   function handleFileInput(e) {
@@ -494,7 +506,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
               <>
                 <button
                   type="button"
-                  onClick={() => setIsFit(f => !f)}
+                  onClick={handleMaximizeClick}
                   className={`w-11 h-11 flex items-center justify-center rounded-xl select-none transition-colors
                     ${isFit
                       ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
