@@ -105,6 +105,7 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns }) {
 
   function onPointerMove(e) {
     if (!drawingRef.current) return
+    e.preventDefault()
     const pt = localPoint(e)
     const { tool } = useAnnotationStore.getState()
     if (tool === 'eraser') {
