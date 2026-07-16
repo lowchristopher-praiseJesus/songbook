@@ -25,7 +25,7 @@ import { NewAlbumCreator } from '../Album/NewAlbumCreator'
 import { CollectionDetailView } from '../Collection/CollectionDetailView'
 import { NewCollectionCreator } from '../Collection/NewCollectionCreator'
 
-export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange }) {
+export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram = false, fontSize = 16, onFontSizeChange, onImportSuccess, onOpenSidebar, metronomeEnabled, onMetronomeToggle, metronomeBpm = 120, onMetronomeBpmChange, maximizeMinFontSize = 18 }) {
   const activeSong = useLibraryStore(s => s.activeSong)
   const activeSongId = useLibraryStore(s => s.activeSongId)
   const index = useLibraryStore(s => s.index)
@@ -89,7 +89,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     decreaseFontSize,
     settled,
     measuredSongId,
-  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId })
+  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId, minFontSize: maximizeMinFontSize })
 
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.

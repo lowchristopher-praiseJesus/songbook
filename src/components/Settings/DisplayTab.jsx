@@ -173,7 +173,42 @@ function ElementRow({ elementKey, label, isOffset, hasAbsoluteSize, elSettings, 
   )
 }
 
-export function DisplayTab({ settings, updateElement, resetAll, fontSize, onFontSizeChange }) {
+function MinFontSizeRow({ value, updateMinFontSize }) {
+  function handleDown() {
+    updateMinFontSize(Math.max(8, value - 1))
+  }
+
+  function handleUp() {
+    updateMinFontSize(Math.min(28, value + 1))
+  }
+
+  return (
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden mb-2">
+      <div className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700">
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Minimum font size (maximize mode)</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDown}
+            aria-label="Decrease minimum font size"
+            className="w-6 h-6 flex items-center justify-center border border-gray-200 dark:border-gray-600 rounded
+              bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 text-sm"
+          >−</button>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 w-10 text-center">{value}px</span>
+          <button
+            type="button"
+            onClick={handleUp}
+            aria-label="Increase minimum font size"
+            className="w-6 h-6 flex items-center justify-center border border-gray-200 dark:border-gray-600 rounded
+              bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 text-sm"
+          >+</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function DisplayTab({ settings, updateElement, updateMinFontSize, resetAll, fontSize, onFontSizeChange }) {
   const [openKey, setOpenKey] = useState(null)
 
   return (
@@ -193,6 +228,7 @@ export function DisplayTab({ settings, updateElement, resetAll, fontSize, onFont
           onToggle={() => setOpenKey(prev => prev === key ? null : key)}
         />
       ))}
+      <MinFontSizeRow value={settings.maximizeMinFontSize} updateMinFontSize={updateMinFontSize} />
       <div className="flex justify-end mt-1">
         <button
           type="button"

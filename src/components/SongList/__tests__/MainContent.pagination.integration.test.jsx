@@ -135,8 +135,11 @@ const sharedBodyObj = makeBodyObj()
 // before its parent's in the same commit, so this always populates the refs
 // before useFitToScreen's own layout effect (registered in the parent,
 // MainContent) reads them.
+let lastSongViewProps = null
 vi.mock('../SongView', () => ({
-  SongView: vi.fn(({ song, containerRef, bodyRef, shadowRef }) => {
+  SongView: vi.fn((props) => {
+    lastSongViewProps = props
+    const { song, containerRef, bodyRef, shadowRef } = props
     useLayoutEffect(() => {
       if (containerRef) containerRef.current = sharedContainerObj
       if (bodyRef) bodyRef.current = sharedBodyObj
@@ -198,5 +201,28 @@ describe('MainContent + real useFitToScreen integration', () => {
     // (which would show "Page 3 of 3" if the cross-hook staleness bug this
     // integration test guards against ever regressed).
     expect(screen.getByTestId('page-indicator')).toHaveTextContent('Page 2 of 2')
+  })
+
+  it('threads a custom maximizeMinFontSize prop down into the real useFitToScreen as its floor', async () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+        maximizeMinFontSize={14}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    await flushRaf()
+
+    // song-2 (the default active song in this file's mocks) is set up to
+    // never fit within 3 columns, so the pagination fallback pins
+    // fitFontSize at the floor — confirming the custom 14 (not the default
+    // 18) reached useFitToScreen through MainContent's prop and came back
+    // out as fitFontSize, which MainContent then passes straight to SongView.
+    expect(lastSongViewProps.fitFontSize).toBe(14)
+    expect(lastSongViewProps.paginated).toBe(true)
   })
 })

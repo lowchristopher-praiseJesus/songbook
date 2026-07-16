@@ -11,6 +11,13 @@ const FONT_MAP = {
 
 export const FONT_OPTIONS = Object.keys(FONT_MAP)
 
+const MIN_FONT_SIZE_FLOOR = 8
+const MIN_FONT_SIZE_CEILING = 28
+
+function clampMinFontSize(value) {
+  return Math.min(MIN_FONT_SIZE_CEILING, Math.max(MIN_FONT_SIZE_FLOOR, value))
+}
+
 const DEFAULTS = {
   title:       { font: 'System Default', size: 24, color: '#111827' },
   artist:      { font: 'System Default', size: 16, color: '#6b7280' },
@@ -18,6 +25,7 @@ const DEFAULTS = {
   chords:      { font: 'Menlo', sizeOffset: -3, color: '#6366f1' },
   sections:    { font: 'System Default', size: 12, color: '#6366f1' },
   annotations: { font: 'System Default', size: 12, color: '#9ca3af' },
+  maximizeMinFontSize: 18,
 }
 
 const KEYS = {
@@ -27,6 +35,7 @@ const KEYS = {
   chords:      'songsheet_display_chords',
   sections:    'songsheet_display_sections',
   annotations: 'songsheet_display_annotations',
+  maximizeMinFontSize: 'songsheet_display_maximize_min_font_size',
 }
 
 function lightenColor(hex) {
@@ -109,9 +118,13 @@ function loadSettings() {
   for (const [key, storageKey] of Object.entries(KEYS)) {
     try {
       const raw = localStorage.getItem(storageKey)
-      result[key] = raw ? { ...DEFAULTS[key], ...JSON.parse(raw) } : { ...DEFAULTS[key] }
+      if (key === 'maximizeMinFontSize') {
+        result[key] = raw ? clampMinFontSize(JSON.parse(raw)) : DEFAULTS[key]
+      } else {
+        result[key] = raw ? { ...DEFAULTS[key], ...JSON.parse(raw) } : { ...DEFAULTS[key] }
+      }
     } catch {
-      result[key] = { ...DEFAULTS[key] }
+      result[key] = key === 'maximizeMinFontSize' ? DEFAULTS[key] : { ...DEFAULTS[key] }
     }
   }
   return result
@@ -135,6 +148,15 @@ export function useDisplaySettings() {
     })
   }, [])
 
+  const updateMinFontSize = useCallback((value) => {
+    setSettings(prev => {
+      const clamped = clampMinFontSize(value)
+      const updated = { ...prev, maximizeMinFontSize: clamped }
+      localStorage.setItem(KEYS.maximizeMinFontSize, JSON.stringify(clamped))
+      return updated
+    })
+  }, [])
+
   const resetAll = useCallback(() => {
     for (const [key, storageKey] of Object.entries(KEYS)) {
       localStorage.setItem(storageKey, JSON.stringify(DEFAULTS[key]))
@@ -144,5 +166,5 @@ export function useDisplaySettings() {
     setSettings(fresh)
   }, [])
 
-  return { settings, updateElement, resetAll }
+  return { settings, updateElement, updateMinFontSize, resetAll }
 }
