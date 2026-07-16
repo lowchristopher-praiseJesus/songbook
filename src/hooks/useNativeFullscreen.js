@@ -11,7 +11,7 @@ export function useNativeFullscreen({ active, onExit }) {
 
   const requestFullscreen = useCallback(() => {
     if (!isSupported) return
-    document.documentElement.requestFullscreen().catch(() => {})
+    document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {})
   }, [isSupported])
 
   const exitFullscreen = useCallback(() => {

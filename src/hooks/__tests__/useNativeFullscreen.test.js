@@ -32,10 +32,11 @@ describe('useNativeFullscreen', () => {
     expect(result.current.isSupported).toBe(false)
   })
 
-  it('calls document.documentElement.requestFullscreen when requestFullscreen() is invoked', () => {
+  it('calls document.documentElement.requestFullscreen with navigationUI hidden when requestFullscreen() is invoked', () => {
     const { result } = renderHook(() => useNativeFullscreen({ active: false, onExit: vi.fn() }))
     act(() => { result.current.requestFullscreen() })
     expect(requestFullscreenMock).toHaveBeenCalledTimes(1)
+    expect(requestFullscreenMock).toHaveBeenCalledWith({ navigationUI: 'hide' })
   })
 
   it('does not call requestFullscreen when unsupported, and does not throw', () => {
