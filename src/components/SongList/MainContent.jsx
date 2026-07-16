@@ -298,7 +298,14 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       {/* Full-viewport maximize overlay */}
       {isFit && activeSong && (
         <div
-          className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col overflow-hidden"
+          data-testid="maximize-overlay"
+          className="fixed inset-0 h-dvh z-50 bg-white dark:bg-gray-900 flex flex-col overflow-hidden"
+          style={{
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingRight: 'env(safe-area-inset-right, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            paddingLeft: 'env(safe-area-inset-left, 0px)',
+          }}
           onTouchStart={annotateMode ? undefined : onTouchStart}
           onTouchEnd={annotateMode ? undefined : onTouchEnd}
         >

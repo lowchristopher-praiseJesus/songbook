@@ -318,4 +318,19 @@ describe('MainContent maximize button', () => {
     expect(screen.queryByLabelText('Exit maximize')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Fit song to screen')).toBeInTheDocument()
   })
+
+  it('sizes the maximize overlay using the dynamic viewport height unit', () => {
+    render(
+      <MainContent
+        onAddToast={vi.fn()}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        lyricsOnly={false}
+        onImportSuccess={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByLabelText('Fit song to screen'))
+    const overlay = screen.getByTestId('maximize-overlay')
+    expect(overlay.className).toMatch(/\bh-dvh\b/)
+  })
 })
