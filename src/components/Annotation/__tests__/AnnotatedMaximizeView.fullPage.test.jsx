@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AnnotatedMaximizeView } from '../AnnotatedMaximizeView'
 import { useAnnotationStore } from '../../../store/annotationStore'
@@ -83,6 +83,10 @@ describe('AnnotatedMaximizeView full-page canvas (frozen/post-annotation branch)
 
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() })))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('renders the title inside the scaled box, alongside the canvas, for a non-paginated frozen baseline', () => {
