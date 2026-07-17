@@ -25,8 +25,11 @@ export function YoutubePlayerBar({
     <div
       className={
         minimized
-          ? 'fixed bottom-0 inset-x-0 z-40 flex items-center justify-between gap-3 px-4 pt-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]'
-          : 'fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+          // z-[55]: above the Maximize (z-50) and Performance (z-50) full-viewport
+          // overlays this bar must stay visible/playing behind — see MainContent,
+          // which renders this player once at a level those overlays don't unmount.
+          ? 'fixed bottom-0 inset-x-0 z-[55] flex items-center justify-between gap-3 px-4 pt-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]'
+          : 'fixed inset-0 z-[60] flex items-center justify-center bg-black/50'
       }
       onClick={minimized ? undefined : onClose}
     >

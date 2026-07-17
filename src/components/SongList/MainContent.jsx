@@ -2,6 +2,8 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon, PencilIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useAnnotationStore } from '../../store/annotationStore'
+import { useYoutubePlayerStore } from '../../store/youtubePlayerStore'
+import { YoutubeSearchModal } from '../YoutubeSearch/YoutubeSearchModal'
 import { AnnotationToolbar } from '../Annotation/AnnotationToolbar'
 import { useDropZone } from '../../hooks/useDropZone'
 import { useFileImport } from '../../hooks/useFileImport'
@@ -31,6 +33,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
   const selectSong = useLibraryStore(s => s.selectSong)
+  const setSongYoutubeVideo = useLibraryStore(s => s.setSongYoutubeVideo)
   const editingSongId = useLibraryStore(s => s.editingSongId)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
   const isCreatingNewSong = useLibraryStore(s => s.isCreatingNewSong)
@@ -74,6 +77,34 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const setUserZoom = useAnnotationStore(s => s.setUserZoom)
   const resetAnnotationZoom = useAnnotationStore(s => s.resetZoom)
   const loadAnnotationsForSong = useAnnotationStore(s => s.loadForSong)
+  // Rendered once, here, rather than inside SongHeader: SongHeader's subtree
+  // gets unmounted when entering Maximize mode (isFit) or is simply covered
+  // by an overlay in Performance mode, so a player owned by it would stop
+  // playing the moment either mode was entered. Keeping it at this level —
+  // which is never unmounted while activeSong stays the same — lets the
+  // video keep playing across both.
+  const ytOpenForSongId = useYoutubePlayerStore(s => s.openForSongId)
+  const ytMinimized = useYoutubePlayerStore(s => s.minimized)
+  const ytMinimize = useYoutubePlayerStore(s => s.minimize)
+  const ytExpand = useYoutubePlayerStore(s => s.expand)
+  const ytClose = useYoutubePlayerStore(s => s.close)
+  const ytOpen = ytOpenForSongId === activeSongId
+
+  useEffect(() => {
+    ytClose()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSongId])
+
+  // Expose the minimized bar's height as a CSS variable on the root so the
+  // lyrics scroll area (in SongList) can reserve bottom padding and keep the
+  // last lines visible above the fixed bottom bar.
+  useEffect(() => {
+    const barVisible = ytOpen && ytMinimized
+    document.documentElement.style.setProperty('--yt-min-bar-h', barVisible ? '3.5rem' : '0px')
+    return () => {
+      document.documentElement.style.setProperty('--yt-min-bar-h', '0px')
+    }
+  }, [ytOpen, ytMinimized])
   const {
     fitFontSize,
     fitColumns,
@@ -667,6 +698,20 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
       {performanceSections && activeSong && (
         <PerformanceModal song={activeSong} sections={performanceSections} navOrder={navOrder} lyricsOnly={lyricsOnly} hideChordDiagram={hideChordDiagram} onClose={handleClosePerformance} />
+      )}
+
+      {activeSong && (
+        <YoutubeSearchModal
+          isOpen={ytOpen}
+          minimized={ytMinimized}
+          onMinimize={ytMinimize}
+          onExpand={ytExpand}
+          onClose={ytClose}
+          title={activeSong.meta.title}
+          artist={activeSong.meta.artist}
+          initialVideoId={activeSong.meta.youtubeVideoId}
+          onVideoPicked={videoId => setSongYoutubeVideo(activeSongId, videoId)}
+        />
       )}
     </main>
   )

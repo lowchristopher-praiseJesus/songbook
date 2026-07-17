@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
-import { useLibraryStore } from '../../store/libraryStore'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
@@ -42,7 +41,6 @@ export function SongList({
   shadowRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
-  const setSongYoutubeVideo = useLibraryStore(s => s.setSongYoutubeVideo)
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
@@ -128,7 +126,6 @@ export function SongList({
                   songId={song.id}
                   recording={recording}
                   onPanelOpen={() => setPanelOpen(true)}
-                  onYoutubeVideoPicked={videoId => setSongYoutubeVideo(song.id, videoId)}
                 />
                 {!lyricsOnly && !hideChordDiagram && (
                   <ChordStrip
@@ -149,8 +146,9 @@ export function SongList({
           ...(isFit && fitFontSize ? { '--fit-fs': `${fitFontSize}px` } : {}),
           // Reserve room above the minimized YouTube bar so the last lyric
           // lines stay scrollable into view. --yt-min-bar-h is 0px unless a
-          // video is minimized (set by SongHeader); the pb-6 above supplies
-          // the base 1.5rem this calc builds on.
+          // video is minimized (set by MainContent, which owns the player so
+          // it survives this song-view subtree remounting); the pb-6 above
+          // supplies the base 1.5rem this calc builds on.
           paddingBottom: 'calc(1.5rem + var(--yt-min-bar-h, 0px))',
         }}
       >
