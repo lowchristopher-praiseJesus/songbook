@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
+import { useAnnotationStore } from '../../store/annotationStore'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
 import { ChordStrip } from '../Chords/ChordStrip'
@@ -13,6 +14,7 @@ import { NamingDialog } from '../Recorder/NamingDialog'
 import { RecordingErrorDialog } from '../Recorder/RecordingErrorDialog'
 import { RecordingsPanel } from '../Recorder/RecordingsPanel'
 import { AnnotatedMaximizeView } from '../Annotation/AnnotatedMaximizeView'
+import { SongTitleBlock } from './SongTitleBlock'
 
 const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
 
@@ -41,6 +43,8 @@ export function SongList({
   shadowRef,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
+  const baseline = useAnnotationStore(s => s.baseline)
+  const effectivePaginated = baseline ? !!baseline.paginated : paginated
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
@@ -152,20 +156,8 @@ export function SongList({
           paddingBottom: 'calc(1.5rem + var(--yt-min-bar-h, 0px))',
         }}
       >
-        {isFit && (
-          <div className="mb-4">
-            <h1
-              className="font-bold leading-tight"
-              style={{ fontFamily: 'var(--title-font)', fontSize: 'var(--title-size)', color: 'var(--title-color-active)' }}
-            >{song.meta.title}</h1>
-            {(song.meta.key || song.meta.tempo) && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {song.meta.key && <span>Key: {song.meta.key}</span>}
-                {song.meta.key && song.meta.tempo && <span className="mx-1.5">·</span>}
-                {song.meta.tempo && <span>BPM: {song.meta.tempo}</span>}
-              </p>
-            )}
-          </div>
+        {isFit && effectivePaginated && (
+          <SongTitleBlock title={song.meta.title} songKey={song.meta.key} tempo={song.meta.tempo} />
         )}
         {isFit ? (
           <AnnotatedMaximizeView
@@ -183,6 +175,9 @@ export function SongList({
             pageColWidth={pageColWidth}
             fitAvailableHeight={fitAvailableHeight}
             containerRef={containerRef}
+            title={song.meta.title}
+            songKey={song.meta.key}
+            tempo={song.meta.tempo}
           />
         ) : (
           <div ref={bodyRef}>
