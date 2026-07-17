@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { getStroke } from 'perfect-freehand'
 import { useAnnotationStore } from '../../store/annotationStore'
-import { MAX_COLS } from '../../hooks/useFitToScreen'
+import { MAX_COLS, COLUMN_GAP_PX } from '../../hooks/useFitToScreen'
 
 // Turns a perfect-freehand outline (array of [x, y]) into a smooth filled
 // Path2D by curving through the midpoint of each consecutive pair.
@@ -131,11 +131,28 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, to
     useAnnotationStore.getState().addStroke(stroke)
     if (!hadBaseline) {
       const canvas = canvasRef.current
+      const isPaginated = paginated && totalColumns && pageColWidth
+      // For a paginated song, this canvas is sized to the FULL multi-page
+      // flow (SongBody's `overlay` slot lives inside its position:relative
+      // inner flow div — see SongBody.jsx) so ink spans and clips per page
+      // correctly. But the frozen baseline box is the single visible PAGE
+      // WINDOW that AnnotatedMaximizeView scales to fit the screen, which is
+      // much narrower than the flow — reading it off canvas.clientWidth
+      // would capture the whole flow's width and make the fit-to-screen
+      // scale computed from it collapse to a fraction, shrinking the song
+      // dramatically the moment the first stroke is drawn. Compute the page
+      // window's own size instead, the same way SongBody derives it.
+      const width = isPaginated
+        ? MAX_COLS * pageColWidth + (MAX_COLS - 1) * COLUMN_GAP_PX
+        : canvas.clientWidth
+      const height = isPaginated
+        ? fitAvailableHeight + 32 // SongBody's outer `py-4`: 16px top + 16px bottom
+        : canvas.clientHeight
       useAnnotationStore.getState().captureBaseline({
         fontSize: fitFontSize,
         columns: fitColumns,
-        width: canvas.clientWidth,
-        height: canvas.clientHeight,
+        width,
+        height,
         paginated,
         totalColumns,
         totalPages: paginated && totalColumns ? Math.ceil(totalColumns / MAX_COLS) : 1,
