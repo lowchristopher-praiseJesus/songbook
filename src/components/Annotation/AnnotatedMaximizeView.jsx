@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { SongBody } from '../SongList/SongBody'
 import { AnnotationLayer } from './AnnotationLayer'
 import { useAnnotationStore } from '../../store/annotationStore'
@@ -55,7 +55,17 @@ export function AnnotatedMaximizeView({
   // wrapper would resolve against an ancestor with no defined height and
   // collapse to 0. Measure the real available space directly against the
   // scrollable containerRef instead, the same way useFitToScreen does.
-  useEffect(() => {
+  //
+  // useLayoutEffect (not useEffect) is required here: this fires the first
+  // time `baseline` goes from null to set, i.e. the exact render where this
+  // component switches from the live branch to this frozen one. A plain
+  // useEffect runs after the browser paints, so that first frame would
+  // paint with the still-default fitScale/availableHeight (1 / 0) — visible
+  // as a one-frame zoom flash right when annotating starts — before the
+  // effect corrects it a moment later. useLayoutEffect computes the correct
+  // values before that first paint, matching how useFitToScreen's own
+  // measurement effect avoids the same class of flash.
+  useLayoutEffect(() => {
     if (!baseline) return
     const container = containerRef?.current
     const outer = outerRef.current
@@ -119,15 +129,17 @@ export function AnnotatedMaximizeView({
           availableHeight={fitAvailableHeight}
           annotationsVisible={annotationsVisible}
           sectionRefs={sectionRefs}
-        />
-        <AnnotationLayer
-          active={annotateMode}
-          fitFontSize={fitFontSize}
-          fitColumns={fitColumns}
-          paginated={paginated}
-          totalColumns={totalColumns}
-          pageColWidth={pageColWidth}
-          fitAvailableHeight={fitAvailableHeight}
+          overlay={
+            <AnnotationLayer
+              active={annotateMode}
+              fitFontSize={fitFontSize}
+              fitColumns={fitColumns}
+              paginated={paginated}
+              totalColumns={totalColumns}
+              pageColWidth={pageColWidth}
+              fitAvailableHeight={fitAvailableHeight}
+            />
+          }
         />
       </div>
     )
@@ -165,8 +177,8 @@ export function AnnotatedMaximizeView({
           pageColWidth={baseline.pageColWidth}
           availableHeight={baseline.availableHeight}
           annotationsVisible={annotationsVisible}
+          overlay={<AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />}
         />
-        <AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />
       </div>
     </div>
   )

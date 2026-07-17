@@ -260,6 +260,7 @@ export function SongBody({
   availableHeight,
   annotationsVisible = true,
   sectionRefs,
+  overlay = null,
 }) {
   if (!sections?.length) return null
 
@@ -281,6 +282,14 @@ export function SongBody({
         <div
           className="transition-transform duration-200 ease-out"
           style={{
+            // `position: relative` makes this div the containing block for
+            // an absolutely positioned overlay (the annotation ink canvas),
+            // so the overlay sizes itself to the full multi-page flow and
+            // slides with the SAME translateX as the content below it —
+            // instead of anchoring to a distant ancestor sized to just one
+            // page, which is what let ink drawn on one page bleed into every
+            // other page.
+            position: 'relative',
             width: `${flowWidth}px`,
             columnWidth: `${pageColWidth}px`,
             columnGap: `${COLUMN_GAP_PX}px`,
@@ -302,6 +311,7 @@ export function SongBody({
               paginated
             />
           ))}
+          {overlay}
         </div>
       </div>
     )
@@ -324,6 +334,7 @@ export function SongBody({
           annotationsVisible={annotationsVisible}
         />
       ))}
+      {overlay}
     </div>
   )
 }
