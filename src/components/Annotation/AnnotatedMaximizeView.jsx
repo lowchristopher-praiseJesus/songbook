@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { SongBody } from '../SongList/SongBody'
 import { AnnotationLayer } from './AnnotationLayer'
+import { SongTitleBlock } from '../SongList/SongTitleBlock'
 import { useAnnotationStore } from '../../store/annotationStore'
 
 function clampPan(pan, scale, baseline, container) {
@@ -39,6 +40,9 @@ export function AnnotatedMaximizeView({
   pageColWidth,
   fitAvailableHeight,
   containerRef,
+  title,
+  songKey,
+  tempo,
 }) {
   const baseline = useAnnotationStore(s => s.baseline)
   const annotateMode = useAnnotationStore(s => s.annotateMode)
@@ -143,32 +147,70 @@ export function AnnotatedMaximizeView({
   }, [annotateMode, userZoom, baseline, pan, fitScale, setPan])
 
   if (!baseline) {
+    if (paginated) {
+      return (
+        <div ref={bodyRef} className="relative">
+          <SongBody
+            sections={sections}
+            fontSize={fontSize}
+            lyricsOnly={lyricsOnly}
+            fitMode={fitFontSize !== null}
+            fitColumns={fitColumns}
+            paginated={paginated}
+            totalColumns={totalColumns}
+            currentPage={currentPage}
+            pageColWidth={pageColWidth}
+            availableHeight={fitAvailableHeight}
+            annotationsVisible={annotationsVisible}
+            sectionRefs={sectionRefs}
+            overlay={
+              <AnnotationLayer
+                active={annotateMode}
+                fitFontSize={fitFontSize}
+                fitColumns={fitColumns}
+                paginated={paginated}
+                totalColumns={totalColumns}
+                pageColWidth={pageColWidth}
+                fitAvailableHeight={fitAvailableHeight}
+              />
+            }
+          />
+        </div>
+      )
+    }
+    // Non-paginated: the ink canvas covers the title AND the lyrics
+    // together (instead of being nested inside SongBody's own overlay
+    // slot, which only wraps the lyrics), so the whole visible page is one
+    // annotatable surface. `bodyRef` stays on the SongBody-only div below —
+    // useFitToScreen's height math depends on its position being exactly
+    // where the lyrics content starts, not the top of the title.
     return (
-      <div ref={bodyRef} className="relative">
-        <SongBody
-          sections={sections}
-          fontSize={fontSize}
-          lyricsOnly={lyricsOnly}
-          fitMode={fitFontSize !== null}
+      <div className="relative">
+        <SongTitleBlock title={title} songKey={songKey} tempo={tempo} />
+        <div ref={bodyRef}>
+          <SongBody
+            sections={sections}
+            fontSize={fontSize}
+            lyricsOnly={lyricsOnly}
+            fitMode={fitFontSize !== null}
+            fitColumns={fitColumns}
+            paginated={paginated}
+            totalColumns={totalColumns}
+            currentPage={currentPage}
+            pageColWidth={pageColWidth}
+            availableHeight={fitAvailableHeight}
+            annotationsVisible={annotationsVisible}
+            sectionRefs={sectionRefs}
+          />
+        </div>
+        <AnnotationLayer
+          active={annotateMode}
+          fitFontSize={fitFontSize}
           fitColumns={fitColumns}
           paginated={paginated}
           totalColumns={totalColumns}
-          currentPage={currentPage}
           pageColWidth={pageColWidth}
-          availableHeight={fitAvailableHeight}
-          annotationsVisible={annotationsVisible}
-          sectionRefs={sectionRefs}
-          overlay={
-            <AnnotationLayer
-              active={annotateMode}
-              fitFontSize={fitFontSize}
-              fitColumns={fitColumns}
-              paginated={paginated}
-              totalColumns={totalColumns}
-              pageColWidth={pageColWidth}
-              fitAvailableHeight={fitAvailableHeight}
-            />
-          }
+          fitAvailableHeight={fitAvailableHeight}
         />
       </div>
     )

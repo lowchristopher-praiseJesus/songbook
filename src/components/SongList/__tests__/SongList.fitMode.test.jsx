@@ -182,4 +182,56 @@ describe('SongList fitMode', () => {
     expect(flow).not.toBeNull()
     expect(flow.style.transform).toBe('translateX(-1392px)')
   })
+
+  it('does not render the title itself for a non-paginated song (delegates to AnnotatedMaximizeView)', () => {
+    const { queryByRole } = render(
+      <SongList
+        song={song}
+        onPerformanceMode={vi.fn()}
+        lyricsOnly={false}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        chordsOpen={true}
+        onChordsToggle={vi.fn()}
+        onEdit={vi.fn()}
+        isFit={true}
+        containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={2}
+        paginated={false}
+        shadowRef={{ current: null }}
+      />
+    )
+    // AnnotatedMaximizeView renders it instead, with the same text — but not
+    // inside SongList's own top-level wrapper.
+    expect(queryByRole('heading', { name: 'Test' })).not.toBeNull()
+  })
+
+  it('renders the title itself for a paginated song (unchanged path)', () => {
+    const { getAllByRole } = render(
+      <SongList
+        song={song}
+        onPerformanceMode={vi.fn()}
+        lyricsOnly={false}
+        fontSize={16}
+        onFontSizeChange={vi.fn()}
+        chordsOpen={true}
+        onChordsToggle={vi.fn()}
+        onEdit={vi.fn()}
+        isFit={true}
+        containerRef={containerRef}
+        bodyRef={{ current: null }}
+        fitFontSize={20}
+        fitColumns={3}
+        paginated={true}
+        totalColumns={7}
+        currentPage={0}
+        pageColWidth={200}
+        fitAvailableHeight={600}
+        shadowRef={{ current: null }}
+      />
+    )
+    expect(getAllByRole('heading', { name: 'Test' })).toHaveLength(1)
+  })
 })
