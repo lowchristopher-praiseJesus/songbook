@@ -13,6 +13,7 @@ function renderIt(props = {}) {
       onExpand={vi.fn()}
       onSearchAgain={vi.fn()}
       onBackToResults={vi.fn()}
+      onRemove={vi.fn()}
       onClose={vi.fn()}
       {...props}
     />,
@@ -135,6 +136,23 @@ describe('YoutubePlayerBar', () => {
     )
     const iframeAfterExpand = screen.getByTitle('YouTube video player')
     expect(iframeAfterExpand).toBe(iframeBefore)
+  })
+
+  it('shows a Remove button in the full-modal variant and calls onRemove when clicked', () => {
+    const onRemove = vi.fn()
+    renderIt({ onRemove })
+    fireEvent.click(screen.getByRole('button', { name: /Remove/i }))
+    expect(onRemove).toHaveBeenCalledOnce()
+  })
+
+  it('hides the Remove button when onRemove is not provided', () => {
+    renderIt({ onRemove: undefined })
+    expect(screen.queryByRole('button', { name: /Remove/i })).not.toBeInTheDocument()
+  })
+
+  it('hides the Remove button in the minimized variant', () => {
+    renderIt({ minimized: true })
+    expect(screen.queryByRole('button', { name: /Remove/i })).not.toBeInTheDocument()
   })
 
   it('closes on Escape in the full-modal variant', () => {

@@ -191,6 +191,15 @@ describe('YoutubeSearchModal', () => {
     expect(screen.queryByTitle('YouTube video player')).not.toBeInTheDocument()
   })
 
+  it('clicking Remove clears the video, calls onVideoPicked(null), and closes', () => {
+    const onVideoPicked = vi.fn()
+    const onClose = vi.fn()
+    renderIt({ initialVideoId: 'abc12345678', onVideoPicked, onClose })
+    fireEvent.click(screen.getByRole('button', { name: /Remove/i }))
+    expect(onVideoPicked).toHaveBeenCalledWith(null)
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   describe('minimize / expand', () => {
     it('shows a minimize button while playing', () => {
       renderIt({ initialVideoId: 'abc12345678' })

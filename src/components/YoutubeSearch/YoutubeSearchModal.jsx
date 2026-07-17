@@ -103,6 +103,13 @@ export function YoutubeSearchModal({
     setStatus('results')
   }
 
+  function handleRemove() {
+    onVideoPicked(null)
+    setVideoId(null)
+    setStatus('idle')
+    onClose?.()
+  }
+
   if (!isOpen) return null
 
   if (status === 'playing' && videoId) {
@@ -116,6 +123,7 @@ export function YoutubeSearchModal({
         onExpand={onExpand}
         onSearchAgain={handleSearchAgain}
         onBackToResults={handleBackToResults}
+        onRemove={handleRemove}
         onClose={onClose}
       />
     )

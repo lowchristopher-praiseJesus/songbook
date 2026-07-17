@@ -10,6 +10,7 @@ export function YoutubePlayerBar({
   onExpand,
   onSearchAgain,
   onBackToResults,
+  onRemove,
   onClose,
 }) {
   useEffect(() => {
@@ -86,14 +87,26 @@ export function YoutubePlayerBar({
                 ← Search again
               </button>
             </div>
-            <a
-              href={`https://www.youtube.com/watch?v=${videoId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 dark:text-gray-400 hover:underline"
-            >
-              Open on YouTube ↗
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href={`https://www.youtube.com/watch?v=${videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 dark:text-gray-400 hover:underline"
+              >
+                Open on YouTube ↗
+              </a>
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={onRemove}
+                  aria-label="Remove video from song"
+                  className="text-red-500 hover:underline"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
         )}
 
