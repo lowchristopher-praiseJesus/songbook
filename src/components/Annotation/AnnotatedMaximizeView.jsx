@@ -65,12 +65,34 @@ export function AnnotatedMaximizeView({
   // effect corrects it a moment later. useLayoutEffect computes the correct
   // values before that first paint, matching how useFitToScreen's own
   // measurement effect avoids the same class of flash.
+  //
+  // `containerRef` is a prop attached to a DOM node several components up
+  // the tree (SongView), not by this component — but React fires layout
+  // effects bottom-up (children before parents). On a fresh mount where
+  // this component's own outerRef AND that ancestor's containerRef are
+  // BOTH being attached within the same commit (e.g. entering maximize mode
+  // directly on an already-annotated song, so this component is born
+  // straight into the baseline branch instead of transitioning into it
+  // while already mounted), this effect can run before SongView's own
+  // commit step has attached containerRef.current yet. The synchronous
+  // measure() below then silently no-ops against a still-null container,
+  // and — since the resulting availableHeight of 0 doesn't come from an
+  // actual container resize — no ResizeObserver callback ever fires
+  // afterward to correct it, leaving the song permanently blank until
+  // something else (e.g. navigating to another song and back) forces a
+  // fresh mount that happens to race the timing differently. Re-running
+  // once more on the next animation frame — by which point the whole
+  // commit, including the ancestor's ref attachment, has long since
+  // settled — catches and corrects that case.
   useLayoutEffect(() => {
     if (!baseline) return
-    const container = containerRef?.current
     const outer = outerRef.current
-    if (!container || !outer) return
+    if (!outer) return
+
+    let observer = null
     const measure = () => {
+      const container = containerRef?.current
+      if (!container) return
       const containerRect = container.getBoundingClientRect()
       const outerRect = outer.getBoundingClientRect()
       const outerTopInContainer = outerRect.top - containerRect.top + container.scrollTop
@@ -78,11 +100,18 @@ export function AnnotatedMaximizeView({
       setAvailableHeight(height)
       const scale = Math.min(outer.clientWidth / baseline.width, height / baseline.height)
       setFitScale(scale > 0 && isFinite(scale) ? scale : 1)
+      if (!observer) {
+        observer = new ResizeObserver(measure)
+        observer.observe(container)
+      }
     }
     measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(container)
-    return () => observer.disconnect()
+    const rafId = requestAnimationFrame(measure)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (observer) observer.disconnect()
+    }
   }, [baseline, containerRef])
 
   // Re-clamp pan whenever the effective scale changes (window resize, zoom
