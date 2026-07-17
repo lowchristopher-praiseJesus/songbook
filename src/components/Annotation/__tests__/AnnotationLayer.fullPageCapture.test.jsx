@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, screen } from '@testing-library/react'
 import { AnnotatedMaximizeView } from '../AnnotatedMaximizeView'
 import { useAnnotationStore } from '../../../store/annotationStore'
 
@@ -53,7 +53,17 @@ describe('Baseline capture covers the full title+lyrics page for non-paginated s
         tempo={120}
       />
     )
-    drawOneStroke(container.querySelector('canvas'))
+    // Prove the canvas that fires the stroke event is structurally
+    // positioned as a sibling covering the title+lyrics wrapper, not
+    // nested inside SongBody's lyrics-only overlay slot. Without this,
+    // the clientHeight stub above (applied to the whole prototype) can't
+    // distinguish the fixed layout from the pre-fix nested layout.
+    const outer = container.firstChild
+    const canvas = container.querySelector('canvas')
+    expect(canvas.parentElement).toBe(outer)
+    expect(outer.contains(screen.getByRole('heading', { name: 'Amazing Grace' }))).toBe(true)
+
+    drawOneStroke(canvas)
 
     const baseline = useAnnotationStore.getState().baseline
     expect(baseline).not.toBeNull()
