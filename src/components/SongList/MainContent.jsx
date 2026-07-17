@@ -666,7 +666,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       </Modal>
 
       {performanceSections && activeSong && (
-        <PerformanceModal song={activeSong} sections={performanceSections} lyricsOnly={lyricsOnly} hideChordDiagram={hideChordDiagram} onClose={handleClosePerformance} />
+        <PerformanceModal song={activeSong} sections={performanceSections} navOrder={navOrder} lyricsOnly={lyricsOnly} hideChordDiagram={hideChordDiagram} onClose={handleClosePerformance} />
       )}
     </main>
   )

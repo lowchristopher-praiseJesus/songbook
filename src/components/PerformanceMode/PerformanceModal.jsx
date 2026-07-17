@@ -9,8 +9,7 @@ import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
 import { formatDuration } from '../../lib/formatDuration'
 
-export function PerformanceModal({ song: initialSong, sections: initialSections, lyricsOnly = false, hideChordDiagram = false, onClose }) {
-  const index = useLibraryStore(s => s.index)
+export function PerformanceModal({ song: initialSong, sections: initialSections, navOrder = [], lyricsOnly = false, hideChordDiagram = false, onClose }) {
   const selectSong = useLibraryStore(s => s.selectSong)
 
   // Local state so swipe navigation updates both song metadata and content
@@ -34,9 +33,9 @@ export function PerformanceModal({ song: initialSong, sections: initialSections,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song.id])
 
-  const currentIdx = index.findIndex(e => e.id === song.id)
-  const prevEntry = currentIdx > 0 ? index[currentIdx - 1] : null
-  const nextEntry = currentIdx < index.length - 1 ? index[currentIdx + 1] : null
+  const currentIdx = navOrder.findIndex(e => e.id === song.id)
+  const prevEntry = currentIdx > 0 ? navOrder[currentIdx - 1] : null
+  const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
 
   const goNext = useCallback(() => {
     if (!nextEntry) return

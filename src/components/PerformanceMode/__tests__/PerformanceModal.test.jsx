@@ -2,6 +2,21 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PerformanceModal } from '../PerformanceModal'
 
+// The global library index deliberately has a DIFFERENT order than the
+// collection navOrder, so a test that regresses to using the raw index
+// (instead of the collection-scoped navOrder) will land on 'Song B'
+// instead of 'Song C'.
+vi.mock('../../../store/libraryStore', () => ({
+  useLibraryStore: (sel) => sel({
+    index: [
+      { id: 'song-a', title: 'Song A' },
+      { id: 'song-b', title: 'Song B' },
+      { id: 'song-c', title: 'Song C' },
+    ],
+    selectSong: vi.fn(),
+  }),
+}))
+
 // Minimal song fixture matching the activeSong shape
 const mockSong = {
   id: 'test-song-1',
@@ -99,6 +114,37 @@ describe('PerformanceModal', () => {
     expect(screen.getByText('Amazing Grace')).toBeInTheDocument()
     // No artist text
     expect(screen.queryByText('John Newton')).not.toBeInTheDocument()
+  })
+
+  it('navigates using the collection-scoped navOrder, not the global library index', () => {
+    const songA = { ...mockSong, id: 'song-a', meta: { ...mockSong.meta, title: 'Song A' } }
+    const songC = {
+      ...mockSong,
+      id: 'song-c',
+      meta: { ...mockSong.meta, title: 'Song C' },
+    }
+    localStorage.setItem('songsheet_song_song-c', JSON.stringify(songC))
+
+    // Collection order skips 'Song B' entirely — next after A should be C,
+    // even though the global index has B in between.
+    const navOrder = [
+      { id: 'song-a', title: 'Song A' },
+      { id: 'song-c', title: 'Song C' },
+    ]
+
+    render(
+      <PerformanceModal
+        song={songA}
+        sections={songA.sections}
+        navOrder={navOrder}
+        onClose={onClose}
+      />
+    )
+
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+
+    expect(screen.getByText('Song C')).toBeInTheDocument()
+    expect(screen.queryByText('Song B')).not.toBeInTheDocument()
   })
 
   it('cleans up keydown listener on unmount', () => {
