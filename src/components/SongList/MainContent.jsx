@@ -220,6 +220,21 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   // actually reporting on the song we currently care about before we trust
   // totalPages/settled at all.
   useEffect(() => {
+    // When the active song has a captured annotation baseline,
+    // useFitToScreen is disabled (see above) and its `settled`/measuredSongId
+    // never fire for this song — they'd otherwise gate this effect forever,
+    // leaving currentPage stuck at whatever the previously active song left
+    // it on (e.g. "Page 4 of 2" after swiping from a 4-page song into a
+    // 2-page one). Reset/land using the baseline's own totalPages instead.
+    if (annotationBaseline) {
+      if (landOnLastPageRef.current === activeSongId) {
+        setCurrentPage(Math.max(0, (annotationBaseline.totalPages ?? 1) - 1))
+        landOnLastPageRef.current = null
+      } else {
+        setCurrentPage(0)
+      }
+      return
+    }
     if (!settled || measuredSongId !== activeSongId) return
     if (landOnLastPageRef.current === activeSongId) {
       setCurrentPage(Math.max(0, totalPages - 1))
@@ -227,7 +242,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     } else {
       setCurrentPage(0)
     }
-  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled, measuredSongId])
+  }, [activeSongId, lyricsOnly, totalPages, fitFontSize, settled, measuredSongId, annotationBaseline])
 
   function showHint(title, direction) {
     clearTimeout(hintTimerRef.current)
