@@ -236,6 +236,9 @@ export function AnnotatedMaximizeView({
           cursor: !annotateMode && userZoom > 1 ? 'grab' : 'default',
         }}
       >
+        {!baseline.paginated && (
+          <SongTitleBlock title={title} songKey={songKey} tempo={tempo} />
+        )}
         <SongBody
           sections={sections}
           fontSize={fontSize}
@@ -248,8 +251,15 @@ export function AnnotatedMaximizeView({
           pageColWidth={baseline.pageColWidth}
           availableHeight={baseline.availableHeight}
           annotationsVisible={annotationsVisible}
-          overlay={<AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />}
+          overlay={
+            baseline.paginated
+              ? <AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />
+              : undefined
+          }
         />
+        {!baseline.paginated && (
+          <AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />
+        )}
       </div>
     </div>
   )
