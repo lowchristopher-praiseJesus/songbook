@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { getStroke } from 'perfect-freehand'
 import { useAnnotationStore } from '../../store/annotationStore'
+import { MAX_COLS } from '../../hooks/useFitToScreen'
 
 // Turns a perfect-freehand outline (array of [x, y]) into a smooth filled
 // Path2D by curving through the midpoint of each consecutive pair.
@@ -31,7 +32,7 @@ function paintStroke(ctx, stroke) {
  * coordinates are plain CSS pixels in that box's own untransformed space, so
  * they stay valid under any ancestor CSS scale (fit-to-screen or optical zoom).
  */
-export function AnnotationLayer({ active, fitFontSize, fitColumns }) {
+export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, totalColumns, pageColWidth, fitAvailableHeight }) {
   const canvasRef = useRef(null)
   const drawingRef = useRef(false)
   const liveStrokeRef = useRef(null)
@@ -135,6 +136,11 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns }) {
         columns: fitColumns,
         width: canvas.clientWidth,
         height: canvas.clientHeight,
+        paginated,
+        totalColumns,
+        totalPages: paginated && totalColumns ? Math.ceil(totalColumns / MAX_COLS) : 1,
+        pageColWidth,
+        availableHeight: fitAvailableHeight,
       })
     }
   }

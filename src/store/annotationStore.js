@@ -58,9 +58,16 @@ export const useAnnotationStore = create((set, get) => ({
 
   // Sets the frozen-layout baseline the first time a song is annotated.
   // No-op if a baseline already exists — it's immutable until reset.
-  captureBaseline({ fontSize, columns, width, height }) {
+  // Snapshots the live pagination shape (paginated/totalColumns/totalPages/
+  // pageColWidth/availableHeight) alongside fontSize/columns: once the
+  // baseline exists, MainContent disables useFitToScreen (its measurement
+  // would otherwise fight the frozen box), which resets the hook's own
+  // pagination state to its "off" defaults. Without this snapshot, that
+  // reset silently collapses a multi-page song to a single page and breaks
+  // in-song navigation.
+  captureBaseline({ fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight }) {
     if (get().baseline) return
-    set({ baseline: { fontSize, columns, width, height } })
+    set({ baseline: { fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight } })
     schedulePersist(get)
   },
 

@@ -91,6 +91,15 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     measuredSongId,
   } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId, minFontSize: maximizeMinFontSize })
 
+  // Once an annotation baseline is captured, useFitToScreen is disabled (see
+  // above) and its own pagination state collapses to the "off" defaults
+  // (totalPages: 1, paginated: false) — it's no longer measuring anything.
+  // Pagination for a frozen/annotated song instead comes from the snapshot
+  // captureBaseline took of the live fit result at the moment of the first
+  // stroke, so in-song page navigation keeps working after annotating.
+  const effectivePaginated = annotationBaseline ? !!annotationBaseline.paginated : paginated
+  const effectiveTotalPages = annotationBaseline ? (annotationBaseline.totalPages ?? 1) : totalPages
+
   // Keep the annotation layer's stroke/baseline data in sync with whichever
   // song is active, regardless of whether Maximize mode is currently open.
   useEffect(() => {
@@ -208,7 +217,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   }
 
   const goNext = useCallback(() => {
-    if (isFit && totalPages > 1 && currentPage < totalPages - 1) {
+    if (isFit && effectiveTotalPages > 1 && currentPage < effectiveTotalPages - 1) {
       setCurrentPage(p => p + 1)
       return
     }
@@ -218,10 +227,10 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     selectSong(nextEntry.id)
     showHint(nextEntry.title, 'left')
     dismissSwipeHint()
-  }, [isFit, totalPages, currentPage, nextEntry, selectSong])
+  }, [isFit, effectiveTotalPages, currentPage, nextEntry, selectSong])
 
   const goPrev = useCallback(() => {
-    if (isFit && totalPages > 1 && currentPage > 0) {
+    if (isFit && effectiveTotalPages > 1 && currentPage > 0) {
       setCurrentPage(p => p - 1)
       return
     }
@@ -231,7 +240,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     selectSong(prevEntry.id)
     showHint(prevEntry.title, 'right')
     dismissSwipeHint()
-  }, [isFit, totalPages, currentPage, prevEntry, selectSong])
+  }, [isFit, effectiveTotalPages, currentPage, prevEntry, selectSong])
 
   const { onTouchStart, onTouchEnd } = useSwipeNavigation({
     onSwipeLeft: goNext,
@@ -442,7 +451,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
             />
           </div>
 
-          {paginated && totalPages > 1 && (
+          {effectivePaginated && effectiveTotalPages > 1 && (
             <div
               data-testid="page-indicator"
               className="pointer-events-none fixed bottom-20 left-1/2 -translate-x-1/2
@@ -450,7 +459,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
                 text-white dark:text-gray-900 text-xs font-medium
                 z-30 whitespace-nowrap select-none"
             >
-              Page {currentPage + 1} of {totalPages}
+              Page {currentPage + 1} of {effectiveTotalPages}
             </div>
           )}
         </div>

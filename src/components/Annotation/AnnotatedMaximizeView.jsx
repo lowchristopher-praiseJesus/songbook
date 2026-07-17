@@ -120,7 +120,15 @@ export function AnnotatedMaximizeView({
           annotationsVisible={annotationsVisible}
           sectionRefs={sectionRefs}
         />
-        <AnnotationLayer active={annotateMode} fitFontSize={fitFontSize} fitColumns={fitColumns} />
+        <AnnotationLayer
+          active={annotateMode}
+          fitFontSize={fitFontSize}
+          fitColumns={fitColumns}
+          paginated={paginated}
+          totalColumns={totalColumns}
+          pageColWidth={pageColWidth}
+          fitAvailableHeight={fitAvailableHeight}
+        />
       </div>
     )
   }
@@ -151,6 +159,11 @@ export function AnnotatedMaximizeView({
           lyricsOnly={lyricsOnly}
           fitMode
           fitColumns={baseline.columns}
+          paginated={baseline.paginated}
+          totalColumns={baseline.totalColumns}
+          currentPage={currentPage}
+          pageColWidth={baseline.pageColWidth}
+          availableHeight={baseline.availableHeight}
           annotationsVisible={annotationsVisible}
         />
         <AnnotationLayer active={annotateMode} fitFontSize={baseline.fontSize} fitColumns={baseline.columns} />
