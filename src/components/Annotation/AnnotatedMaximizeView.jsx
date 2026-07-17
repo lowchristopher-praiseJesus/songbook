@@ -53,6 +53,8 @@ export function AnnotatedMaximizeView({
   const outerRef = useRef(null)
   const [fitScale, setFitScale] = useState(1)
   const [availableHeight, setAvailableHeight] = useState(0)
+  const liveWrapperRef = useRef(null)
+  const [liveMinHeight, setLiveMinHeight] = useState(0)
 
   // The maximize overlay's content column is auto-height (sized to fit its
   // children), not a flex/grid item — so a plain `height: 100%` on this
@@ -117,6 +119,42 @@ export function AnnotatedMaximizeView({
       if (observer) observer.disconnect()
     }
   }, [baseline, containerRef])
+
+  // Before any ink exists on a non-paginated song, stretch the live wrapper's
+  // min-height to reach the bottom of the scrollable container — otherwise
+  // the wrapper (and the AnnotationLayer canvas absolutely positioned inside
+  // it) is only as tall as the title + lyrics content, leaving the rest of
+  // the visible page below a short song un-annotatable. Same measurement
+  // technique as the frozen branch's own `measure()` above (and
+  // useFitToScreen's getAvailableHeight()): container height minus this
+  // element's own top offset within the container.
+  useLayoutEffect(() => {
+    if (baseline || paginated) return
+    const wrapper = liveWrapperRef.current
+    if (!wrapper) return
+
+    let observer = null
+    const measure = () => {
+      const container = containerRef?.current
+      if (!container) return
+      const containerRect = container.getBoundingClientRect()
+      const wrapperRect = wrapper.getBoundingClientRect()
+      const wrapperTopInContainer = wrapperRect.top - containerRect.top + container.scrollTop
+      const height = Math.max(0, container.clientHeight - wrapperTopInContainer)
+      setLiveMinHeight(height)
+      if (!observer) {
+        observer = new ResizeObserver(measure)
+        observer.observe(container)
+      }
+    }
+    measure()
+    const rafId = requestAnimationFrame(measure)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (observer) observer.disconnect()
+    }
+  }, [baseline, paginated, containerRef])
 
   // Re-clamp pan whenever the effective scale changes (window resize, zoom
   // level change) so content can't get stranded off-screen.
@@ -185,7 +223,7 @@ export function AnnotatedMaximizeView({
     // useFitToScreen's height math depends on its position being exactly
     // where the lyrics content starts, not the top of the title.
     return (
-      <div className="relative">
+      <div ref={liveWrapperRef} className="relative" style={{ minHeight: `${liveMinHeight}px` }}>
         <SongTitleBlock title={title} songKey={songKey} tempo={tempo} />
         <div ref={bodyRef}>
           <SongBody

@@ -46,6 +46,50 @@ describe('AnnotatedMaximizeView full-page canvas (live/pre-annotation branch)', 
     expect(outer.contains(screen.getByRole('heading', { name: 'Amazing Grace' }))).toBe(true)
   })
 
+  it('stretches the non-paginated live wrapper to fill the remaining container height below the title', () => {
+    const containerRef = { current: { clientHeight: 900, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) } }
+    const { container } = render(
+      <AnnotatedMaximizeView
+        sections={sections}
+        fontSize={16}
+        lyricsOnly={false}
+        annotationsVisible={true}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={2}
+        paginated={false}
+        containerRef={containerRef}
+        title="Amazing Grace"
+      />
+    )
+    const outer = container.firstChild
+    expect(outer.style.minHeight).toBe('900px')
+  })
+
+  it('does not stretch the wrapper for a paginated song (unchanged)', () => {
+    const containerRef = { current: { clientHeight: 900, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) } }
+    const { container } = render(
+      <AnnotatedMaximizeView
+        sections={sections}
+        fontSize={16}
+        lyricsOnly={false}
+        annotationsVisible={true}
+        bodyRef={{ current: null }}
+        fitFontSize={18}
+        fitColumns={3}
+        paginated={true}
+        totalColumns={7}
+        currentPage={0}
+        pageColWidth={200}
+        fitAvailableHeight={600}
+        containerRef={containerRef}
+        title="Amazing Grace"
+      />
+    )
+    const outer = container.firstChild
+    expect(outer.style.minHeight).toBe('')
+  })
+
   it('does not render a title and keeps the canvas inside SongBody for a paginated song (unchanged)', () => {
     const { container } = render(
       <AnnotatedMaximizeView
