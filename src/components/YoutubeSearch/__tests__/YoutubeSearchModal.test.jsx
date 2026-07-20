@@ -81,6 +81,20 @@ describe('YoutubeSearchModal', () => {
     )
   })
 
+  it('starts playback at the timestamp from a pasted link with a t= param', async () => {
+    const onVideoPicked = vi.fn()
+    searchYoutube.mockResolvedValue([])
+    renderIt({ onVideoPicked })
+    const input = screen.getByPlaceholderText(/paste a YouTube link/i)
+    fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=x_ekj3IOvT8&t=580s' } })
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+
+    expect(onVideoPicked).toHaveBeenCalledWith('x_ekj3IOvT8')
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/x_ekj3IOvT8?start=580',
+    )
+  })
+
   it('plays a youtu.be short link directly without searching', async () => {
     const onVideoPicked = vi.fn()
     searchYoutube.mockResolvedValue([])

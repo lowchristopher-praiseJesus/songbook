@@ -2,18 +2,19 @@ import { firecrawlSearch } from '../ugImport/firecrawlClient'
 
 const YT_WATCH_URL_RE = /[?&]v=([\w-]{11})/
 const YT_ID_RE = /^[\w-]{11}$/
+const YT_TIME_RE = /^(\d+h)?(\d+m)?(\d+s)?$/i
 
 function cleanTitle(title) {
   return (title ?? '').replace(/\s*-\s*YouTube\s*$/i, '').trim()
 }
 
 /**
- * If `input` is a YouTube link (watch / youtu.be / shorts / embed / live),
- * return the 11-character video id. Otherwise return null — meaning the
- * input is a plain search phrase and should go through searchYoutube.
- * Accepts urls with or without a scheme, and tolerates surrounding whitespace.
+ * Parse `input` as a YouTube URL (watch / youtu.be / shorts / embed / live).
+ * Returns the parsed URL, or null if it isn't a YouTube link — meaning the
+ * input is a plain search phrase. Accepts urls with or without a scheme, and
+ * tolerates surrounding whitespace.
  */
-export function parseYouTubeVideoId(input) {
+function parseYouTubeUrl(input) {
   const raw = (input ?? '').trim()
   if (!raw) return null
 
@@ -28,8 +29,18 @@ export function parseYouTubeVideoId(input) {
 
   const host = url.hostname.toLowerCase()
   const isYouTube = host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')
-  if (!isYouTube) return null
+  return isYouTube ? url : null
+}
 
+/**
+ * If `input` is a YouTube link, return the 11-character video id.
+ * Otherwise return null.
+ */
+export function parseYouTubeVideoId(input) {
+  const url = parseYouTubeUrl(input)
+  if (!url) return null
+
+  const host = url.hostname.toLowerCase()
   if (host === 'youtu.be') {
     const id = url.pathname.split('/').filter(Boolean)[0]
     return YT_ID_RE.test(id ?? '') ? id : null
@@ -46,6 +57,27 @@ export function parseYouTubeVideoId(input) {
     return YT_ID_RE.test(id) ? id : null
   }
   return null
+}
+
+/**
+ * If `input` is a YouTube link carrying a start time (`t=` or `start=`,
+ * either plain seconds like `580`/`580s` or YouTube's `1h2m3s` shorthand),
+ * return that time in whole seconds. Otherwise return null.
+ */
+export function parseYouTubeStartSeconds(input) {
+  const url = parseYouTubeUrl(input)
+  if (!url) return null
+
+  const t = url.searchParams.get('t') ?? url.searchParams.get('start')
+  if (!t) return null
+  if (/^\d+$/.test(t)) return parseInt(t, 10)
+
+  const match = YT_TIME_RE.exec(t)
+  if (!match || !(match[1] || match[2] || match[3])) return null
+  const hours = parseInt(match[1] ?? '0', 10)
+  const minutes = parseInt(match[2] ?? '0', 10)
+  const seconds = parseInt(match[3] ?? '0', 10)
+  return hours * 3600 + minutes * 60 + seconds
 }
 
 /**

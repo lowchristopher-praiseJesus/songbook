@@ -5,7 +5,7 @@ vi.mock('../../ugImport/firecrawlClient', () => ({
 }))
 
 import { firecrawlSearch } from '../../ugImport/firecrawlClient'
-import { searchYoutube, parseYouTubeVideoId } from '../youtubeClient'
+import { searchYoutube, parseYouTubeVideoId, parseYouTubeStartSeconds } from '../youtubeClient'
 
 describe('searchYoutube', () => {
   beforeEach(() => {
@@ -83,5 +83,29 @@ describe('parseYouTubeVideoId', () => {
     ['empty string', ''],
   ])('returns null for %s', (_label, input) => {
     expect(parseYouTubeVideoId(input)).toBeNull()
+  })
+})
+
+describe('parseYouTubeStartSeconds', () => {
+  it.each([
+    ['plain seconds', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=580s', 580],
+    ['plain seconds with no s suffix', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=580', 580],
+    ['minutes and seconds shorthand', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=9m40s', 580],
+    ['hours minutes seconds shorthand', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1h2m3s', 3723],
+    ['minutes only shorthand', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=2m', 120],
+    ['youtu.be with a timestamp', 'https://youtu.be/dQw4w9WgXcQ?t=30', 30],
+    ['start= param instead of t=', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=45', 45],
+    ['no scheme', 'youtube.com/watch?v=dQw4w9WgXcQ&t=580s', 580],
+  ])('extracts the start time from a %s', (_label, input, expected) => {
+    expect(parseYouTubeStartSeconds(input)).toBe(expected)
+  })
+
+  it.each([
+    ['a watch url with no timestamp', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'],
+    ['a plain search phrase', 'El Shaddai Amy Grant'],
+    ['a non-youtube url', 'https://vimeo.com/12345?t=30'],
+    ['empty string', ''],
+  ])('returns null for %s', (_label, input) => {
+    expect(parseYouTubeStartSeconds(input)).toBeNull()
   })
 })

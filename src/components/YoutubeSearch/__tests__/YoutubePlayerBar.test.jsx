@@ -28,6 +28,20 @@ describe('YoutubePlayerBar', () => {
     )
   })
 
+  it('appends a start param to the embed src when startSeconds is given', () => {
+    renderIt({ startSeconds: 580 })
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678?start=580',
+    )
+  })
+
+  it('omits the start param when startSeconds is not given', () => {
+    renderIt()
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678',
+    )
+  })
+
   it('shows dialog controls in the full-modal variant', () => {
     renderIt()
     expect(screen.getByRole('button', { name: /^Search again/i })).toBeInTheDocument()

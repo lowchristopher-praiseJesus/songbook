@@ -3,6 +3,7 @@ import { MinusSmallIcon } from '@heroicons/react/24/outline'
 
 export function YoutubePlayerBar({
   videoId,
+  startSeconds,
   label,
   minimized,
   hasResults,
@@ -56,7 +57,7 @@ export function YoutubePlayerBar({
         <iframe
           title="YouTube video player"
           aria-hidden={minimized}
-          src={`https://www.youtube.com/embed/${videoId}`}
+          src={`https://www.youtube.com/embed/${videoId}${startSeconds ? `?start=${startSeconds}` : ''}`}
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen={!minimized}
           className={

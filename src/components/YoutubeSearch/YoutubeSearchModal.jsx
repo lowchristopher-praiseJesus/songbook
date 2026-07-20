@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
 import { getFirecrawlKey } from '../../lib/storage'
-import { searchYoutube, parseYouTubeVideoId } from '../../lib/youtubeImport/youtubeClient'
+import { searchYoutube, parseYouTubeVideoId, parseYouTubeStartSeconds } from '../../lib/youtubeImport/youtubeClient'
 import { youtubeSearchUrl } from '../../lib/youtubeSearch'
 import { YoutubePlayerBar } from './YoutubePlayerBar'
 
@@ -30,6 +30,7 @@ export function YoutubeSearchModal({
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [videoId, setVideoId] = useState(null)
+  const [startSeconds, setStartSeconds] = useState(null)
   const [error, setError] = useState(null)
 
   // Re-derive the modal's starting state each time it opens, from whichever
@@ -40,6 +41,7 @@ export function YoutubeSearchModal({
     setQuery([title, artist].filter(Boolean).join(' '))
     setResults([])
     setError(null)
+    setStartSeconds(null)
     if (initialVideoId) {
       setVideoId(initialVideoId)
       setStatus('playing')
@@ -61,6 +63,7 @@ export function YoutubeSearchModal({
       setResults([])
       setError(null)
       setVideoId(linkedId)
+      setStartSeconds(parseYouTubeStartSeconds(value))
       setStatus('playing')
       onExpand?.()
       onVideoPicked(linkedId)
@@ -88,6 +91,7 @@ export function YoutubeSearchModal({
 
   function handlePick(result) {
     setVideoId(result.videoId)
+    setStartSeconds(null)
     setStatus('playing')
     onExpand?.()
     onVideoPicked(result.videoId)
@@ -116,6 +120,7 @@ export function YoutubeSearchModal({
     return (
       <YoutubePlayerBar
         videoId={videoId}
+        startSeconds={startSeconds}
         label={[title, artist].filter(Boolean).join(' — ')}
         minimized={minimized}
         hasResults={results.length > 0}
