@@ -60,7 +60,7 @@ describe('YoutubeSearchModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
     const row = await screen.findByText('El Shaddai (Live)')
     fireEvent.click(row)
-    expect(onVideoPicked).toHaveBeenCalledWith('abc12345678')
+    expect(onVideoPicked).toHaveBeenCalledWith('abc12345678', null)
     expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
       'src', 'https://www.youtube.com/embed/abc12345678',
     )
@@ -75,7 +75,7 @@ describe('YoutubeSearchModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
 
     expect(searchYoutube).not.toHaveBeenCalled()
-    expect(onVideoPicked).toHaveBeenCalledWith('direct12345')
+    expect(onVideoPicked).toHaveBeenCalledWith('direct12345', null)
     expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
       'src', 'https://www.youtube.com/embed/direct12345',
     )
@@ -89,9 +89,32 @@ describe('YoutubeSearchModal', () => {
     fireEvent.change(input, { target: { value: 'https://www.youtube.com/watch?v=x_ekj3IOvT8&t=580s' } })
     fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
 
-    expect(onVideoPicked).toHaveBeenCalledWith('x_ekj3IOvT8')
+    expect(onVideoPicked).toHaveBeenCalledWith('x_ekj3IOvT8', 580)
     expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
       'src', 'https://www.youtube.com/embed/x_ekj3IOvT8?start=580',
+    )
+  })
+
+  it('reopens at the saved timestamp when initialStartSeconds is set', () => {
+    renderIt({ initialVideoId: 'x_ekj3IOvT8', initialStartSeconds: 940 })
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/x_ekj3IOvT8?start=940',
+    )
+  })
+
+  it('clears the saved timestamp when a search result is picked instead', async () => {
+    searchYoutube.mockResolvedValue([
+      { videoId: 'abc12345678', title: 'El Shaddai (Live)', url: 'https://www.youtube.com/watch?v=abc12345678' },
+    ])
+    const onVideoPicked = vi.fn()
+    renderIt({ onVideoPicked, initialVideoId: 'x_ekj3IOvT8', initialStartSeconds: 940 })
+    fireEvent.click(screen.getByRole('button', { name: /Search again/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
+    fireEvent.click(await screen.findByText('El Shaddai (Live)'))
+
+    expect(onVideoPicked).toHaveBeenCalledWith('abc12345678', null)
+    expect(screen.getByTitle('YouTube video player')).toHaveAttribute(
+      'src', 'https://www.youtube.com/embed/abc12345678',
     )
   })
 
@@ -104,7 +127,7 @@ describe('YoutubeSearchModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Search$/i }))
 
     expect(searchYoutube).not.toHaveBeenCalled()
-    expect(onVideoPicked).toHaveBeenCalledWith('short123456')
+    expect(onVideoPicked).toHaveBeenCalledWith('short123456', null)
   })
 
   it('falls back to search when the input is not a YouTube link', async () => {
@@ -210,7 +233,7 @@ describe('YoutubeSearchModal', () => {
     const onClose = vi.fn()
     renderIt({ initialVideoId: 'abc12345678', onVideoPicked, onClose })
     fireEvent.click(screen.getByRole('button', { name: /Remove/i }))
-    expect(onVideoPicked).toHaveBeenCalledWith(null)
+    expect(onVideoPicked).toHaveBeenCalledWith(null, null)
     expect(onClose).toHaveBeenCalledOnce()
   })
 

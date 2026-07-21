@@ -21,6 +21,7 @@ export function YoutubeSearchModal({
   title,
   artist,
   initialVideoId,
+  initialStartSeconds,
   onVideoPicked,
   minimized = false,
   onMinimize,
@@ -41,12 +42,13 @@ export function YoutubeSearchModal({
     setQuery([title, artist].filter(Boolean).join(' '))
     setResults([])
     setError(null)
-    setStartSeconds(null)
     if (initialVideoId) {
       setVideoId(initialVideoId)
+      setStartSeconds(initialStartSeconds ?? null)
       setStatus('playing')
     } else {
       setVideoId(null)
+      setStartSeconds(null)
       setStatus('idle')
     }
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -62,11 +64,12 @@ export function YoutubeSearchModal({
     if (linkedId) {
       setResults([])
       setError(null)
+      const linkedStart = parseYouTubeStartSeconds(value)
       setVideoId(linkedId)
-      setStartSeconds(parseYouTubeStartSeconds(value))
+      setStartSeconds(linkedStart)
       setStatus('playing')
       onExpand?.()
-      onVideoPicked(linkedId)
+      onVideoPicked(linkedId, linkedStart)
       return
     }
 
@@ -94,7 +97,7 @@ export function YoutubeSearchModal({
     setStartSeconds(null)
     setStatus('playing')
     onExpand?.()
-    onVideoPicked(result.videoId)
+    onVideoPicked(result.videoId, null)
   }
 
   function handleSearchAgain() {
@@ -108,8 +111,9 @@ export function YoutubeSearchModal({
   }
 
   function handleRemove() {
-    onVideoPicked(null)
+    onVideoPicked(null, null)
     setVideoId(null)
+    setStartSeconds(null)
     setStatus('idle')
     onClose?.()
   }

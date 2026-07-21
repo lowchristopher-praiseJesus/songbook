@@ -40,6 +40,24 @@ describe('setSongYoutubeVideo', () => {
     );
   });
 
+  it('saves the start timestamp alongside the videoId', () => {
+    const { setSongYoutubeVideo } = useLibraryStore.getState();
+    setSongYoutubeVideo('L1', 'abc12345678', 940);
+    expect(saveSong).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: expect.objectContaining({ youtubeVideoId: 'abc12345678', youtubeStartSeconds: 940 }),
+      }),
+    );
+  });
+
+  it('clears a previously saved start timestamp when none is given', () => {
+    const { setSongYoutubeVideo } = useLibraryStore.getState();
+    setSongYoutubeVideo('L1', 'abc12345678');
+    expect(saveSong).toHaveBeenCalledWith(
+      expect.objectContaining({ meta: expect.objectContaining({ youtubeStartSeconds: undefined }) }),
+    );
+  });
+
   it('refreshes activeSong when the song is currently active', () => {
     useLibraryStore.setState({ activeSongId: 'L1', activeSong: { id: 'L1', meta: {} } });
     const { setSongYoutubeVideo } = useLibraryStore.getState();

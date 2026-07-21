@@ -132,6 +132,7 @@ export const useLibraryStore = create((set, get) => ({
             capo:     song.meta.capo ?? 0,
             tempo:    song.meta.tempo,  // preserve undefined — must match buildBaseline exactly
             youtubeVideoId: song.meta.youtubeVideoId,  // preserve undefined — must match buildBaseline exactly
+            youtubeStartSeconds: song.meta.youtubeStartSeconds,  // preserve undefined — must match buildBaseline exactly
           },
         }
       }
@@ -549,10 +550,18 @@ export const useLibraryStore = create((set, get) => ({
    * Persist the user's chosen YouTube video for a song, so reopening the
    * in-app YouTube search jumps straight to playback instead of a fresh search.
    */
-  setSongYoutubeVideo(id, videoId) {
+  setSongYoutubeVideo(id, videoId, startSeconds) {
     const song = loadSong(id)
     if (!song) return
-    const updated = { ...song, meta: { ...song.meta, youtubeVideoId: videoId } }
+    const updated = {
+      ...song,
+      meta: {
+        ...song.meta,
+        youtubeVideoId: videoId,
+        // Always overwrite: a new pick without a timestamp must clear the old one.
+        youtubeStartSeconds: startSeconds ?? undefined,
+      },
+    }
     saveSong(updated)
     if (get().activeSongId === id) {
       set({ activeSong: updated })
@@ -580,6 +589,7 @@ export const useLibraryStore = create((set, get) => ({
           capo:     song.meta.capo     ?? 0,
           tempo:    song.meta.tempo,
           youtubeVideoId: song.meta.youtubeVideoId,
+          youtubeStartSeconds: song.meta.youtubeStartSeconds,
         },
       },
     })

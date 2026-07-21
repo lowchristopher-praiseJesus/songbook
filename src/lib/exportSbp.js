@@ -128,6 +128,9 @@ function songToSbpJson(song, stripAppSyntax = false) {
     Copyright: meta.copyright ?? '',
     NotesText: meta.annotation ?? '',
     YoutubeVideoId: meta.youtubeVideoId ?? null,
+    // App-specific extension to the SBP schema — emitted only when set so
+    // files without a start time stay byte-identical to what SongBook Pro writes.
+    ...(meta.youtubeStartSeconds != null ? { YoutubeStartSeconds: meta.youtubeStartSeconds } : {}),
     appKeyIndex: meta.keyIndex ?? 0,
     Zoom: 1.0,
     SectionOrder: '',

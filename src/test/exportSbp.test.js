@@ -406,4 +406,28 @@ describe('youtubeVideoId round-trip', () => {
     const { songs } = await parseSbpFile(buf)
     expect(songs[0].meta.youtubeVideoId).toBeUndefined()
   })
+
+  it('preserves youtubeStartSeconds through export → parse', async () => {
+    const songWithStart = {
+      meta: {
+        title: 'Test', artist: 'Artist', keyIndex: 0, capo: 0,
+        youtubeVideoId: 'x_ekj3IOvT8', youtubeStartSeconds: 940,
+      },
+      rawText: '{c: Verse}\nHello world',
+    }
+    const buf = await buildSbpZip([songWithStart]).generateAsync({ type: 'arraybuffer' })
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.youtubeStartSeconds).toBe(940)
+  })
+
+  it('leaves youtubeStartSeconds undefined when never set', async () => {
+    const buf = await buildSbpZip([mockSong]).generateAsync({ type: 'arraybuffer' })
+    const { songs } = await parseSbpFile(buf)
+    expect(songs[0].meta.youtubeStartSeconds).toBeUndefined()
+  })
+
+  it('omits the YoutubeStartSeconds key entirely when unset, keeping SBP files unpolluted', async () => {
+    const { json } = await parseZip([mockSong])
+    expect(json.songs[0]).not.toHaveProperty('YoutubeStartSeconds')
+  })
 })

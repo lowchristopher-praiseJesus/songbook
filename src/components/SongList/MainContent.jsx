@@ -725,7 +725,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
           title={activeSong.meta.title}
           artist={activeSong.meta.artist}
           initialVideoId={activeSong.meta.youtubeVideoId}
-          onVideoPicked={videoId => setSongYoutubeVideo(activeSongId, videoId)}
+          initialStartSeconds={activeSong.meta.youtubeStartSeconds}
+          onVideoPicked={(videoId, startSeconds) => setSongYoutubeVideo(activeSongId, videoId, startSeconds)}
         />
       )}
     </main>

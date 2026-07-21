@@ -47,6 +47,16 @@ describe('buildBaseline', () => {
     const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, youtubeVideoId: undefined } };
     expect(buildBaseline(song).youtubeVideoId).toBeUndefined();
   });
+
+  it('extracts youtubeStartSeconds', () => {
+    const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, youtubeStartSeconds: 940 } };
+    expect(buildBaseline(song).youtubeStartSeconds).toBe(940);
+  });
+
+  it('preserves undefined youtubeStartSeconds rather than coercing to 0', () => {
+    const song = { rawText: 'x', meta: { keyIndex: 0, key: 'C', capo: 0, youtubeStartSeconds: undefined } };
+    expect(buildBaseline(song).youtubeStartSeconds).toBeUndefined();
+  });
 });
 
 describe('mergeSharedCollection', () => {
@@ -212,6 +222,38 @@ describe('mergeSharedCollection', () => {
     expect(result.autoApplied).toHaveLength(1);
     expect(result.autoApplied[0].metaUpdates.youtubeVideoId).toBe('newVideoId2');
     expect(result.conflicts).toHaveLength(0);
+  });
+
+  it('auto-applies a changed youtubeStartSeconds from the server when local is unchanged', () => {
+    // The sharer sets a start timestamp on an already-shared video; a recipient
+    // who never touched the pick should receive the new start time too.
+    const baselineWithStart = { ...baseline, youtubeVideoId: 'abc12345678', youtubeStartSeconds: undefined };
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: 'abc12345678', youtubeStartSeconds: undefined, sharedBaseline: baselineWithStart },
+      sections: [],
+    };
+    const server = { rawText: 'Hello', meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', youtubeVideoId: 'abc12345678', youtubeStartSeconds: 940 }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.autoApplied).toHaveLength(1);
+    expect(result.autoApplied[0].metaUpdates.youtubeStartSeconds).toBe(940);
+    expect(result.conflicts).toHaveLength(0);
+  });
+
+  it('does not produce a false youtubeStartSeconds conflict when both sides have none', () => {
+    const local = {
+      id: 'L1', rawText: 'Hello',
+      meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1', sharedBaseline: baseline },
+      sections: [],
+    };
+    const server = { rawText: 'Hello', meta: { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, sbpId: 'S1' }, sections: [] };
+
+    const result = mergeSharedCollection({ songIds: ['L1'] }, [local], [server]);
+
+    expect(result.conflicts).toHaveLength(0);
+    expect(result.autoApplied).toHaveLength(0);
   });
 
   it('does not produce a false youtubeVideoId conflict when both sides have undefined youtubeVideoId', () => {
