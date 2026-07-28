@@ -264,7 +264,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             <button
               type="button"
               onClick={() => setViewMode('collections')}
-              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+              className={`flex-1 text-xs py-2 rounded-md transition-colors ${
                 viewMode === 'collections'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -275,7 +275,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             <button
               type="button"
               onClick={() => setViewMode('allSongs')}
-              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+              className={`flex-1 text-xs py-2 rounded-md transition-colors ${
                 viewMode === 'allSongs'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -286,7 +286,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
             <button
               type="button"
               onClick={() => setViewMode('albums')}
-              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+              className={`flex-1 text-xs py-2 rounded-md transition-colors ${
                 viewMode === 'albums'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium shadow-sm'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -337,7 +337,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               <button
                 type="button"
                 onClick={() => { setIsCreatingNewSong(true); onSongSelect?.() }}
-                className="w-full flex items-center gap-1 px-2 py-1 text-xs
+                className="w-full flex items-center gap-1 px-2 py-2 text-xs
                   text-indigo-500 dark:text-indigo-400
                   border border-dashed border-gray-300 dark:border-gray-600 rounded
                   hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20

@@ -100,6 +100,20 @@ describe('SongHeader annotation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hide annotations' }))
     expect(onAnnotationsToggle).toHaveBeenCalledOnce()
   })
+
+  it('shows a visible text label, not just an icon (unlike the neighboring YouTube/Rec buttons, this used to be icon-only and opaque)', () => {
+    render(<SongHeader {...baseProps} />)
+    expect(screen.getByRole('button', { name: 'Hide annotations' })).toHaveTextContent('Annotations')
+  })
+})
+
+describe('SongHeader capo label legibility', () => {
+  it('renders the "Capo" label at readable size (text-sm), not the former arm\'s-length-unreadable text-xs', () => {
+    render(<SongHeader {...baseProps} />)
+    const label = screen.getByText('Capo')
+    expect(label).toHaveClass('text-sm')
+    expect(label).not.toHaveClass('text-xs')
+  })
 })
 
 const recorderProps = {

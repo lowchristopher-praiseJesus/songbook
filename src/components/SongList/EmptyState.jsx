@@ -1,6 +1,9 @@
 import { MusicalNoteIcon } from '@heroicons/react/24/outline'
 
 export function EmptyState({ onFileChange }) {
+  // Drag-and-drop is meaningless on touch devices — point at the button instead.
+  const coarsePointer =
+    typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-8">
       <div className="mb-6 select-none">
@@ -10,7 +13,7 @@ export function EmptyState({ onFileChange }) {
       </div>
       <h2 className="text-2xl font-semibold mb-2 text-gray-700 dark:text-gray-300">No songs yet</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-1">
-        Drag a file here to get started
+        {coarsePointer ? 'Tap Import File to get started' : 'Drag a file here to get started'}
       </p>
       <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
         Supports SongBook Pro (.sbp) and ChordPro (.cho, .chordpro, .pro)

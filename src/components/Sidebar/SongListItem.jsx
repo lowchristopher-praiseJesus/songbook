@@ -106,13 +106,13 @@ export function SongListItem({
           type="button"
           onClick={handleDelete}
           aria-label={`Delete ${entry.title}`}
-          className={`ml-1 mr-1 p-1 rounded cursor-pointer transition-opacity shrink-0
+          className={`ml-1 mr-1 p-2.5 rounded cursor-pointer transition-opacity shrink-0
             ${isActive
               ? 'text-white hover:bg-indigo-700'
               : '[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500'
             }`}
         >
-          <TrashIcon className="w-4 h-4" />
+          <TrashIcon className="w-5 h-5" />
         </button>
       )}
     </li>

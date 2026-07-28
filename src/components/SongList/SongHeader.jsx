@@ -65,12 +65,12 @@ export function SongHeader({
                 isMinor={meta.isMinor}
               />
               <div className="flex items-center gap-1" aria-label="Capo controls">
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Capo</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Capo</span>
                 <button
                   type="button"
                   onClick={transpose.capoDown}
                   disabled={transpose.capo === 0}
-                  className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   aria-label="Decrease capo"
                 >−</button>
                 <span className="w-4 text-center text-sm font-mono">{transpose.capo}</span>
@@ -78,7 +78,7 @@ export function SongHeader({
                   type="button"
                   onClick={transpose.capoUp}
                   disabled={transpose.capo === 7}
-                  className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base leading-none hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   aria-label="Increase capo"
                 >+</button>
               </div>
@@ -150,7 +150,7 @@ export function SongHeader({
           <button
             type="button"
             onClick={onAnnotationsToggle}
-            className={`flex items-center p-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer ${
+            className={`flex items-center gap-1.5 text-sm px-3 py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer ${
               annotationsVisible
                 ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
                 : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
@@ -158,7 +158,8 @@ export function SongHeader({
             aria-label={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
             title={annotationsVisible ? 'Hide annotations' : 'Show annotations'}
           >
-            <ChatBubbleLeftEllipsisIcon className="w-4 h-4" />
+            <ChatBubbleLeftEllipsisIcon className="w-3.5 h-3.5" />
+            Annotations
           </button>
         )}
         {songId && RECORDER_SUPPORTED && recording && (

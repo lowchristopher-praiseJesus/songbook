@@ -21,7 +21,7 @@ export function CollectionsPanel({ onSelect, onClose, onGroupCheckboxChange }) {
         <button
           type="button"
           onClick={handleNewCollection}
-          className="w-full flex items-center gap-1 px-2 py-1 text-xs
+          className="w-full flex items-center gap-1 px-2 py-2 text-xs
             text-indigo-500 dark:text-indigo-400
             border border-dashed border-gray-300 dark:border-gray-600 rounded
             hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20
@@ -43,7 +43,7 @@ export function CollectionsPanel({ onSelect, onClose, onGroupCheckboxChange }) {
 
         {groups.length === 0 && (
           <li className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
-            No songs yet
+            No collections yet
           </li>
         )}
       </ul>

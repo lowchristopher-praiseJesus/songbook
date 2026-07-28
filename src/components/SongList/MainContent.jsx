@@ -19,6 +19,8 @@ import { NewSongEditor } from '../SongEditor/NewSongEditor'
 import { buildNavOrder } from '../../lib/collectionUtils'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
+import { useWakeLock } from '../../hooks/useWakeLock'
+import { useScrollActivity } from '../../hooks/useScrollActivity'
 import { formatDuration } from '../../lib/formatDuration'
 import metronomeIcon from '../../assets/metronome.png'
 import swipeIcon from '../../assets/swipe.png'
@@ -33,6 +35,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const index = useLibraryStore(s => s.index)
   const collections = useLibraryStore(s => s.collections)
   const selectSong = useLibraryStore(s => s.selectSong)
+  const setViewMode = useLibraryStore(s => s.setViewMode)
+  const setExpandedCollectionId = useLibraryStore(s => s.setExpandedCollectionId)
   const setSongYoutubeVideo = useLibraryStore(s => s.setSongYoutubeVideo)
   const editingSongId = useLibraryStore(s => s.editingSongId)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
@@ -138,6 +142,15 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   }, [activeSongId, loadAnnotationsForSong])
   const { targetDuration, setTargetDuration } = useScrollSettings(activeSongId)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
+
+  // Keep the screen awake on stage: while Performance mode is open or
+  // auto-scroll is running, the device must not dim/sleep mid-song.
+  useWakeLock(!!performanceSections || isScrolling)
+
+  // Dim the floating tool rail while the user is reading/scrolling so it
+  // doesn't occlude full-width lyric lines on phones; it stays tappable.
+  const mainRef = useRef(null)
+  const scrollActive = useScrollActivity(mainRef)
 
   useEffect(() => {
     if (!isScrolling) setSpeedMode(false)
@@ -321,7 +334,20 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const { importFiles } = useFileImport({
     onError: msg => onAddToast(msg, 'error'),
     onDuplicateCheck,
-    onSuccess: onImportSuccess,
+    // Mirror the Sidebar import path: land the user on what they just
+    // imported instead of leaving the "No songs yet" empty state up.
+    onSuccess: ({ newSongIds, collectionId } = {}) => {
+      if (newSongIds?.length > 0) {
+        if (collectionId) {
+          setViewMode('collections')
+          setExpandedCollectionId(collectionId)
+        } else {
+          setViewMode('allSongs')
+        }
+        selectSong(newSongIds[0])
+      }
+      onImportSuccess?.()
+    },
   })
 
   const { isDragging, onDragOver, onDragLeave, onDrop } = useDropZone(importFiles)
@@ -340,6 +366,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
 
   return (
     <main
+      ref={mainRef}
       className={`flex-1 overflow-y-auto relative transition-colors
         ${isDragging ? 'ring-4 ring-indigo-400 ring-inset bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
       onDragOver={onDragOver}
@@ -548,7 +575,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       {activeSong && !isFit && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
         <div
           ref={pillRef}
-          className="fixed right-4 z-20 pointer-events-auto"
+          className={`fixed right-4 z-20 pointer-events-auto transition-opacity duration-300
+            ${scrollActive ? 'opacity-30' : 'opacity-100'}`}
           style={{
             bottom: pillTop === null ? '1rem' : undefined,
             top: pillTop !== null ? `${pillTop}px` : undefined,

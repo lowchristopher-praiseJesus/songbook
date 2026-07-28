@@ -7,6 +7,7 @@ import { useSwipeNavigation } from '../../hooks/useSwipeNavigation'
 import { ChordStrip } from '../Chords/ChordStrip'
 import { useScrollSettings } from '../../hooks/useScrollSettings'
 import { useAutoScroll } from '../../hooks/useAutoScroll'
+import { useWakeLock } from '../../hooks/useWakeLock'
 import { formatDuration } from '../../lib/formatDuration'
 
 export function PerformanceModal({ song: initialSong, sections: initialSections, navOrder = [], lyricsOnly = false, hideChordDiagram = false, onClose }) {
@@ -21,6 +22,9 @@ export function PerformanceModal({ song: initialSong, sections: initialSections,
   const containerRef = useRef()
   const { targetDuration, setTargetDuration } = useScrollSettings(song.id)
   const { isScrolling, start, stop } = useAutoScroll(containerRef, targetDuration)
+
+  // This is the on-stage view — keep the screen awake for its whole lifetime.
+  useWakeLock(true)
   const [speedMode, setSpeedMode] = useState(false)
 
   useEffect(() => {

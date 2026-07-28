@@ -23,8 +23,8 @@ const DEFAULTS = {
   artist:      { font: 'System Default', size: 16, color: '#6b7280' },
   lyrics:      { font: 'System Default', color: '#374151' },
   chords:      { font: 'Menlo', sizeOffset: -3, color: '#6366f1' },
-  sections:    { font: 'System Default', size: 12, color: '#6366f1' },
-  annotations: { font: 'System Default', size: 12, color: '#9ca3af' },
+  sections:    { font: 'System Default', size: 14, color: '#6366f1' },
+  annotations: { font: 'System Default', size: 14, color: '#9ca3af' },
   maximizeMinFontSize: 18,
 }
 

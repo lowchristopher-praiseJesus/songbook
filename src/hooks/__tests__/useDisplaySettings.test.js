@@ -51,3 +51,18 @@ describe('useDisplaySettings — maximizeMinFontSize', () => {
     expect(JSON.parse(localStorage.getItem('songsheet_display_maximize_min_font_size'))).toBe(18)
   })
 })
+
+describe('useDisplaySettings — section and annotation legibility defaults', () => {
+  // Section labels (INTRO/CHORUS/...) are the at-a-glance navigation aid on
+  // a music stand, and annotations carry performance notes — both used to
+  // default to 12px, too small to read comfortably at arm's length.
+  it('defaults section label size to 14px when nothing is stored', () => {
+    const { result } = renderHook(() => useDisplaySettings())
+    expect(result.current.settings.sections.size).toBe(14)
+  })
+
+  it('defaults annotation size to 14px when nothing is stored', () => {
+    const { result } = renderHook(() => useDisplaySettings())
+    expect(result.current.settings.annotations.size).toBe(14)
+  })
+})

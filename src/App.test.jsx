@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import App from './App'
 
 // This file exists to cover the one untested link in the maximizeMinFontSize
@@ -65,5 +65,16 @@ describe('App maximizeMinFontSize wiring', () => {
 
     expect(lastMainContentProps).not.toBeNull()
     expect(lastMainContentProps.maximizeMinFontSize).toBe(22)
+  })
+})
+
+describe('App sidebar toggle', () => {
+  it('is visible at every breakpoint (no md:hidden)', () => {
+    // Regression guard: the hamburger used to be md:hidden, which made the
+    // sidebar unreachable on iPad / landscape phones once it was closed —
+    // at ≥768px there is no other control that reopens it.
+    render(<App />)
+    const toggle = screen.getByLabelText('Toggle sidebar')
+    expect(toggle.className).not.toContain('md:hidden')
   })
 })
