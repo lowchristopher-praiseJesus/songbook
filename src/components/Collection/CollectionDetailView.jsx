@@ -103,6 +103,7 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   const [ugModalOpen, setUgModalOpen] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [linkExpired, setLinkExpired] = useState(false)
+  const [expiresAt, setExpiresAt] = useState(null)
   const [pendingRefresh, setPendingRefresh] = useState(null)
   const renameInputRef = useRef(null)
   const duplicateInputRef = useRef(null)
@@ -145,6 +146,21 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
       duplicateInputRef.current?.select()
     }
   }, [duplicating]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!collection?.shareCode) return
+    let cancelled = false
+    checkShareVersion(collection.shareCode)
+      .then(({ expiresAt: serverExpiresAt }) => {
+        if (cancelled) return
+        if (serverExpiresAt) setExpiresAt(serverExpiresAt)
+      })
+      .catch(err => {
+        if (cancelled) return
+        if (err.code === 'expired') setLinkExpired(true)
+      })
+    return () => { cancelled = true }
+  }, [collection?.shareCode])
 
   const handleDragEnd = useCallback((event) => {
     const { active, over } = event
