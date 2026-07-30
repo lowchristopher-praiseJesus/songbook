@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Show a `← <Collection Name>` link above the song title whenever the active song was opened from a collection, and clicking it returns the user to that collection's detail view.
+**Goal:** Show a `← <Collection Name>` link in the song header — between the artist line and the controls row — whenever the active song was opened from a collection, and clicking it returns the user to that collection's detail view.
 
 **Architecture:** Thread two new props (`collectionName: string | null`, `onBackToCollection: () => void`) down the existing render chain `MainContent` → `SongView` → `SongList` → `SongHeader`. `MainContent` derives `collectionName` by looking up the store's existing `activeCollectionId` in `collections` (so a deleted collection naturally yields `null`), and `onBackToCollection` calls the store's existing `setSelectedCollectionId`, which `MainContent` already uses to switch its own render branch to `CollectionDetailView`. No new store state, no new view-switching logic — this only wires existing mechanisms together.
 
@@ -696,7 +696,7 @@ Run: `npm run dev`
 
 - [ ] **Step 2: Verify the golden path**
 
-In the browser: open a collection from the sidebar, click a song inside it. Confirm a `← <Collection Name>` link appears above the song title. Click it and confirm it returns to that collection's detail page (the same page reached via the sidebar).
+In the browser: open a collection from the sidebar, click a song inside it. Confirm a `← <Collection Name>` link appears between the artist line and the controls row. Click it and confirm it returns to that collection's detail page (the same page reached via the sidebar).
 
 - [ ] **Step 3: Verify the absent cases**
 

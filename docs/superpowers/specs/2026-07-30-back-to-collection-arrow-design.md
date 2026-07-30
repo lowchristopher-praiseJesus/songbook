@@ -6,7 +6,7 @@ When a user opens a song from inside a collection (via the sidebar's collection 
 
 ## Goal
 
-When the active song belongs to a collection the user navigated from, show a `← <Collection Name>` link above the song title that returns to that collection's detail view (the same view `CollectionDetailView` renders, listing all songs in the collection).
+When the active song belongs to a collection the user navigated from, show a `← <Collection Name>` link in the song header, between the artist line and the controls row, that returns to that collection's detail view (the same view `CollectionDetailView` renders, listing all songs in the collection).
 
 ## Non-goals
 
@@ -67,4 +67,4 @@ Add coverage (likely in `MainContent`'s or `SongHeader`'s existing test file):
 
 ## Open questions
 
-None — placement and label style were confirmed with the user (link above the title, showing the collection name).
+None — placement and label style were confirmed with the user (link between the artist line and the controls row, showing the collection name).
