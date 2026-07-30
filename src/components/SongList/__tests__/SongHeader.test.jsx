@@ -116,6 +116,25 @@ describe('SongHeader capo label legibility', () => {
   })
 })
 
+describe('SongHeader back-to-collection link', () => {
+  it('renders a back link with the collection name when collectionName is provided', () => {
+    render(<SongHeader {...baseProps} collectionName="Sunday Worship" onBackToCollection={vi.fn()} />)
+    expect(screen.getByRole('button', { name: '← Sunday Worship' })).toBeInTheDocument()
+  })
+
+  it('does not render a back link when collectionName is absent', () => {
+    render(<SongHeader {...baseProps} />)
+    expect(screen.queryByText(/^←/)).not.toBeInTheDocument()
+  })
+
+  it('calls onBackToCollection when the back link is clicked', () => {
+    const onBackToCollection = vi.fn()
+    render(<SongHeader {...baseProps} collectionName="Sunday Worship" onBackToCollection={onBackToCollection} />)
+    fireEvent.click(screen.getByRole('button', { name: '← Sunday Worship' }))
+    expect(onBackToCollection).toHaveBeenCalledOnce()
+  })
+})
+
 const recorderProps = {
   ...baseProps,
   songId: 'song-abc',

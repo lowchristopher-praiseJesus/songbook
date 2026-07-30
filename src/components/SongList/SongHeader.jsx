@@ -30,6 +30,8 @@ export function SongHeader({
   songId,
   recording,
   onPanelOpen,
+  collectionName = null,
+  onBackToCollection,
 }) {
   const [infoOpen, setInfoOpen] = useState(false)
   const openYoutubePlayer = useYoutubePlayerStore(s => s.open)
@@ -51,6 +53,15 @@ export function SongHeader({
       )}
       {annotationsVisible && meta.annotation && (
         <p className="text-sm italic text-gray-400 dark:text-gray-500 mt-0.5">{meta.annotation}</p>
+      )}
+      {collectionName && (
+        <button
+          type="button"
+          onClick={onBackToCollection}
+          className="mt-1 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors truncate max-w-full"
+        >
+          ← {collectionName}
+        </button>
       )}
 
       {/* Row 1: Music controls (left) + Primary CTAs (right) */}
