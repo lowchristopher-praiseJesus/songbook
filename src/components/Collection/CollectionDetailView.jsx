@@ -152,6 +152,11 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   }, [duplicating]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // Reset on every shareCode change (including to/from no shareCode at all) — this
+    // component instance persists across a direct collection-to-collection switch in
+    // the sidebar, so a stale flag from the previously-viewed collection must not leak.
+    setLinkExpired(false)
+    setExpiresAt(null)
     if (!collection?.shareCode) return
     let cancelled = false
     checkShareVersion(collection.shareCode)

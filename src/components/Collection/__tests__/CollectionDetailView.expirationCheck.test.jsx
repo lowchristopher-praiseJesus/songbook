@@ -62,4 +62,28 @@ describe('CollectionDetailView proactive expiration check', () => {
     expect(screen.getByRole('button', { name: 'Check for updates' })).toBeInTheDocument()
     expect(screen.queryByText('Link expired')).not.toBeInTheDocument()
   })
+
+  it('clears a stale "Link expired" flag when switching directly from an expired-link collection to one whose link is valid', async () => {
+    collectionsSeed = [
+      { id: 'c1', name: 'Expired Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'expired-code', lastVersion: 1 },
+      { id: 'c2', name: 'Valid Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'valid-code', lastVersion: 1 },
+    ]
+    checkShareVersion.mockImplementation(code =>
+      code === 'expired-code'
+        ? Promise.reject(Object.assign(new Error('expired'), { code: 'expired' }))
+        : Promise.resolve({ version: 1, locked: false, hasPin: false, expiresAt: '2026-08-30T00:00:00Z' })
+    )
+    storeState.selectedCollectionId = 'c1'
+    const { rerender } = render(<CollectionDetailView {...defaultProps} />)
+    await waitFor(() => expect(screen.getByText('Link expired')).toBeInTheDocument())
+
+    // Simulate clicking straight from c1 to c2 in the sidebar — CollectionDetailView
+    // stays mounted (same component instance), only selectedCollectionId changes.
+    storeState.selectedCollectionId = 'c2'
+    rerender(<CollectionDetailView {...defaultProps} />)
+
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalledWith('valid-code'))
+    await waitFor(() => expect(screen.queryByText('Link expired')).not.toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Check for updates' })).toBeInTheDocument()
+  })
 })
