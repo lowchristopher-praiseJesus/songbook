@@ -474,7 +474,7 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
             </p>
           )}
 
-          {shareRevealOpen && (
+          {shareRevealOpen && collection?.shareCode && !linkExpired && (
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Share link</p>
               <div className="flex gap-2">

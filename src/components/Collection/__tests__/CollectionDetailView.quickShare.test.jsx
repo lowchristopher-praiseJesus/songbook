@@ -95,9 +95,28 @@ describe('CollectionDetailView quick-share panel', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Copied!' })).toBeInTheDocument())
   })
 
-  it('shows a Save QR button once the share panel is open', () => {
+  it('force-closes an already-open share panel when a later check reveals the link expired', async () => {
+    collectionsSeed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'abc123', lastVersion: 1 }]
+    checkShareVersion
+      .mockResolvedValueOnce({ version: 1, locked: false, hasPin: false, expiresAt: '2026-08-30T00:00:00Z' })
+      .mockRejectedValueOnce(Object.assign(new Error('expired'), { code: 'expired' }))
+    render(<CollectionDetailView {...defaultProps} />)
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalledWith('abc123'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share collection' }))
+    expect(screen.getByDisplayValue('https://songsheet.example/?share=abc123')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check for updates' }))
+    await waitFor(() => expect(screen.getByText('Link expired')).toBeInTheDocument())
+
+    expect(screen.queryByDisplayValue('https://songsheet.example/?share=abc123')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save QR' })).not.toBeInTheDocument()
+  })
+
+  it('shows a Save QR button once the share panel is open', async () => {
     collectionsSeed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'abc123', lastVersion: 1 }]
     render(<CollectionDetailView {...defaultProps} />)
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalledWith('abc123'))
     expect(screen.queryByRole('button', { name: 'Save QR' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Share collection' }))
     expect(screen.getByRole('button', { name: 'Save QR' })).toBeInTheDocument()
