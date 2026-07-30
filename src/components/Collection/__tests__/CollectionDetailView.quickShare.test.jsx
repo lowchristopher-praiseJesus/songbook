@@ -33,6 +33,7 @@ vi.mock('../../../lib/storage', () => ({ loadSong: vi.fn(() => null) }))
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn() } }))
 
 import QRCode from 'qrcode'
+import { checkShareVersion } from '../../../lib/shareApi'
 
 const defaultProps = { onAddToast: vi.fn(), onOpenSidebar: vi.fn() }
 
@@ -55,10 +56,11 @@ describe('CollectionDetailView quick-share panel', () => {
     expect(screen.queryByRole('button', { name: 'Share collection' })).not.toBeInTheDocument()
   })
 
-  it('renders the Share icon when the collection has an unexpired shareCode', () => {
+  it('renders the Share icon when the collection has an unexpired shareCode', async () => {
     collectionsSeed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'abc123', lastVersion: 1 }]
     render(<CollectionDetailView {...defaultProps} />)
     expect(screen.getByRole('button', { name: 'Share collection' })).toBeInTheDocument()
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalledWith('abc123'))
   })
 
   it('clicking Share opens a panel with the share URL and renders a QR code for it', async () => {
@@ -73,9 +75,10 @@ describe('CollectionDetailView quick-share panel', () => {
     ))
   })
 
-  it('clicking Share again closes the panel', () => {
+  it('clicking Share again closes the panel', async () => {
     collectionsSeed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'abc123', lastVersion: 1 }]
     render(<CollectionDetailView {...defaultProps} />)
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalledWith('abc123'))
     const shareButton = screen.getByRole('button', { name: 'Share collection' })
     fireEvent.click(shareButton)
     expect(screen.getByDisplayValue('https://songsheet.example/?share=abc123')).toBeInTheDocument()
