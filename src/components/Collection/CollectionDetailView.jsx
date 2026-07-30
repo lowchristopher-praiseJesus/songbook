@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
+import QRCode from 'qrcode'
 import { AddSongsModal } from '../Sidebar/AddSongsModal'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { ConflictPickerModal } from '../Share/ConflictPickerModal'
@@ -104,11 +105,14 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   const [refreshing, setRefreshing] = useState(false)
   const [linkExpired, setLinkExpired] = useState(false)
   const [expiresAt, setExpiresAt] = useState(null)
+  const [shareRevealOpen, setShareRevealOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [pendingRefresh, setPendingRefresh] = useState(null)
   const renameInputRef = useRef(null)
   const duplicateInputRef = useRef(null)
   const renameEscapeRef = useRef(false)
   const duplicateEscapeRef = useRef(false)
+  const qrCanvasRef = useRef(null)
 
   const isUncategorized = collectionId === '__uncategorized__'
   const collection = isUncategorized
@@ -253,6 +257,26 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
     onAddToast('Updated — conflicts resolved.', 'success')
   }
 
+  const shareUrl = collection?.shareCode
+    ? `${window.location.origin}/?share=${collection.shareCode}`
+    : ''
+
+  useEffect(() => {
+    if (shareRevealOpen && shareUrl && qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, shareUrl, { width: 220, margin: 2 })
+    }
+  }, [shareRevealOpen, shareUrl])
+
+  async function handleCopyShareUrl() {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard unavailable — user can manually copy the URL
+    }
+  }
+
   const collectionName = isUncategorized ? 'Uncategorized' : (collection?.name ?? '')
 
   return (
@@ -379,6 +403,22 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
             {collection?.shareCode && !linkExpired && (
               <button
                 type="button"
+                onClick={() => setShareRevealOpen(v => !v)}
+                aria-label="Share collection"
+                aria-expanded={shareRevealOpen}
+                title="Share"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg
+                  border border-gray-300 dark:border-gray-600
+                  text-gray-600 dark:text-gray-300
+                  hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span aria-hidden="true" className="text-base leading-none">🔗</span>
+                <span className="text-[10px] leading-none">Share</span>
+              </button>
+            )}
+            {collection?.shareCode && !linkExpired && (
+              <button
+                type="button"
                 onClick={handleCheckUpdates}
                 disabled={refreshing}
                 aria-label="Check for updates"
@@ -398,6 +438,31 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-1">
               Link expired
             </p>
+          )}
+
+          {shareRevealOpen && (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Share link</p>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700
+                    text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyShareUrl}
+                  className="shrink-0 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
+                    text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <canvas ref={qrCanvasRef} className="rounded-lg border border-gray-200 dark:border-gray-700" />
+              </div>
+            </div>
           )}
 
           {duplicating && (
