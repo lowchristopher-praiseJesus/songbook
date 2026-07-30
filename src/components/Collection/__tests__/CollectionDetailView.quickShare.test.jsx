@@ -94,4 +94,12 @@ describe('CollectionDetailView quick-share panel', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://songsheet.example/?share=abc123')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Copied!' })).toBeInTheDocument())
   })
+
+  it('shows a Save QR button once the share panel is open', () => {
+    collectionsSeed = [{ id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: [], shareCode: 'abc123', lastVersion: 1 }]
+    render(<CollectionDetailView {...defaultProps} />)
+    expect(screen.queryByRole('button', { name: 'Save QR' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Share collection' }))
+    expect(screen.getByRole('button', { name: 'Save QR' })).toBeInTheDocument()
+  })
 })
