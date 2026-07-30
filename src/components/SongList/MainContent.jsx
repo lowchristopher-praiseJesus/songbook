@@ -48,6 +48,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const activeCollectionId = useLibraryStore(s => s.activeCollectionId)
   const activeAlbumCode = useLibraryStore(s => s.activeAlbumCode)
   const selectedCollectionId = useLibraryStore(s => s.selectedCollectionId)
+  const setSelectedCollectionId = useLibraryStore(s => s.setSelectedCollectionId)
   const albums = useLibraryStore(s => s.albums)
   const activeAlbum = activeAlbumCode ? albums.find(a => a.albumCode === activeAlbumCode) ?? null : null
   const [performanceSections, setPerformanceSections] = useState(null)
@@ -210,6 +211,9 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const nextEntry = currentIdx < navOrder.length - 1 ? navOrder[currentIdx + 1] : null
   const inCollection = !!activeSong && !!activeCollectionId
     && !performanceSections && !editingSongId && !isCreatingNewSong && !selectedCollectionId
+  const backCollection = activeCollectionId
+    ? collections.find(c => c.id === activeCollectionId) ?? null
+    : null
 
   // Reset (or, when arriving via a backward page-cross, jump to the last page
   // of) the current page whenever the song, lyrics-only mode, or the fit
@@ -418,6 +422,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
                 onEdit={() => setEditingSongId(activeSongId)}
                 isFit={false}
                 containerRef={containerRef}
+                collectionName={backCollection?.name ?? null}
+                onBackToCollection={() => setSelectedCollectionId(activeCollectionId)}
               />
             </div>
           : null
