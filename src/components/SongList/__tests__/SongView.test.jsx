@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SongView } from '../SongView'
+import { SongList } from '../SongList'
 
 // Stub SongList to avoid its deep hook dependencies
 vi.mock('../SongList', () => ({
@@ -82,5 +83,13 @@ describe('SongView', () => {
   it('registers an IntersectionObserver on mount', () => {
     render(<SongView {...baseProps} />)
     expect(IntersectionObserver).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes collectionName and onBackToCollection through to SongList', () => {
+    const onBackToCollection = vi.fn()
+    render(<SongView {...baseProps} collectionName="Sunday Worship" onBackToCollection={onBackToCollection} />)
+    const props = SongList.mock.calls.at(-1)[0]
+    expect(props.collectionName).toBe('Sunday Worship')
+    expect(props.onBackToCollection).toBe(onBackToCollection)
   })
 })

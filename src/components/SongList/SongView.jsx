@@ -25,6 +25,8 @@ export function SongView({
   pageColWidth,
   fitAvailableHeight,
   shadowRef,
+  collectionName = null,
+  onBackToCollection,
 }) {
   const [sidebarOpen, setSidebarOpen] = useLocalStorage('songsheet_sections_panel_open', false)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -136,6 +138,8 @@ export function SongView({
             pageColWidth={pageColWidth}
             fitAvailableHeight={fitAvailableHeight}
             shadowRef={shadowRef}
+            collectionName={collectionName}
+            onBackToCollection={onBackToCollection}
           />
         </div>
       </div>
