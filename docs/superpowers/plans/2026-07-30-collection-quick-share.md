@@ -249,10 +249,12 @@ Leave everything from this last `<div className="border-t ...">` line onward (th
 Run: `npx vitest run src/components/Collection/__tests__/CollectionDetailView.actionIcons.test.jsx`
 Expected: PASS (all 6 tests)
 
-- [ ] **Step 5: Run the two pre-existing CollectionDetailView test files to check for regressions**
+- [ ] **Step 5: Run the pre-existing CollectionDetailView test file to check for regressions**
 
-Run: `npx vitest run src/components/Collection/__tests__/CollectionDetailView.deleteConductor.test.jsx src/components/Collection/__tests__/CollectionDetailView.searchUG.test.jsx`
-Expected: PASS — neither file references Rename/Duplicate/Check-for-Updates text, so they should be unaffected. If either fails, re-check the replaced block didn't accidentally change the Delete Collection or Search Songs markup.
+Run: `npx vitest run src/components/Collection/__tests__/CollectionDetailView.searchUG.test.jsx`
+Expected: PASS — this file doesn't reference Rename/Duplicate/Check-for-Updates text, so it should be unaffected. If it fails, re-check the replaced block didn't accidentally change the Search Songs markup.
+
+Note: on this branch, `CollectionDetailView.jsx` does not yet have the conductor-broadcast delete logic that exists as unrelated in-progress work on `main` — so there is no `CollectionDetailView.deleteConductor.test.jsx` here. Don't create one; it's out of scope for this plan.
 
 - [ ] **Step 6: Commit**
 
@@ -405,7 +407,7 @@ Expected: PASS (all 3 tests)
 - [ ] **Step 5: Run the full CollectionDetailView test suite to check for regressions**
 
 Run: `npx vitest run src/components/Collection/__tests__/`
-Expected: PASS — Task 1's tests mock `checkShareVersion` to resolve `{ version: 1 }` by default (no `expiresAt`), which is harmless against this new effect; the `deleteConductor`/`searchUG` test files use collections without `shareCode`, so the new effect is a no-op for them.
+Expected: PASS — Task 1's tests mock `checkShareVersion` to resolve `{ version: 1 }` by default (no `expiresAt`), which is harmless against this new effect; the `searchUG` test file uses a collection without `shareCode`, so the new effect is a no-op for it.
 
 - [ ] **Step 6: Commit**
 
@@ -710,7 +712,7 @@ Expected: PASS (all 5 tests)
 - [ ] **Step 6: Run the full CollectionDetailView test suite to check for regressions**
 
 Run: `npx vitest run src/components/Collection/__tests__/`
-Expected: PASS across all four files (`actionIcons`, `expirationCheck`, `quickShare`, `deleteConductor`, `searchUG`)
+Expected: PASS across all four files (`actionIcons`, `expirationCheck`, `quickShare`, `searchUG`)
 
 - [ ] **Step 7: Commit**
 
