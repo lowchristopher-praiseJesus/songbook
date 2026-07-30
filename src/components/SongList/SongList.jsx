@@ -41,6 +41,8 @@ export function SongList({
   pageColWidth,
   fitAvailableHeight,
   shadowRef,
+  collectionName = null,
+  onBackToCollection,
 }) {
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
   const baseline = useAnnotationStore(s => s.baseline)
@@ -130,6 +132,8 @@ export function SongList({
                   songId={song.id}
                   recording={recording}
                   onPanelOpen={() => setPanelOpen(true)}
+                  collectionName={collectionName}
+                  onBackToCollection={onBackToCollection}
                 />
                 {!lyricsOnly && !hideChordDiagram && (
                   <ChordStrip
