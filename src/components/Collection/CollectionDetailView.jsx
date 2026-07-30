@@ -329,19 +329,62 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
             Search Songs
           </button>
 
-          {renaming ? null : (
-            <button
-              type="button"
-              onClick={() => setRenaming(true)}
-              className="w-full py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
-                text-gray-700 dark:text-gray-300 text-sm font-medium
-                hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Rename
-            </button>
+          <div className="flex items-stretch gap-2 pt-1">
+            {!renaming && (
+              <button
+                type="button"
+                onClick={() => setRenaming(true)}
+                aria-label="Rename collection"
+                title="Rename"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg
+                  border border-gray-300 dark:border-gray-600
+                  text-gray-600 dark:text-gray-300
+                  hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span aria-hidden="true" className="text-base leading-none">✏️</span>
+                <span className="text-[10px] leading-none">Rename</span>
+              </button>
+            )}
+            {!duplicating && (
+              <button
+                type="button"
+                onClick={() => setDuplicating(true)}
+                aria-label="Duplicate collection"
+                title="Duplicate"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg
+                  border border-gray-300 dark:border-gray-600
+                  text-gray-600 dark:text-gray-300
+                  hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span aria-hidden="true" className="text-base leading-none">⧉</span>
+                <span className="text-[10px] leading-none">Duplicate</span>
+              </button>
+            )}
+            {collection?.shareCode && !linkExpired && (
+              <button
+                type="button"
+                onClick={handleCheckUpdates}
+                disabled={refreshing}
+                aria-label="Check for updates"
+                title="Check for updates"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg
+                  border border-indigo-300 dark:border-indigo-700
+                  text-indigo-600 dark:text-indigo-400
+                  hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors
+                  disabled:opacity-50"
+              >
+                <span aria-hidden="true" className="text-base leading-none">{refreshing ? '…' : '↻'}</span>
+                <span className="text-[10px] leading-none">Updates</span>
+              </button>
+            )}
+          </div>
+          {collection?.shareCode && linkExpired && (
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-1">
+              Link expired
+            </p>
           )}
 
-          {duplicating ? (
+          {duplicating && (
             <div>
               <input
                 ref={duplicateInputRef}
@@ -364,35 +407,6 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
                 Enter to confirm · Esc to cancel
               </p>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setDuplicating(true)}
-              className="w-full py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
-                text-gray-700 dark:text-gray-300 text-sm font-medium
-                hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Duplicate
-            </button>
-          )}
-
-          {collection?.shareCode && !linkExpired && (
-            <button
-              type="button"
-              onClick={handleCheckUpdates}
-              disabled={refreshing}
-              className="w-full py-2.5 rounded-lg border border-indigo-300 dark:border-indigo-700
-                text-indigo-600 dark:text-indigo-400 text-sm font-medium
-                hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors
-                disabled:opacity-50"
-            >
-              {refreshing ? 'Checking…' : 'Check for Updates'}
-            </button>
-          )}
-          {collection?.shareCode && linkExpired && (
-            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-1">
-              Share link expired
-            </p>
           )}
 
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
