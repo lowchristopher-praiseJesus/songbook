@@ -51,4 +51,28 @@ describe('checkKey', () => {
     expect(result.detectedKey).toBe('C')
     expect(result.outlierChords).toEqual([])
   })
+
+  it('does not flag sus/power chords as outliers or trigger a mismatch (no third to conflict)', () => {
+    const rawText = '[C]a [Dsus4]b [Dsus4]c [G]d [Am]e [Dsus4]f'
+    const result = checkKey(rawText, 'C')
+
+    expect(result.keyMatches).toBe(true)
+    expect(result.detectedKey).toBe('C')
+    expect(result.outlierChords).toEqual([])
+  })
+
+  it('flags a decisive adjacent-key mismatch (I-IV-V-vi in G declared as C)', () => {
+    const rawText = '[G]a [C]b [D]c [Em]d\n[G]a [C]b [D]c [Em]d'
+    const result = checkKey(rawText, 'C')
+
+    expect(result.keyMatches).toBe(false)
+    expect(result.detectedKey).toBe('G')
+  })
+
+  it('does not silently drop whitespace-padded chord tokens', () => {
+    const result = checkKey('[ C ]a [F]b [G]c', 'C')
+
+    expect(result.totalChords).toBe(3)
+    expect(result.outlierChords).toEqual([])
+  })
 })

@@ -5,7 +5,12 @@ import { isChord } from './contentParser'
 const DEGREE_QUALITIES = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished']
 
 // If the stated key's diatonic-fit score is at least this high, it's never reported as a mismatch.
-const MISMATCH_SCORE_THRESHOLD = 0.7
+// Tuned to 0.9 (rather than a looser 0.7) because adjacent keys (a fifth apart, e.g. C and G)
+// share 6 of 7 diatonic chords, so a song fully in the "wrong" adjacent key can still clear 0.7
+// on the stated key and never get flagged (e.g. a I-IV-V-vi progression in G declared as C scores
+// 0.75 on C — a clear mis-key that 0.7 would silently accept). 0.9 catches that case while still
+// leaving room for a single genuine borrowed/outlier chord in an otherwise-diatonic song.
+const MISMATCH_SCORE_THRESHOLD = 0.9
 // Otherwise, the best-scoring key must beat the stated key by at least this margin to be reported.
 const MISMATCH_MARGIN = 0.15
 
@@ -16,6 +21,11 @@ function classifyQuality(suffix) {
   if (suffix.startsWith('aug')) return 'other'
   if (suffix.startsWith('maj') || suffix.startsWith('M')) return 'major'
   if (suffix.startsWith('min') || suffix.startsWith('m')) return 'minor'
+  // No third present (sus2/sus4/bare sus, no3/no-variants, bare power chords like "5")
+  // means the chord can't conflict with either a major or minor diatonic degree.
+  if (suffix.startsWith('sus')) return 'neutral'
+  if (suffix.startsWith('no')) return 'neutral'
+  if (/^5/.test(suffix)) return 'neutral'
   return 'major'
 }
 
@@ -39,7 +49,13 @@ function diatonicSetForKey(keyIndex) {
 }
 
 function fitsKey(parsed, keyIndex) {
-  return diatonicSetForKey(keyIndex).get(parsed.rootIndex) === parsed.quality
+  const expectedQuality = diatonicSetForKey(keyIndex).get(parsed.rootIndex)
+  if (expectedQuality === undefined) return false
+  // A neutral (no-third) chord has nothing to conflict with, so it fits any
+  // diatonic degree as long as its root is diatonic — regardless of that
+  // degree's expected triad quality.
+  if (parsed.quality === 'neutral') return true
+  return expectedQuality === parsed.quality
 }
 
 function keyIndexToName(keyIndex) {
@@ -54,7 +70,7 @@ function collectChordInstances(rawText) {
     CHORD_TOKEN_RE.lastIndex = 0
     let m
     while ((m = CHORD_TOKEN_RE.exec(lineText)) !== null) {
-      const token = m[1]
+      const token = m[1].trim()
       if (!isChord(token)) continue
       const parsed = parseChordToken(token)
       if (!parsed) continue

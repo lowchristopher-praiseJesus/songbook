@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { SongEditor } from '../SongEditor'
 
 const mockSong = {
@@ -165,6 +165,20 @@ describe('SongEditor — Check key', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
     expect(screen.getByRole('button', { name: /update key/i })).toBeInTheDocument()
+  })
+
+  it('opens the KeyCheckModal (not a toast) when the key matches but outlier chords exist', () => {
+    const onAddToast = vi.fn()
+    render(<SongEditor songId="song-1" onAddToast={onAddToast} />)
+    fireEvent.change(screen.getByLabelText('Song content'), {
+      target: { value: '[G]a [C]b [D]c [Em]d [G]a [C]b [D]c [Em]d [G]a [F]b' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
+
+    expect(onAddToast).not.toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText(/✓ Key matches/i)).toBeInTheDocument()
+    expect(within(dialog).getByText('F')).toBeInTheDocument()
   })
 
   it('Update key applies the detected key and hands off to the transpose-confirm flow', () => {

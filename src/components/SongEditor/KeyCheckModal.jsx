@@ -13,13 +13,18 @@ export function KeyCheckModal({ isOpen, result, onUpdateKey, onCancel }) {
             ✓ Key matches — stated key <strong>{statedKey}</strong> fits the chords used.
           </p>
         ) : (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Stated key: <strong>{statedKey}</strong> · Detected key: <strong>{detectedKey}</strong>
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Stated key: <strong>{statedKey}</strong> · Detected key: <strong>{detectedKey}</strong>
+              </p>
+              <Button variant="primary" onClick={() => onUpdateKey(detectedKey)}>
+                Update key
+              </Button>
+            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+              Your chords already match this key — choose "Keep As-Is" on the next step.
             </p>
-            <Button variant="primary" onClick={() => onUpdateKey(detectedKey)}>
-              Update key
-            </Button>
           </div>
         )}
       </div>
