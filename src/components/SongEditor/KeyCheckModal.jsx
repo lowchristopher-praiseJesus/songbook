@@ -6,7 +6,7 @@ export function KeyCheckModal({ isOpen, result, onUpdateKey, onCancel }) {
   const { statedKey, detectedKey, keyMatches, outlierChords } = result
 
   return (
-    <Modal isOpen={isOpen} title="Check Key">
+    <Modal isOpen={isOpen} title="Check Key" onClose={onCancel}>
       <div className="mb-4">
         {keyMatches ? (
           <p className="text-sm text-green-600 dark:text-green-400">

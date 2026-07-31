@@ -60,7 +60,7 @@ describe('KeyCheckModal', () => {
   it('calls onCancel when Close is clicked', () => {
     const onCancel = vi.fn()
     render(<KeyCheckModal isOpen result={matchingResult} onUpdateKey={() => {}} onCancel={onCancel} />)
-    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(onCancel).toHaveBeenCalled()
   })
 })
