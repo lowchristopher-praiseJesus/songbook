@@ -126,3 +126,57 @@ describe('SongEditor', () => {
     expect(mockUpdateSong).not.toHaveBeenCalled()
   })
 })
+
+describe('SongEditor — Check key', () => {
+  beforeEach(() => {
+    mockUpdateSong.mockReset()
+    mockSetEditingSongId.mockReset()
+    mockSaveAsNewSong.mockReset()
+    mockSelectSong.mockReset()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('toasts when there are no chords to analyze', () => {
+    const onAddToast = vi.fn()
+    render(<SongEditor songId="song-1" onAddToast={onAddToast} />)
+    fireEvent.change(screen.getByLabelText('Song content'), {
+      target: { value: 'no chords here at all' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
+    expect(onAddToast).toHaveBeenCalledWith('No chords found to analyze.', 'info')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('toasts success when the stated key matches with no outliers', () => {
+    const onAddToast = vi.fn()
+    render(<SongEditor songId="song-1" onAddToast={onAddToast} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
+    expect(onAddToast).toHaveBeenCalledWith('Key looks correct — no issues found.', 'success')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('opens the KeyCheckModal on a key mismatch', () => {
+    render(<SongEditor songId="song-1" />)
+    fireEvent.change(screen.getByLabelText('Song content'), {
+      target: { value: '[B]one [E]two [F#]three [G#m]four\n[B]one [E]two [F#]three [G#m]four' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
+    expect(screen.getByRole('button', { name: /update key/i })).toBeInTheDocument()
+  })
+
+  it('Update key applies the detected key and hands off to the transpose-confirm flow', () => {
+    render(<SongEditor songId="song-1" />)
+    fireEvent.change(screen.getByLabelText('Song content'), {
+      target: { value: '[B]one [E]two [F#]three [G#m]four\n[B]one [E]two [F#]three [G#m]four' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
+    fireEvent.click(screen.getByRole('button', { name: /update key/i }))
+
+    expect(screen.queryByRole('button', { name: /update key/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/changing the key from/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Transpose Chords' })).toBeInTheDocument()
+  })
+})

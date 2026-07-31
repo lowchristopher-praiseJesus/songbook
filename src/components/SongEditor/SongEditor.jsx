@@ -7,6 +7,8 @@ import { FixChordsModal } from './FixChordsModal'
 import { transposeRawTextByKey } from '../../lib/parser/chordUtils'
 import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/sectionDetector'
 import { detectChordFixes, applyChordFixes } from '../../lib/parser/chordLineDetector'
+import { checkKey } from '../../lib/parser/keyChecker'
+import { KeyCheckModal } from './KeyCheckModal'
 
 export function SongEditor({ songId, onAddToast }) {
   const song = useLibraryStore(s => s.activeSong)
@@ -21,6 +23,7 @@ export function SongEditor({ songId, onAddToast }) {
   const [pendingKeyChange, setPendingKeyChange] = useState(null)
   const [pendingFixes, setPendingFixes] = useState(null)
   const [pendingChordFixes, setPendingChordFixes] = useState(null)
+  const [pendingKeyCheck, setPendingKeyCheck] = useState(null)
 
   function handleDetectHeaders() {
     const detections = detectSectionHeaders(rawText)
@@ -44,6 +47,24 @@ export function SongEditor({ songId, onAddToast }) {
     setRawText(applyChordFixes(rawText, selectedFixes))
     setIsDirty(true)
     setPendingChordFixes(null)
+  }
+
+  function handleCheckKey() {
+    const result = checkKey(rawText, meta.key)
+    if (result.totalChords === 0) {
+      onAddToast?.('No chords found to analyze.', 'info')
+      return
+    }
+    if (result.keyMatches && result.outlierChords.length === 0) {
+      onAddToast?.('Key looks correct — no issues found.', 'success')
+      return
+    }
+    setPendingKeyCheck(result)
+  }
+
+  function handleUpdateKeyFromCheck(newKey) {
+    setPendingKeyCheck(null)
+    handleMetaChange('key', newKey)
   }
 
   if (!song) return null
@@ -152,6 +173,15 @@ export function SongEditor({ songId, onAddToast }) {
           >
             Fix chords
           </button>
+          <button
+            type="button"
+            onClick={handleCheckKey}
+            className="shrink-0 ml-2 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+                       text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+          >
+            Check key
+          </button>
         </div>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"
@@ -172,6 +202,12 @@ export function SongEditor({ songId, onAddToast }) {
         detections={pendingChordFixes ?? []}
         onApply={handleApplyChordFixes}
         onCancel={() => setPendingChordFixes(null)}
+      />
+      <KeyCheckModal
+        isOpen={pendingKeyCheck !== null}
+        result={pendingKeyCheck}
+        onUpdateKey={handleUpdateKeyFromCheck}
+        onCancel={() => setPendingKeyCheck(null)}
       />
     </div>
   )
