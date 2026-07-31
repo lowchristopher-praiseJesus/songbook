@@ -1,11 +1,11 @@
-const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-const FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+export const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+export const FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 const FLAT_KEY_NAMES  = new Set(['Db', 'Eb', 'F', 'Ab', 'Bb'])
-const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
-const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
+export const FLAT_KEY_INDICES = new Set([1, 3, 5, 8, 10])
+export const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11]
 
 // Build a lookup from note name → chromatic index (handles both sharp and flat names)
-const NOTE_TO_INDEX = {}
+export const NOTE_TO_INDEX = {}
 SHARPS.forEach((n, i) => { NOTE_TO_INDEX[n] = i })
 FLATS.forEach((n, i)  => { NOTE_TO_INDEX[n] = i })
 
