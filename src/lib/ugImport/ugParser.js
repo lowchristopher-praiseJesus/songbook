@@ -223,7 +223,7 @@ function parseFromStoreData(data, url) {
   console.log('[ugParser] raw wiki_tab.content (first 800 chars):\n' + content.slice(0, 800))
   const contentString = processContentLines(content)
   return makeSong(contentString, {
-    title, artist, key, keyIndex, isMinor, usesFlats, capo,
+    title, artist, key, keyIndex, isMinor, usesFlats, capo, capoAppliesAtDisplay: false,
   })
 }
 
@@ -277,6 +277,6 @@ export function parseUGMarkdown(markdown = '', url = '') {
     : detectKeyFromContent(contentString)
 
   return makeSong(contentString, {
-    title, artist, key, keyIndex, isMinor, usesFlats, capo,
+    title, artist, key, keyIndex, isMinor, usesFlats, capo, capoAppliesAtDisplay: false,
   })
 }

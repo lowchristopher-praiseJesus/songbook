@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranspose } from '../../hooks/useTranspose'
+import { getDefaultCapo } from '../../lib/parser/chordUtils'
 import { useAnnotationStore } from '../../store/annotationStore'
 import { SongHeader } from './SongHeader'
 import { SongBody } from './SongBody'
@@ -44,7 +45,7 @@ export function SongList({
   collectionName = null,
   onBackToCollection,
 }) {
-  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, song.meta.capo ?? 0)
+  const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, getDefaultCapo(song.meta))
   const baseline = useAnnotationStore(s => s.baseline)
   const effectivePaginated = baseline ? !!baseline.paginated : paginated
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transposeChord, transposeSections, detectKeyFromContent } from '../chordUtils'
+import { transposeChord, transposeSections, detectKeyFromContent, getDefaultCapo } from '../chordUtils'
 
 describe('transposeChord', () => {
   it('transposes G up 2 semitones to A', () => {
@@ -135,5 +135,23 @@ describe('detectKeyFromContent', () => {
     const result = detectKeyFromContent('No chords here just words')
     expect(result.key).toBe('C')
     expect(result.keyIndex).toBe(0)
+  })
+})
+
+describe('getDefaultCapo', () => {
+  it('returns meta.capo when capoAppliesAtDisplay is unset (SBP / manual songs)', () => {
+    expect(getDefaultCapo({ capo: 3 })).toBe(3)
+  })
+
+  it('returns meta.capo when capoAppliesAtDisplay is explicitly true', () => {
+    expect(getDefaultCapo({ capo: 2, capoAppliesAtDisplay: true })).toBe(2)
+  })
+
+  it('returns 0 when capoAppliesAtDisplay is false, regardless of meta.capo (UG / Daniel Choy songs)', () => {
+    expect(getDefaultCapo({ capo: 1, capoAppliesAtDisplay: false })).toBe(0)
+  })
+
+  it('defaults to 0 when meta.capo is absent', () => {
+    expect(getDefaultCapo({})).toBe(0)
   })
 })

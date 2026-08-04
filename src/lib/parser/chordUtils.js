@@ -97,6 +97,20 @@ export function transposeRawTextByKey(rawText, fromKey, toKey) {
 }
 
 /**
+ * The capo value useTranspose should seed its display-shift state from.
+ *
+ * Most sources (SBP, manual entry) store chords at concert/sounding pitch, so
+ * `meta.capo` must be subtracted at display time to show playable shapes —
+ * useTranspose's default behavior. Sources whose stored chords are already the
+ * shape chords as printed at the source (UG, Daniel Choy) set
+ * `meta.capoAppliesAtDisplay = false` so capo stays informational-only and
+ * isn't subtracted again on top of chords that already reflect it.
+ */
+export function getDefaultCapo(meta) {
+  return meta.capoAppliesAtDisplay === false ? 0 : (meta.capo ?? 0)
+}
+
+/**
  * Return a new sections array with all chord tokens transposed by `delta` semitones.
  * Does not mutate the original array or any of its contents.
  */

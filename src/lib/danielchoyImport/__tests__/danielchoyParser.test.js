@@ -34,3 +34,17 @@ describe('parseDanielChoyPage — chord-above-lyrics merge', () => {
     expect(lines[1].content).toBe('Hello world')
   })
 })
+
+describe('parseDanielChoyPage — capo metadata', () => {
+  it('extracts capo from a "Play in Key" line', () => {
+    const html = 'Original Key: E  Play in Key: C (Capo 4 Frets)\nVerse 1\nC  G\nHello world'
+    const song = parseDanielChoyPage(html, { title: 'Test Song', artist: 'Test Artist' })
+    expect(song.meta.capo).toBe(4)
+  })
+
+  it('flags capo as informational-only (chords are already the printed shape chords, not concert pitch)', () => {
+    const html = 'Original Key: E  Play in Key: C (Capo 4 Frets)\nVerse 1\nC  G\nHello world'
+    const song = parseDanielChoyPage(html, { title: 'Test Song', artist: 'Test Artist' })
+    expect(song.meta.capoAppliesAtDisplay).toBe(false)
+  })
+})

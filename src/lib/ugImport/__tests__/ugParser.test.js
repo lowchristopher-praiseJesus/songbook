@@ -28,6 +28,12 @@ describe('parseUGMarkdown — metadata', () => {
     expect(song.meta.capo).toBe(0)
   })
 
+  it('flags capo as informational-only (chords are already shape chords, not concert pitch)', () => {
+    const md = '# Song Chords by Artist\nCapo: 3\n\n[Verse 1]\nG  D\nHello world'
+    const song = parseUGMarkdown(md)
+    expect(song.meta.capoAppliesAtDisplay).toBe(false)
+  })
+
   it('defaults key to C when no Key: line and no chords are present', () => {
     const md = '# Song Chords by Artist\n\nJust lyrics here no chords at all'
     const song = parseUGMarkdown(md)
@@ -259,6 +265,11 @@ describe('parseUGPage — store.page_data JSON extraction', () => {
     expect(song.meta.title).toBe('Hallelujah')
     expect(song.meta.artist).toBe('Leonard Cohen')
     expect(song.meta.capo).toBe(5)
+  })
+
+  it('flags capo as informational-only (chords are already shape chords, not concert pitch)', () => {
+    const song = parseUGPage({ rawHtml: makeHtml(basePageData) })
+    expect(song.meta.capoAppliesAtDisplay).toBe(false)
   })
 
   it('reads tonality_name for a major key (G)', () => {

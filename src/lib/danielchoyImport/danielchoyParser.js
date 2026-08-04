@@ -293,6 +293,7 @@ export function parseDanielChoyPage(rawHtml, titleMeta) {
       isMinor: keyInfo.isMinor,
       usesFlats: keyInfo.usesFlats,
       capo,
+      capoAppliesAtDisplay: false,
     },
     sections,
   }

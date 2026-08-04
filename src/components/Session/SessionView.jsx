@@ -21,6 +21,7 @@ import { SongBody } from '../SongList/SongBody'
 import { TransposeControl } from '../SongList/TransposeControl'
 import { parseContent } from '../../lib/parser/contentParser'
 import { useTranspose } from '../../hooks/useTranspose'
+import { getDefaultCapo } from '../../lib/parser/chordUtils'
 import { v4 as uuidv4 } from 'uuid'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { parseChordPro } from '../../lib/parser/chordProParser'
@@ -77,7 +78,7 @@ function SortableSessionSong({ songId, song, isLocked, isMyLock, onEdit, onRemov
 
 function SessionSongViewer({ song, onClose }) {
   const sections = useMemo(() => parseContent(song.rawText ?? ''), [song.rawText])
-  const transpose = useTranspose(sections, song.meta.usesFlats ?? false, song.id, song.meta.capo ?? 0)
+  const transpose = useTranspose(sections, song.meta.usesFlats ?? false, song.id, getDefaultCapo(song.meta))
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
