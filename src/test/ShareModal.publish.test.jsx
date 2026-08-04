@@ -118,6 +118,17 @@ describe('ShareModal — community publish', () => {
     expect(publishCollection.mock.calls[0][0].turnstileToken).toBe('mock-token');
   });
 
+  it('defaults a blank artist to "Unknown" so the worker does not reject the whole batch', async () => {
+    renderShareModal({ songs: [{ id: 's1', meta: { title: 'No Author Song' }, rawText: 'a\nb' }] });
+
+    fireEvent.click(screen.getByLabelText(/also list in community/i));
+    fireEvent.click(screen.getByLabelText(/i have the right to share/i));
+    fireEvent.click(screen.getByRole('button', { name: /create link/i }));
+
+    await waitFor(() => expect(publishCollection).toHaveBeenCalled());
+    expect(publishCollection.mock.calls[0][0].songs[0].artist).toBe('Unknown');
+  });
+
   it('strips {note:} tokens from published bodies', async () => {
     renderShareModal({ songs: [{ id: 's1', meta: { title: 'T', artist: 'A' }, rawText: 'a\n{note: private}\nb' }] });
 

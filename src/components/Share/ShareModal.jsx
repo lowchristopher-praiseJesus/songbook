@@ -96,7 +96,9 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   function buildCommunitySongs() {
     return songs.map(s => ({
       title: s.meta.title,
-      artist: s.meta.artist ?? '',
+      // The worker rejects the whole publish if any song is missing an artist
+      // (community.ts:49) — congregational charts routinely leave this blank.
+      artist: s.meta.artist || 'Unknown',
       keyIndex: s.meta.keyIndex,
       capo: s.meta.capo,
       tempo: s.meta.tempo,
