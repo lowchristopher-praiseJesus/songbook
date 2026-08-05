@@ -35,3 +35,4 @@ experiments/
 tools/
 .wrangler/
 scripts/
+unused-root-files/
