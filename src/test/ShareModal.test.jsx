@@ -126,6 +126,23 @@ describe('ShareModal', () => {
     );
   });
 
+  it('saves the lyrics-only choice on the collection so later pushes can restore it', async () => {
+    uploadShare.mockResolvedValue({
+      shareCode: 'abc',
+      shareUrl: 'http://app?share=abc',
+      expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+    });
+    useLibraryStore.setState({
+      collections: [{ id: 'coll-2', name: 'My Set', createdAt: '', songIds: [] }],
+    });
+    renderWithLicense(<ShareModal isOpen songs={songs} collectionId="coll-2" collectionName="My Set" onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('switch', { name: /share lyrics only/i }));
+    fireEvent.click(screen.getByText('Create link'));
+    await screen.findByDisplayValue('http://app?share=abc');
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-2');
+    expect(col.shareLyricsOnly).toBe(true);
+  });
+
   it('hides conductor toggle when not licensed', () => {
     renderWithLicense(<ShareModal isOpen songs={songs} collectionId={null} onClose={() => {}} />);
     expect(screen.queryByLabelText(/enable conductor broadcast/i)).not.toBeInTheDocument();
@@ -392,6 +409,143 @@ describe('ShareModal — update mode', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /push update/i }));
     expect(await screen.findByText(/unlock it before pushing updates/i)).toBeInTheDocument();
+  });
+
+  it('restores the lyrics-only toggle from the collection in update mode', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+        shareLyricsOnly: true,
+      }],
+    });
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = screen.getByRole('switch', { name: /share lyrics only/i });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(checkShareVersion).toHaveBeenCalled());
+  });
+
+  it('keeps lyrics-only on in the pushed ZIP when the original link had it on', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+        shareLyricsOnly: true,
+      }],
+    });
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalled());
+    expect(exportSongsAsSbp).toHaveBeenCalledWith([], 'Sunday Set', true, null);
+  });
+
+  it('allows turning lyrics-only back on in update mode and pushes it', async () => {
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    const toggle = screen.getByRole('switch', { name: /share lyrics only/i });
+    expect(toggle).not.toBeDisabled();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalled());
+    expect(exportSongsAsSbp).toHaveBeenCalledWith([], 'Sunday Set', true, null);
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-1');
+    expect(col.shareLyricsOnly).toBe(true);
+  });
+
+  it('allows turning lyrics-only off in update mode and pushes it', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+        shareLyricsOnly: true,
+      }],
+    });
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    fireEvent.click(screen.getByRole('switch', { name: /share lyrics only/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalled());
+    expect(exportSongsAsSbp).toHaveBeenCalledWith([], 'Sunday Set', false, null);
+    const col = useLibraryStore.getState().collections.find(c => c.id === 'coll-1');
+    expect(col.shareLyricsOnly).toBe(false);
+  });
+
+  it('keeps the conductor code in the pushed ZIP so the link still offers the broadcast', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+        conductorCode: 'COND12',
+        conductorDirectorToken: 'director-tok',
+        conductorRole: 'conductor',
+      }],
+    });
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalled());
+    expect(exportSongsAsSbp).toHaveBeenCalledWith([], 'Sunday Set', false, 'COND12');
+  });
+
+  it('drops the conductor code from the pushed ZIP once the broadcast has ended', async () => {
+    useLibraryStore.setState({
+      collections: [{
+        id: 'coll-1',
+        name: 'Sunday Set',
+        createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+        songIds: [],
+        shareCode: 'abc-123',
+        lastVersion: 1,
+        conductorCode: 'COND12',
+        conductorRole: 'conductor',
+        conductorEnded: true,
+      }],
+    });
+    updateShare.mockResolvedValue({ version: 2, updatedAt: new Date().toISOString() });
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    await waitFor(() => expect(updateShare).toHaveBeenCalled());
+    expect(exportSongsAsSbp).toHaveBeenCalledWith([], 'Sunday Set', false, null);
   });
 
   it('shows "Push Update" button when collection has shareCode', async () => {

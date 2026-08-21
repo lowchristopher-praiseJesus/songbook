@@ -139,6 +139,9 @@ export default function App() {
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
+      // Recipients can push updates back to this link. Remember the link's lyrics-only
+      // setting so their Push Update re-stamps it instead of silently dropping it.
+      if (collectionId) updateCollection(collectionId, { shareLyricsOnly: !!shareSongs.lyricsOnly })
       setSidebarOpen(true)
       if (window.innerWidth < 768) {
         setAutoClosingSidebar(true)

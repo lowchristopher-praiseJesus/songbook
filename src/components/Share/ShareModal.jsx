@@ -33,8 +33,13 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
 
   // Sync nameValue from prop each time the modal opens (useState initial value
   // is only evaluated once on mount, so prop changes after mount are ignored).
+  // The lyrics-only flag lives only inside the shared ZIP, so update mode has to
+  // restore the value the link was created with — otherwise Push Update rewrites
+  // the ZIP without it and silently turns lyrics-only off for every recipient.
   useEffect(() => {
-    if (isOpen) setNameValue(collectionName ?? '')
+    if (!isOpen) return
+    setNameValue(collectionName ?? '')
+    setShareLyricsOnly(collection?.shareLyricsOnly ?? false)
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [listInCommunity, setListInCommunity] = useState(false);
@@ -161,7 +166,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       // Save shareCode on the sharer's collection so Push Update / Check for updates work next time
       if (collectionId) {
         const shareCode = result.shareCode ?? new URL(result.shareUrl).searchParams.get('share')
-        updateCollection(collectionId, { shareCode, lastVersion: 1 })
+        updateCollection(collectionId, { shareCode, lastVersion: 1, shareLyricsOnly })
       }
 
       if (conductorEnabled) {
@@ -260,9 +265,13 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
         return { ...song, rawText, meta: { ...song.meta, keyIndex: newKeyIndex, capo } }
       }).filter(Boolean)
 
-      const blob = await exportSongsAsSbp(collectionSongs, nameValue.trim() || null, shareLyricsOnly, null)
+      // Push Update rewrites the entire ZIP, so every ZIP-only field has to be
+      // re-stamped here or the link loses it: the lyrics-only flag, and the
+      // conductor code that makes the link offer the broadcast to new joiners.
+      const conductorCodeForPush = collection.conductorEnded ? null : (collection.conductorCode ?? null)
+      const blob = await exportSongsAsSbp(collectionSongs, nameValue.trim() || null, shareLyricsOnly, conductorCodeForPush)
       const result = await updateShare(collection.shareCode, blob)
-      if (collectionId) updateCollection(collectionId, { lastVersion: result.version })
+      if (collectionId) updateCollection(collectionId, { lastVersion: result.version, shareLyricsOnly })
       // Update baseline so the sharer's songs look "in sync" after pushing;
       // prevents false merge conflicts when recipients push further changes.
       collection.songIds.forEach(id => stampSharedBaseline(id))
@@ -600,9 +609,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
               role="switch"
               aria-checked={shareLyricsOnly}
               aria-label="Share lyrics only"
-              onClick={() => !isUpdateMode && setShareLyricsOnly(v => !v)}
-              disabled={isUpdateMode}
-              className={`flex items-center gap-3 w-full text-left ${isUpdateMode ? 'cursor-not-allowed opacity-50' : ''}`}
+              onClick={() => setShareLyricsOnly(v => !v)}
+              className="flex items-center gap-3 w-full text-left"
             >
               <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent
                 transition-colors duration-200
@@ -610,8 +618,11 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
                 <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200
                   ${shareLyricsOnly ? 'translate-x-5' : 'translate-x-0'}`} />
               </span>
-              <span className={`text-sm ${isUpdateMode ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>Share lyrics only</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Share lyrics only</span>
             </button>
+            {isUpdateMode && (
+              <p className="text-xs text-gray-400 mt-1 ml-14">Applies to the live link on your next Push Update</p>
+            )}
           </div>
           <div>
             <button
