@@ -10,7 +10,7 @@ import { DisplayTab } from './DisplayTab'
 
 export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideChordDiagram, onToggleHideChordDiagram, displaySettings, fontSize, onFontSizeChange }) {
   const [tab, setTab] = useState('general')
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, christmasMode, setChristmasMode } = useTheme()
   const index = useLibraryStore(s => s.index)
   const deleteSong = useLibraryStore(s => s.deleteSong)
   const stats = getStorageStats()
@@ -118,8 +118,8 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
         {/* Theme */}
         <div className="mb-4 sm:mb-6">
           <label className="block text-sm font-medium mb-2 dark:text-gray-300">Theme</label>
-          <div className="flex gap-2">
-            {['light', 'dark', 'system'].map(t => (
+          <div className="flex flex-wrap gap-2">
+            {['light', 'dark', 'system', 'christmas'].map(t => (
               <Button
                 key={t}
                 variant={theme === t ? 'primary' : 'secondary'}
@@ -129,6 +129,21 @@ export function SettingsPanel({ onClose, lyricsOnly, onToggleLyricsOnly, hideCho
               </Button>
             ))}
           </div>
+          {theme === 'christmas' && (
+            <div role="group" aria-label="Christmas mode" className="flex flex-wrap items-center gap-2 mt-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Mode</span>
+              {[['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(([value, label]) => (
+                <Button
+                  key={value}
+                  variant={christmasMode === value ? 'primary' : 'secondary'}
+                  aria-pressed={christmasMode === value}
+                  onClick={() => setChristmasMode(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Display */}

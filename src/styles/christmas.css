@@ -1,0 +1,66 @@
+/* Christmas theme: light mode = Snowfall, dark mode = Evergreen & Cranberry.
+   ThemeContext sets data-theme="christmas" and toggles .dark from the OS setting.
+   Chart colors are always set inline by useDisplaySettings, so they are overridden
+   via the *-active variables, which means Christmas owns the chart colors. */
+
+html[data-theme="christmas"] {
+  --gray-50: 240 244 247;
+  --gray-100: 230 237 242;
+  --gray-200: 213 222 229;
+  --gray-300: 191 202 211;
+  --gray-400: 143 160 172;
+  --gray-500: 107 122 134;
+  --gray-600: 77 91 102;
+  --gray-700: 55 68 78;
+  --gray-800: 36 48 57;
+  --gray-900: 31 42 51;
+  --gray-950: 17 26 33;
+  --indigo-50: 253 242 244;
+  --indigo-100: 252 228 232;
+  --indigo-200: 248 200 208;
+  --indigo-300: 240 150 163;
+  --indigo-400: 226 95 115;
+  --indigo-500: 214 56 76;
+  --indigo-600: 200 40 60;
+  --indigo-700: 168 30 48;
+  --indigo-800: 135 28 42;
+  --indigo-900: 105 25 36;
+  --indigo-950: 60 12 20;
+  --title-color-active: #1f2a33;
+  --artist-color-active: #6b7a86;
+  --lyrics-color-active: #243039;
+  --chord-color-active: #1f7a45;
+  --section-color-active: #16623a;
+  --annotation-color-active: #8fa0ac;
+}
+
+html[data-theme="christmas"].dark {
+  --gray-50: 248 243 230;
+  --gray-100: 243 234 214;
+  --gray-200: 227 220 198;
+  --gray-300: 201 209 191;
+  --gray-400: 167 185 164;
+  --gray-500: 127 154 130;
+  --gray-600: 43 77 55;
+  --gray-700: 28 66 43;
+  --gray-800: 20 51 34;
+  --gray-900: 15 40 26;
+  --gray-950: 8 24 15;
+  --indigo-50: 254 249 235;
+  --indigo-100: 253 243 214;
+  --indigo-200: 250 232 187;
+  --indigo-300: 246 218 143;
+  --indigo-400: 240 199 94;
+  --indigo-500: 214 170 60;
+  --indigo-600: 179 38 60;
+  --indigo-700: 148 30 50;
+  --indigo-800: 118 26 42;
+  --indigo-900: 90 22 36;
+  --indigo-950: 52 12 22;
+  --title-color-active: #f3ead6;
+  --artist-color-active: #a7b9a4;
+  --lyrics-color-active: #f3ead6;
+  --chord-color-active: #f0c75e;
+  --section-color-active: #e4707f;
+  --annotation-color-active: #7f9a82;
+}

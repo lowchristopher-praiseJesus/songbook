@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { SettingsPanel } from '../SettingsPanel'
 
 // --- Mock dependencies ---
 
 // Mock ThemeContext
 const mockSetTheme = vi.fn()
+const mockSetChristmasMode = vi.fn()
 let mockTheme = 'light'
+let mockChristmasMode = 'auto'
 vi.mock('../../../contexts/ThemeContext', () => ({
-  useTheme: () => ({ theme: mockTheme, setTheme: mockSetTheme }),
+  useTheme: () => ({ theme: mockTheme, setTheme: mockSetTheme, christmasMode: mockChristmasMode, setChristmasMode: mockSetChristmasMode }),
 }))
 
 // Mock LicenseContext
@@ -53,6 +55,8 @@ describe('SettingsPanel', () => {
     vi.useFakeTimers()
     onClose = vi.fn()
     mockTheme = 'light'
+    mockChristmasMode = 'auto'
+    mockSetChristmasMode.mockReset()
     mockIndex = []
     mockDeleteSong.mockReset()
     mockSetTheme.mockReset()
@@ -115,6 +119,26 @@ describe('SettingsPanel', () => {
     expect(screen.getByRole('button', { name: /light/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /dark/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /system/i })).toBeInTheDocument()
+  })
+
+  it('renders a Christmas theme button that selects the christmas theme', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    fireEvent.click(screen.getByRole('button', { name: /christmas/i }))
+    expect(mockSetTheme).toHaveBeenCalledWith('christmas')
+  })
+
+  it('hides the Christmas Auto/Light/Dark row unless Christmas is selected', () => {
+    render(<SettingsPanel onClose={onClose} />)
+    expect(screen.queryByRole('group', { name: /christmas mode/i })).not.toBeInTheDocument()
+  })
+
+  it('shows Auto/Light/Dark under Christmas and saves the choice', () => {
+    mockTheme = 'christmas'
+    render(<SettingsPanel onClose={onClose} />)
+    const group = screen.getByRole('group', { name: /christmas mode/i })
+    expect(within(group).getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(within(group).getByRole('button', { name: 'Dark' }))
+    expect(mockSetChristmasMode).toHaveBeenCalledWith('dark')
   })
 
   it('close button has type="button"', () => {
