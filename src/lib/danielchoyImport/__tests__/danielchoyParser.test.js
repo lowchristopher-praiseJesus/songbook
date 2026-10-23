@@ -28,7 +28,7 @@ describe('parseDanielChoyPage — chord-above-lyrics merge', () => {
     const lines = song.sections[0].lines
     expect(lines).toHaveLength(2)
     expect(lines[0].type).toBe('lyric')
-    expect(lines[0].content).toBe('G  D  x')
+    expect(lines[0].content).toBe('G D x') // alignment padding is collapsed in lyric lines
     expect(lines[0].chords).toEqual([])
     expect(lines[1].type).toBe('lyric')
     expect(lines[1].content).toBe('Hello world')

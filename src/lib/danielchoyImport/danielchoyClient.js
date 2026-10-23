@@ -4,6 +4,18 @@ const DC_URL_RE = /danielchoy\.blogspot\.com\/\d{4}\/\d{2}\/[^?#]+\.html/i
 
 // Matches the key-chord boundary in post titles: ". G Chord" or ". Ab Chord"
 const KEY_CHORD_BOUNDARY_RE = /\.\s+[A-G][b#]?(?:[-/][A-G][b#]?)?\s+[Cc]hord/
+// Captures the chart key from the same boundary (". A Chords", ". G-A Chord" → first key)
+const CHART_KEY_RE = /\.\s+([A-G][b#]?)(?:[-/][A-G][b#]?)?\s+[Cc]hords?\b/
+
+/**
+ * The key the post's chords are written in, from the "X Chord" in its title — e.g.
+ * "What A God - SEU Worship @ June 2024. D Chord. (Lyrics and Chords)" → "D".
+ * More reliable than the post's own "Play in Key" header, which sometimes describes
+ * another version of the arrangement. Returns null when the title doesn't say.
+ */
+export function chartKeyFromTitle(rawTitle) {
+  return CHART_KEY_RE.exec(rawTitle ?? '')?.[1] ?? null
+}
 
 /**
  * Extract song name and artist from a DC post title like:
@@ -120,7 +132,7 @@ async function searchDCviaBlogger(query) {
       // Blogger feed includes the full post HTML — carry it so the importer
       // can skip the Firecrawl scrape step (no API key needed for JSONP results)
       const rawHtml = entry?.content?.['$t'] ?? ''
-      return { title: songName, artist, url, rawHtml }
+      return { title: songName, artist, url, rawHtml, chartKey: chartKeyFromTitle(rawTitle) }
     })
 }
 
@@ -143,7 +155,10 @@ export async function searchDanielChoy(query, apiKey) {
         .filter(item => DC_URL_RE.test(item.url))
         .map(item => {
           const { songName, artist } = parseDCTitle(item.title ?? '')
-          return { title: songName, artist, url: item.url, description: item.description }
+          return {
+            title: songName, artist, url: item.url, description: item.description,
+            chartKey: chartKeyFromTitle(item.title),
+          }
         })
     : []
 
