@@ -22,6 +22,7 @@ import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { mergeSharedCollection } from '../../lib/mergeSharedCollection'
 import { loadSong } from '../../lib/storage'
 import { ConflictPickerModal } from '../Share/ConflictPickerModal'
+import { usePushUpdate } from '../../hooks/usePushUpdate'
 
 function SortableSongListItem({ entry, onSelect, collectionId }) {
   const {
@@ -70,6 +71,8 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
   const [pendingRefresh, setPendingRefresh] = useState(null)
   const collection = useLibraryStore(s => s.collections.find(c => c.id === group.id))
   const applyShareRefresh = useLibraryStore(s => s.applyShareRefresh)
+  const markLinkExpired = useCallback(() => setLinkExpired(true), [])
+  const { push: pushUpdate, pushing } = usePushUpdate({ onAddToast, onExpired: markLinkExpired })
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -290,6 +293,22 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
                   hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
               >
                 🗑
+              </button>
+            )}
+            {collection?.shareCode && !isSpecial && !linkExpired && (
+              <button
+                type="button"
+                aria-label={`Push update to ${group.name}`}
+                title="Push your changes to the share link"
+                onClick={e => { e.stopPropagation(); pushUpdate(collection) }}
+                disabled={pushing}
+                className="ml-1 p-1 rounded shrink-0 text-xs
+                  [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100
+                  focus:opacity-100 transition-opacity
+                  hover:bg-gray-200 dark:hover:bg-gray-600 text-indigo-500 dark:text-indigo-400
+                  disabled:opacity-40"
+              >
+                {pushing ? '…' : '⇪'}
               </button>
             )}
             {collection?.shareCode && !isSpecial && !linkExpired && (

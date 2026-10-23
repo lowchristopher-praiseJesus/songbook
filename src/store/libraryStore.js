@@ -600,6 +600,19 @@ export const useLibraryStore = create((set, get) => ({
    * Used to attach conductor-mode fields (e.g. conductorCode, conductorDirectorToken)
    * after importing a conductor-enabled share.
    */
+  /**
+   * Record a successful Push Update: store the new server version and the
+   * lyrics-only flag the ZIP was written with, and re-stamp every song's
+   * sharedBaseline so the sharer's songs look "in sync" after pushing —
+   * prevents false merge conflicts when recipients push further changes.
+   */
+  recordSharePush(collectionId, { version, shareLyricsOnly }) {
+    const collection = get().collections.find(c => c.id === collectionId)
+    if (!collection) return
+    get().updateCollection(collectionId, { lastVersion: version, shareLyricsOnly })
+    collection.songIds.forEach(id => get().stampSharedBaseline(id))
+  },
+
   updateCollection(collectionId, updates) {
     const collections = get().collections.map(c =>
       c.id === collectionId ? { ...c, ...updates } : c

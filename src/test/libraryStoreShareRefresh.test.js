@@ -269,3 +269,26 @@ describe('applyShareRefresh', () => {
     expect(col.songIds).toContain('NEW1');
   });
 });
+
+describe('recordSharePush', () => {
+  it('records the pushed version and lyrics-only flag on the collection', () => {
+    useLibraryStore.getState().recordSharePush('C1', { version: 5, shareLyricsOnly: true });
+    const c = useLibraryStore.getState().collections.find(c => c.id === 'C1');
+    expect(c.lastVersion).toBe(5);
+    expect(c.shareLyricsOnly).toBe(true);
+    expect(saveCollections).toHaveBeenCalled();
+  });
+
+  it('stamps the shared baseline on every song in the collection', () => {
+    loadSong.mockImplementation(id => ({ id, rawText: 'x', meta: { title: 'T', sbpId: 'S1' }, sections: [] }));
+    useLibraryStore.getState().recordSharePush('C1', { version: 5, shareLyricsOnly: false });
+    const stampedIds = saveSong.mock.calls.map(([song]) => song.id);
+    expect(stampedIds).toEqual(useLibraryStore.getState().collections.find(c => c.id === 'C1').songIds);
+  });
+
+  it('does nothing for an unknown collection', () => {
+    useLibraryStore.getState().recordSharePush('nope', { version: 5, shareLyricsOnly: false });
+    expect(saveCollections).not.toHaveBeenCalled();
+    expect(saveSong).not.toHaveBeenCalled();
+  });
+});

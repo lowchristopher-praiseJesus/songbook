@@ -24,6 +24,7 @@ import { checkShareVersion, fetchShare } from '../../lib/shareApi'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { mergeSharedCollection } from '../../lib/mergeSharedCollection'
 import { loadSong } from '../../lib/storage'
+import { usePushUpdate } from '../../hooks/usePushUpdate'
 
 function SortableSongRow({ entry, index: idx, onSongClick, onRemove }) {
   const {
@@ -113,6 +114,8 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
   const renameEscapeRef = useRef(false)
   const duplicateEscapeRef = useRef(false)
   const qrCanvasRef = useRef(null)
+  const markLinkExpired = useCallback(() => setLinkExpired(true), [])
+  const { push: pushUpdate, pushing } = usePushUpdate({ onAddToast, onExpired: markLinkExpired })
 
   const isUncategorized = collectionId === '__uncategorized__'
   const collection = isUncategorized
@@ -453,6 +456,23 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
               >
                 <span aria-hidden="true" className="text-base leading-none">🔗</span>
                 <span className="text-[10px] leading-none">Share</span>
+              </button>
+            )}
+            {collection?.shareCode && !linkExpired && (
+              <button
+                type="button"
+                onClick={() => pushUpdate(collection)}
+                disabled={pushing}
+                aria-label="Push update"
+                title="Push your changes to the share link"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 rounded-lg
+                  border border-indigo-300 dark:border-indigo-700
+                  text-indigo-600 dark:text-indigo-400
+                  hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors
+                  disabled:opacity-50"
+              >
+                <span aria-hidden="true" className="text-base leading-none">{pushing ? '…' : '⇪'}</span>
+                <span className="text-[10px] leading-none">Push</span>
               </button>
             )}
             {collection?.shareCode && !linkExpired && (

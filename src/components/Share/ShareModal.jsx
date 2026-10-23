@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Modal } from '../UI/Modal';
 import { Button } from '../UI/Button';
-import { uploadShare, updateShare, checkShareVersion, setShareLocked } from '../../lib/shareApi';
+import { uploadShare, checkShareVersion, setShareLocked } from '../../lib/shareApi';
 import { exportSongsAsSbp, computeExportId, stripNoteTokens } from '../../lib/exportSbp';
 import { publishCollection, unpublishCollection } from '../../lib/communityImport/communityClient';
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
-import { loadSong, getTransposeState } from '../../lib/storage';
-import { transposeChord } from '../../lib/parser/chordUtils';
+import { pushCollectionUpdate } from '../../lib/pushCollectionUpdate';
 import { useLicense } from '../../contexts/LicenseContext';
 import useTurnstile from '../../hooks/useTurnstile';
 
@@ -57,6 +56,7 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
   const updateCollection = useLibraryStore(s => s.updateCollection)
   const backfillSongSbpId = useLibraryStore(s => s.backfillSongSbpId)
   const stampSharedBaseline = useLibraryStore(s => s.stampSharedBaseline)
+  const recordSharePush = useLibraryStore(s => s.recordSharePush)
   const collections = useLibraryStore(s => s.collections)
   const collection = collectionId ? collections.find(c => c.id === collectionId) : null
   const isUpdateMode = !!collection?.shareCode
@@ -247,34 +247,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
     setStep('uploading')
     setErrorMessage('')
     try {
-      // Always derive songs from the collection's current songIds so that
-      // additions and removals since the modal opened are reflected in the ZIP.
-      const collectionSongs = collection.songIds.map(id => {
-        const song = loadSong(id)
-        if (!song) return null
-        const ts = getTransposeState(id)
-        const delta = ts?.delta ?? 0
-        const capo = ts?.capo ?? song.meta.capo ?? 0
-        const usesFlats = song.meta.usesFlats ?? false
-        const newKeyIndex = (((song.meta.keyIndex ?? 0) + delta) % 12 + 12) % 12
-        const rawText = delta === 0
-          ? (song.rawText ?? '')
-          : (song.rawText ?? '').replace(/\[([^\]]+)\]/g, (_, chord) =>
-              '[' + transposeChord(chord, delta, usesFlats) + ']'
-            )
-        return { ...song, rawText, meta: { ...song.meta, keyIndex: newKeyIndex, capo } }
-      }).filter(Boolean)
-
-      // Push Update rewrites the entire ZIP, so every ZIP-only field has to be
-      // re-stamped here or the link loses it: the lyrics-only flag, and the
-      // conductor code that makes the link offer the broadcast to new joiners.
-      const conductorCodeForPush = collection.conductorEnded ? null : (collection.conductorCode ?? null)
-      const blob = await exportSongsAsSbp(collectionSongs, nameValue.trim() || null, shareLyricsOnly, conductorCodeForPush)
-      const result = await updateShare(collection.shareCode, blob)
-      if (collectionId) updateCollection(collectionId, { lastVersion: result.version, shareLyricsOnly })
-      // Update baseline so the sharer's songs look "in sync" after pushing;
-      // prevents false merge conflicts when recipients push further changes.
-      collection.songIds.forEach(id => stampSharedBaseline(id))
+      const result = await pushCollectionUpdate(collection, { name: nameValue, lyricsOnly: shareLyricsOnly })
+      recordSharePush(collection.id, { version: result.version, shareLyricsOnly })
       setExpiresAt(result.updatedAt ?? new Date().toISOString())
       if (result.locked) setLocked(true)
       setStep('update-done')
