@@ -28,7 +28,7 @@ export function resolveChordKey(chord) {
 
   // 3. Strip slash bass, apply suffix alias, look up root chord
   const slashIdx = rest.indexOf('/')
-  const suffix = slashIdx !== -1 ? rest.slice(0, slashIdx) : rest
+  const suffix = (slashIdx !== -1 ? rest.slice(0, slashIdx) : rest).replace(/^maj/i, 'maj').replace(/^min/i, 'min')
   const normalSuffix = SUFFIX_ALIAS[suffix] ?? suffix
   const rootKey = normalSuffix ? `${aliasedRoot}${normalSuffix}` : aliasedRoot
 

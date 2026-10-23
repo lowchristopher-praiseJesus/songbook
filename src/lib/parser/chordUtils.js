@@ -21,8 +21,9 @@ export function transposeChord(chord, delta, usesFlats) {
 
   const scale = usesFlats ? FLATS : SHARPS
 
-  // Handle slash chord: "G/B" → root="G", bass="B"; "Dm7/F" → root="D", suffix="m7", bass="F"
-  const slashIdx = chord.indexOf('/')
+  // Handle slash chord: "G/B" → root="G", bass="B"; "Dm7/F" → root="D", suffix="m7", bass="F".
+  // Split on the last slash so "C6/9/E" keeps "6/9" in the suffix.
+  const slashIdx = chord.lastIndexOf('/')
   if (slashIdx !== -1) {
     const leftPart = chord.slice(0, slashIdx)
     const bass = chord.slice(slashIdx + 1)

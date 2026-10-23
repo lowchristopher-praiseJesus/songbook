@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseContent } from '../contentParser'
+import { parseContent, isChord } from '../contentParser'
 
 describe('parseContent', () => {
   it('parses a simple section with chords inline', () => {
@@ -193,5 +193,44 @@ describe('inline {strum:} on chord tokens', () => {
     expect(chords[0].strum).toBe('///')
     expect(chords[1].strum).toBe('/')
     expect(chords[2].strum).toBeNull()
+  })
+})
+
+describe('capitalized Maj suffix', () => {
+  it('recognizes [EbMaj7] as a chord', () => {
+    const [section] = parseContent('[EbMaj7]hello')
+    expect(section.lines[0].chords).toEqual([{ chord: 'EbMaj7', position: 0, strum: null }])
+    expect(section.lines[0].content).toBe('hello')
+  })
+})
+
+describe('isChord — extended spellings', () => {
+  it.each([
+    // number before sus
+    'C7sus4', 'C7sus', 'C9sus4', 'F#7sus4/B',
+    // minor add9
+    'Cmadd9', 'Ebmadd9',
+    // six-nine
+    'C6/9', 'C6/9/E',
+    // no chord
+    'N.C.', 'NC', 'N.C',
+    // minor-major 7th
+    'CmMaj7', 'Cmmaj7', 'CmM7',
+    // symbol qualities
+    'C°', 'C°7', 'Cø', 'Cø7', 'C+', 'C+7', 'C-', 'C-7', 'Bb-7/F',
+    // case-insensitive maj/min
+    'CMAJ7', 'Cmaj7', 'CMaj7', 'CMin7', 'CMIN7', 'Cmin',
+  ])('accepts %s', chord => {
+    expect(isChord(chord)).toBe(true)
+  })
+
+  it.each(['H7', 'C/9', 'Cma', 'Hello', 'N', 'x', 'C--', 'add9'])('rejects %s', token => {
+    expect(isChord(token)).toBe(false)
+  })
+
+  it('parses [N.C.] inline as a chord, not lyric text', () => {
+    const [section] = parseContent('[N.C.]Hallelujah')
+    expect(section.lines[0].chords[0].chord).toBe('N.C.')
+    expect(section.lines[0].content).toBe('Hallelujah')
   })
 })

@@ -155,3 +155,16 @@ describe('getDefaultCapo', () => {
     expect(getDefaultCapo({})).toBe(0)
   })
 })
+
+describe('transposeChord — extended spellings', () => {
+  it.each([
+    ['N.C.', 'N.C.'],
+    ['C6/9', 'D6/9'],
+    ['C7sus4', 'D7sus4'],
+    ['CmMaj7', 'DmMaj7'],
+    ['C°7', 'D°7'],
+    ['C6/9/E', 'D6/9/F#'],
+  ])('transposes %s up 2 → %s', (input, expected) => {
+    expect(transposeChord(input, 2, false)).toBe(expected)
+  })
+})

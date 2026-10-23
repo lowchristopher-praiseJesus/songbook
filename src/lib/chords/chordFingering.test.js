@@ -49,4 +49,9 @@ describe('resolveChordKey', () => {
     expect(resolveChordKey('Zzzz')).toBeNull()
     expect(resolveChordKey(null)).toBeNull()
   })
+
+  test('treats capitalized Maj suffix like maj (EbMaj7 → Ebmaj7)', () => {
+    expect(resolveChordKey('EbMaj7')).toBe(resolveChordKey('Ebmaj7'))
+    expect(resolveChordKey('EbMaj7')).not.toBeNull()
+  })
 })

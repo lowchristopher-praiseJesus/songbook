@@ -76,3 +76,20 @@ describe('checkKey', () => {
     expect(result.outlierChords).toEqual([])
   })
 })
+
+describe('checkKey — extended chord spellings', () => {
+  it('treats Min/MIN, -, and madd9 as minor (diatonic ii/iii/vi in C)', () => {
+    const result = checkKey('[C]a [DMin7]b [E-7]c [Amadd9]d [CMAJ7]e [F]f [G7sus4]g', 'C')
+    expect(result.outlierChords).toEqual([])
+  })
+
+  it('treats ° and ø as diminished (vii in C)', () => {
+    const result = checkKey('[C]a [F]b [G]c [B°]d [Bø7]e [Am]f', 'C')
+    expect(result.outlierChords).toEqual([])
+  })
+
+  it('skips N.C. rather than counting it as a chord', () => {
+    const result = checkKey('[C]a [N.C.]b [G]c', 'C')
+    expect(result.totalChords).toBe(2)
+  })
+})

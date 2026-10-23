@@ -95,8 +95,13 @@ function parseLine(rawLine) {
   }
 }
 
-const CHORD_RE = /^[A-G][b#]?(?:maj|min|m|M|aug|dim|sus[24]?|add|no)?[0-9]{0,2}(?:[b#][0-9]+)*(?:\([^)]+\))?(?:\/[A-G][b#]?)?$/
+// Quality: maj/min in any case, minor-major (mMaj7, mM7), letter qualities, and the
+// symbol shorthands ° (dim), ø (half-dim), + (aug), - (minor).
+// After the number: 6/9, then any of b9/#11 alterations, sus4 (C7sus4), add9 (Cmadd9).
+const CHORD_RE = /^[A-G][b#]?(?:[Mm][Aa][Jj]|[Mm][Ii][Nn]|m(?:[Mm]aj|M)|m|M|aug|dim|sus[24]?|add|no|°|ø|\+|-)?(?:6\/9|[0-9]{0,2})(?:[b#][0-9]+|sus[24]?|add[0-9]+)*(?:\([^)]+\))?(?:\/[A-G][b#]?)?$/
+const NO_CHORD_RE = /^N\.?C\.?$/
 
 export function isChord(str) {
-  return CHORD_RE.test(str.trim())
+  const s = str.trim()
+  return CHORD_RE.test(s) || NO_CHORD_RE.test(s)
 }

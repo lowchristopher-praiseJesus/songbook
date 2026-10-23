@@ -17,10 +17,12 @@ const MISMATCH_MARGIN = 0.15
 const CHORD_TOKEN_RE = /\[([^\]]+)\]/g
 
 function classifyQuality(suffix) {
-  if (suffix.startsWith('dim')) return 'diminished'
-  if (suffix.startsWith('aug')) return 'other'
-  if (suffix.startsWith('maj') || suffix.startsWith('M')) return 'major'
-  if (suffix.startsWith('min') || suffix.startsWith('m')) return 'minor'
+  if (suffix.startsWith('dim') || suffix.startsWith('°') || suffix.startsWith('ø')) return 'diminished'
+  if (suffix.startsWith('aug') || suffix.startsWith('+')) return 'other'
+  if (/^maj/i.test(suffix)) return 'major'
+  if (/^min/i.test(suffix) || suffix.startsWith('-')) return 'minor'
+  if (suffix.startsWith('M')) return 'major'
+  if (suffix.startsWith('m')) return 'minor'
   // No third present (sus2/sus4/bare sus, no3/no-variants, bare power chords like "5")
   // means the chord can't conflict with either a major or minor diatonic degree.
   if (suffix.startsWith('sus')) return 'neutral'
