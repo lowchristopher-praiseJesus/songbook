@@ -16,7 +16,9 @@ import { transposeChord } from './parser/chordUtils'
  *
  * Callers are responsible for recording the push in the store (see
  * libraryStore.recordSharePush). Throws whatever updateShare throws — notably
- * an error with code 'locked' when the link is locked.
+ * an error with code 'locked' when the link is locked, and code 'stale' when
+ * someone else has pushed since this collection's lastVersion (the caller
+ * must Check for updates and merge before pushing again).
  *
  * @param {object} collection - collection with a shareCode
  * @param {{ name?: string, lyricsOnly?: boolean }} [options] - defaults to the
@@ -42,5 +44,5 @@ export async function pushCollectionUpdate(collection, { name = collection.name,
 
   const conductorCode = collection.conductorEnded ? null : (collection.conductorCode ?? null)
   const blob = await exportSongsAsSbp(songs, name?.trim() || null, lyricsOnly, conductorCode)
-  return updateShare(collection.shareCode, blob)
+  return updateShare(collection.shareCode, blob, collection.lastVersion ?? null)
 }

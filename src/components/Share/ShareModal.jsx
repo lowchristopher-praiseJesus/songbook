@@ -8,6 +8,7 @@ import { publishCollection, unpublishCollection } from '../../lib/communityImpor
 import { createConductorSession } from '../../lib/conductorApi';
 import { useLibraryStore } from '../../store/libraryStore';
 import { pushCollectionUpdate } from '../../lib/pushCollectionUpdate';
+import { STALE_PUSH_MESSAGE } from '../../hooks/usePushUpdate';
 import { useLicense } from '../../contexts/LicenseContext';
 import useTurnstile from '../../hooks/useTurnstile';
 
@@ -257,6 +258,8 @@ export function ShareModal({ isOpen, songs, collectionName, collectionId, onClos
       if (err.code === 'locked') {
         setLocked(true)
         setErrorMessage('This link is locked. Unlock it before pushing updates.')
+      } else if (err.code === 'stale') {
+        setErrorMessage(STALE_PUSH_MESSAGE)
       } else {
         setErrorMessage('Update failed. Please check your connection and try again.')
       }

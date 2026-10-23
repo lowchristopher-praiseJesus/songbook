@@ -536,3 +536,43 @@ describe('HEAD/GET /share/:code — X-Share-Has-Pin header', () => {
     expect(exposeHeaders).toContain('X-Share-Has-Pin');
   });
 });
+
+describe('PUT /share/:code — stale push protection', () => {
+  async function push(shareCode: string, baseVersion?: number) {
+    return SELF.fetch(`http://localhost/share/${shareCode}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/zip',
+        Origin: ORIGIN,
+        ...(baseVersion != null ? { 'X-Base-Version': String(baseVersion) } : {}),
+      },
+      body: new Uint8Array([4, 5, 6]),
+    });
+  }
+
+  it('accepts a push based on the current version', async () => {
+    const { shareCode } = await createShare();
+    const res = await push(shareCode, 1);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ version: 2 });
+  });
+
+  it('rejects a push based on an older version with 409 and the current version', async () => {
+    const { shareCode } = await createShare();
+    await push(shareCode, 1); // someone else pushes → v2
+    const res = await push(shareCode, 1); // still based on v1
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'stale', version: 2 });
+
+    const headRes = await SELF.fetch(`http://localhost/share/${shareCode}`, { method: 'HEAD', headers: { Origin: ORIGIN } });
+    expect(headRes.headers.get('X-Share-Version')).toBe('2');
+  });
+
+  it('still accepts a push without X-Base-Version (older clients)', async () => {
+    const { shareCode } = await createShare();
+    await push(shareCode, 1);
+    const res = await push(shareCode);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ version: 3 });
+  });
+});

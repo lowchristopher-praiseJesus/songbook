@@ -411,6 +411,17 @@ describe('ShareModal — update mode', () => {
     expect(await screen.findByText(/unlock it before pushing updates/i)).toBeInTheDocument();
   });
 
+  it('refuses to overwrite a newer push and says to check for updates first', async () => {
+    updateShare.mockRejectedValue(Object.assign(new Error('stale'), { code: 'stale', serverVersion: 2 }));
+    exportSongsAsSbp.mockResolvedValue(new Blob(['zip']));
+    renderWithLicense(
+      <ShareModal isOpen songs={songs} collectionId="coll-1" collectionName="Sunday Set" onClose={() => {}} />
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /push update/i }));
+    expect(await screen.findByText(/check for updates first/i)).toBeInTheDocument();
+  });
+
   it('restores the lyrics-only toggle from the collection in update mode', async () => {
     useLibraryStore.setState({
       collections: [{
@@ -574,7 +585,7 @@ describe('ShareModal — update mode', () => {
     );
     await waitFor(() => expect(screen.getByRole('button', { name: /push update/i })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /push update/i }));
-    await waitFor(() => expect(updateShare).toHaveBeenCalledWith('abc-123', expect.any(Blob)));
+    await waitFor(() => expect(updateShare).toHaveBeenCalledWith('abc-123', expect.any(Blob), 1));
     await waitFor(() => expect(screen.getByText(/link updated/i)).toBeInTheDocument());
   });
 

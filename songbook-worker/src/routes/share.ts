@@ -71,6 +71,13 @@ share.put('/:code', async (c) => {
   if (existing.locked) {
     return c.json({ error: 'locked' }, 423);
   }
+  // Optimistic concurrency: a client pushing from a stale copy would silently
+  // wipe out whatever was pushed since it last synced. The header is optional
+  // so clients that predate it keep working.
+  const baseVersion = c.req.header('X-Base-Version');
+  if (baseVersion != null && Number(baseVersion) !== existing.version) {
+    return c.json({ error: 'stale', version: existing.version }, 409);
+  }
 
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'no_body' }, 400);

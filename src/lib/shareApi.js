@@ -25,14 +25,27 @@ export async function uploadShare(blob, expiresInDays = 7, turnstileToken, locke
   return res.json();
 }
 
-export async function fetchShare(shareCode) {
+async function getShare(shareCode) {
   // cache: 'no-store' — a live share blob changes on every Push Update; a cached copy
   // would silently merge stale data on refresh.
   const res = await fetch(`${WORKER_URL}/share/${shareCode}`, { cache: 'no-store' });
   if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
   if (!res.ok) throw Object.assign(new Error('network_error'), { code: 'network_error' });
-  return res.arrayBuffer();
+  return res;
+}
+
+export async function fetchShare(shareCode) {
+  return (await getShare(shareCode)).arrayBuffer();
+}
+
+// The version comes from the same response as the ZIP, so it is exactly the version
+// whose content was downloaded — a separate HEAD could see a push that landed in between.
+export async function fetchShareWithVersion(shareCode) {
+  const res = await getShare(shareCode);
+  const buffer = await res.arrayBuffer();
+  const version = Number(res.headers.get('X-Share-Version') ?? 1);
+  return { buffer, version };
 }
 
 export async function checkShareVersion(shareCode) {
@@ -49,15 +62,24 @@ export async function checkShareVersion(shareCode) {
   return { version, locked, hasPin, expiresAt };
 }
 
-export async function updateShare(shareCode, blob) {
+// baseVersion is the server version this push was built on. If someone else has
+// pushed since, the worker rejects with 409 rather than silently overwriting their
+// changes; the error carries the server's current version as `serverVersion`.
+export async function updateShare(shareCode, blob, baseVersion = null) {
+  const headers = { 'Content-Type': 'application/zip' };
+  if (baseVersion != null) headers['X-Base-Version'] = String(baseVersion);
   const res = await fetch(`${WORKER_URL}/share/${shareCode}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/zip' },
+    headers,
     body: blob,
   });
   if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
   if (res.status === 410) throw Object.assign(new Error('expired'), { code: 'expired' });
   if (res.status === 423) throw Object.assign(new Error('locked'), { code: 'locked' });
+  if (res.status === 409) {
+    const { version } = await res.json().catch(() => ({}));
+    throw Object.assign(new Error('stale'), { code: 'stale', serverVersion: version ?? null });
+  }
   if (!res.ok) throw Object.assign(new Error('update_failed'), { code: 'update_failed' });
   return res.json();
 }

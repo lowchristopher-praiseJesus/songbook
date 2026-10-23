@@ -36,8 +36,13 @@ describe('pushCollectionUpdate', () => {
     expect(name).toBe('Sunday Set');
     expect(lyricsOnly).toBe(false);
     expect(conductorCode).toBeNull();
-    expect(updateShare).toHaveBeenCalledWith('abc', blob);
+    expect(updateShare).toHaveBeenCalledWith('abc', blob, null);
     expect(result.version).toBe(4);
+  });
+
+  it('sends the version this collection was last synced to, so a stale push is rejected', async () => {
+    await pushCollectionUpdate(makeCollection({ lastVersion: 3 }));
+    expect(updateShare).toHaveBeenCalledWith('abc', blob, 3);
   });
 
   it('skips song ids that no longer exist', async () => {

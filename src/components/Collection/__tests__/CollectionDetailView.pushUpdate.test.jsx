@@ -83,6 +83,16 @@ describe('CollectionDetailView — one-click Push Update', () => {
     expect(mockRecordSharePush).not.toHaveBeenCalled()
   })
 
+  it('tells the user to check for updates when someone else pushed first', async () => {
+    pushCollectionUpdate.mockRejectedValue(Object.assign(new Error('stale'), { code: 'stale', serverVersion: 6 }))
+    render(<CollectionDetailView {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Push update' }))
+    await waitFor(() => expect(onAddToast).toHaveBeenCalledWith(
+      expect.stringMatching(/check for updates first/i), 'error',
+    ))
+    expect(mockRecordSharePush).not.toHaveBeenCalled()
+  })
+
   it('marks the link expired when the server says so', async () => {
     pushCollectionUpdate.mockRejectedValue(Object.assign(new Error('expired'), { code: 'expired' }))
     render(<CollectionDetailView {...defaultProps} />)

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { uploadShare, fetchShare, checkShareVersion, updateShare, setShareLocked } from '../lib/shareApi';
+import { uploadShare, fetchShare, fetchShareWithVersion, checkShareVersion, updateShare, setShareLocked } from '../lib/shareApi';
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
@@ -92,6 +92,19 @@ describe('uploadShare', () => {
         headers: expect.not.objectContaining({ 'X-Lock-Pin': expect.anything() }),
       }),
     );
+  });
+});
+
+describe('fetchShareWithVersion', () => {
+  it('returns the ZIP and the version from the same response', async () => {
+    const buf = new ArrayBuffer(4);
+    fetch.mockResolvedValue({ status: 200, ok: true, arrayBuffer: async () => buf, headers: new Headers({ 'X-Share-Version': '7' }) });
+    expect(await fetchShareWithVersion('abc123')).toEqual({ buffer: buf, version: 7 });
+  });
+
+  it('throws with code expired on 410', async () => {
+    fetch.mockResolvedValue({ status: 410, ok: false });
+    await expect(fetchShareWithVersion('abc')).rejects.toMatchObject({ code: 'expired' });
   });
 });
 
@@ -240,6 +253,23 @@ describe('updateShare', () => {
   it('throws with code locked on 423', async () => {
     fetch.mockResolvedValue({ status: 423, ok: false });
     await expect(updateShare('abc', new Blob(['x']))).rejects.toMatchObject({ code: 'locked' });
+  });
+
+  it('sends X-Base-Version when a base version is given', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ version: 4 }) });
+    await updateShare('abc-123', new Blob(['x']), 3);
+    expect(fetch.mock.calls[0][1].headers).toMatchObject({ 'X-Base-Version': '3' });
+  });
+
+  it('omits X-Base-Version when no base version is known', async () => {
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ version: 4 }) });
+    await updateShare('abc-123', new Blob(['x']));
+    expect(fetch.mock.calls[0][1].headers).not.toHaveProperty('X-Base-Version');
+  });
+
+  it('throws with code stale and the server version on 409', async () => {
+    fetch.mockResolvedValue({ status: 409, ok: false, json: async () => ({ error: 'stale', version: 5 }) });
+    await expect(updateShare('abc', new Blob(['x']), 3)).rejects.toMatchObject({ code: 'stale', serverVersion: 5 });
   });
 
   it('returns the locked field from the response (auto re-lock signal)', async () => {

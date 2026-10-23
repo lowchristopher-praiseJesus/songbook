@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { useLibraryStore } from '../store/libraryStore'
 import { pushCollectionUpdate } from '../lib/pushCollectionUpdate'
 
+export const STALE_PUSH_MESSAGE =
+  'Someone pushed a newer version of this link. Check for updates first, then push again — nothing was overwritten.'
+
 /**
  * One-click Push Update for an already-shared collection, reporting the
  * outcome via toast. Uses the collection's stored name and lyrics-only flag;
@@ -24,6 +27,8 @@ export function usePushUpdate({ onAddToast, onExpired = () => {} }) {
     } catch (err) {
       if (err.code === 'locked') {
         onAddToast('This link is locked. Unlock it in Share via link before pushing updates.', 'error')
+      } else if (err.code === 'stale') {
+        onAddToast(STALE_PUSH_MESSAGE, 'error')
       } else if (err.code === 'expired') {
         onExpired()
         onAddToast('This share link has expired.', 'error')

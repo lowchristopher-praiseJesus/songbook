@@ -11,7 +11,7 @@ import { Sidebar } from './components/Sidebar/Sidebar'
 import { MainContent } from './components/SongList/MainContent'
 import { SettingsPanel } from './components/Settings/SettingsPanel'
 import { ImportConfirmModal } from './components/Share/ImportConfirmModal'
-import { fetchShare } from './lib/shareApi'
+import { fetchShareWithVersion } from './lib/shareApi'
 import { fetchSessionState } from './lib/sessionApi'
 import { parseSbpFile } from './lib/parser/sbpParser'
 import { useSessionStore } from './store/sessionStore'
@@ -96,9 +96,8 @@ export default function App() {
     setBroadcastTimeFromUrl(broadcastTimeVal)
     if (!shareCode) return
 
-    fetchShare(shareCode)
-      .then(buf => parseSbpFile(buf))
-      .then(parsed => setShareSongs({ ...parsed, shareCode }))
+    fetchShareWithVersion(shareCode)
+      .then(({ buffer, version }) => parseSbpFile(buffer).then(parsed => setShareSongs({ ...parsed, shareCode, version })))
       .catch(err => {
         if (err.code === 'expired') {
           addToast('This share link has expired.', 'error')
@@ -135,7 +134,7 @@ export default function App() {
   function handleShareImport() {
     if (shareSongs) {
       const name = shareSongs.collectionName || 'Shared Songs'
-      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name, null, shareSongs.shareCode, 1)
+      const { newSongIds, collectionId } = addSongs(shareSongs.songs, name, null, shareSongs.shareCode, shareSongs.version ?? 1)
       const count = shareSongs.songs.length
       addToast(`${count} song${count !== 1 ? 's' : ''} imported.`, 'success')
       if (shareSongs.lyricsOnly) setSessionLyricsOnly(true)
