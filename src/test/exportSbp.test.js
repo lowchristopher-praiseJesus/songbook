@@ -316,6 +316,71 @@ describe('buildSbpZip / exportSongsAsSbp', () => {
       expect(s.KeyShift).toBe(0)
       expect(s.key).toBe((8 + 0 + 3) % 12) // F# sounding key A-based
     })
+
+    describe('set shift on edited songs', () => {
+      // After an edit sbpOriginalContent is null and rawText is exported. rawText
+      // already includes the set shift, so the set entry must not apply it again.
+      async function exportAsCollection(song) {
+        const buf = await buildSbpZip([song], 'Set').generateAsync({ type: 'uint8array' })
+        const zip = await JSZip.loadAsync(buf)
+        const text = await zip.file('dataFile.txt').async('string')
+        return {
+          entry: JSON.parse(text.slice(text.indexOf('\n') + 1)).sets[0].contents[0],
+          reimported: (await parseSbpFile(buf.buffer)).songs[0],
+        }
+      }
+
+      it('does not re-apply set keyOfset after an edit', async () => {
+        // Here I Am To Worship: written in D, keyOfset +5, shown as G.
+        const { entry, reimported } = await exportAsCollection({
+          meta: {
+            title: 'Here I Am To Worship', artist: '',
+            keyIndex: 7, capo: 0,
+            sbpKey: 5, sbpKeyShift: 0, sbpSongCapo: 0,
+            sbpSetCapo: 0, sbpKeyOfset: 5,
+            sbpOriginalContent: null,
+            sbpBaselineKeyIndex: 7,
+          },
+          rawText: '[G]edited [D]line',
+        })
+        expect(entry.keyOfset).toBe(0)
+        expect(reimported.rawText).toBe('[G]edited [D]line') // not [C] / [G]
+      })
+
+      it('does not re-apply set capo after an edit', async () => {
+        // That's The Power: written in Gm, set capo 3, shown as Em.
+        const { entry, reimported } = await exportAsCollection({
+          meta: {
+            title: 'That’s The Power', artist: '',
+            keyIndex: 7, capo: 0,
+            sbpKey: 1, sbpKeyShift: 9, sbpSongCapo: 0,
+            sbpSetCapo: 3, sbpKeyOfset: 0,
+            sbpOriginalContent: null,
+            sbpBaselineKeyIndex: 7,
+          },
+          rawText: '[Em]edited [Cmaj7]line',
+        })
+        expect(entry.Capo).toBe(0)
+        expect(reimported.rawText).toBe('[Em]edited [Cmaj7]line') // not [C#m] / [Amaj7]
+      })
+
+      it('keeps the set shift when transposed but not edited', async () => {
+        // Content is built from the unshifted original, so the set must still shift it.
+        const { entry, reimported } = await exportAsCollection({
+          meta: {
+            title: 'Here I Am To Worship', artist: '',
+            keyIndex: 9, capo: 0, // G + 2
+            sbpKey: 5, sbpKeyShift: 0, sbpSongCapo: 0,
+            sbpSetCapo: 0, sbpKeyOfset: 5,
+            sbpOriginalContent: '[D]hello [A]world',
+            sbpBaselineKeyIndex: 7,
+          },
+          rawText: '[A]hello [E]world',
+        })
+        expect(entry.keyOfset).toBe(5)
+        expect(reimported.rawText).toBe('[A]hello [E]world') // D+2 then +5
+      })
+    })
   })
 
   describe('SBP download (stripAppSyntax=true) key export', () => {

@@ -169,22 +169,27 @@ export function buildSbpZip(songs, collectionName = null, lyricsOnly = false, co
         SyncId: crypto.randomUUID(),
         pinned: 0,
       },
-      contents: sbpSongs.map((sbpSong, i) => ({
-        Id: setId * 100 + i + 1,
-        Order: i,
-        Capo: songs[i].meta?.sbpSetCapo ?? 0,
-        SetId: setId,
-        SongId: sbpSong.Id,
-        keyOfset: songs[i].meta?.sbpKeyOfset ?? 0,
-        ModifiedDateTime: now,
-        Deleted: 0,
-        SyncId: crypto.randomUUID(),
-        NotesText: null,
-        SectionOrder: '',
-        ItemType: 1,
-        Content: '',
-        drawingPathsBackup: null,
-      })),
+      contents: sbpSongs.map((sbpSong, i) => {
+        // Without the original content, the export used rawText, which already
+        // includes the set shift, so the set entry must not apply it again.
+        const shiftInContent = songs[i].meta?.sbpOriginalContent == null
+        return {
+          Id: setId * 100 + i + 1,
+          Order: i,
+          Capo: shiftInContent ? 0 : songs[i].meta?.sbpSetCapo ?? 0,
+          SetId: setId,
+          SongId: sbpSong.Id,
+          keyOfset: shiftInContent ? 0 : songs[i].meta?.sbpKeyOfset ?? 0,
+          ModifiedDateTime: now,
+          Deleted: 0,
+          SyncId: crypto.randomUUID(),
+          NotesText: null,
+          SectionOrder: '',
+          ItemType: 1,
+          Content: '',
+          drawingPathsBackup: null,
+        }
+      }),
     }]
   }
 
