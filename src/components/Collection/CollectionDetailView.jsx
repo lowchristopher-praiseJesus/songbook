@@ -16,11 +16,13 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
+import { songsOnlyInCollection } from '../../lib/collectionSongs'
 import QRCode from 'qrcode'
 import { AddSongsModal } from '../Sidebar/AddSongsModal'
 import { UGSearchModal } from '../UGImport/UGSearchModal'
 import { ConflictPickerModal } from '../Share/ConflictPickerModal'
 import { checkShareVersion, fetchShare } from '../../lib/shareApi'
+import { DeleteCollectionPrompt } from './DeleteCollectionPrompt'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { mergeSharedCollection } from '../../lib/mergeSharedCollection'
 import { loadSong } from '../../lib/storage'
@@ -198,8 +200,8 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
     setDuplicateDraft('')
   }
 
-  function handleDelete() {
-    deleteCollection(collectionId)
+  function handleDelete(deleteSongs = false) {
+    deleteCollection(collectionId, { deleteSongs })
     setSelectedCollectionId(null)
   }
 
@@ -569,30 +571,13 @@ export function CollectionDetailView({ onAddToast, onOpenSidebar }) {
                 Delete Collection
               </button>
             ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Remove "{collectionName}"? The {entries.length} song{entries.length !== 1 ? 's' : ''} will remain in your library.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white
-                      hover:bg-red-700 transition-colors"
-                  >
-                    Yes, delete
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(false)}
-                    className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600
-                      text-gray-600 dark:text-gray-400
-                      hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <DeleteCollectionPrompt
+                name={collectionName}
+                songCount={entries.length}
+                exclusiveCount={songsOnlyInCollection(collections, collectionId).filter(id => byId.has(id)).length}
+                onConfirm={handleDelete}
+                onCancel={() => setConfirming(false)}
+              />
             )}
           </div>
         </div>

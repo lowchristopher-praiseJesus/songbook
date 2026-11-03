@@ -16,6 +16,9 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useLibraryStore } from '../../store/libraryStore'
+import { songsOnlyInCollection } from '../../lib/collectionSongs'
+import { Modal } from '../UI/Modal'
+import { DeleteCollectionPrompt } from '../Collection/DeleteCollectionPrompt'
 import { SongListItem } from './SongListItem'
 import { checkShareVersion, fetchShare } from '../../lib/shareApi'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
@@ -69,7 +72,9 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
   const [linkExpired, setLinkExpired] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [pendingRefresh, setPendingRefresh] = useState(null)
-  const collection = useLibraryStore(s => s.collections.find(c => c.id === group.id))
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const collections = useLibraryStore(s => s.collections)
+  const collection = collections.find(c => c.id === group.id)
   const applyShareRefresh = useLibraryStore(s => s.applyShareRefresh)
   const markLinkExpired = useCallback(() => setLinkExpired(true), [])
   const { push: pushUpdate, pushing } = usePushUpdate({ onAddToast, onExpired: markLinkExpired })
@@ -109,9 +114,12 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
 
   function handleDelete(e) {
     e.stopPropagation()
-    if (window.confirm(`Remove collection "${group.name}"? The ${group.entries.length} song${group.entries.length !== 1 ? 's' : ''} will remain in your library.`)) {
-      deleteCollection(group.id)
-    }
+    setConfirmingDelete(true)
+  }
+
+  function handleConfirmDelete(deleteSongs) {
+    setConfirmingDelete(false)
+    deleteCollection(group.id, { deleteSongs })
   }
 
   function handleEditClick(e) {
@@ -353,6 +361,17 @@ export function CollectionGroup({ group, onSelect, onAddSongs = () => {}, onDupl
             </SortableContext>
           </DndContext>
         )
+      )}
+      {confirmingDelete && (
+        <Modal isOpen title="Delete collection" onClose={() => setConfirmingDelete(false)}>
+          <DeleteCollectionPrompt
+            name={group.name}
+            songCount={group.entries.length}
+            exclusiveCount={songsOnlyInCollection(collections, group.id).filter(id => groupIds.includes(id)).length}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        </Modal>
       )}
       {pendingRefresh && (
         <ConflictPickerModal

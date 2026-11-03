@@ -10,6 +10,7 @@ import {
 import { parseContent } from '../lib/parser/contentParser'
 import { resolveSaveAsTitle } from '../lib/saveAsTitle'
 import { loadMyAlbums } from '../lib/albumApi'
+import { songsOnlyInCollection } from '../lib/collectionSongs'
 
 const KEY_TO_INDEX = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
@@ -260,14 +261,35 @@ export const useLibraryStore = create((set, get) => ({
   },
 
   /**
-   * Remove a collection without deleting its songs.
-   * Songs remain in the library; membership is purely tracked via collections[j].songIds.
+   * Remove a collection. By default its songs remain in the library.
+   * With { deleteSongs: true }, songs that belong to no other collection are
+   * also deleted from the library; songs shared with another collection are kept.
    */
-  deleteCollection(collectionId) {
-    if (!get().collections.some(c => c.id === collectionId)) return
-    const newCollections = get().collections.filter(c => c.id !== collectionId)
+  deleteCollection(collectionId, { deleteSongs = false } = {}) {
+    const all = get().collections
+    if (!all.some(c => c.id === collectionId)) return
+    const songIdsToDelete = deleteSongs ? new Set(songsOnlyInCollection(all, collectionId)) : new Set()
+    const newCollections = all.filter(c => c.id !== collectionId)
     saveCollections(newCollections)
-    set({ collections: newCollections })
+
+    if (songIdsToDelete.size === 0) {
+      set({ collections: newCollections })
+      return
+    }
+
+    for (const id of songIdsToDelete) {
+      deleteFromStorage(id)
+      deleteAnnotations(id)
+    }
+    const newIndex = get().index.filter(e => !songIdsToDelete.has(e.id))
+    saveIndex(newIndex)
+    const wasActive = songIdsToDelete.has(get().activeSongId)
+    if (wasActive) clearLastSongId()
+    set({
+      collections: newCollections,
+      index: newIndex,
+      ...(wasActive ? { activeSongId: null, activeSong: null, editingSongId: null } : {}),
+    })
   },
 
   /**

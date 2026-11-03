@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useLibraryStore } from '../libraryStore'
-import { loadCollections, saveCollections, loadIndex, saveIndex, saveSong } from '../../lib/storage'
+import { songsOnlyInCollection } from '../../lib/collectionSongs'
+import { loadCollections, saveCollections, loadIndex, saveIndex, saveSong, loadSong } from '../../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -145,6 +146,64 @@ describe('deleteCollection', () => {
     useLibraryStore.getState().deleteCollection('c1')
     const saved = loadCollections()
     expect(saved).toHaveLength(0)
+  })
+})
+
+describe('deleteCollection with deleteSongs', () => {
+  const entry = id => ({ id, title: id, artist: '', importedAt: '2026-01-01T00:00:00Z' })
+  const song = id => ({ id, meta: { title: id, artist: '' }, importedAt: '2026-01-01T00:00:00Z', rawText: '', sections: [] })
+
+  beforeEach(() => {
+    ;['s1', 's2', 's3'].forEach(id => saveSong(song(id)))
+    saveIndex(['s1', 's2', 's3'].map(entry))
+    useLibraryStore.setState({
+      index: ['s1', 's2', 's3'].map(entry),
+      collections: [
+        { id: 'c1', name: 'Sunday Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s1', 's2'] },
+        { id: 'c2', name: 'Other Set', createdAt: '2026-01-01T00:00:00Z', songIds: ['s2', 's3'] },
+      ],
+      activeSongId: 's1',
+      activeSong: song('s1'),
+    })
+  })
+
+  it('deletes songs that belong only to the deleted collection', () => {
+    useLibraryStore.getState().deleteCollection('c1', { deleteSongs: true })
+    const { index, collections } = useLibraryStore.getState()
+    expect(index.map(e => e.id)).toEqual(['s2', 's3'])
+    expect(loadIndex().map(e => e.id)).toEqual(['s2', 's3'])
+    expect(loadSong('s1')).toBeNull()
+    expect(collections.map(c => c.id)).toEqual(['c2'])
+  })
+
+  it('keeps songs that are also in another collection', () => {
+    useLibraryStore.getState().deleteCollection('c1', { deleteSongs: true })
+    expect(loadSong('s2')).not.toBeNull()
+    expect(useLibraryStore.getState().collections[0].songIds).toEqual(['s2', 's3'])
+  })
+
+  it('clears the active song when it was deleted', () => {
+    useLibraryStore.getState().deleteCollection('c1', { deleteSongs: true })
+    expect(useLibraryStore.getState().activeSongId).toBeNull()
+    expect(useLibraryStore.getState().activeSong).toBeNull()
+  })
+
+  it('leaves songs alone when deleteSongs is not set', () => {
+    useLibraryStore.getState().deleteCollection('c1')
+    expect(useLibraryStore.getState().index).toHaveLength(3)
+    expect(loadSong('s1')).not.toBeNull()
+    expect(useLibraryStore.getState().activeSongId).toBe('s1')
+  })
+})
+
+describe('songsOnlyInCollection', () => {
+  it('returns song ids not present in any other collection', () => {
+    const collections = [
+      { id: 'c1', songIds: ['s1', 's2'] },
+      { id: 'c2', songIds: ['s2', 's3'] },
+    ]
+    expect(songsOnlyInCollection(collections, 'c1')).toEqual(['s1'])
+    expect(songsOnlyInCollection(collections, 'missing')).toEqual([])
   })
 })
 
