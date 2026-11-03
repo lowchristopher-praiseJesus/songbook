@@ -450,7 +450,7 @@ export function Sidebar({ isOpen, onAddToast, onSongSelect, onClose, onImportSuc
               <button
                 type="button"
                 onClick={() => setUgModalOpen(true)}
-                aria-label="Search Ultimate Guitar"
+                aria-label="Search Songs"
                 className="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
               >
                 <MagnifyingGlassIcon className="w-4 h-4" />

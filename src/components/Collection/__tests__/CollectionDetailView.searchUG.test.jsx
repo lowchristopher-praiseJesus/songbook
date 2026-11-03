@@ -26,13 +26,9 @@ vi.mock('../../../store/libraryStore', () => ({
   useLibraryStore: (selector) => selector(storeState),
 }))
 
-vi.mock('../../UGImport/UGSearchModal', () => ({
-  UGSearchModal: ({ isOpen, collectionId, onSongSelect }) =>
-    isOpen ? (
-      <div data-testid="ug-search-modal" data-collection-id={collectionId}>
-        <button type="button" onClick={onSongSelect}>trigger-song-select</button>
-      </div>
-    ) : null,
+vi.mock('../../Sidebar/AddSongsModal', () => ({
+  AddSongsModal: ({ isOpen, collectionId }) =>
+    isOpen ? <div data-testid="add-songs-modal" data-collection-id={collectionId} /> : null,
 }))
 
 const defaultProps = {
@@ -40,32 +36,26 @@ const defaultProps = {
   onOpenSidebar: vi.fn(),
 }
 
-describe('CollectionDetailView Search Songs button', () => {
+// Add Songs and Search Songs were merged into one dialog that searches the
+// library and online sources together.
+describe('CollectionDetailView Add Songs button', () => {
   beforeEach(() => {
     mockSetSelectedCollectionId.mockReset()
   })
 
-  it('does not show the Search Songs modal by default', () => {
+  it('no longer shows a separate "Search Songs" button', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    expect(screen.queryByTestId('ug-search-modal')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Search Songs' })).not.toBeInTheDocument()
   })
 
-  it('renders a "Search Songs" button', () => {
+  it('does not show the Add Songs dialog by default', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    expect(screen.getByRole('button', { name: 'Search Songs' })).toBeInTheDocument()
+    expect(screen.queryByTestId('add-songs-modal')).not.toBeInTheDocument()
   })
 
-  it('clicking "Search Songs" opens the modal scoped to the current collection', () => {
+  it('clicking "Add Songs" opens the merged dialog scoped to the current collection', () => {
     render(<CollectionDetailView {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search Songs' }))
-    const modal = screen.getByTestId('ug-search-modal')
-    expect(modal).toHaveAttribute('data-collection-id', 'c1')
-  })
-
-  it('a successful import navigates away from the collection screen', () => {
-    render(<CollectionDetailView {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Search Songs' }))
-    fireEvent.click(screen.getByText('trigger-song-select'))
-    expect(mockSetSelectedCollectionId).toHaveBeenCalledWith(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Add Songs' }))
+    expect(screen.getByTestId('add-songs-modal')).toHaveAttribute('data-collection-id', 'c1')
   })
 })

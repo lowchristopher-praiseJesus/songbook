@@ -56,4 +56,11 @@ describe('Sidebar — Browse Communities', () => {
     expect(capturedProps.onAddToast).toBe(onAddToast)
     expect(capturedProps.onImportSuccess).toBe(onImportSuccess)
   })
+
+  // It searches Community, Ultimate Guitar and Daniel Choy, so the accessible
+  // name must match the visible "Search Songs" label, not just one source.
+  it('labels the footer search button "Search Songs" for screen readers', () => {
+    render(<Sidebar isOpen onAddToast={vi.fn()} onSongSelect={vi.fn()} onClose={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Search Songs' })).toBeInTheDocument()
+  })
 })
