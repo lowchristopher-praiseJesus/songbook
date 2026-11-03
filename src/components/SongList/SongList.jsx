@@ -162,7 +162,7 @@ export function SongList({
         }}
       >
         {isFit && effectivePaginated && (
-          <SongTitleBlock title={song.meta.title} songKey={song.meta.key} tempo={song.meta.tempo} />
+          <SongTitleBlock title={song.meta.title} songKey={song.meta.key} keyIndex={song.meta.keyIndex} isMinor={song.meta.isMinor} delta={transpose.delta} tempo={song.meta.tempo} />
         )}
         {isFit ? (
           <AnnotatedMaximizeView
@@ -182,6 +182,9 @@ export function SongList({
             containerRef={containerRef}
             title={song.meta.title}
             songKey={song.meta.key}
+            keyIndex={song.meta.keyIndex}
+            isMinor={song.meta.isMinor}
+            delta={transpose.delta}
             tempo={song.meta.tempo}
           />
         ) : (

@@ -42,6 +42,9 @@ export function AnnotatedMaximizeView({
   containerRef,
   title,
   songKey,
+  keyIndex,
+  isMinor,
+  delta,
   tempo,
 }) {
   const baseline = useAnnotationStore(s => s.baseline)
@@ -224,7 +227,7 @@ export function AnnotatedMaximizeView({
     // where the lyrics content starts, not the top of the title.
     return (
       <div ref={liveWrapperRef} className="relative" style={{ minHeight: `${liveMinHeight}px` }}>
-        <SongTitleBlock title={title} songKey={songKey} tempo={tempo} />
+        <SongTitleBlock title={title} songKey={songKey} keyIndex={keyIndex} isMinor={isMinor} delta={delta} tempo={tempo} />
         <div ref={bodyRef}>
           <SongBody
             sections={sections}
@@ -275,7 +278,7 @@ export function AnnotatedMaximizeView({
         }}
       >
         {!baseline.paginated && (
-          <SongTitleBlock title={title} songKey={songKey} tempo={tempo} />
+          <SongTitleBlock title={title} songKey={songKey} keyIndex={keyIndex} isMinor={isMinor} delta={delta} tempo={tempo} />
         )}
         <SongBody
           sections={sections}

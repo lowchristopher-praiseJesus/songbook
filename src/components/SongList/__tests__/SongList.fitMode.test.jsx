@@ -49,7 +49,7 @@ vi.mock('../../Recorder/RecordingsPanel', () => ({
 
 const song = {
   id: 'song-1',
-  meta: { title: 'Test', keyIndex: 0, key: 'Eb', tempo: 120 },
+  meta: { title: 'Test', keyIndex: 3, key: 'Eb', tempo: 120 },
   sections: [],
 }
 

@@ -36,7 +36,7 @@ export function SongHeader({
   const [infoOpen, setInfoOpen] = useState(false)
   const openYoutubePlayer = useYoutubePlayerStore(s => s.open)
 
-  const hasInfo = meta.tempo || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
+  const hasInfo = meta.tempo > 0 || meta.timeSignature || meta.capo > 0 || meta.ccli || meta.copyright
 
   const isActiveRecording = recording
     ? recording.status === 'recording' || recording.status === 'paused'
@@ -210,7 +210,7 @@ export function SongHeader({
         <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           {meta.key && <div><span className="font-medium text-gray-700 dark:text-gray-300">Key:</span> {meta.key}</div>}
           {meta.capo > 0 && <div><span className="font-medium text-gray-700 dark:text-gray-300">Capo:</span> {meta.capo}</div>}
-          {meta.tempo && <div><span className="font-medium text-gray-700 dark:text-gray-300">BPM:</span> {meta.tempo}</div>}
+          {meta.tempo > 0 && <div><span className="font-medium text-gray-700 dark:text-gray-300">BPM:</span> {meta.tempo}</div>}
           {meta.timeSignature && <div><span className="font-medium text-gray-700 dark:text-gray-300">Time:</span> {meta.timeSignature}</div>}
           {meta.ccli && <div><span className="font-medium text-gray-700 dark:text-gray-300">CCLI:</span> {meta.ccli}</div>}
           {meta.copyright && <div className="col-span-2 text-xs"><span className="font-medium text-gray-700 dark:text-gray-300">©</span> {meta.copyright}</div>}
