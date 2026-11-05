@@ -1,0 +1,16 @@
+[Unit]
+Description=SongSheet theme picker (FastAPI)
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/home/ubuntu
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/songsheet-picker
+EnvironmentFile=/home/ubuntu/songsheet-picker/.env
+ExecStart=/opt/abacus-python/bin/python3 -m uvicorn app:app --host 127.0.0.1 --port 8098
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
