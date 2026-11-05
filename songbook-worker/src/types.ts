@@ -8,4 +8,6 @@ export interface Env {
   LICENSE_TOKEN_SECRET: string;
   TURNSTILE_SECRET_KEY: string;
   THEME_PICK_GLOBAL_DAILY?: string;
+  PICKER_URL: string;
+  PICKER_KEY: string;
 }

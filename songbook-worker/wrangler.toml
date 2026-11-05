@@ -23,3 +23,9 @@ binding = "DB"
 database_name = "songbook-community"
 database_id = "c5191dd2-c473-4a53-bcce-bf110610c36b"
 migrations_dir = "migrations"
+
+# Theme song picker. PICKER_URL and PICKER_KEY are secrets:
+#   wrangler secret put PICKER_URL   (e.g. https://bible-explorer.abacusai.cloud/songsheet-picker/api)
+#   wrangler secret put PICKER_KEY   (must match PICKER_KEY in the Abacus VM's songsheet-picker/.env)
+[vars]
+THEME_PICK_GLOBAL_DAILY = "200"

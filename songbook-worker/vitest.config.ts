@@ -14,6 +14,8 @@ export default defineWorkersConfig({
             LICENSE_SECRET: 'test-license-secret',
             LICENSE_TOKEN_SECRET: 'test-token-secret',
             TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
+            PICKER_URL: 'https://picker.test/songsheet-picker/api',
+            PICKER_KEY: 'test-picker-key',
             TEST_MIGRATIONS: migrations,
           },
           kvNamespaces: ['SESSION_KV'],

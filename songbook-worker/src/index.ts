@@ -7,6 +7,7 @@ import conductor from './routes/conductor';
 import album from './routes/album';
 import license from './routes/license';
 import community from './routes/community';
+import themePick from './routes/themePick';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -52,5 +53,6 @@ app.route('/conductor', conductor);
 app.route('/album', album);
 app.route('/license', license);
 app.route('/community', community);
+app.route('/theme-pick', themePick);
 
 export default app;
