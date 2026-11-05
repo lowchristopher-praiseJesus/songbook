@@ -24,7 +24,7 @@ function parseInput(body: unknown): PickInput | null {
   return { theme: trimmed, count, exclude: exclude as string[] };
 }
 
-const ipOf = (c: Context<{ Bindings: Env }>) => c.req.header('CF-Connecting-IP') ?? 'unknown';
+const ipOf = (c: { req: { header(name: string): string | undefined } }) => c.req.header('CF-Connecting-IP') ?? 'unknown';
 
 const themePick = new Hono<{ Bindings: Env; Variables: { input: PickInput } }>();
 
