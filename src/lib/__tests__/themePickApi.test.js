@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getThemePickQuota, requestThemePicks } from '../themePickApi'
+import { getThemePickQuota, requestThemePicks, withTimeout } from '../themePickApi'
 
 const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
 
@@ -56,5 +56,23 @@ describe('getThemePickQuota', () => {
     expect(await getThemePickQuota()).toBeNull()
     fetch.mockResolvedValue(res(500, {}))
     expect(await getThemePickQuota()).toBeNull()
+  })
+})
+
+describe('withTimeout', () => {
+  it('rejects with the given code when the promise never settles', async () => {
+    vi.useFakeTimers()
+    try {
+      const p = withTimeout(new Promise(() => {}), 20000, 'turnstile_failed')
+      const assertion = expect(p).rejects.toMatchObject({ code: 'turnstile_failed' })
+      await vi.advanceTimersByTimeAsync(20000)
+      await assertion
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('passes the value through when the promise settles in time', async () => {
+    expect(await withTimeout(Promise.resolve('tok'), 1000, 'x')).toBe('tok')
   })
 })

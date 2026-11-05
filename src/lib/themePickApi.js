@@ -43,3 +43,10 @@ export async function requestThemePicks({ theme, count, exclude = [], turnstileT
   const code = KNOWN_ERRORS.has(body?.error) ? body.error : 'network_error'
   throw err(code, body?.resetsAt ? { resetsAt: body.resetsAt } : {})
 }
+
+/** Reject with an Error whose `.code` is `code` if `promise` hasn't settled within `ms`. */
+export function withTimeout(promise, ms, code) {
+  let timer
+  const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(err(code)), ms) })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}

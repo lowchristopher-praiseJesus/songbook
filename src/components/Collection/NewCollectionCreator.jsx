@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
-import { getThemePickQuota, requestThemePicks } from '../../lib/themePickApi'
+import { getThemePickQuota, requestThemePicks, withTimeout } from '../../lib/themePickApi'
 import { createCollectionFromPicks } from '../../lib/createCollectionFromPicks'
 import useTurnstile from '../../hooks/useTurnstile'
 import { ThemePickReview } from './ThemePickReview'
@@ -10,6 +10,7 @@ const MIN_COUNT = 1
 const MAX_COUNT = 20
 const MAX_EXCLUDE = 100
 const PER_DAY = 5
+const TURNSTILE_TIMEOUT_MS = 20000
 
 function clampCount(text) {
   const n = parseInt(String(text).trim(), 10)
@@ -42,6 +43,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
   const [countText, setCountText] = useState(String(DEFAULT_COUNT))
   const [quota, setQuota] = useState(null)       // { remaining, resetsAt } or null when unknown
   const [loading, setLoading] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
   const [review, setReview] = useState(null)     // { theme, count, picks, shownIds }
   const inputRef = useRef(null)
@@ -72,6 +74,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
   }
 
   function handleCancel() {
+    if (adding) return
     close()
     if (window.innerWidth < 768) onOpenSidebar?.()
   }
@@ -82,7 +85,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
     setLoading(true)
     setError('')
     try {
-      const turnstileToken = await getToken()
+      const turnstileToken = await withTimeout(getToken(), TURNSTILE_TIMEOUT_MS, 'turnstile_failed')
       const { picks, remaining: left } = await requestThemePicks({ theme: pickTheme, count, exclude, turnstileToken })
       if (!aliveRef.current) return
       setQuota(q => ({ ...(q ?? {}), remaining: left }))
@@ -106,7 +109,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
   }
 
   function handlePick() {
-    if (!draft.trim() || !hasTheme || exhausted) return
+    if (busyRef.current || review || !draft.trim() || !hasTheme || exhausted) return
     const count = clampCount(countText)
     setCountText(String(count))
     setReview(null)
@@ -120,8 +123,10 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
 
   async function handleAdd(selected) {
     if (busyRef.current) return
+    if (!draft.trim()) return
     busyRef.current = true
     setLoading(true)
+    setAdding(true)
     setError('')
     try {
       const { collectionId, failedTitles } = await createCollectionFromPicks(draft.trim(), selected)
@@ -136,6 +141,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
       close()
     } finally {
       busyRef.current = false
+      setAdding(false)
       if (aliveRef.current) setLoading(false)
     }
   }
@@ -169,7 +175,11 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter') { e.preventDefault(); hasTheme ? handlePick() : handleCreate() }
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (review || busyRef.current) return
+              hasTheme ? handlePick() : handleCreate()
+            }
             if (e.key === 'Escape') handleCancel()
           }}
           placeholder="Collection name…"
@@ -252,9 +262,11 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
           <button
             type="button"
             onClick={handleCancel}
+            disabled={adding}
             className="flex-1 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600
               text-gray-600 dark:text-gray-400 text-sm font-medium
-              hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+              disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -276,6 +288,7 @@ export function NewCollectionCreator({ onOpenSidebar, onAddToast }) {
           picks={review.picks}
           remaining={remaining}
           loading={loading}
+          addDisabled={!draft.trim()}
           onAdd={handleAdd}
           onRegenerate={handleRegenerate}
           onCancel={() => setReview(null)}

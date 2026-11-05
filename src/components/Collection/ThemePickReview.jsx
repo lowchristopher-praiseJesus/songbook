@@ -9,7 +9,7 @@ const SECTIONS = [
 ]
 
 /** The AI's suggestions for a theme: tick/untick, then add, regenerate or cancel. */
-export function ThemePickReview({ theme, picks, remaining, loading, onAdd, onRegenerate, onCancel }) {
+export function ThemePickReview({ theme, picks, remaining, loading, addDisabled = false, onAdd, onRegenerate, onCancel }) {
   const index = useLibraryStore(s => s.index)
   const [ticked, setTicked] = useState(() => new Set(picks.map(p => p.id)))
 
@@ -73,7 +73,7 @@ export function ThemePickReview({ theme, picks, remaining, loading, onAdd, onReg
         <button
           type="button"
           onClick={() => onAdd(selected)}
-          disabled={n === 0 || loading}
+          disabled={n === 0 || loading || addDisabled}
           className="flex-1 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
             transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >

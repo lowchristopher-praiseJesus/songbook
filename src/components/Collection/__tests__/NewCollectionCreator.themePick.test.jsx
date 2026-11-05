@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
-vi.mock('../../../lib/themePickApi', () => ({ getThemePickQuota: vi.fn(), requestThemePicks: vi.fn() }))
+vi.mock('../../../lib/themePickApi', () => ({ getThemePickQuota: vi.fn(), requestThemePicks: vi.fn(), withTimeout: (p) => p }))
 vi.mock('../../../lib/createCollectionFromPicks', () => ({ createCollectionFromPicks: vi.fn() }))
 vi.mock('../../../hooks/useTurnstile', () => ({ default: () => ({ getToken: vi.fn().mockResolvedValue('tok') }) }))
 
@@ -161,5 +161,38 @@ describe('NewCollectionCreator — theme picker', () => {
     fireEvent.click(screen.getByRole('button', { name: '✨ Create & pick songs' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Add 2 songs' }))
     await waitFor(() => expect(onAddToast).toHaveBeenCalledWith(expect.stringContaining('Holy Forever'), 'error'))
+  })
+})
+
+describe('NewCollectionCreator — review-stage guards', () => {
+  async function openReview() {
+    await renderCreator()
+    fill()
+    fireEvent.click(screen.getByRole('button', { name: '✨ Create & pick songs' }))
+    await screen.findByRole('button', { name: 'Add 2 songs' })
+  }
+
+  it('Cancel and Escape are disabled while songs are being added', async () => {
+    const d = deferred()
+    createCollectionFromPicks.mockReturnValue(d.promise)
+    await openReview()
+    fireEvent.click(screen.getByRole('button', { name: 'Add 2 songs' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled())
+    fireEvent.keyDown(screen.getByPlaceholderText('Collection name…'), { key: 'Escape' })
+    expect(useLibraryStore.getState().isCreatingNewCollection).toBe(true)
+    await act(async () => d.resolve({ collectionId: 'new-id', failedTitles: [] }))
+  })
+
+  it('Enter in the name field does not spend a pick while the review is open', async () => {
+    await openReview()
+    fireEvent.keyDown(screen.getByPlaceholderText('Collection name…'), { key: 'Enter' })
+    expect(requestThemePicks).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Add 2 songs' })).toBeInTheDocument()
+  })
+
+  it('Add is disabled if the collection name is cleared', async () => {
+    await openReview()
+    fireEvent.change(screen.getByPlaceholderText('Collection name…'), { target: { value: '  ' } })
+    expect(screen.getByRole('button', { name: 'Add 2 songs' })).toBeDisabled()
   })
 })
