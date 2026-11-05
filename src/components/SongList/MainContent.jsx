@@ -392,7 +392,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
         : activeAlbum
         ? <AlbumDetailView album={activeAlbum} />
         : isCreatingNewCollection
-        ? <NewCollectionCreator onOpenSidebar={onOpenSidebar} />
+        ? <NewCollectionCreator onOpenSidebar={onOpenSidebar} onAddToast={onAddToast} />
         : selectedCollectionId
         ? <CollectionDetailView onAddToast={onAddToast} onOpenSidebar={onOpenSidebar} />
         : isCreatingNewSong
