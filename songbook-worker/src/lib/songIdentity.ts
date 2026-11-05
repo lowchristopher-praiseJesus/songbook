@@ -17,7 +17,7 @@ export function normalizeBody(body: string): string {
   return body.replace(/\s+/g, ' ').trim();
 }
 
-function normalizeField(s: string): string {
+export function normalizeField(s: string): string {
   return s
     .toLowerCase()
     .replace(/\([^)]*\)\s*$/, '')     // trailing parentheticals: (Live), (Acoustic)
