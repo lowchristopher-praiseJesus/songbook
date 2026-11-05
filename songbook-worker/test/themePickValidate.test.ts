@@ -7,11 +7,11 @@ const cat = [e('a', 'Shout To The Lord'), e('b', 'Holy Forever', 'Chris Tomlin')
 const p = (id: string, section = 'opening') => ({ id, section, reason: 'r' });
 
 describe('validatePicks', () => {
-  it('keeps valid picks in order with title and artist from the catalogue', () => {
-    const out = validatePicks({ picks: [{ id: 'b', section: 'close', reason: 'r', title: 'WRONG' }, p('a')] }, cat, [], 3);
+  it('keeps valid picks with title and artist from the catalogue', () => {
+    const out = validatePicks({ picks: [p('a'), { id: 'b', section: 'close', reason: 'r', title: 'WRONG' }] }, cat, [], 3);
     expect(out).toEqual([
-      { id: 'b', title: 'Holy Forever', artist: 'Chris Tomlin', section: 'close', reason: 'r' },
       { id: 'a', title: 'Shout To The Lord', artist: '', section: 'opening', reason: 'r' },
+      { id: 'b', title: 'Holy Forever', artist: 'Chris Tomlin', section: 'close', reason: 'r' },
     ]);
   });
 
@@ -39,5 +39,12 @@ describe('validatePicks', () => {
   it('truncates reason to 200 characters', () => {
     const out = validatePicks({ picks: [{ id: 'a', section: 'middle', reason: 'x'.repeat(500) }] }, cat, [], 1);
     expect(out[0].reason).toHaveLength(200);
+  });
+});
+
+describe('validatePicks ordering', () => {
+  it('returns picks grouped opening → middle → close, keeping AI order within a section', () => {
+    const raw = { picks: [p('c', 'close'), p('a', 'opening'), p('b', 'middle')] };
+    expect(validatePicks(raw, cat, [], 3).map(x => x.id)).toEqual(['a', 'b', 'c']);
   });
 });

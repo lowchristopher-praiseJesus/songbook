@@ -154,3 +154,29 @@ describe('GET /theme-pick/quota', () => {
     expect(q.resetsAt).toMatch(/T00:00:00\.000Z$/);
   });
 });
+
+describe('attempt cap (bounds credit spend from failed calls)', () => {
+  it('a failed call counts as an attempt but not a pick', async () => {
+    mockPicker(503, 'asleep');
+    await pick(VALID, '192.0.2.40');
+    const day = new Date().toISOString().slice(0, 10);
+    expect(await env.SESSION_KV.get(`themepick:attempts:ip:192.0.2.40:${day}`)).toBe('1');
+    expect((await quota('192.0.2.40')).remaining).toBe(5);
+  });
+
+  it('429 daily_limit once an IP has used 15 attempts, without calling the picker', async () => {
+    const day = new Date().toISOString().slice(0, 10);
+    await env.SESSION_KV.put(`themepick:attempts:ip:192.0.2.41:${day}`, '15');
+    const res = await pick(VALID, '192.0.2.41');
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ error: 'daily_limit' });
+  });
+
+  it('429 global_limit once global attempts reach 3× the global cap', async () => {
+    const day = new Date().toISOString().slice(0, 10);
+    await env.SESSION_KV.put(`themepick:attempts:global:${day}`, '600');
+    const res = await pick(VALID, '192.0.2.42');
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ error: 'global_limit' });
+  });
+});

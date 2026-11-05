@@ -3,7 +3,7 @@ import type { Context, Next } from 'hono';
 import type { Env } from '../types';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { buildCatalogue } from '../lib/themeCatalogue';
-import { getQuota, recordPick, PER_IP_DAILY } from '../lib/themeQuota';
+import { getQuota, recordPick, takeAttempt, PER_IP_DAILY } from '../lib/themeQuota';
 import { validatePicks } from '../lib/themePickValidate';
 
 const MAX_COUNT = 20;
@@ -51,6 +51,9 @@ themePick.post('/', validateInput, verifyTurnstile, async (c) => {
   const q = await getQuota(c.env, ip, now);
   if (q.remaining <= 0) return c.json({ error: 'daily_limit', resetsAt: q.resetsAt }, 429);
   if (q.globalRemaining <= 0) return c.json({ error: 'global_limit', resetsAt: q.resetsAt }, 429);
+
+  const attempt = await takeAttempt(c.env, ip, now);
+  if (attempt !== 'ok') return c.json({ error: attempt, resetsAt: q.resetsAt }, 429);
 
   const excluded = new Set(exclude);
   const catalogue = (await buildCatalogue(c.env)).filter(s => !excluded.has(s.id));

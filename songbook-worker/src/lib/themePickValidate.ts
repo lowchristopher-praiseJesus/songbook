@@ -12,6 +12,7 @@ export interface Pick {
 
 const SECTIONS = new Set<string>(['opening', 'middle', 'close']);
 const MAX_REASON = 200;
+const SECTION_ORDER: Record<Section, number> = { opening: 0, middle: 1, close: 2 };
 
 /**
  * Keep only picks that name a real catalogue song, once each, not excluded, with a known
@@ -37,5 +38,10 @@ export function validatePicks(raw: unknown, catalogue: CatalogueEntry[], exclude
     seen.add(id);
     out.push({ id, title: song.title, artist: song.artist, section: section as Section, reason: reason.slice(0, MAX_REASON) });
   }
-  return out;
+  // The review panel shows songs grouped by section, and they are added in the order shown,
+  // so return them in that order (stable within a section).
+  return out
+    .map((pick, i) => ({ pick, i }))
+    .sort((a, b) => SECTION_ORDER[a.pick.section] - SECTION_ORDER[b.pick.section] || a.i - b.i)
+    .map(x => x.pick);
 }

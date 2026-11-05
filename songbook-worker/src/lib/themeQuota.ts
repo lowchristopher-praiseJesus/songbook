@@ -45,3 +45,25 @@ export async function recordPick(env: Env, ip: string, now: Date): Promise<void>
     await env.SESSION_KV.put(key, String(n + 1), { expirationTtl: KEY_TTL_SECONDS });
   }
 }
+
+/**
+ * Failed AI calls use no pick but still spend Abacus credits, so every call to the picker is
+ * also counted as an attempt (before it runs): 15 per IP and 3× the global pick cap per day.
+ */
+export const ATTEMPTS_PER_IP = 15;
+const attemptsIpKey = (ip: string, now: Date) => `themepick:attempts:ip:${ip}:${utcDay(now)}`;
+const attemptsGlobalKey = (now: Date) => `themepick:attempts:global:${utcDay(now)}`;
+
+export async function takeAttempt(env: Env, ip: string, now: Date): Promise<'ok' | 'daily_limit' | 'global_limit'> {
+  const [ipUsed, globalUsed] = await Promise.all([
+    readCount(env, attemptsIpKey(ip, now)),
+    readCount(env, attemptsGlobalKey(now)),
+  ]);
+  if (ipUsed >= ATTEMPTS_PER_IP) return 'daily_limit';
+  if (globalUsed >= globalLimit(env) * 3) return 'global_limit';
+  await Promise.all([
+    env.SESSION_KV.put(attemptsIpKey(ip, now), String(ipUsed + 1), { expirationTtl: KEY_TTL_SECONDS }),
+    env.SESSION_KV.put(attemptsGlobalKey(now), String(globalUsed + 1), { expirationTtl: KEY_TTL_SECONDS }),
+  ]);
+  return 'ok';
+}
