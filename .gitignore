@@ -36,3 +36,9 @@ tools/
 .wrangler/
 scripts/
 unused-root-files/
+
+# theme song picker (Python)
+songsheet-picker/.venv/
+songsheet-picker/.env
+__pycache__/
+.pytest_cache/
