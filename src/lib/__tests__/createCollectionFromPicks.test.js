@@ -7,6 +7,7 @@ import { createCollectionFromPicks } from '../createCollectionFromPicks'
 import { fetchAndParseSong } from '../ugImport/fetchSong'
 import { recordCommunityImport } from '../communityImport/communityClient'
 import { useLibraryStore } from '../../store/libraryStore'
+import { songsOnlyInCollection } from '../collectionSongs'
 
 const pick = (id, title) => ({ id, title, artist: 'A', section: 'opening', reason: 'r' })
 const PICKS = [pick('c1', 'Shout To The Lord'), pick('c2', 'Holy Forever'), pick('c3', 'Glory To The Lamb')]
@@ -37,6 +38,13 @@ describe('createCollectionFromPicks', () => {
     expect(titlesOf(collectionId)).toEqual(['Shout To The Lord', 'Holy Forever', 'Glory To The Lamb'])
     expect(fetchAndParseSong).toHaveBeenCalledWith({ source: 'community', id: 'c1' })
     expect(recordCommunityImport.mock.calls.map(c => c[0]).sort()).toEqual(['c1', 'c2', 'c3'])
+  })
+
+  it('files imported songs only in the new collection, so deleting it can also delete them', async () => {
+    const { collectionId } = await createCollectionFromPicks('Sunday', PICKS)
+    const { collections } = useLibraryStore.getState()
+    expect(collections.map(c => c.name)).toEqual(['Sunday'])
+    expect(songsOnlyInCollection(collections, collectionId)).toHaveLength(3)
   })
 
   it('reuses a song already in the library without importing or counting it', async () => {

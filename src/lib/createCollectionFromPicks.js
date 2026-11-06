@@ -31,7 +31,9 @@ export async function createCollectionFromPicks(name, picks) {
 
   const toImport = ok.filter(r => r.song)
   if (toImport.length > 0) {
-    const { newSongIds } = store.addSongs(toImport.map(r => r.song), 'Community', 'community')
+    // No 'Community' source collection: the new collection is these songs' only home, so
+    // deleting it can offer to delete them too (see songsOnlyInCollection).
+    const { newSongIds } = store.addSongs(toImport.map(r => r.song))
     toImport.forEach((r, i) => { r.libraryId = newSongIds[i] })
     toImport.forEach(r => recordCommunityImport(r.pick.id))
   }
