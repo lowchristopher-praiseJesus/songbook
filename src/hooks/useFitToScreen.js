@@ -7,7 +7,10 @@ const DEBOUNCE_MS = 100
 export const COLUMN_GAP_PX = 32
 export { MAX_COLS }
 
-export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId, minFontSize }) {
+// layoutKey: any value that changes the space above the lyrics body without
+// resizing the container (e.g. showing/hiding the Song Note in the title
+// block). The ResizeObserver can't see those, so a change forces a re-fit.
+export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, songId, minFontSize, layoutKey }) {
   const clampedMinFontSize = Math.min(MAX_FONT, Math.max(8, minFontSize))
   const [state, setState] = useState({
     fitFontSize: null,
@@ -279,7 +282,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       rafRef.current = requestAnimationFrame(() => measureRef.current(true))
     })
     return () => cancelAnimationFrame(rafRef.current)
-  }, [enabled, lyricsOnly, songId, clampedMinFontSize])
+  }, [enabled, lyricsOnly, songId, clampedMinFontSize, layoutKey])
 
   // ResizeObserver: re-measure on container size changes (debounced).
   // In manual mode, keep the user's pinned font and only re-derive columns;

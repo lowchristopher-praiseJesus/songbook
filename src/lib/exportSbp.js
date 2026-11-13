@@ -21,9 +21,10 @@ function buildDeepSearch(name, author, subTitle) {
 }
 
 export function stripNoteTokens(content) {
-  // Remove each {note:} line including its trailing newline so no blank line
-  // is left in its place, preserving the original spacing between other lines.
-  return content.replace(/\{note:[^}]*\}[^\n]*\n?/g, '')
+  // Remove each {note:} / {highlight:} line including its trailing newline so
+  // no blank line is left in its place, preserving the original spacing
+  // between other lines. Both are private annotations.
+  return content.replace(/\{(?:note|highlight):[^}]*\}[^\n]*\n?/g, '')
 }
 
 function stripStrumTokens(content) {

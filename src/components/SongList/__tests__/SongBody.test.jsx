@@ -178,3 +178,31 @@ describe('SongBody sectionRefs', () => {
     ).not.toThrow()
   })
 })
+
+describe('SongBody {highlight:} annotations', () => {
+  const hl = [{
+    label: 'Bridge',
+    annotation: 'build here',
+    annotationHighlight: true,
+    lines: [
+      { type: 'lyric', content: 'Amazing grace', chords: [], annotation: 'key change', annotationHighlight: true },
+      { type: 'lyric', content: 'How sweet', chords: [], annotation: 'plain note' },
+    ],
+  }]
+
+  it('renders highlighted section and line annotations with the highlighter style', () => {
+    render(<SongBody sections={hl} annotationsVisible={true} />)
+    expect(screen.getByText('build here')).toHaveClass('annotation-highlight')
+    expect(screen.getByText('key change')).toHaveClass('annotation-highlight')
+  })
+
+  it('keeps plain notes unhighlighted', () => {
+    render(<SongBody sections={hl} annotationsVisible={true} />)
+    expect(screen.getByText('— plain note')).not.toHaveClass('annotation-highlight')
+  })
+
+  it('hides highlights when annotations are hidden', () => {
+    render(<SongBody sections={hl} annotationsVisible={false} />)
+    expect(screen.queryByText('key change')).toBeNull()
+  })
+})

@@ -82,6 +82,10 @@ function hexToRgb(hex) {
   ]
 }
 
+// Highlighter-pen colors for {highlight:} annotations in the printed PDF.
+const HIGHLIGHT_FILL = '#fff44f'
+const HIGHLIGHT_TEXT = '#1f2937'
+
 function setColor(doc, hex) {
   const [r, g, b] = hexToRgb(hex)
   doc.setTextColor(r, g, b)
@@ -209,19 +213,40 @@ export async function exportPrintPdf(songs, {
     }
   }
 
-  function renderAnnotation(text) {
+  // Draw an inline annotation (a {note:} or {highlight:}) at x/baseline y in the
+  // annotation font. Highlights get a highlighter-yellow box behind the text,
+  // with dark text so it reads on the yellow whatever annotation color is set.
+  function drawInlineAnnotation(text, x, baseline, highlight) {
     doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
     doc.setFontSize(comp.annotation.fontSize)
-    setColor(doc, comp.annotation.color)
+    if (highlight) {
+      const fs = comp.annotation.fontSize
+      const w = doc.getStringUnitWidth(text) * fs / doc.internal.scaleFactor
+      const padX = fs * 0.25
+      doc.setFillColor(...hexToRgb(HIGHLIGHT_FILL))
+      doc.rect(x - padX, baseline - fs * 0.82, w + padX * 2, fs * 1.08, 'F')
+      setColor(doc, HIGHLIGHT_TEXT)
+    } else {
+      setColor(doc, comp.annotation.color)
+    }
+    doc.text(text, x, baseline)
+  }
+
+  // Block annotation under the title (the song-level Song Note). Text starts at
+  // the column edge so it lines up with the title; a highlight box bleeds a
+  // few points into the margin, like a highlighter pen would.
+  function renderAnnotation(text, highlight = false) {
+    doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
+    doc.setFontSize(comp.annotation.fontSize)
     const wrapped = doc.splitTextToSize(text, colWidth)
     for (const line of wrapped) {
       advance(annotLineH)
-      doc.text(line, colX(), y)
+      drawInlineAnnotation(line, colX(), y, highlight)
       y += annotLineH
     }
   }
 
-  function renderSectionLabel(label, annotation) {
+  function renderSectionLabel(label, annotation, highlight = false) {
     const prePad = comp.lyrics.fontSize * 0.4
     // Reserve pre-padding + label + at least one chord/lyric row so the
     // section header is never orphaned at the bottom of a column or page.
@@ -238,12 +263,7 @@ export async function exportPrintPdf(songs, {
       const labelW = doc.getStringUnitWidth(upperLabel) * comp.sectionLabel.fontSize / doc.internal.scaleFactor
       const annotX = colX() + labelW + 6
       const annotW = colWidth - labelW - 6
-      if (annotW > 15) {
-        doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
-        doc.setFontSize(comp.annotation.fontSize)
-        setColor(doc, comp.annotation.color)
-        doc.text(annotation, annotX, y)
-      }
+      if (annotW > 15) drawInlineAnnotation(annotation, annotX, y, highlight)
     }
 
     y += labelLineH
@@ -290,7 +310,7 @@ export async function exportPrintPdf(songs, {
 
   // Render a pure chord line (type === 'chord'): no paired lyric, so space
   // chords using their character-position values and the chord font's char width.
-  function renderPureChordRow(chords, annotation) {
+  function renderPureChordRow(chords, annotation, highlight = false) {
     doc.setFont(comp.chords.fontFamily, comp.chords.fontStyle)
     doc.setFontSize(comp.chords.fontSize)
     setColor(doc, comp.chords.color)
@@ -308,18 +328,13 @@ export async function exportPrintPdf(songs, {
     if (annotation) {
       const annotX = maxRight + 6
       const annotW = x0 + colWidth - maxRight - 6
-      if (annotW > 15) {
-        doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
-        doc.setFontSize(comp.annotation.fontSize)
-        setColor(doc, comp.annotation.color)
-        doc.text(annotation, annotX, y)
-      }
+      if (annotW > 15) drawInlineAnnotation(annotation, annotX, y, highlight)
     }
 
     y += chordLineH
   }
 
-  function renderLyricLine(text, annotation) {
+  function renderLyricLine(text, annotation, highlight = false) {
     doc.setFont(comp.lyrics.fontFamily, comp.lyrics.fontStyle)
     doc.setFontSize(comp.lyrics.fontSize)
     setColor(doc, comp.lyrics.color)
@@ -331,12 +346,7 @@ export async function exportPrintPdf(songs, {
         const lyricW = doc.getStringUnitWidth(wrapped[i]) * comp.lyrics.fontSize / doc.internal.scaleFactor
         const annotX = colX() + lyricW + 6
         const annotW = colWidth - lyricW - 6
-        if (annotW > 15) {
-          doc.setFont(comp.annotation.fontFamily, comp.annotation.fontStyle)
-          doc.setFontSize(comp.annotation.fontSize)
-          setColor(doc, comp.annotation.color)
-          doc.text(annotation, annotX, y)
-        }
+        if (annotW > 15) drawInlineAnnotation(annotation, annotX, y, highlight)
       }
       y += lyricLineH
     }
@@ -371,7 +381,7 @@ export async function exportPrintPdf(songs, {
     renderTitle(song.meta?.title ?? 'Untitled')
 
     if (song.meta?.annotation) {
-      renderAnnotation(song.meta.annotation)
+      renderAnnotation(song.meta.annotation, true)  // Song Note is always highlighted
     }
 
     for (const section of song.sections ?? []) {
@@ -379,7 +389,7 @@ export async function exportPrintPdf(songs, {
       if (!hasLyric) continue
 
       if (section.label) {
-        renderSectionLabel(section.label, section.annotation)
+        renderSectionLabel(section.label, section.annotation, !!section.annotationHighlight)
       }
 
       for (const line of section.lines ?? []) {
@@ -391,7 +401,7 @@ export async function exportPrintPdf(songs, {
         if (line.type === 'chord') {
           if (!hideChords) {
             advance(chordLineH)
-            renderPureChordRow(line.chords ?? [], line.annotation)
+            renderPureChordRow(line.chords ?? [], line.annotation, !!line.annotationHighlight)
           }
           continue
         }
@@ -402,7 +412,7 @@ export async function exportPrintPdf(songs, {
           renderChordRow(line.chords, line.content ?? '')
         }
 
-        renderLyricLine(line.content ?? '', line.annotation)
+        renderLyricLine(line.content ?? '', line.annotation, !!line.annotationHighlight)
       }
 
       y += comp.lyrics.fontSize * 0.3

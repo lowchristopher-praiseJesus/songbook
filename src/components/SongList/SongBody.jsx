@@ -163,7 +163,9 @@ const SongSection = React.forwardRef(function SongSection(
               className="ml-2 font-normal normal-case tracking-normal italic"
               style={{ fontFamily: 'var(--annotation-font)', fontSize: 'var(--annotation-size)', color: 'var(--annotation-color-active)' }}
             >
-              — {section.annotation}
+              — {section.annotationHighlight
+                ? <mark className="annotation-highlight">{section.annotation}</mark>
+                : section.annotation}
             </span>
           )}
         </h3>
@@ -235,7 +237,9 @@ const SongSection = React.forwardRef(function SongSection(
                   className="ml-2 italic"
                   style={{ fontFamily: 'var(--annotation-font)', fontSize: 'var(--annotation-size)', color: 'var(--annotation-color-active)' }}
                 >
-                  — {line.annotation}
+                  — {line.annotationHighlight
+                    ? <mark className="annotation-highlight">{line.annotation}</mark>
+                    : line.annotation}
                 </span>
               )}
             </div>

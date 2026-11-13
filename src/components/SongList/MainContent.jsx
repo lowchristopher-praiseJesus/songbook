@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon, PencilIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon } from '@heroicons/react/24/outline'
+import { ArrowsPointingOutIcon, ArrowsPointingInIcon, PlayIcon, StopIcon, PencilIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline'
 import { useLibraryStore } from '../../store/libraryStore'
 import { useAnnotationStore } from '../../store/annotationStore'
 import { useYoutubePlayerStore } from '../../store/youtubePlayerStore'
+import { useMaximizeSettingsStore } from '../../store/maximizeSettingsStore'
 import { YoutubeSearchModal } from '../YoutubeSearch/YoutubeSearchModal'
 import { AnnotationToolbar } from '../Annotation/AnnotationToolbar'
 import { useDropZone } from '../../hooks/useDropZone'
@@ -82,6 +83,8 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
   const setUserZoom = useAnnotationStore(s => s.setUserZoom)
   const resetAnnotationZoom = useAnnotationStore(s => s.resetZoom)
   const loadAnnotationsForSong = useAnnotationStore(s => s.loadForSong)
+  const showSongNote = useMaximizeSettingsStore(s => s.showSongNote)
+  const toggleShowSongNote = useMaximizeSettingsStore(s => s.toggleShowSongNote)
   // Rendered once, here, rather than inside SongHeader: SongHeader's subtree
   // gets unmounted when entering Maximize mode (isFit) or is simply covered
   // by an overlay in Performance mode, so a player owned by it would stop
@@ -125,7 +128,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
     decreaseFontSize,
     settled,
     measuredSongId,
-  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId, minFontSize: maximizeMinFontSize })
+  } = useFitToScreen({ enabled: isFit && !annotationBaseline, containerRef, bodyRef, lyricsOnly, songId: activeSongId, minFontSize: maximizeMinFontSize, layoutKey: showSongNote })
 
   // Once an annotation baseline is captured, useFitToScreen is disabled (see
   // above) and its own pagination state collapses to the "off" defaults
@@ -475,6 +478,25 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
                 </>
               )}
             </div>
+            {activeSong.meta?.annotation?.trim() && (
+              <button
+                type="button"
+                onClick={toggleShowSongNote}
+                // A frozen annotation baseline pins the title layout the ink
+                // was drawn on, so the note can't be toggled until it's cleared.
+                disabled={!!annotationBaseline}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                  ${(annotationBaseline ? annotationBaseline.showSongNote : showSongNote)
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                aria-label={showSongNote ? 'Hide song note' : 'Show song note'}
+                aria-pressed={!!(annotationBaseline ? annotationBaseline.showSongNote : showSongNote)}
+                title={annotationBaseline ? 'Song note is fixed while this song has annotations' : (showSongNote ? 'Hide song note' : 'Show song note')}
+              >
+                <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setAnnotateMode(!annotateMode)}

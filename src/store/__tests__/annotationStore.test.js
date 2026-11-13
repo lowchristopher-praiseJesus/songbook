@@ -44,19 +44,19 @@ describe('loadForSong', () => {
 describe('captureBaseline', () => {
   it('sets the baseline once', () => {
     useAnnotationStore.getState().captureBaseline({ fontSize: 16, columns: 1, width: 600, height: 900 })
-    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900 })
+    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900, showSongNote: false })
   })
 
   it('ignores a second capture attempt, keeping the first baseline', () => {
     useAnnotationStore.getState().captureBaseline({ fontSize: 16, columns: 1, width: 600, height: 900 })
     useAnnotationStore.getState().captureBaseline({ fontSize: 24, columns: 3, width: 1200, height: 1800 })
-    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900 })
+    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900, showSongNote: false })
   })
 
   it('persists the baseline to storage after the debounce', () => {
     useAnnotationStore.getState().captureBaseline({ fontSize: 16, columns: 1, width: 600, height: 900 })
     vi.advanceTimersByTime(600)
-    expect(getAnnotations('song-1').baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900 })
+    expect(getAnnotations('song-1').baseline).toEqual({ fontSize: 16, columns: 1, width: 600, height: 900, showSongNote: false })
   })
 })
 
@@ -135,7 +135,7 @@ describe('clearAllAnnotations', () => {
     useAnnotationStore.getState().captureBaseline({ fontSize: 16, columns: 1, width: 600, height: 900 })
     useAnnotationStore.getState().clearAllAnnotations()
     useAnnotationStore.getState().captureBaseline({ fontSize: 24, columns: 3, width: 1200, height: 1800 })
-    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 24, columns: 3, width: 1200, height: 1800 })
+    expect(useAnnotationStore.getState().baseline).toEqual({ fontSize: 24, columns: 3, width: 1200, height: 1800, showSongNote: false })
   })
 })
 
@@ -170,5 +170,17 @@ describe('zoom/pan', () => {
     useAnnotationStore.getState().resetZoom()
     expect(useAnnotationStore.getState().userZoom).toBe(1)
     expect(useAnnotationStore.getState().pan).toEqual({ x: 0, y: 0 })
+  })
+})
+
+describe('captureBaseline — song note layout', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    useAnnotationStore.getState().loadForSong('song-note')
+  })
+
+  it('records whether the Maximize song note was shown when ink was first drawn', () => {
+    useAnnotationStore.getState().captureBaseline({ fontSize: 16, columns: 1, width: 600, height: 900, showSongNote: true })
+    expect(useAnnotationStore.getState().baseline.showSongNote).toBe(true)
   })
 })

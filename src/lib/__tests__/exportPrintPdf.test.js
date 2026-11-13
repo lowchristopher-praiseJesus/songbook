@@ -10,6 +10,8 @@ const mockDoc = {
   setFont:            vi.fn(),
   setFontSize:        vi.fn(),
   setTextColor:       vi.fn(),
+  setFillColor:       vi.fn(),
+  rect:               vi.fn(),
   text:               vi.fn(),
   splitTextToSize:    vi.fn((t) => [t ?? '']),
   getStringUnitWidth: vi.fn(() => 1),
@@ -190,5 +192,43 @@ describe('exportPrintPdf CJK font loading', () => {
     okFetch()
     await exportPrintPdf([cjkSong])
     expect(mockFetch).toHaveBeenCalledWith('/fonts/NotoSansSC-Regular.ttf')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// {highlight:} annotations
+// ---------------------------------------------------------------------------
+describe('exportPrintPdf highlight annotations', () => {
+  const song = (annotationHighlight) => ({
+    meta: { title: 'T' },
+    sections: [{
+      label: 'Verse',
+      annotation: 'sec', annotationHighlight,
+      lines: [{ type: 'lyric', content: 'Hello', chords: [], annotation: 'line', annotationHighlight }],
+    }],
+  })
+
+  it('draws a filled highlighter box behind each highlighted annotation', async () => {
+    okFetch()
+    await exportPrintPdf([song(true)])
+    const fills = mockDoc.rect.mock.calls.filter(c => c[4] === 'F')
+    expect(fills).toHaveLength(2)
+    expect(mockDoc.text).toHaveBeenCalledWith('sec', expect.any(Number), expect.any(Number))
+    expect(mockDoc.text).toHaveBeenCalledWith('line', expect.any(Number), expect.any(Number))
+  })
+
+  it('draws no highlighter box for plain notes', async () => {
+    okFetch()
+    await exportPrintPdf([song(false)])
+    expect(mockDoc.rect).not.toHaveBeenCalled()
+  })
+})
+
+describe('exportPrintPdf Song Note', () => {
+  it('highlights the song-level Song Note under the title', async () => {
+    okFetch()
+    await exportPrintPdf([{ meta: { title: 'T', annotation: 'Start soft' }, sections: [{ label: 'V', lines: [{ type: 'lyric', content: 'Hi', chords: [] }] }] }])
+    expect(mockDoc.rect.mock.calls.filter(c => c[4] === 'F')).toHaveLength(1)
+    expect(mockDoc.text).toHaveBeenCalledWith('Start soft', expect.any(Number), expect.any(Number))
   })
 })

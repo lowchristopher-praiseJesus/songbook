@@ -234,3 +234,32 @@ describe('isChord — extended spellings', () => {
     expect(section.lines[0].content).toBe('Hallelujah')
   })
 })
+
+describe('{highlight:} annotation tokens', () => {
+  it('attaches highlight after {c:} to section.annotation, flagged as highlight', () => {
+    const sections = parseContent('{c: Chorus}\n{highlight: key change!}\nHello world')
+    expect(sections[0].annotation).toBe('key change!')
+    expect(sections[0].annotationHighlight).toBe(true)
+    expect(sections[0].lines).toHaveLength(1)
+  })
+
+  it('attaches highlight after a lyric line to line.annotation, flagged as highlight', () => {
+    const sections = parseContent('{c: Verse}\nAmazing grace\n{highlight: hold this note}')
+    const line = sections[0].lines[0]
+    expect(line.annotation).toBe('hold this note')
+    expect(line.annotationHighlight).toBe(true)
+    expect(sections[0].lines).toHaveLength(1)
+  })
+
+  it('does not flag plain {note:} annotations as highlights', () => {
+    const sections = parseContent('{c: Verse}\nAmazing grace\n{note: sing softly}')
+    expect(sections[0].lines[0].annotationHighlight).toBeFalsy()
+  })
+
+  it('drops a standalone {highlight:} line with nothing to attach to', () => {
+    const sections = parseContent('{highlight: orphan}\n{c: Verse}\nHello')
+    expect(sections).toHaveLength(1)
+    expect(sections[0].label).toBe('Verse')
+    expect(sections[0].lines.map(l => l.content)).toEqual(['Hello'])
+  })
+})

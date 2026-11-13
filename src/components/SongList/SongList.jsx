@@ -16,6 +16,7 @@ import { RecordingErrorDialog } from '../Recorder/RecordingErrorDialog'
 import { RecordingsPanel } from '../Recorder/RecordingsPanel'
 import { AnnotatedMaximizeView } from '../Annotation/AnnotatedMaximizeView'
 import { SongTitleBlock } from './SongTitleBlock'
+import { useMaximizeSettingsStore } from '../../store/maximizeSettingsStore'
 
 const { supported: RECORDER_SUPPORTED } = checkRecorderSupport()
 
@@ -48,6 +49,12 @@ export function SongList({
   const transpose = useTranspose(song.sections, song.meta.usesFlats, song.id, getDefaultCapo(song.meta))
   const baseline = useAnnotationStore(s => s.baseline)
   const effectivePaginated = baseline ? !!baseline.paginated : paginated
+  // Song Note in the Maximize title block. A frozen annotation baseline keeps
+  // the visibility it was drawn with (ink is positioned against that layout);
+  // baselines captured before this setting existed had no note, hence `!!`.
+  const showSongNotePref = useMaximizeSettingsStore(s => s.showSongNote)
+  const showSongNote = baseline ? !!baseline.showSongNote : showSongNotePref
+  const fitSongNote = showSongNote ? song.meta.annotation : undefined
 
   useEffect(() => {
     document.documentElement.style.setProperty('--lyrics-size', `${fontSize}px`)
@@ -162,7 +169,7 @@ export function SongList({
         }}
       >
         {isFit && effectivePaginated && (
-          <SongTitleBlock title={song.meta.title} songKey={song.meta.key} keyIndex={song.meta.keyIndex} isMinor={song.meta.isMinor} delta={transpose.delta} tempo={song.meta.tempo} />
+          <SongTitleBlock title={song.meta.title} songKey={song.meta.key} keyIndex={song.meta.keyIndex} isMinor={song.meta.isMinor} delta={transpose.delta} tempo={song.meta.tempo} songNote={fitSongNote} />
         )}
         {isFit ? (
           <AnnotatedMaximizeView
@@ -186,6 +193,7 @@ export function SongList({
             isMinor={song.meta.isMinor}
             delta={transpose.delta}
             tempo={song.meta.tempo}
+            songNote={fitSongNote}
           />
         ) : (
           <div ref={bodyRef}>

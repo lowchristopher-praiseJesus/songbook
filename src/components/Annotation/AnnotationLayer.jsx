@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { getStroke } from 'perfect-freehand'
 import { useAnnotationStore } from '../../store/annotationStore'
+import { useMaximizeSettingsStore } from '../../store/maximizeSettingsStore'
 import { MAX_COLS, COLUMN_GAP_PX } from '../../hooks/useFitToScreen'
 
 // Turns a perfect-freehand outline (array of [x, y]) into a smooth filled
@@ -158,6 +159,8 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, to
         totalPages: paginated && totalColumns ? Math.ceil(totalColumns / MAX_COLS) : 1,
         pageColWidth,
         availableHeight: fitAvailableHeight,
+        // Title-block layout the ink is drawn against (see SongList).
+        showSongNote: useMaximizeSettingsStore.getState().showSongNote,
       })
     }
   }

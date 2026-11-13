@@ -58,6 +58,17 @@ describe('SongTitleBlock', () => {
     expect(screen.getByText('Key: Bb')).not.toBeNull()
   })
 
+  it('renders the song note when provided', () => {
+    render(<SongTitleBlock title="T" songKey="A" songNote="Start soft, build on chorus 2" />)
+    expect(screen.getByText('Start soft, build on chorus 2')).not.toBeNull()
+    expect(screen.getByText('Start soft, build on chorus 2')).toHaveClass('annotation-highlight')
+  })
+
+  it('renders no song note when it is empty or whitespace', () => {
+    const { container } = render(<SongTitleBlock title="T" songNote="   " />)
+    expect(container.textContent).toBe('T')
+  })
+
   it('transposes minor keys', () => {
     render(<SongTitleBlock title="T" keyIndex={9} isMinor delta={2} />)
     expect(screen.getByText('Key: Bm')).not.toBeNull()

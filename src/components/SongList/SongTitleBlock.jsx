@@ -11,10 +11,13 @@ function resolveKey(songKey, keyIndex, isMinor, delta) {
   return (isMinor ? MINOR_NAMES : MAJOR_NAMES)[i]
 }
 
-export function SongTitleBlock({ title, songKey, keyIndex, isMinor, delta = 0, tempo }) {
+// songNote: the song-level "Song Note" (meta.annotation). Callers pass it only
+// when the Maximize-mode "Song Note" toggle is on; empty/whitespace renders nothing.
+export function SongTitleBlock({ title, songKey, keyIndex, isMinor, delta = 0, tempo, songNote }) {
   const key = resolveKey(songKey, keyIndex, isMinor, delta)
   // tempo can be 0 from some imports; coerce so React doesn't render a literal "0".
   const hasTempo = Number(tempo) > 0
+  const note = typeof songNote === 'string' ? songNote.trim() : ''
   return (
     <div className="mb-4">
       <h1
@@ -26,6 +29,11 @@ export function SongTitleBlock({ title, songKey, keyIndex, isMinor, delta = 0, t
           {key && <span>Key: {key}</span>}
           {key && hasTempo && <span className="mx-1.5">·</span>}
           {hasTempo && <span>BPM: {tempo}</span>}
+        </p>
+      )}
+      {note && (
+        <p data-testid="song-note" className="annotation-highlight-flush text-sm mt-1.5 whitespace-pre-line">
+          <mark className="annotation-highlight">{note}</mark>
         </p>
       )}
     </div>

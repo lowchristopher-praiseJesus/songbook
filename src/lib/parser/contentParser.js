@@ -1,5 +1,22 @@
 const SECTION_RE = /^\{c:\s*(.+?)\s*\}\s*$/
 const NOTE_RE = /^\{note:\s*(.*?)\s*\}\s*$/
+// {highlight: text} — same attachment rules as {note:}, but rendered with a
+// highlighter mark. Both set `annotation`; highlights also set annotationHighlight.
+const HIGHLIGHT_RE = /^\{highlight:\s*(.*?)\s*\}\s*$/
+
+function matchAnnotation(rawLine) {
+  const n = rawLine.match(NOTE_RE)
+  if (n) return { text: n[1], highlight: false }
+  const h = rawLine.match(HIGHLIGHT_RE)
+  if (h) return { text: h[1], highlight: true }
+  return null
+}
+
+// Only add the flag when set, so existing plain-note shapes are unchanged.
+function annotationFields(a) {
+  if (!a) return { annotation: null }
+  return a.highlight ? { annotation: a.text, annotationHighlight: true } : { annotation: a.text }
+}
 
 export function parseContent(content) {
   if (!content) return []
@@ -11,8 +28,8 @@ export function parseContent(content) {
 
   function peekNote() {
     if (i + 1 < rawLines.length) {
-      const m = rawLines[i + 1].match(NOTE_RE)
-      if (m) { i++; return m[1] }
+      const a = matchAnnotation(rawLines[i + 1])
+      if (a) { i++; return a }
     }
     return null
   }
@@ -20,16 +37,15 @@ export function parseContent(content) {
   while (i < rawLines.length) {
     const rawLine = rawLines[i]
 
-    // Consume standalone {note:} lines not attached to any element
-    if (NOTE_RE.test(rawLine)) {
+    // Consume standalone {note:}/{highlight:} lines not attached to any element
+    if (matchAnnotation(rawLine)) {
       i++
       continue
     }
 
     const sectionMatch = rawLine.match(SECTION_RE)
     if (sectionMatch) {
-      const annotation = peekNote()
-      current = { label: sectionMatch[1], annotation, lines: [] }
+      current = { label: sectionMatch[1], ...annotationFields(peekNote()), lines: [] }
       sections.push(current)
       i++
       continue
@@ -46,8 +62,7 @@ export function parseContent(content) {
       continue
     }
 
-    const annotation = peekNote()
-    const line = { ...parseLine(rawLine), annotation }
+    const line = { ...parseLine(rawLine), ...annotationFields(peekNote()) }
     current.lines.push(line)
     i++
   }

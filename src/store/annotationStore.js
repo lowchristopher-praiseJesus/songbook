@@ -65,9 +65,9 @@ export const useAnnotationStore = create((set, get) => ({
   // pagination state to its "off" defaults. Without this snapshot, that
   // reset silently collapses a multi-page song to a single page and breaks
   // in-song navigation.
-  captureBaseline({ fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight }) {
+  captureBaseline({ fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight, showSongNote = false }) {
     if (get().baseline) return
-    set({ baseline: { fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight } })
+    set({ baseline: { fontSize, columns, width, height, paginated, totalColumns, totalPages, pageColWidth, availableHeight, showSongNote: !!showSongNote } })
     schedulePersist(get)
   },
 
