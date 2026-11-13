@@ -4,14 +4,31 @@ import { useAnnotationStore, MAX_LAYERS } from '../../store/annotationStore'
 import { useDraggablePill } from '../../hooks/useDraggablePill'
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#111827']
+// Bright marker colours — drawn at partial opacity, so they need to be light
+// enough that lyrics and chords stay readable underneath.
+const HIGHLIGHT_COLORS = ['#facc15', '#4ade80', '#f472b6', '#60a5fa', '#fb923c', '#c084fc']
+
+// Heroicons has no highlighter glyph; chisel-tip marker in the same 24px
+// outline style.
+function HighlighterIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15.5 3.5l5 5-8.5 8.5-5-5 8.5-8.5z" />
+      <path d="M7 12l-1.5 5.5L7 19l5.5-1.5" />
+      <path d="M5.5 17.5L3 20h4" />
+    </svg>
+  )
+}
 
 export function AnnotationToolbar() {
   const tool = useAnnotationStore(s => s.tool)
   const color = useAnnotationStore(s => s.color)
+  const highlightColor = useAnnotationStore(s => s.highlightColor)
   const layers = useAnnotationStore(s => s.layers)
   const activeLayer = useAnnotationStore(s => s.activeLayer)
   const setTool = useAnnotationStore(s => s.setTool)
   const setColor = useAnnotationStore(s => s.setColor)
+  const setHighlightColor = useAnnotationStore(s => s.setHighlightColor)
   const setActiveLayer = useAnnotationStore(s => s.setActiveLayer)
   const toggleLayerVisibility = useAnnotationStore(s => s.toggleLayerVisibility)
   const undoLastStroke = useAnnotationStore(s => s.undoLastStroke)
@@ -19,6 +36,13 @@ export function AnnotationToolbar() {
 
   const { pillRef, position, orientation, gripProps } = useDraggablePill('songsheet_annotation_pill_pos')
   const isHorizontal = orientation === 'horizontal'
+
+  // Swatches follow the drawing tool: marker colours while highlighting,
+  // ink colours otherwise (incl. eraser, which keeps the last pen palette).
+  const highlighting = tool === 'highlighter'
+  const swatches = highlighting ? HIGHLIGHT_COLORS : COLORS
+  const selectedColor = highlighting ? highlightColor : color
+  const pickColor = highlighting ? setHighlightColor : setColor
 
   const [confirmingReset, setConfirmingReset] = useState(false)
   const confirmTimerRef = useRef(null)
@@ -62,7 +86,7 @@ export function AnnotationToolbar() {
         </div>
       </div>
 
-      {/* Pen / eraser */}
+      {/* Pen / highlighter / eraser */}
       <div className={`flex gap-0.5 bg-gray-100/70 dark:bg-gray-800/70 rounded-xl p-0.5 ${isHorizontal ? 'flex-row' : 'flex-col'}`}>
         <button
           type="button"
@@ -73,6 +97,16 @@ export function AnnotationToolbar() {
           aria-pressed={tool === 'pen'}
         >
           <PencilIcon className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setTool('highlighter')}
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors
+            ${tool === 'highlighter' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          aria-label="Highlighter tool"
+          aria-pressed={tool === 'highlighter'}
+        >
+          <HighlighterIcon className="w-5 h-5" />
         </button>
         <button
           type="button"
@@ -88,16 +122,16 @@ export function AnnotationToolbar() {
 
       {/* Color swatches */}
       <div data-testid="color-swatches" className={`grid gap-1 py-1 ${isHorizontal ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        {COLORS.map(c => (
+        {swatches.map(c => (
           <button
             key={c}
             type="button"
-            onClick={() => setColor(c)}
+            onClick={() => pickColor(c)}
             className={`w-4 h-4 rounded-full ring-offset-1 ring-offset-white dark:ring-offset-gray-900
-              ${color === c ? 'ring-2 ring-gray-700 dark:ring-gray-200' : ''}`}
+              ${selectedColor === c ? 'ring-2 ring-gray-700 dark:ring-gray-200' : ''}`}
             style={{ backgroundColor: c }}
             aria-label={`Color ${c}`}
-            aria-pressed={color === c}
+            aria-pressed={selectedColor === c}
           />
         ))}
       </div>

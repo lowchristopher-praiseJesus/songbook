@@ -19,11 +19,25 @@ function strokeOutlineToPath2D(outline) {
   return path
 }
 
+// Highlighter band thickness in baseline CSS px — roughly one lyric line tall
+// at typical Maximize font sizes, so a pass over a word covers it.
+export const HIGHLIGHTER_WIDTH = 18
+export const HIGHLIGHTER_OPACITY = 0.35
+
+const isHighlight = stroke => stroke.tool === 'highlighter'
+
 function paintStroke(ctx, stroke) {
   const input = stroke.points.map(p => [p.x, p.y, p.pressure ?? 0.5])
-  const outline = getStroke(input, { size: stroke.width, thinning: 0.6, smoothing: 0.5, streamline: 0.5 })
+  const highlight = isHighlight(stroke)
+  // Highlighter: even width (no pressure thinning) like a felt marker. The
+  // outline is filled once, so the band's own self-overlaps don't darken.
+  const outline = getStroke(input, highlight
+    ? { size: stroke.width, thinning: 0, smoothing: 0.5, streamline: 0.5, simulatePressure: false }
+    : { size: stroke.width, thinning: 0.6, smoothing: 0.5, streamline: 0.5 })
+  ctx.globalAlpha = highlight ? HIGHLIGHTER_OPACITY : 1
   ctx.fillStyle = stroke.color
   ctx.fill(strokeOutlineToPath2D(outline))
+  ctx.globalAlpha = 1
 }
 
 /**
@@ -49,11 +63,18 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, to
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     const dpr = window.devicePixelRatio || 1
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    layers.forEach((layer, i) => {
-      if (!layer.visible) return
-      layer.strokes.forEach(stroke => paintStroke(ctx, stroke))
-      if (i === activeLayer && liveStrokeRef.current) paintStroke(ctx, liveStrokeRef.current)
-    })
+    // Two passes so every highlight sits underneath every pen line (like a
+    // real highlighter over ink), whatever order or layer they were drawn in.
+    const live = liveStrokeRef.current
+    for (const wantHighlight of [true, false]) {
+      layers.forEach((layer, i) => {
+        if (!layer.visible) return
+        layer.strokes.forEach(stroke => {
+          if (isHighlight(stroke) === wantHighlight) paintStroke(ctx, stroke)
+        })
+        if (i === activeLayer && live && isHighlight(live) === wantHighlight) paintStroke(ctx, live)
+      })
+    }
   }, [layers, activeLayer])
 
   // Keeps the canvas backing store matched to its own layout box (CSS px * dpr).
@@ -97,12 +118,14 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, to
     canvasRef.current.setPointerCapture(e.pointerId)
     drawingRef.current = true
     const pt = localPoint(e)
-    const { tool, color, strokeWidth } = useAnnotationStore.getState()
+    const { tool, color, highlightColor, strokeWidth } = useAnnotationStore.getState()
     if (tool === 'eraser') {
       useAnnotationStore.getState().eraseStrokeAt(pt.x, pt.y)
       return
     }
-    liveStrokeRef.current = { color, width: strokeWidth, points: [pt] }
+    liveStrokeRef.current = tool === 'highlighter'
+      ? { tool: 'highlighter', color: highlightColor, width: HIGHLIGHTER_WIDTH, points: [pt] }
+      : { color, width: strokeWidth, points: [pt] }
   }
 
   function onPointerMove(e) {

@@ -75,8 +75,10 @@ export function setTransposeState(songId, state) {
 
 /**
  * Annotation shape: { baseline: { fontSize, columns, width, height } | null,
- *   layers: [{ visible, strokes: [{ id, color, width, points: [{x, y, pressure}] }] }],
+ *   layers: [{ visible, strokes: [{ id, tool?, color, width, points: [{x, y, pressure}] }] }],
  *   activeLayer }
+ * `tool` is 'highlighter' for highlighter strokes; absent for pen strokes
+ * (older saved annotations predate it and are all pen).
  */
 export function getAnnotations(songId) {
   const raw = localStorage.getItem(ANNOTATION_PREFIX + songId)

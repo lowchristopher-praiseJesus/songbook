@@ -35,8 +35,9 @@ export const useAnnotationStore = create((set, get) => ({
   baseline: null,      // { fontSize, columns, width, height } | null
   layers: freshLayers(),
   activeLayer: 0,
-  tool: 'pen',          // 'pen' | 'eraser'
+  tool: 'pen',          // 'pen' | 'highlighter' | 'eraser'
   color: '#ef4444',
+  highlightColor: '#facc15',
   strokeWidth: 3,
   annotateMode: false,
   userZoom: 1,
@@ -89,7 +90,11 @@ export const useAnnotationStore = create((set, get) => ({
     let closestIdx = -1
     let closestDist = Infinity
     layer.strokes.forEach((stroke, i) => {
-      const threshold = Math.max(12, stroke.width * 2)
+      // Highlighter bands are wide: hit anywhere across the painted band plus
+      // a little slop. Pen lines are thin, so use a generous fixed minimum.
+      const threshold = stroke.tool === 'highlighter'
+        ? stroke.width / 2 + 8
+        : Math.max(12, stroke.width * 2)
       const d = distanceToStroke(stroke, x, y)
       if (d <= threshold && d < closestDist) {
         closestDist = d
@@ -135,6 +140,7 @@ export const useAnnotationStore = create((set, get) => ({
 
   setTool(tool) { set({ tool }) },
   setColor(color) { set({ color }) },
+  setHighlightColor(highlightColor) { set({ highlightColor }) },
   setStrokeWidth(strokeWidth) { set({ strokeWidth }) },
   setAnnotateMode(annotateMode) { set({ annotateMode }) },
 

@@ -59,3 +59,22 @@ describe('AnnotationToolbar', () => {
     expect(screen.getByTestId('color-swatches')).toHaveClass('grid-cols-3')
   })
 })
+
+describe('AnnotationToolbar highlighter', () => {
+  it('selects the highlighter tool', () => {
+    render(<AnnotationToolbar />)
+    fireEvent.click(screen.getByLabelText('Highlighter tool'))
+    expect(screen.getByLabelText('Highlighter tool')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Pen tool')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('shows highlighter colors while highlighting and sets the highlight color, not the pen color', () => {
+    render(<AnnotationToolbar />)
+    fireEvent.click(screen.getByLabelText('Highlighter tool'))
+    fireEvent.click(screen.getByLabelText('Color #4ade80'))
+    const s = useAnnotationStore.getState()
+    expect(s.highlightColor).toBe('#4ade80')
+    expect(s.color).toBe('#ef4444')
+    expect(screen.getByLabelText('Color #4ade80')).toHaveAttribute('aria-pressed', 'true')
+  })
+})

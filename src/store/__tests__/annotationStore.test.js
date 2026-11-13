@@ -184,3 +184,22 @@ describe('captureBaseline — song note layout', () => {
     expect(useAnnotationStore.getState().baseline.showSongNote).toBe(true)
   })
 })
+
+describe('highlighter', () => {
+  it('keeps a separate highlight color, defaulting to yellow', () => {
+    const s = useAnnotationStore.getState()
+    expect(s.highlightColor).toBe('#facc15')
+    s.setHighlightColor('#4ade80')
+    expect(useAnnotationStore.getState().highlightColor).toBe('#4ade80')
+    expect(useAnnotationStore.getState().color).toBe('#ef4444')
+  })
+
+  it('eraser hits a wide highlighter stroke anywhere across its painted band', () => {
+    const s = useAnnotationStore.getState()
+    s.addStroke({ tool: 'highlighter', color: '#facc15', width: 20, points: [{ x: 100, y: 100, pressure: 0.5 }] })
+    // 18px from the centre line is still inside a 20px-wide band's hit area
+    // (pen-sized threshold of 12px would miss it).
+    useAnnotationStore.getState().eraseStrokeAt(100, 118)
+    expect(useAnnotationStore.getState().layers[0].strokes).toHaveLength(0)
+  })
+})
