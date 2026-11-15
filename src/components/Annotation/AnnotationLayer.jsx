@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { getStroke } from 'perfect-freehand'
 import { useAnnotationStore } from '../../store/annotationStore'
 import { useMaximizeSettingsStore } from '../../store/maximizeSettingsStore'
-import { MAX_COLS, COLUMN_GAP_PX } from '../../hooks/useFitToScreen'
+import { MAX_COLS, COLUMN_GAP_PX, PAGINATED_PAD_Y_TOTAL } from '../../hooks/useFitToScreen'
 
 // Turns a perfect-freehand outline (array of [x, y]) into a smooth filled
 // Path2D by curving through the midpoint of each consecutive pair.
@@ -170,7 +170,7 @@ export function AnnotationLayer({ active, fitFontSize, fitColumns, paginated, to
         ? MAX_COLS * pageColWidth + (MAX_COLS - 1) * COLUMN_GAP_PX
         : canvas.clientWidth
       const height = isPaginated
-        ? fitAvailableHeight + 32 // SongBody's outer `py-4`: 16px top + 16px bottom
+        ? fitAvailableHeight + PAGINATED_PAD_Y_TOTAL // SongBody's outer `py-4`: 16px top + 16px bottom
         : canvas.clientHeight
       useAnnotationStore.getState().captureBaseline({
         fontSize: fitFontSize,

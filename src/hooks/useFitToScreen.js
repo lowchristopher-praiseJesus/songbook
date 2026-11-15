@@ -5,6 +5,13 @@ const MAX_COLS = 3
 const STEP = 2
 const DEBOUNCE_MS = 100
 export const COLUMN_GAP_PX = 32
+// SongBody's paginated branch wraps its fixed-height column flow in a `py-4`
+// div: 16px above the flow and 16px below it. The flow therefore starts 16px
+// below the bodyRef top that getAvailableHeight() measures from, so the flow
+// itself must be this much shorter than the available height or its bottom
+// overhangs the screen and the last line of a full column gets clipped.
+// (AnnotationLayer adds the same 32px back to cover the whole body.)
+export const PAGINATED_PAD_Y_TOTAL = 32
 export { MAX_COLS }
 
 // layoutKey: any value that changes the space above the lyrics body without
@@ -156,7 +163,8 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
         fitAvailableHeight: null,
       }
     }
-    const pagination = measurePagination(fontSize, availableWidth, availableHeight)
+    const flowHeight = availableHeight - PAGINATED_PAD_Y_TOTAL
+    const pagination = measurePagination(fontSize, availableWidth, flowHeight)
     if (pagination === null) return null
     return {
       fitFontSize: fontSize,
@@ -165,7 +173,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
       totalColumns: pagination.totalColumns,
       totalPages: pagination.totalPages,
       pageColWidth: pagination.colWidth,
-      fitAvailableHeight: availableHeight,
+      fitAvailableHeight: flowHeight,
     }
   }
 
@@ -214,7 +222,8 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
     if (best) {
       result = { ...best, paginated: false, totalColumns: null, totalPages: 1, pageColWidth: null, fitAvailableHeight: null }
     } else {
-      const pagination = measurePagination(clampedMinFontSize, availableWidth, availableHeight)
+      const flowHeight = availableHeight - PAGINATED_PAD_Y_TOTAL
+      const pagination = measurePagination(clampedMinFontSize, availableWidth, flowHeight)
       result = {
         fitFontSize: clampedMinFontSize,
         fitColumns: MAX_COLS,
@@ -222,7 +231,7 @@ export function useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly, son
         totalColumns: pagination.totalColumns,
         totalPages: pagination.totalPages,
         pageColWidth: pagination.colWidth,
-        fitAvailableHeight: availableHeight,
+        fitAvailableHeight: flowHeight,
       }
     }
 

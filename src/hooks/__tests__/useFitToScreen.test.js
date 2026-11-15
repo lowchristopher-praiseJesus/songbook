@@ -175,6 +175,37 @@ describe('useFitToScreen', () => {
     expect(result.current.totalPages).toBe(3) // ceil(7 / 3)
   })
 
+  // SongBody's paginated branch wraps the fixed-height column flow in a `py-4`
+  // div (16px top + 16px bottom). The flow box therefore starts 16px below the
+  // bodyRef top that getAvailableHeight measures from, so a flow as tall as the
+  // full available height overhangs the screen bottom by 16px and clips the
+  // last line of any column that reaches it (seen on iPad landscape: V1's last
+  // line of "Great Is The Lord" cut off). The flow height — both what's measured
+  // and what's reported for rendering — must exclude that padding.
+  it('sizes the paginated flow to the available height minus SongBody\'s py-4 padding', () => {
+    const containerRef = makeContainerRef(400) // body top 80 → 320px available
+    const bodyRef = makeBodyRef(80)
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useFitToScreen({ enabled, containerRef, bodyRef, lyricsOnly: false, minFontSize: 20 }),
+      { initialProps: { enabled: false } }
+    )
+
+    const shadow = makePaginatingShadowEl({ totalColumns: 7 })
+    let heightAtMeasure = null
+    const desc = Object.getOwnPropertyDescriptor(shadow, 'scrollWidth')
+    Object.defineProperty(shadow, 'scrollWidth', {
+      get() { heightAtMeasure = shadow.style.height; return desc.get.call(shadow) },
+    })
+    result.current.shadowRef.current = shadow
+    act(() => rerender({ enabled: true }))
+
+    expect(result.current.paginated).toBe(true)
+    expect(result.current.fitAvailableHeight).toBe(288)
+    expect(heightAtMeasure).toBe('288px')
+  })
+
   it('reports paginated:false and totalPages:1 for a normal single-page fit', () => {
     const containerRef = makeContainerRef()
     const bodyRef = makeBodyRef()
