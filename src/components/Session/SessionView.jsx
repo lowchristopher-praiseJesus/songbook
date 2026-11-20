@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/shallow'
+import { SyntaxHint } from '../SongEditor/SyntaxHint'
 import {
   DndContext, MouseSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
@@ -654,8 +655,9 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
             {/* Lyrics / chords */}
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Lyrics &amp; chords &mdash; <span className="font-normal">{'{c: Section}'} for headers &middot; [Chord] before a syllable &middot; {'{note: text}'} for annotations &middot; {'{highlight: text}'} for highlighted annotations &middot; [Chord]{'{strum: ///}'} for strum patterns</span>
+                Lyrics &amp; chords
               </label>
+              <SyntaxHint className="mb-1" />
               <textarea
                 className="w-full h-48 font-mono text-sm resize-none border border-gray-200 dark:border-gray-700
                   rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100

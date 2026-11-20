@@ -30,3 +30,38 @@ describe('MetaFields', () => {
     expect(screen.getByLabelText('Song Note')).toHaveValue('existing note')
   })
 })
+
+describe('MetaFields collapsible summary (mobile)', () => {
+  const fieldsBox = () => document.getElementById('song-meta-fields')
+
+  it('starts open by default', () => {
+    render(<MetaFields meta={baseMeta} onChange={() => {}} />)
+    expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument()
+    expect(fieldsBox().className).not.toMatch(/(^|\s)hidden(\s|$)/)
+  })
+
+  it('starts collapsed with defaultCollapsed and summarises the song', () => {
+    render(<MetaFields meta={{ ...baseMeta, capo: 2, tempo: 72 }} onChange={() => {}} defaultCollapsed />)
+    const toggle = screen.getByRole('button', { expanded: false })
+    expect(toggle).toHaveTextContent('Amazing Grace')
+    expect(toggle).toHaveTextContent('John Newton')
+    expect(toggle).toHaveTextContent('Key G · Capo 2 · 72 BPM')
+    expect(fieldsBox().className).toMatch(/(^|\s)hidden(\s|$)/)
+  })
+
+  it('toggles open and closed when the summary is tapped', () => {
+    render(<MetaFields meta={baseMeta} onChange={() => {}} defaultCollapsed />)
+    const toggle = screen.getByRole('button', { expanded: false })
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(fieldsBox().className).not.toMatch(/(^|\s)hidden(\s|$)/)
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('forces open when there is a title error', () => {
+    render(<MetaFields meta={{ ...baseMeta, title: '' }} onChange={() => {}} defaultCollapsed titleError />)
+    expect(screen.getByRole('button', { expanded: true })).toBeInTheDocument()
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+  })
+})

@@ -600,7 +600,7 @@ export function MainContent({ onAddToast, lyricsOnly = false, hideChordDiagram =
       )}
 
       {/* Floating controls — grouped pill card */}
-      {activeSong && !isFit && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && (
+      {activeSong && !isFit && !isCreatingNewAlbum && !activeAlbum && !isCreatingNewCollection && !selectedCollectionId && !editingSongId && !isCreatingNewSong && (
         <div
           ref={pillRef}
           className={`fixed right-4 z-20 pointer-events-auto transition-opacity duration-300

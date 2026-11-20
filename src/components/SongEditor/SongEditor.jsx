@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLibraryStore } from '../../store/libraryStore'
 import { MetaFields } from './MetaFields'
+import { SyntaxHint } from './SyntaxHint'
 import { TransposeConfirmModal } from './TransposeConfirmModal'
 import { FixHeadersModal } from './FixHeadersModal'
 import { FixChordsModal } from './FixChordsModal'
@@ -113,8 +114,8 @@ export function SongEditor({ songId, onAddToast }) {
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sticky top bar */}
       <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 z-10">
-        <h2 className="font-semibold truncate max-w-xs">{meta.title || 'Untitled'}</h2>
-        <div className="flex gap-2">
+        <h2 className="hidden md:block font-semibold truncate max-w-xs">{meta.title || 'Untitled'}</h2>
+        <div className="flex gap-2 ml-auto">
           <button
             type="button"
             onClick={handleCancel}
@@ -141,7 +142,7 @@ export function SongEditor({ songId, onAddToast }) {
       </div>
 
       {/* Metadata fields */}
-      <MetaFields meta={meta} onChange={handleMetaChange} />
+      <MetaFields meta={meta} onChange={handleMetaChange} defaultCollapsed />
       <TransposeConfirmModal
         isOpen={pendingKeyChange !== null}
         fromKey={pendingKeyChange?.fromKey ?? ''}
@@ -152,14 +153,13 @@ export function SongEditor({ songId, onAddToast }) {
 
       {/* Content textarea */}
       <div className="flex flex-1 flex-col px-4 pt-3 pb-4 min-h-0">
-        <div className="flex items-start justify-between mb-1">
-          <p className="text-xs text-gray-400 dark:text-gray-500 select-none">
-            {'{c: Section}'} for headers · [Chord] before a syllable · {'{note: text}'} for annotations · {'{highlight: text}'} for highlighted annotations · [Chord]{'{strum: ///}'} for strum patterns
-          </p>
+        <div className="flex flex-col gap-2 mb-2 md:flex-row md:items-start md:justify-between">
+          <SyntaxHint className="min-w-0" />
+          <div className="flex flex-wrap gap-2 md:shrink-0">
           <button
             type="button"
             onClick={handleDetectHeaders}
-            className="shrink-0 ml-3 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+            className="shrink-0 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
                        text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           >
@@ -168,7 +168,7 @@ export function SongEditor({ songId, onAddToast }) {
           <button
             type="button"
             onClick={handleDetectChords}
-            className="shrink-0 ml-2 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+            className="shrink-0 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
                        text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           >
@@ -177,12 +177,13 @@ export function SongEditor({ songId, onAddToast }) {
           <button
             type="button"
             onClick={handleCheckKey}
-            className="shrink-0 ml-2 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
+            className="shrink-0 text-xs px-2.5 py-1 rounded-md border border-indigo-300 dark:border-indigo-700
                        text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           >
             Check key
           </button>
+          </div>
         </div>
         <textarea
           className="flex-1 w-full font-mono text-sm resize-none bg-transparent focus:outline-none leading-relaxed"
