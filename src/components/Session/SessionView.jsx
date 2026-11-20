@@ -25,6 +25,7 @@ import { getDefaultCapo } from '../../lib/parser/chordUtils'
 import { v4 as uuidv4 } from 'uuid'
 import { parseSbpFile } from '../../lib/parser/sbpParser'
 import { parseChordPro } from '../../lib/parser/chordProParser'
+import { withSyncedKeyName } from '../../lib/keyNames'
 
 const KEY_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
 
@@ -238,7 +239,7 @@ export function SessionView({ code, leaderToken, onExit, onAddToast }) {
     const songId = editingSongId
     const updatedSong = {
       ...songs[songId],
-      meta: { ...songs[songId].meta, ...localMeta },
+      meta: withSyncedKeyName({ ...songs[songId].meta, ...localMeta }),
       rawText: localEditText,
     }
     setEditingSongId(null)

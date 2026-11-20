@@ -2,6 +2,7 @@ import { updateShare } from './shareApi'
 import { exportSongsAsSbp } from './exportSbp'
 import { loadSong, getTransposeState } from './storage'
 import { transposeChord } from './parser/chordUtils'
+import { withSyncedKeyName } from './keyNames'
 
 /**
  * Re-upload a shared collection's current contents to its existing link.
@@ -39,7 +40,7 @@ export async function pushCollectionUpdate(collection, { name = collection.name,
       : (song.rawText ?? '').replace(/\[([^\]]+)\]/g, (_, chord) =>
           '[' + transposeChord(chord, delta, usesFlats) + ']'
         )
-    return { ...song, rawText, meta: { ...song.meta, keyIndex: newKeyIndex, capo } }
+    return { ...song, rawText, meta: withSyncedKeyName({ ...song.meta, keyIndex: newKeyIndex, capo }) }
   }).filter(Boolean)
 
   const conductorCode = collection.conductorEnded ? null : (collection.conductorCode ?? null)

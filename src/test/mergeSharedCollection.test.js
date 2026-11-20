@@ -305,3 +305,32 @@ describe('mergeSharedCollection', () => {
     expect(result.removed).not.toContain('M1');
   });
 });
+
+describe('mergeSharedCollection — key name stays in sync with keyIndex', () => {
+  const baseline = { title: 'TestSong', artist: '', keyIndex: 0, key: 'C', capo: 0, tempo: 120, rawText: 'Hello' };
+
+  it('auto-applies the key name together with a server keyIndex change', () => {
+    const local  = makeSong({ id: 'L1', sbpId: 'A', baseline });
+    const server = makeServerSong({ sbpId: 'A', keyIndex: 7, key: 'G' });
+    const { autoApplied, conflicts } = mergeSharedCollection({}, [local], [server]);
+    expect(conflicts).toHaveLength(0);
+    expect(autoApplied[0].metaUpdates).toEqual(expect.objectContaining({ keyIndex: 7, key: 'G' }));
+  });
+
+  it('does not raise a separate "Key name" conflict alongside the Key conflict', () => {
+    const local  = makeSong({ id: 'L1', sbpId: 'A', keyIndex: 2, key: 'D', baseline });
+    const server = makeServerSong({ sbpId: 'A', keyIndex: 7, key: 'G' });
+    const { conflicts } = mergeSharedCollection({}, [local], [server]);
+    expect(conflicts[0].fields.map(f => f.key)).toEqual(['keyIndex']);
+  });
+
+  it('never applies a key name without its keyIndex (old baseline missing key)', () => {
+    const oldBaseline = { ...baseline, key: undefined };
+    const local  = makeSong({ id: 'L1', sbpId: 'A', baseline: oldBaseline });
+    const server = makeServerSong({ sbpId: 'A' });
+    const { autoApplied, conflicts } = mergeSharedCollection({}, [local], [server]);
+    expect(conflicts).toHaveLength(0);
+    expect(autoApplied).toHaveLength(0);
+  });
+});
+

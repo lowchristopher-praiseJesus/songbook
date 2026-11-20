@@ -1,10 +1,13 @@
+import { withSyncedKeyName } from './keyNames';
+
+// meta.key (the key name) is deliberately not tracked: it is derived from keyIndex,
+// and tracking it separately let the two be merged independently and drift apart.
 // norm must match the normalization buildBaseline applies so that
 // undefined/null raw values compare equal to a stored '' or 0 baseline.
 const TRACKED_FIELDS = [
   { key: 'title',    label: 'Title',                        norm: v => v ?? '' },
   { key: 'artist',   label: 'Artist',                       norm: v => v ?? '' },
   { key: 'keyIndex', label: 'Key',                          norm: v => v ?? 0 },
-  { key: 'key',      label: 'Key name',                     norm: v => v ?? '' },
   { key: 'capo',     label: 'Capo',                         norm: v => v ?? 0 },
   { key: 'tempo',    label: 'Tempo' },                      // preserve undefined — matches buildBaseline
   { key: 'youtubeVideoId', label: 'YouTube Video' },         // preserve undefined — matches buildBaseline
@@ -95,6 +98,10 @@ export function mergeSharedCollection(localCollection, localSongs, serverSongs) 
       } else {
         conflictFields.push({ key, label, mine: rawLocal, theirs: rawServer });
       }
+    }
+
+    if (metaUpdates.keyIndex !== undefined) {
+      metaUpdates.key = withSyncedKeyName({ keyIndex: metaUpdates.keyIndex, key: serverSong.meta.key }).key;
     }
 
     const newBaseline = buildBaseline(serverSong);

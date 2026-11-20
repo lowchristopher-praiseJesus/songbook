@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { SongEditor } from '../SongEditor'
 
-const mockSong = {
+let mockSong = {
   id: 'song-1',
   rawText: '{c: Verse}\n[G]Hello world',
   meta: {
@@ -193,4 +193,28 @@ describe('SongEditor — Check key', () => {
     expect(screen.getByText(/changing the key from/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Transpose Chords' })).toBeInTheDocument()
   })
+
+  describe('when meta.key has drifted from meta.keyIndex', () => {
+    let original
+    beforeEach(() => {
+      original = mockSong
+      // Header shows keyIndex (G); a stale key name ('C') must not leak into the editor.
+      mockSong = { ...original, meta: { ...original.meta, key: 'C', keyIndex: 7 } }
+    })
+    afterEach(() => { mockSong = original })
+
+    it('shows the key from keyIndex, matching the song header', () => {
+      render(<SongEditor songId="song-1" />)
+      expect(screen.getByLabelText('Key')).toHaveValue('G')
+    })
+
+    it('saves the keyIndex-derived key name so Save does not shift the key', () => {
+      render(<SongEditor songId="song-1" />)
+      fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+      expect(mockUpdateSong).toHaveBeenCalledWith('song-1', expect.objectContaining({
+        meta: expect.objectContaining({ key: 'G', keyIndex: 7 }),
+      }))
+    })
+  })
 })
+

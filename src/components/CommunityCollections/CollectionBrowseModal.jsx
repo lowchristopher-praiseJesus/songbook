@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { keyNameForIndex } from '../../lib/keyNames'
 import { useLibraryStore } from '../../store/libraryStore'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
@@ -14,6 +15,7 @@ function toSong(row, publisherName) {
       title: row.title,
       artist: row.artist,
       keyIndex: row.keyIndex ?? 0,
+        key: keyNameForIndex(row.keyIndex ?? 0),
       capo: row.capo ?? 0,
       tempo: row.tempo ?? undefined,
       communitySource: {

@@ -8,6 +8,7 @@ import {
   deleteAnnotations,
 } from '../lib/storage'
 import { parseContent } from '../lib/parser/contentParser'
+import { withSyncedKeyName } from '../lib/keyNames'
 import { resolveSaveAsTitle } from '../lib/saveAsTitle'
 import { loadMyAlbums } from '../lib/albumApi'
 import { songsOnlyInCollection } from '../lib/collectionSongs'
@@ -659,8 +660,7 @@ export const useLibraryStore = create((set, get) => ({
           ? { rawText: patch.rawText, sections: parseContent(patch.rawText) }
           : {}),
         meta: {
-          ...song.meta,
-          ...patch.metaUpdates,
+          ...withSyncedKeyName({ ...song.meta, ...patch.metaUpdates }),
           sharedBaseline: patch.newBaseline,
           // If the patch updated rawText, discard the cached original SBP content so
           // exportSbp uses the new rawText rather than silently shipping the old version.

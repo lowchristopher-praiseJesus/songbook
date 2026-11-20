@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Modal } from '../UI/Modal'
 import { Button } from '../UI/Button'
+import { keyNameForIndex } from '../../lib/keyNames'
 
 function displayValue(field, value) {
   if (field.key === 'rawText') return String(value).slice(0, 80) + (String(value).length > 80 ? '…' : '')
+  if (field.key === 'keyIndex' && typeof value === 'number') return keyNameForIndex(value)
   if (field.key === 'capo') return value ? `Capo ${value}` : 'No capo'
   if (field.key === 'tempo') return value ? `${value} BPM` : '—'
   return String(value ?? '—')
