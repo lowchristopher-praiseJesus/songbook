@@ -1,4 +1,9 @@
 import '@testing-library/jest-dom'
+import { afterEach } from 'vitest'
+import { resetTransposeSession } from '../store/transposeStore'
+
+// Transpose state is a module-level store; don't let it leak between tests.
+afterEach(() => resetTransposeSession())
 
 // jsdom localStorage mock
 const store = {}
