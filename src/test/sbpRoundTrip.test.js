@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs'
+import path from 'path'
 import JSZip from 'jszip'
 import { parseSbpFile } from '../lib/parser/sbpParser'
 import { buildSbpZip } from '../lib/exportSbp'
+
+// Vitest runs from the project root; jsdom's import.meta.url isn't a file: URL.
+const FIXTURE = path.resolve(process.cwd(), 'src/test/fixtures/cny-2026.sbp')
 
 // Real-file round-trip: import CNY 2026 → export → inspect the exported JSON.
 // The SBP-level fields (key, KeyShift, Capo, content, set Capo, keyOfset)
@@ -10,7 +14,7 @@ import { buildSbpZip } from '../lib/exportSbp'
 // will interpret the re-imported file the same way as the original.
 describe('SBP round-trip with real CNY 2026 fixture', () => {
   it('preserves key/KeyShift/Capo/content + set Capo/keyOfset verbatim', async () => {
-    const origBytes = fs.readFileSync('/Volumes/HomeX/Chris/Documents/songbook/CNY 2026 (2-28-2026).sbp')
+    const origBytes = fs.readFileSync(FIXTURE)
     const origBuf = new Uint8Array(origBytes).buffer
     const { songs, collectionName } = await parseSbpFile(origBuf)
 
@@ -45,7 +49,7 @@ describe('SBP round-trip with real CNY 2026 fixture', () => {
   })
 
   it('preserves key/KeyShift/Capo/content on the SBP download path', async () => {
-    const origBytes = fs.readFileSync('/Volumes/HomeX/Chris/Documents/songbook/CNY 2026 (2-28-2026).sbp')
+    const origBytes = fs.readFileSync(FIXTURE)
     const origBuf = new Uint8Array(origBytes).buffer
     const { songs, collectionName } = await parseSbpFile(origBuf)
 
