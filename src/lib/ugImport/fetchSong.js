@@ -3,6 +3,7 @@ import { parseUGPage } from './ugParser'
 import { parseDanielChoyPage } from '../danielchoyImport/danielchoyParser'
 import { fetchCommunityArrangement } from '../communityImport/communityClient'
 import { parseContent } from '../parser/contentParser'
+import { keyNameForIndex } from '../keyNames'
 
 // Fetch + parse a single search result into a Song object.
 // `result` shape: { url, source: 'ug' | 'danielchoy' | 'community', rawHtml?, id? }
@@ -18,6 +19,7 @@ export async function fetchAndParseSong(result, apiKey) {
         title: a.title,
         artist: a.artist,
         keyIndex: a.keyIndex ?? 0,
+        key: keyNameForIndex(a.keyIndex ?? 0),
         capo: a.capo ?? 0,
         tempo: a.tempo ?? undefined,
         // Provenance only. Deliberately no sbpId and no sharedBaseline: mergeSharedCollection

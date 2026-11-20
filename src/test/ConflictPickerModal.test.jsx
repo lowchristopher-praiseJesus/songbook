@@ -121,3 +121,12 @@ it('Apply button is disabled when conflicts array is empty', () => {
   render(<ConflictPickerModal conflicts={[]} onApply={() => {}} onCancel={() => {}} />);
   expect(screen.getByRole('button', { name: /apply/i })).toBeDisabled();
 });
+
+it('shows a Key conflict as note names, not raw index numbers', () => {
+  const c = [{ ...conflicts[0], fields: [{ key: 'keyIndex', label: 'Key', mine: 0, theirs: 7 }] }];
+  render(<ConflictPickerModal conflicts={c} onApply={() => {}} onCancel={() => {}} />);
+  expect(screen.getByRole('button', { name: /keep mine/i })).toHaveTextContent('C');
+  expect(screen.getByRole('button', { name: /use theirs/i })).toHaveTextContent('G');
+  expect(screen.getByRole('button', { name: /use theirs/i })).not.toHaveTextContent('7');
+});
+

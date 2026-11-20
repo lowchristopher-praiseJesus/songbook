@@ -9,6 +9,7 @@ import { detectSectionHeaders, convertSectionHeaders } from '../../lib/parser/se
 import { detectChordFixes, applyChordFixes } from '../../lib/parser/chordLineDetector'
 import { checkKey } from '../../lib/parser/keyChecker'
 import { KeyCheckModal } from './KeyCheckModal'
+import { withSyncedKeyName } from '../../lib/keyNames'
 
 export function SongEditor({ songId, onAddToast }) {
   const song = useLibraryStore(s => s.activeSong)
@@ -17,7 +18,7 @@ export function SongEditor({ songId, onAddToast }) {
   const selectSong = useLibraryStore(s => s.selectSong)
   const setEditingSongId = useLibraryStore(s => s.setEditingSongId)
 
-  const [meta, setMeta] = useState(() => song ? { ...song.meta } : {})
+  const [meta, setMeta] = useState(() => song ? { ...withSyncedKeyName(song.meta) } : {})
   const [rawText, setRawText] = useState(() => song?.rawText ?? '')
   const [isDirty, setIsDirty] = useState(false)
   const [pendingKeyChange, setPendingKeyChange] = useState(null)

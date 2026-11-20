@@ -91,4 +91,12 @@ describe('pushCollectionUpdate', () => {
     updateShare.mockRejectedValue(Object.assign(new Error('locked'), { code: 'locked' }));
     await expect(pushCollectionUpdate(makeCollection())).rejects.toMatchObject({ code: 'locked' });
   });
+
+  it('exports a key name that matches the transposed keyIndex', async () => {
+    getTransposeState.mockImplementation(id => (id === 's1' ? { delta: 7, capo: 0 } : null));
+    await pushCollectionUpdate(makeCollection());
+    const [s1, s2] = exportSongsAsSbp.mock.calls[0][0];
+    expect(s1.meta).toEqual(expect.objectContaining({ keyIndex: 7, key: 'G' }));
+    expect(s2.meta).toEqual(expect.objectContaining({ keyIndex: 2, key: 'D' }));
+  });
 });

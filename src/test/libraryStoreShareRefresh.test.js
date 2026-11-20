@@ -192,6 +192,25 @@ describe('applyShareRefresh', () => {
     expect(useLibraryStore.getState().collections[0].lastVersion).toBe(2);
   });
 
+  it('keeps meta.key in sync when a patch changes only keyIndex (e.g. conflict picker)', () => {
+    const { applyShareRefresh } = useLibraryStore.getState();
+    applyShareRefresh('C1', {
+      patches: [{
+        localId: 'L1',
+        metaUpdates: { keyIndex: 7 },
+        rawText: undefined,
+        newBaseline: { rawText: 'old', keyIndex: 7, key: 'G', capo: 0, tempo: 120 },
+      }],
+      newSongs: [],
+      removed: [],
+      serverSbpIdOrder: ['S1'],
+      newVersion: 2,
+    });
+    const saved = saveSong.mock.calls[0][0];
+    expect(saved.meta.keyIndex).toBe(7);
+    expect(saved.meta.key).toBe('G');
+  });
+
   it('removes songs from collection songIds but leaves them in the library index', () => {
     const { applyShareRefresh } = useLibraryStore.getState();
     applyShareRefresh('C1', {
