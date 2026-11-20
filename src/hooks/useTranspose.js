@@ -1,35 +1,43 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useMemo, useCallback, useEffect } from 'react'
 import { transposeSections } from '../lib/parser/chordUtils'
 import { setTransposeState } from '../lib/storage'
+import { useTransposeStore } from '../store/transposeStore'
 
 export function useTranspose(sections, usesFlats, songId, defaultCapo = 0) {
-  const [state, setState] = useState({
-    songId,
-    defaultCapo,
-    delta: 0,
-    capo: defaultCapo,
-  })
+  // Shared store, not component state: Full Screen and the normal view are
+  // separate component instances (and Performance mode is opened from either),
+  // so a key change must survive the view being remounted for the same song.
+  const state = useTransposeStore(s => s.current)
+  const setCurrent = useTransposeStore(s => s.setCurrent)
 
-  const stateMatchesSong = state.songId === songId && state.defaultCapo === defaultCapo
+  const stateMatchesSong = state?.songId === songId && state?.defaultCapo === defaultCapo
   const delta = stateMatchesSong ? state.delta : 0
   const capo = stateMatchesSong ? state.capo : defaultCapo
 
-  // Start each newly selected song from its saved metadata. Transpose/capo
-  // changes are still persisted for export, but reopening a song should not
-  // make the header key drift away from the editor's saved key.
+  // Opening a different song starts it from its saved metadata: drop the
+  // previous song's transpose so returning to it later doesn't resurrect it.
+  useEffect(() => {
+    if (!songId) return
+    const current = useTransposeStore.getState().current
+    if (current && (current.songId !== songId || current.defaultCapo !== defaultCapo)) {
+      setCurrent(null)
+    }
+  }, [songId, defaultCapo, setCurrent])
+
+  // Transpose/capo changes are still persisted for export (Sidebar export,
+  // pushCollectionUpdate read them back).
   useEffect(() => {
     if (!songId) return
     setTransposeState(songId, { delta, capo })
   }, [songId, delta, capo])
 
   const updateState = useCallback((updater) => {
-    setState(prev => {
-      const current = prev.songId === songId && prev.defaultCapo === defaultCapo
-        ? prev
-        : { songId, defaultCapo, delta: 0, capo: defaultCapo }
-      return { ...current, ...updater(current) }
-    })
-  }, [songId, defaultCapo])
+    const prev = useTransposeStore.getState().current
+    const current = prev && prev.songId === songId && prev.defaultCapo === defaultCapo
+      ? prev
+      : { songId, defaultCapo, delta: 0, capo: defaultCapo }
+    setCurrent({ ...current, ...updater(current) })
+  }, [songId, defaultCapo, setCurrent])
 
   const transposedSections = useMemo(
     () => transposeSections(sections ?? [], delta - capo, usesFlats ?? false),
