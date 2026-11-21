@@ -22,9 +22,6 @@ export function KeyCheckModal({ isOpen, result, onUpdateKey, onCancel }) {
                 Update key
               </Button>
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-              Your chords already match this key — choose "Keep As-Is" on the next step.
-            </p>
           </div>
         )}
       </div>

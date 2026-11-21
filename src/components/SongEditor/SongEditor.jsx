@@ -64,9 +64,13 @@ export function SongEditor({ songId, onAddToast }) {
     setPendingKeyCheck(result)
   }
 
+  // The detected key is derived from the chords, so they already fit it —
+  // relabel only. Going through handleMetaChange would offer to transpose,
+  // which would move the chords out of the key just detected.
   function handleUpdateKeyFromCheck(newKey) {
     setPendingKeyCheck(null)
-    handleMetaChange('key', newKey)
+    setMeta(m => ({ ...m, key: newKey }))
+    setIsDirty(true)
   }
 
   if (!song) return null

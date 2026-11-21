@@ -181,15 +181,30 @@ describe('SongEditor — Check key', () => {
     expect(within(dialog).getByText('F')).toBeInTheDocument()
   })
 
-  it('Update key applies the detected key and hands off to the transpose-confirm flow', () => {
+  it('Update key relabels the key without asking to transpose, leaving chords untouched', () => {
+    // The detected key comes from the chords, so they already fit it —
+    // transposing here would move them out of the key the user just confirmed.
+    const chords = '[B]one [E]two [F#]three [G#m]four\n[B]one [E]two [F#]three [G#m]four'
     render(<SongEditor songId="song-1" />)
-    fireEvent.change(screen.getByLabelText('Song content'), {
-      target: { value: '[B]one [E]two [F#]three [G#m]four\n[B]one [E]two [F#]three [G#m]four' },
-    })
+    fireEvent.change(screen.getByLabelText('Song content'), { target: { value: chords } })
     fireEvent.click(screen.getByRole('button', { name: 'Check key' }))
     fireEvent.click(screen.getByRole('button', { name: /update key/i }))
 
-    expect(screen.queryByRole('button', { name: /update key/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByText(/changing the key from/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Key')).toHaveValue('B')
+    expect(screen.getByLabelText('Song content').value).toBe(chords)
+
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    expect(mockUpdateSong).toHaveBeenCalledWith('song-1', expect.objectContaining({
+      meta: expect.objectContaining({ key: 'B' }),
+      rawText: chords,
+    }))
+  })
+
+  it('changing the key via the Key field still offers to transpose', () => {
+    render(<SongEditor songId="song-1" />)
+    fireEvent.change(screen.getByLabelText('Key'), { target: { value: 'A' } })
     expect(screen.getByText(/changing the key from/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Transpose Chords' })).toBeInTheDocument()
   })
